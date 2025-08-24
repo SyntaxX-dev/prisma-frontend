@@ -10,37 +10,36 @@ import { Card } from './ui/card';
 import { User, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import styles from './AuthScreen.module.css';
 import spotlightStyles from './spotlight.module.css';
-
 import Link from 'next/link';
-
-const forgotPasswordSchema = z.object({
-    email: z.string().min(1, 'Email é obrigatório').email('Email inválido'),
-});
-
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+import { requestPasswordResetSchema, RequestPasswordResetFormData } from '@/lib/validators/auth';
+import { requestPasswordReset } from '@/api/auth/request-password-reset';
+import { PasswordResetService } from '@/lib/services/password-reset';
 
 export function ForgotPasswordScreen() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-    const form = useForm<ForgotPasswordFormData>({
-        resolver: zodResolver(forgotPasswordSchema),
+    const form = useForm<RequestPasswordResetFormData>({
+        resolver: zodResolver(requestPasswordResetSchema),
         defaultValues: {
             email: '',
         },
     });
 
-    const onSubmit = async (data: ForgotPasswordFormData) => {
+    const onSubmit = async (data: RequestPasswordResetFormData) => {
         try {
             setIsLoading(true);
-            // Simular envio do email
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Chamar API para solicitar reset de senha
+            const response = await requestPasswordReset(data);
+
+            // Salvar email no localStorage
+            PasswordResetService.saveEmail(data.email);
+
             setIsSubmitted(true);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Erro ao solicitar reset de senha:', error);
             // Aqui você pode adicionar um toast ou notificação de erro
         } finally {

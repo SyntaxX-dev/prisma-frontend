@@ -11,24 +11,24 @@ type CustomTooltipItem = {
   name?: string;
   dataKey?: string;
   value?: number | string;
-  payload?: Record<string, any> | undefined;
+  payload?: Record<string, unknown> | undefined;
 };
 
 type ChartTooltipContentProps = React.HTMLAttributes<HTMLDivElement> & {
   active?: boolean;
   payload?: CustomTooltipItem[];
-  label?: any;
+  label?: string | number;
   indicator?: "line" | "dot" | "dashed";
   hideLabel?: boolean;
   hideIndicator?: boolean;
-  labelFormatter?: (value: any, payload?: CustomTooltipItem[]) => React.ReactNode;
+  labelFormatter?: (value: string | number, payload?: CustomTooltipItem[]) => React.ReactNode;
   labelClassName?: string;
   formatter?: (
-    value: any,
+    value: string | number,
     name: string,
     item: CustomTooltipItem,
     index: number,
-    raw: any,
+    raw: string | number,
   ) => React.ReactNode;
   color?: string;
   nameKey?: string;
@@ -129,13 +129,13 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
             ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
+                .map(([key, itemConfig]) => {
+                  const color =
+                    itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+                    itemConfig.color;
+                  return color ? `  --color-${key}: ${color};` : null;
+                })
+                .join("\n")}
 }
 `,
           )
@@ -348,8 +348,8 @@ function getPayloadConfigFromPayload(
 
   const payloadPayload =
     "payload" in payload &&
-    typeof payload.payload === "object" &&
-    payload.payload !== null
+      typeof payload.payload === "object" &&
+      payload.payload !== null
       ? payload.payload
       : undefined;
 

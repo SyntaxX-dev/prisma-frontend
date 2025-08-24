@@ -10,28 +10,20 @@ import { Card } from './ui/card';
 import { Eye, EyeOff, User, Mail, Lock, ArrowLeftRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import styles from './AuthScreen.module.css';
 import spotlightStyles from './spotlight.module.css';
 import Link from 'next/link';
+import {
+  loginSchema,
+  registerSchema,
+  LoginFormData,
+  RegisterFormData
+} from '@/lib/validators/auth';
+import { EducationLevel } from '@/types/education';
+import { EDUCATION_OPTIONS } from '@/lib/constants';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-const loginSchema = z.object({
-  email: z.string().min(1, 'Email é obrigatório').email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-});
 
-const registerSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().min(1, 'Email é obrigatório').email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  confirmPassword: z.string().min(1, 'Confirmação de senha é obrigatória'),
-}).refine((data: RegisterFormData) => data.password === data.confirmPassword, {
-  message: "Senhas não coincidem",
-  path: ["confirmPassword"],
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-type RegisterFormData = z.infer<typeof registerSchema>;
 
 export function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -55,6 +47,8 @@ export function AuthScreen() {
       email: '',
       password: '',
       confirmPassword: '',
+      age: 18,
+      educationLevel: EducationLevel.UNDERGRADUATE,
     },
   });
 
@@ -328,6 +322,58 @@ export function AuthScreen() {
                           {registerForm.formState.errors.name && (
                             <p className="text-red-400 text-xs mt-1 ml-1">
                               {registerForm.formState.errors.name.message}
+                            </p>
+                          )}
+                        </motion.div>
+
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="relative"
+                        >
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
+                          <Input
+                            type="number"
+                            placeholder="Idade"
+                            min="0"
+                            max="120"
+                            {...registerForm.register('age', { valueAsNumber: true })}
+                            className={`pl-10 bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${registerForm.formState.errors.age ? 'border-red-500' : ''
+                              }`}
+                          />
+                          {registerForm.formState.errors.age && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">
+                              {registerForm.formState.errors.age.message}
+                            </p>
+                          )}
+                        </motion.div>
+
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="relative"
+                        >
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
+                          <Select
+                            value={registerForm.watch('educationLevel')}
+                            onValueChange={(value) => registerForm.setValue('educationLevel', value as EducationLevel)}
+                          >
+                            <SelectTrigger className="pl-10 bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-300 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg">
+                              <SelectValue placeholder="Nível de educação" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-gray-900 border-[#B3E240]/30 text-white">
+                              {EDUCATION_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value} className="text-white hover:bg-[#B3E240]/20">
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {registerForm.formState.errors.educationLevel && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">
+                              {registerForm.formState.errors.educationLevel.message}
                             </p>
                           )}
                         </motion.div>

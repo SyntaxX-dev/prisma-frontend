@@ -10,21 +10,15 @@ import { Card } from './ui/card';
 import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle, Shield } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import styles from './AuthScreen.module.css';
 import spotlightStyles from './spotlight.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { resetPasswordSchema, ResetPasswordFormData } from '@/lib/validators/auth';
+import { resetPassword } from '@/api/auth/reset-password';
+import { PasswordResetService } from '@/lib/services/password-reset';
 
-const newPasswordSchema = z.object({
-    password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
-    confirmPassword: z.string().min(1, 'Confirmação de senha é obrigatória'),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Senhas não coincidem",
-    path: ["confirmPassword"],
-});
 
-type NewPasswordFormData = z.infer<typeof newPasswordSchema>;
 
 export function NewPasswordScreen() {
     const [isLoading, setIsLoading] = useState(false);
@@ -34,22 +28,40 @@ export function NewPasswordScreen() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const router = useRouter();
 
-    const form = useForm<NewPasswordFormData>({
-        resolver: zodResolver(newPasswordSchema),
+    const form = useForm<ResetPasswordFormData>({
+        resolver: zodResolver(resetPasswordSchema),
         defaultValues: {
-            password: '',
+            newPassword: '',
             confirmPassword: '',
         },
     });
 
-    const onSubmit = async (data: NewPasswordFormData) => {
+    const onSubmit = async (data: ResetPasswordFormData) => {
         try {
             setIsLoading(true);
-            // Simular reset de senha
-            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Pegar email e código do localStorage
+            const email = PasswordResetService.getEmail();
+            const code = PasswordResetService.getCode();
+
+            if (!email || !code) {
+                throw new Error('Dados de reset não encontrados. Volte para a tela anterior.');
+            }
+
+            // Chamar API para resetar senha
+            await resetPassword({
+                email,
+                code,
+                newPassword: data.newPassword
+            });
+
+            // Limpar dados do localStorage
+            PasswordResetService.clearData();
+
             setIsSuccess(true);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Erro ao resetar senha:', error);
+            // Aqui você pode adicionar um toast ou notificação de erro
         } finally {
             setIsLoading(false);
         }
@@ -221,8 +233,8 @@ export function NewPasswordScreen() {
                                             <Input
                                                 type={showPassword ? 'text' : 'password'}
                                                 placeholder="Nova senha"
-                                                {...form.register('password')}
-                                                className={`pl-10 pr-10 bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-300 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${form.formState.errors.password ? 'border-red-500' : ''
+                                                {...form.register('newPassword')}
+                                                className={`pl-10 pr-10 bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-300 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${form.formState.errors.newPassword ? 'border-red-500' : ''
                                                     }`}
                                             />
                                             <button
@@ -232,9 +244,9 @@ export function NewPasswordScreen() {
                                             >
                                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
-                                            {form.formState.errors.password && (
+                                            {form.formState.errors.newPassword && (
                                                 <p className="text-red-400 text-xs mt-1 ml-1">
-                                                    {form.formState.errors.password.message}
+                                                    {form.formState.errors.newPassword.message}
                                                 </p>
                                             )}
                                         </div>

@@ -10,40 +10,56 @@ import { Card } from './ui/card';
 import { Mail, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import styles from './AuthScreen.module.css';
 import spotlightStyles from './spotlight.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { verifyResetCodeSchema, VerifyResetCodeFormData } from '@/lib/validators/auth';
+import { verifyResetCode } from '@/api/auth/verify-reset-code';
+import { PasswordResetService } from '@/lib/services/password-reset';
 
-const verifyCodeSchema = z.object({
-    code: z.string().min(6, 'Código deve ter 6 dígitos').max(6, 'Código deve ter 6 dígitos'),
-});
 
-type VerifyCodeFormData = z.infer<typeof verifyCodeSchema>;
 
 export function VerifyCodeScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const router = useRouter();
 
-    const form = useForm<VerifyCodeFormData>({
-        resolver: zodResolver(verifyCodeSchema),
+    const form = useForm<VerifyResetCodeFormData>({
+        resolver: zodResolver(verifyResetCodeSchema),
         defaultValues: {
             code: '',
         },
     });
 
-    const onSubmit = async (data: VerifyCodeFormData) => {
+    const onSubmit = async (data: VerifyResetCodeFormData) => {
         try {
             setIsLoading(true);
-            // Simular verificação do código
-            await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Se o código for válido, redirecionar para a tela de nova senha
-            router.push('/reset-password/new-password');
-        } catch (error) {
+            // Pegar email do localStorage
+            const email = PasswordResetService.getEmail();
+            if (!email) {
+                throw new Error('Email não encontrado. Volte para a tela anterior.');
+            }
+
+            // Chamar API para verificar código
+            const response = await verifyResetCode({
+                email,
+                code: data.code
+            });
+
+            if (response.valid) {
+                // Salvar código no localStorage
+                PasswordResetService.saveCode(data.code);
+
+                // Se o código for válido, redirecionar para a tela de nova senha
+                router.push('/reset-password/new-password');
+            } else {
+                throw new Error('Código inválido');
+            }
+        } catch (error: unknown) {
             console.error('Erro ao verificar código:', error);
+            // Aqui você pode adicionar um toast ou notificação de erro
         } finally {
             setIsLoading(false);
         }
