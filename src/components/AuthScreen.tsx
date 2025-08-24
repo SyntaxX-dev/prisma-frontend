@@ -13,6 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import styles from './AuthScreen.module.css';
 import spotlightStyles from './spotlight.module.css';
+import Link from 'next/link';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email é obrigatório').email('Email inválido'),
@@ -277,13 +278,14 @@ export function AuthScreen() {
                             </div>
                             <span className="ml-3 font-medium">Lembrar</span>
                           </label>
-                          <motion.a
-                            href="#"
+                          <Link
+                            href="/forgot-password"
                             className="text-gray-400 hover:text-[#B3E240] transition-colors cursor-pointer font-medium hover:underline"
-                            whileHover={{ scale: 1.05 }}
                           >
-                            Esqueceu senha?
-                          </motion.a>
+                            <motion.span whileHover={{ scale: 1.05 }}>
+                              Esqueceu senha?
+                            </motion.span>
+                          </Link>
                         </div>
 
                         <motion.div
