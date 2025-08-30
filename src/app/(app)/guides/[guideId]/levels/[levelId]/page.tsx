@@ -1,6 +1,8 @@
-export default function LevelDetailPage({ params }: { params: { guideId: string; levelId: string } }) {
+export default async function LevelDetailPage({ params }: { params: Promise<{ guideId: string; levelId: string }> }) {
+	const { guideId, levelId } = await params;
+
 	return (
-		<h1 className="text-2xl font-semibold">Nível {params.levelId} do guia {params.guideId}</h1>
+		<h1 className="text-2xl font-semibold">Nível {levelId} do guia {guideId}</h1>
 	);
 }
 

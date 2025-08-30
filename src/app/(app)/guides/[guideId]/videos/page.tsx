@@ -1,6 +1,8 @@
-export default function GuideVideosPage({ params }: { params: { guideId: string } }) {
+export default async function GuideVideosPage({ params }: { params: Promise<{ guideId: string }> }) {
+	const { guideId } = await params;
+
 	return (
-		<h1 className="text-2xl font-semibold">Vídeos do guia {params.guideId}</h1>
+		<h1 className="text-2xl font-semibold">Vídeos do guia {guideId}</h1>
 	);
 }
 
