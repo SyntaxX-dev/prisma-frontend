@@ -186,66 +186,89 @@ export function LearningDashboard() {
   ];
 
   return (
-    <div className="flex-1 p-8 ml-20 pt-28"> {/* Added pt-28 for fixed navbar */}
+    <div className="flex-1 p-6 ml-10 pt-10">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-black dark:text-white text-3xl font-bold mb-2">Bom dia, Sajibur!</h1>
-        <p className="text-black/70 dark:text-white/60">Continue aprendendo e desenvolvendo suas habilidades em tecnologia.</p>
+        <h1 className="text-white text-2xl font-bold mb-2">Bom dia, Sajibur!</h1>
+        <p className="text-white/60 text-sm">Continue aprendendo e desenvolvendo suas habilidades em tecnologia.</p>
       </div>
 
       {/* Recommended Courses Section */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-black dark:text-white text-xl font-semibold">Recomendações</h2>
-          <Button variant="ghost" className="text-black/70 dark:text-white/60 hover:text-black dark:hover:text-white">
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white text-lg font-semibold">Recomendações</h2>
+          <Button variant="ghost" className="text-white/60 hover:text-white text-sm">
             Ver todos
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
-        
+
         <Carousel
           opts={{
             align: "start",
           }}
           className="w-full"
         >
-          <CarouselContent className="-ml-4">
+          <CarouselContent className="-ml-3">
             {recommendedCourses.map((course, index) => (
-              <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                <CourseCard course={course} />
+              <CarouselItem key={index} className="pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                <CourseCard
+                  title={course.title}
+                  instructor={course.instructor}
+                  duration={course.duration}
+                  level={course.level}
+                  year={course.year}
+                  technology={course.technology}
+                  icon={course.icon}
+                  isSubscriber={course.isSubscriber}
+                  thumbnailUrl={course.thumbnailUrl}
+                  iconColor={course.iconColor}
+                />
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
+          <CarouselPrevious className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
+          <CarouselNext className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
         </Carousel>
       </div>
 
       {/* Free Courses Section */}
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-black dark:text-white text-xl font-semibold">Acesse gratuitamente</h2>
-          <Button variant="ghost" className="text-black/70 dark:text-white/60 hover:text-black dark:hover:text-white">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white text-lg font-semibold">Acesse gratuitamente</h2>
+          <Button variant="ghost" className="text-white/60 hover:text-white text-sm">
             Ver todos
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
-        
+
         <Carousel
           opts={{
             align: "start",
           }}
           className="w-full"
         >
-          <CarouselContent className="-ml-4">
+          <CarouselContent className="-ml-3">
             {freeCourses.map((course, index) => (
-              <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                <CourseCard course={course} />
+              <CarouselItem key={index} className="pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                <CourseCard
+                  title={course.title}
+                  instructor={course.instructor}
+                  duration={course.duration}
+                  level={course.level}
+                  year={course.year}
+                  technology={course.technology}
+                  icon={course.icon}
+                  isSubscriber={course.isSubscriber}
+                  isFree={course.isFree}
+                  thumbnailUrl={course.thumbnailUrl}
+                  iconColor={course.iconColor}
+                />
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
+          <CarouselPrevious className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
+          <CarouselNext className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
         </Carousel>
       </div>
     </div>

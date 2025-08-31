@@ -1,0 +1,19 @@
+{
+    "buildCommand": "bun run build",
+    "outputDirectory": ".next",
+    "framework": "nextjs",
+    "installCommand": "bun install",
+    "devCommand": "bun run dev",
+    "regions": [
+        "gru1"
+    ],
+    "headers": [],
+    "env": {
+        "NODE_ENV": "production"
+    },
+    "build": {
+        "env": {
+            "NEXT_TELEMETRY_DISABLED": "1"
+        }
+    }
+}

@@ -1,10 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,
   },
+
   // Permitir acesso de dispositivos na rede local
   allowedDevOrigins: ['192.168.0.101'],
   // Configurar variáveis de ambiente para desenvolvimento
