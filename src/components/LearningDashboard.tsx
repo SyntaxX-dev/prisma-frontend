@@ -15,7 +15,8 @@ export function LearningDashboard() {
       icon: "💡",
       iconColor: "#f59e0b",
       isSubscriber: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=200&fit=crop",
+      courseId: "soft-skills"
     },
     {
       title: "Node.js",
@@ -27,7 +28,8 @@ export function LearningDashboard() {
       icon: "⚡",
       iconColor: "#10b981",
       isSubscriber: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
+      courseId: "nodejs"
     },
     {
       title: "Android com Kotlin",
@@ -39,7 +41,8 @@ export function LearningDashboard() {
       icon: "📱",
       iconColor: "#8b5cf6",
       isSubscriber: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop",
+      courseId: "android-kotlin"
     },
     {
       title: "Inglês para Devs",
@@ -51,7 +54,8 @@ export function LearningDashboard() {
       icon: "🌎",
       iconColor: "#ef4444",
       isSubscriber: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=200&fit=crop",
+      courseId: "ingles-para-devs"
     },
     {
       title: "iOS com Swift",
@@ -63,7 +67,8 @@ export function LearningDashboard() {
       icon: "🍎",
       iconColor: "#3b82f6",
       isSubscriber: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=200&fit=crop",
+      courseId: "ios-swift"
     },
     {
       title: "Tech Lead",
@@ -75,7 +80,8 @@ export function LearningDashboard() {
       icon: "👥",
       iconColor: "#f97316",
       isSubscriber: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=200&fit=crop",
+      courseId: "tech-lead"
     },
     {
       title: "Lógica de Programação",
@@ -87,7 +93,8 @@ export function LearningDashboard() {
       icon: "🧩",
       iconColor: "#ec4899",
       isSubscriber: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&h=200&fit=crop",
+      courseId: "logica-programacao"
     }
   ];
 
@@ -103,7 +110,8 @@ export function LearningDashboard() {
       iconColor: "#06b6d4",
       isSubscriber: false,
       isFree: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=200&fit=crop",
+      courseId: "dev-global-starter"
     },
     {
       title: "Angular - Curso Introdutório",
@@ -116,7 +124,8 @@ export function LearningDashboard() {
       iconColor: "#dc2626",
       isSubscriber: false,
       isFree: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1555949963-ff9fe37c3d97?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1555949963-ff9fe37c3d97?w=400&h=200&fit=crop",
+      courseId: "angular-intro"
     },
     {
       title: "Discover",
@@ -129,7 +138,8 @@ export function LearningDashboard() {
       iconColor: "#f59e0b",
       isSubscriber: false,
       isFree: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop",
+      courseId: "discover"
     },
     {
       title: "Go - Curso Introdutório",
@@ -142,7 +152,8 @@ export function LearningDashboard() {
       iconColor: "#10b981",
       isSubscriber: false,
       isFree: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=200&fit=crop",
+      courseId: "go-intro"
     },
     {
       title: "C# e .NET - Curso Introdutório",
@@ -155,7 +166,8 @@ export function LearningDashboard() {
       iconColor: "#8b5cf6",
       isSubscriber: false,
       isFree: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=400&h=200&fit=crop",
+      courseId: "csharp-dotnet-intro"
     },
     {
       title: "React Native com Expo - Curso Introdutório",
@@ -168,7 +180,8 @@ export function LearningDashboard() {
       iconColor: "#06b6d4",
       isSubscriber: false,
       isFree: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop",
+      courseId: "react-native-expo"
     },
     {
       title: "Python com Django - Introdutório",
@@ -181,7 +194,8 @@ export function LearningDashboard() {
       iconColor: "#f59e0b",
       isSubscriber: false,
       isFree: true,
-      thumbnailUrl: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop"
+      thumbnailUrl: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
+      courseId: "python-django"
     }
   ];
 
@@ -222,6 +236,7 @@ export function LearningDashboard() {
                   isSubscriber={course.isSubscriber}
                   thumbnailUrl={course.thumbnailUrl}
                   iconColor={course.iconColor}
+                  courseId={course.courseId}
                 />
               </CarouselItem>
             ))}
@@ -261,6 +276,7 @@ export function LearningDashboard() {
                   isFree={course.isFree}
                   thumbnailUrl={course.thumbnailUrl}
                   iconColor={course.iconColor}
+                  courseId={course.courseId}
                 />
               </CarouselItem>
             ))}
