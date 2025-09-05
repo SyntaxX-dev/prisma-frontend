@@ -46,10 +46,8 @@ export function VerifyCodeScreen() {
                 code: data.code
             });
 
-            if (response.valid) {
-
+            if (response.status === 'success') {
                 PasswordResetService.saveCode(data.code);
-
                 router.push('/reset-password/new-password');
             } else {
                 throw new Error('Código inválido');
@@ -122,7 +120,7 @@ export function VerifyCodeScreen() {
                                 <Clock className="w-5 h-5" />
                                 <span className="text-sm">Código válido por 15 minutos</span>
                             </div>
-                            <Link href="/forgot-password">
+                            <Link href="/auth/forgot-password">
                                 <Button className="bg-transparent cursor-pointer border-2 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240] hover:text-black transition-all duration-300 px-8 py-2 rounded-lg">
                                     Voltar
                                 </Button>
@@ -137,11 +135,11 @@ export function VerifyCodeScreen() {
                                     transition={{ duration: 0.5 }}
                                 >
                                     <div className="flex items-center mb-8">
-                                        <Link href="/forgot-password">
+                                        <Link href="/auth/forgot-password">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="p-2 text-[#B3E240] hover:bg-[#B3E240]/10 rounded-lg mr-4"
+                                                className="p-2 cursor-pointer text-[#B3E240] hover:bg-[#B3E240]/10 rounded-lg mr-4"
                                             >
                                                 <ArrowLeft className="w-5 h-5" />
                                             </Button>
@@ -152,7 +150,7 @@ export function VerifyCodeScreen() {
                                     </div>
 
                                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                        <div className="relative">
+                                        <div className="relative mb-6">
                                             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                                             <Input
                                                 type="text"
@@ -163,7 +161,7 @@ export function VerifyCodeScreen() {
                                                     }`}
                                             />
                                             {form.formState.errors.code && (
-                                                <p className="text-red-400 text-xs mt-1 ml-1">
+                                                <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                                                     {form.formState.errors.code.message}
                                                 </p>
                                             )}
@@ -176,7 +174,7 @@ export function VerifyCodeScreen() {
                                             <Button
                                                 type="button"
                                                 variant="ghost"
-                                                className="text-[#B3E240] hover:bg-[#B3E240]/10 transition-colors"
+                                                className="cursor-pointer text-[#B3E240] hover:bg-[#B3E240]/10 transition-colors"
                                             >
                                                 Reenviar código
                                             </Button>

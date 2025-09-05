@@ -33,7 +33,7 @@ export const registerSchema = z.object({
     'MESTRADO',
     'DOUTORADO'
   ] as const, {
-    errorMap: () => ({ message: 'Nível educacional inválido' })
+    message: 'Nível educacional inválido'
   })
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',

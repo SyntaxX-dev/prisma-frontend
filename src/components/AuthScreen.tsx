@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
-import { Eye, EyeOff, User, Mail, Lock, ArrowLeftRight } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, ArrowLeftRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import styles from './AuthScreen.module.css';
@@ -19,7 +19,6 @@ import {
   LoginFormData,
   RegisterFormData
 } from '@/lib/validators/auth-forms';
-import { EducationLevel, educationLevelEnToPt } from '@/types/education';
 import { EDUCATION_OPTIONS } from '@/lib/constants';
 import { EducationLevel as ApiEducationLevel } from '@/types/auth-api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -58,7 +57,7 @@ export function AuthScreen() {
       password: '',
       confirmPassword: '',
       age: 18,
-      educationLevel: EducationLevel.UNDERGRADUATE,
+      educationLevel: 'GRADUACAO' as const,
     },
   });
 
@@ -71,9 +70,10 @@ export function AuthScreen() {
 
       toast.success('Login realizado com sucesso!');
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro no login:', error);
-      toast.error(error.message || 'Erro ao fazer login');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer login';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +85,7 @@ export function AuthScreen() {
 
       const apiData = {
         ...data,
-        educationLevel: educationLevelEnToPt[data.educationLevel] as ApiEducationLevel
+        educationLevel: data.educationLevel as ApiEducationLevel
       };
 
       const response = await registerUser(apiData);
@@ -94,9 +94,10 @@ export function AuthScreen() {
 
       toast.success('Conta criada com sucesso!');
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro no registro:', error);
-      toast.error(error.message || 'Erro ao criar conta');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao criar conta';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -249,23 +250,23 @@ export function AuthScreen() {
 
                     {isLogin ? (
                       <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
-                        <div className="relative">
+                        <div className="relative mb-6">
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Input
                             type="email"
-                            placeholder="USUÁRIO"
+                            placeholder="Email"
                             {...loginForm.register('email')}
                             className={`pl-10 bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-300 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${loginForm.formState.errors.email ? 'border-red-500' : ''
                               }`}
                           />
                           {loginForm.formState.errors.email && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">
+                            <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                               {loginForm.formState.errors.email.message}
                             </p>
                           )}
                         </div>
 
-                        <div className="relative">
+                        <div className="relative mb-6">
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Input
                             type={showPassword ? 'text' : 'password'}
@@ -282,7 +283,7 @@ export function AuthScreen() {
                             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
                           {loginForm.formState.errors.password && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">
+                            <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                               {loginForm.formState.errors.password.message}
                             </p>
                           )}
@@ -315,7 +316,7 @@ export function AuthScreen() {
                             <span className="ml-3 font-medium">Lembrar</span>
                           </label>
                           <Link
-                            href="/forgot-password"
+                            href="/auth/forgot-password"
                             className="text-gray-400 hover:text-[#B3E240] transition-colors cursor-pointer font-medium hover:underline"
                           >
                             <motion.span whileHover={{ scale: 1.05 }}>
@@ -351,7 +352,7 @@ export function AuthScreen() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="relative"
+                          className="relative mb-6"
                         >
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Input
@@ -362,7 +363,7 @@ export function AuthScreen() {
                               }`}
                           />
                           {registerForm.formState.errors.name && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">
+                            <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                               {registerForm.formState.errors.name.message}
                             </p>
                           )}
@@ -372,7 +373,7 @@ export function AuthScreen() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="relative"
+                          className="relative mb-6"
                         >
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Input
@@ -385,7 +386,7 @@ export function AuthScreen() {
                               }`}
                           />
                           {registerForm.formState.errors.age && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">
+                            <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                               {registerForm.formState.errors.age.message}
                             </p>
                           )}
@@ -395,12 +396,12 @@ export function AuthScreen() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="relative"
+                          className="relative mb-6"
                         >
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Select
                             value={registerForm.watch('educationLevel')}
-                            onValueChange={(value) => registerForm.setValue('educationLevel', value as EducationLevel)}
+                            onValueChange={(value) => registerForm.setValue('educationLevel', value as ApiEducationLevel)}
                           >
                             <SelectTrigger className="pl-10 bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-300 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg">
                               <SelectValue placeholder="Nível de educação" />
@@ -414,13 +415,13 @@ export function AuthScreen() {
                             </SelectContent>
                           </Select>
                           {registerForm.formState.errors.educationLevel && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">
+                            <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                               {registerForm.formState.errors.educationLevel.message}
                             </p>
                           )}
                         </motion.div>
 
-                        <div className="relative">
+                        <div className="relative mb-6">
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Input
                             type="email"
@@ -430,13 +431,13 @@ export function AuthScreen() {
                               }`}
                           />
                           {registerForm.formState.errors.email && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">
+                            <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                               {registerForm.formState.errors.email.message}
                             </p>
                           )}
                         </div>
 
-                        <div className="relative">
+                        <div className="relative mb-6">
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Input
                             type={showPassword ? 'text' : 'password'}
@@ -453,7 +454,7 @@ export function AuthScreen() {
                             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
                           {registerForm.formState.errors.password && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">
+                            <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                               {registerForm.formState.errors.password.message}
                             </p>
                           )}
@@ -463,7 +464,7 @@ export function AuthScreen() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="relative"
+                          className="relative mb-6"
                         >
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Input
@@ -481,7 +482,7 @@ export function AuthScreen() {
                             {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
                           {registerForm.formState.errors.confirmPassword && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">
+                            <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                               {registerForm.formState.errors.confirmPassword.message}
                             </p>
                           )}

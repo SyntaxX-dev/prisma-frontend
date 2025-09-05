@@ -59,11 +59,6 @@ export interface ApiResponse<T = unknown> {
   timestamp: string;
 }
 
-export interface ApiError {
-  message: string;
-  status: number;
-  details?: unknown;
-}
 
 // Mapeamento de níveis educacionais para português
 export const EDUCATION_LEVEL_LABELS: Record<EducationLevel, string> = {

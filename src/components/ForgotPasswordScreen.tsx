@@ -121,17 +121,20 @@ export function ForgotPasswordScreen() {
                                 transition={{ delay: 0.6 }}
                                 className="space-y-4"
                             >
-                                <Link href="/login">
-                                    <Button className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg">
-                                        Voltar para o Login
-                                    </Button>
-                                </Link>
+                                <div className='gap-4'>
+                                    <Link href="/auth/login">
+                                        <Button className="w-full cursor-pointer bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg">
+                                            Voltar para o Login
+                                        </Button>
+                                    </Link>
 
-                                <Link href="/reset-password/verify-code">
-                                    <Button className="w-full bg-transparent border-2 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240] hover:text-black transition-all duration-300 rounded-lg">
-                                        Verificar Código
-                                    </Button>
-                                </Link>
+                                    <Link href="/auth/reset-password/verify-code">
+                                        <Button className="w-full mt-4 cursor-pointer bg-transparent border-2 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240] hover:text-black transition-all duration-300 rounded-lg">
+                                            Verificar Código
+                                        </Button>
+                                    </Link>
+                                </div>
+
                             </motion.div>
                         </div>
                     </Card>
@@ -189,7 +192,7 @@ export function ForgotPasswordScreen() {
                             <p className="text-gray-400 text-sm mb-8">
                                 Digite seu email e enviaremos instruções para redefinir sua senha.
                             </p>
-                            <Link href="/login">
+                            <Link href="/auth/login" className='cursor-pointer'>
                                 <Button className="bg-transparent cursor-pointer border-2 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240] hover:text-black transition-all duration-300 px-8 py-2 rounded-lg">
                                     Voltar ao Login
                                 </Button>
@@ -204,11 +207,11 @@ export function ForgotPasswordScreen() {
                                     transition={{ duration: 0.5 }}
                                 >
                                     <div className="flex items-center mb-8">
-                                        <Link href="/login">
+                                        <Link href="/auth/login">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="p-2 text-[#B3E240] hover:bg-[#B3E240]/10 rounded-lg mr-4"
+                                                className="p-2 cursor-pointer text-[#B3E240] hover:bg-[#B3E240]/10 rounded-lg mr-4"
                                             >
                                                 <ArrowLeft className="w-5 h-5" />
                                             </Button>
@@ -219,7 +222,7 @@ export function ForgotPasswordScreen() {
                                     </div>
 
                                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                        <div className="relative">
+                                        <div className="relative mb-6">
                                             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                                             <Input
                                                 type="email"
@@ -229,7 +232,7 @@ export function ForgotPasswordScreen() {
                                                     }`}
                                             />
                                             {form.formState.errors.email && (
-                                                <p className="text-red-400 text-xs mt-1 ml-1">
+                                                <p className="text-red-400 text-xs mt-1 ml-1 absolute top-full left-0">
                                                     {form.formState.errors.email.message}
                                                 </p>
                                             )}
@@ -260,7 +263,7 @@ export function ForgotPasswordScreen() {
                                             <p className="text-gray-400 text-sm">
                                                 Lembrou sua senha?{' '}
                                                 <Link
-                                                    href="/login"
+                                                    href="/auth/login"
                                                     className="text-[#B3E240] hover:underline font-medium transition-colors"
                                                 >
                                                     Faça login aqui

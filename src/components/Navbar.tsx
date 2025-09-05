@@ -1,9 +1,19 @@
 "use client";
 
-import { Search, Bell, HelpCircle, X } from "lucide-react";
+import { Search, Bell, HelpCircle, X, LogOut, User, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-import React, { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../hooks/useAuth";
 
 interface NavbarProps {
   isDark: boolean;
@@ -11,26 +21,21 @@ interface NavbarProps {
 }
 
 export function Navbar({ isDark, toggleTheme }: NavbarProps) {
+
   const navItems = ["Dashboard", "Cursos", "Trilhas", "Certificados", "Minha Conta", "Suporte"];
-  const [scrolled, setScrolled] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
+  const router = useRouter();
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const isScrolled = window.scrollY > 0;
-      setScrolled(isScrolled);
-    };
 
-    window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
 
   return (
-    <div className={`fixed top-0 right-0 z-50 w-[calc(100%-20%)] p-4 transition-all duration-300 bg-transparent`}>
-      <div className="flex items-center justify-between gap-4">
+    <div className={`fixed top-0 right-0 z-50 w-[calc(100vw-20%)] p-4 transition-all duration-300 bg-transparent`}>
+      <div className="flex items-center justify-between gap-4 relative w-full">
 
         <div className="bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
           <nav className="flex items-center gap-6">
@@ -95,18 +100,70 @@ export function Navbar({ isDark, toggleTheme }: NavbarProps) {
           </div>
         </div>
 
-        <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer">
-          <div className="flex items-center gap-3">
-            <Avatar className="w-8 h-8">
-              <AvatarImage src="/api/placeholder/32/32" />
-              <AvatarFallback className="bg-[#B3E240] text-black">SR</AvatarFallback>
-            </Avatar>
-            <div className="text-white">
-              <div className="text-sm font-medium">Sajibur Rahman</div>
-              <div className="text-xs text-white/60">sajibur@man.com</div>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src="/api/placeholder/32/32" />
+                  <AvatarFallback className="bg-[#B3E240] text-black">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-white">
+                  <div className="text-sm font-medium">
+                    {user?.name || 'Usuário'}
+                  </div>
+                  <div className="text-xs text-white/60">
+                    {user?.email || 'usuario@email.com'}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            side="bottom"
+            sideOffset={8}
+            className="w-48 min-w-[12rem] text-white"
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '16px',
+              boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)'
+            }}
+            avoidCollisions={true}
+            collisionPadding={16}
+            alignOffset={-20}
+          >
+            <DropdownMenuLabel className="text-gray-300 font-medium px-3 py-2">Minha Conta</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-white/20" />
+            <DropdownMenuItem
+              onClick={() => router.push('/profile')}
+              className="text-gray-300 hover:text-gray-100 rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-white/30"
+            >
+              <User className="mr-3 h-4 w-4 text-[#B3E240]" />
+              <span>Perfil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push('/settings')}
+              className="text-gray-300 hover:text-gray-100 rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-white/30"
+            >
+              <Settings className="mr-3 h-4 w-4 text-[#B3E240]" />
+              <span>Configurações</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-white/20" />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-red-400 hover:text-white rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-red-500/20 data-[highlighted]:!text-white"
+            >
+              <LogOut className="mr-3 h-4 w-4 text-[#B3E240]" />
+              <span>Sair</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
