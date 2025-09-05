@@ -32,7 +32,7 @@ export default function DashboardPage() {
 				updatedAt: new Date().toISOString()
 			};
 
-			login(token, user);
+			login(token, user, true);
 
 			window.history.replaceState({}, document.title, '/dashboard');
 

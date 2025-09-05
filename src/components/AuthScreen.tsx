@@ -68,7 +68,7 @@ export function AuthScreen() {
       setIsLoading(true);
       const response = await loginUser(data);
 
-      login(response.token, response.user);
+      login(response.token, response.user, rememberMe);
 
       toast.success('Login realizado com sucesso!');
       router.push('/dashboard');
@@ -92,7 +92,7 @@ export function AuthScreen() {
 
       const response = await registerUser(apiData);
 
-      login(response.token, response.user);
+      login(response.token, response.user, false); // Registro sempre false para lembrar
 
       toast.success('Conta criada com sucesso!');
       router.push('/dashboard');

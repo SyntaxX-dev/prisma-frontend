@@ -17,12 +17,26 @@ export function useAuth() {
     setIsLoading(false);
   }, []);
 
-  const login = (token: string, user: UserProfile) => {
+  const login = (token: string, user: UserProfile, rememberMe: boolean = false) => {
     setAuthState({ isAuthenticated: true, user, token });
+    
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('user_profile', JSON.stringify(user));
+    localStorage.setItem('remember_me', rememberMe.toString());
+    
+    if (rememberMe) {
+
+      localStorage.setItem('auth_expires', (Date.now() + 30 * 24 * 60 * 60 * 1000).toString()); // 30 dias
+    } else {
+
+      localStorage.setItem('auth_expires', (Date.now() + 24 * 60 * 60 * 1000).toString()); // 24 horas
+    }
   };
 
   const logout = () => {
     clearAuthState();
+    localStorage.removeItem('remember_me');
+    localStorage.removeItem('auth_expires');
     setAuthState({ isAuthenticated: false, user: null, token: null });
   };
 

@@ -27,7 +27,7 @@ export default function GoogleCallbackPage() {
                 updatedAt: new Date().toISOString()
             };
 
-            login(token, user);
+            login(token, user, true);
 
             window.history.replaceState({}, document.title, '/dashboard');
 
