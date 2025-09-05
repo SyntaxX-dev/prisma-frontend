@@ -1,16 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
 import { LearningDashboard } from "../../../components/LearningDashboard";
+import { useAuth } from "../../../hooks/useAuth";
 
 export default function DashboardPage() {
 	const [isDark, setIsDark] = useState(true);
+	const { login } = useAuth();
 
 	const toggleTheme = () => {
 		setIsDark(!isDark);
 	};
+
+	useEffect(() => {
+
+		const urlParams = new URLSearchParams(window.location.search);
+		const token = urlParams.get('token');
+		const name = urlParams.get('name');
+		const email = urlParams.get('email');
+
+		if (token && name && email) {
+			const user = {
+				id: email,
+				name,
+				email,
+				age: 25,
+				educationLevel: 'GRADUACAO' as const,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
+			};
+
+			login(token, user);
+
+			window.history.replaceState({}, document.title, '/dashboard');
+
+			console.log('Usuário logado via Google:', { name, email });
+		}
+	}, [login]);
 
 	return (
 		<div className={`min-h-screen ${isDark ? 'dark' : ''}`}>
