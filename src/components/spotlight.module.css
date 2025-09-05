@@ -12,14 +12,14 @@
         inset 0 -1px 0 rgba(255, 255, 255, 0.02),
         inset 0 0 2px 1px rgba(255, 255, 255, 0.04);
     transform-style: preserve-3d;
-    transition: transform 0.3s ease, z-index 0s 0.3s; /* Adicionado z-index para garantir a sobreposição */
+    transition: transform 0.3s ease, z-index 0s 0.3s;
     cursor: pointer;
 }
 
 .spotlight-card:hover {
-    transform: scale(1.05); /* Aumenta o card em 5% no hover */
-    z-index: 100; /* Garante que o card fique sobre outros elementos */
-    position: relative; /* Necessário para z-index funcionar corretamente */
+    transform: scale(1.05); 
+    z-index: 100;
+    position: relative;
 }
 
 .spotlight-card::before {

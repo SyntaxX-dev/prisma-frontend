@@ -1,7 +1,15 @@
-import { fetchJson } from '@/api/http/client';
+export async function logoutUser(): Promise<void> {
+  try {
 
-export async function logout(): Promise<{ success: true }> {
-	return fetchJson<{ success: true }>('/auth/logout', { method: 'POST' });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_profile');
+      localStorage.removeItem('reset_email');
+    }
+  } catch (error) {
+    console.error('Erro ao fazer logout:', error);
+    throw error;
+  }
 }
 
 

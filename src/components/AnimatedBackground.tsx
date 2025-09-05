@@ -5,10 +5,9 @@ import { motion } from 'framer-motion';
 export function AnimatedBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
-      {/* Gradient overlay */}
+
       <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
       
-      {/* Animated grid */}
       <div className="absolute inset-0 opacity-20">
         <div className="h-full w-full" style={{
           backgroundImage: `
@@ -19,7 +18,6 @@ export function AnimatedBackground() {
         }} />
       </div>
       
-      {/* Floating particles */}
       {Array.from({ length: 20 }).map((_, i) => (
         <motion.div
           key={i}
@@ -40,7 +38,6 @@ export function AnimatedBackground() {
         />
       ))}
       
-      {/* Geometric shapes */}
       <motion.div
         className="absolute top-20 left-20 w-32 h-32 border border-[#B3E240] opacity-20"
         animate={{
@@ -68,7 +65,6 @@ export function AnimatedBackground() {
         }}
       />
       
-      {/* Glowing orbs */}
       <motion.div
         className="absolute top-1/4 left-1/4 w-4 h-4 bg-[#B3E240] rounded-full"
         style={{

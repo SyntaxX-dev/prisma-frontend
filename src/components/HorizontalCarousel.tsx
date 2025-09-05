@@ -30,7 +30,7 @@ export function HorizontalCarousel({ courses, itemWidth = 280 }: HorizontalCarou
     if (!scrollContainerRef.current) return;
     
     const container = scrollContainerRef.current;
-    const scrollAmount = itemWidth * 2; // Scroll 2 items at a time
+    const scrollAmount = itemWidth * 2;
     
     if (direction === 'left') {
       container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
@@ -52,7 +52,7 @@ export function HorizontalCarousel({ courses, itemWidth = 280 }: HorizontalCarou
 
   return (
     <div className="relative group">
-      {/* Left Arrow */}
+
       {canScrollLeft && (
         <Button
           variant="ghost"
@@ -64,7 +64,6 @@ export function HorizontalCarousel({ courses, itemWidth = 280 }: HorizontalCarou
         </Button>
       )}
 
-      {/* Right Arrow */}
       {canScrollRight && (
         <Button
           variant="ghost"
@@ -76,7 +75,6 @@ export function HorizontalCarousel({ courses, itemWidth = 280 }: HorizontalCarou
         </Button>
       )}
 
-      {/* Scrollable Container */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}

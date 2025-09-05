@@ -1,11 +1,33 @@
 import { env } from '../../lib/env';
 
+export interface ApiError {
+	message: string;
+	status: number;
+	details?: unknown;
+}
+
 export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+	const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+	
 	const res = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
 		...init,
-		headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+		headers: { 
+			'Content-Type': 'application/json', 
+			...(token && { 'Authorization': `Bearer ${token}` }),
+			...(init?.headers || {}) 
+		},
 	});
-	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	
+	if (!res.ok) {
+		const errorData = await res.json().catch(() => ({}));
+		const error: ApiError = {
+			message: errorData.message || `HTTP ${res.status}`,
+			status: res.status,
+			details: errorData
+		};
+		throw error;
+	}
+	
 	return res.json() as Promise<T>;
 }
 

@@ -9,12 +9,8 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.0.101'],
   // Configurar variáveis de ambiente para desenvolvimento
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NODE_ENV === 'production' 
-      ? 'http://localhost:3333' 
-      : 'http://192.168.0.101:3333',
-    API_URL: process.env.NODE_ENV === 'production' 
-      ? 'http://localhost:3333' 
-      : 'http://192.168.0.101:3333',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://prisma-backend-production-4c22.up.railway.app',
+    API_URL: process.env.API_URL || 'https://prisma-backend-production-4c22.up.railway.app',
   },
   webpack: (config, { isServer }) => {
     // Resolver problema do canvas no build

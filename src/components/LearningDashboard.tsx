@@ -187,13 +187,12 @@ export function LearningDashboard() {
 
   return (
     <div className="flex-1 p-6 ml-10 pt-10">
-      {/* Welcome Section */}
+
       <div className="mb-8">
         <h1 className="text-white text-2xl font-bold mb-2">Bom dia, Sajibur!</h1>
         <p className="text-white/60 text-sm">Continue aprendendo e desenvolvendo suas habilidades em tecnologia.</p>
       </div>
 
-      {/* Recommended Courses Section */}
       <div className="mb-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white text-lg font-semibold">Recomendações</h2>
@@ -232,7 +231,6 @@ export function LearningDashboard() {
         </Carousel>
       </div>
 
-      {/* Free Courses Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white text-lg font-semibold">Acesse gratuitamente</h2>

@@ -53,10 +53,9 @@ export function Sidebar({ isDark, toggleTheme }: SidebarProps) {
           border: '1px solid rgba(255, 255, 255, 0.3)'
         }}
       >
-        {/* Header */}
+
         <div className="flex items-center justify-center border-b border-white/20 flex-shrink-0">
           <div className="flex items-center justify-center">
-            {/* Logo */}
             <div className="flex items-center justify-center">
               <img
                 src="/logo-prisma.png"
@@ -69,9 +68,8 @@ export function Sidebar({ isDark, toggleTheme }: SidebarProps) {
           </div>
         </div>
 
-        {/* Navigation Content */}
         <div className="flex-1 p-4 space-y-6">
-          {/* MAIN Section */}
+
           <div>
             <button
               onClick={() => toggleSection('main')}
@@ -106,7 +104,6 @@ export function Sidebar({ isDark, toggleTheme }: SidebarProps) {
             </div>
           </div>
 
-          {/* FEATURES Section */}
           <div>
             <button
               onClick={() => toggleSection('features')}
@@ -140,7 +137,6 @@ export function Sidebar({ isDark, toggleTheme }: SidebarProps) {
             </div>
           </div>
 
-          {/* TOOLS Section */}
           <div>
             <button
               onClick={() => toggleSection('tools')}
@@ -175,7 +171,6 @@ export function Sidebar({ isDark, toggleTheme }: SidebarProps) {
           </div>
         </div>
 
-        {/* Upgrade Pro Card */}
         <div className="p-4 border-t border-white/20">
           <div
             className="rounded-2xl p-6 relative w-full"

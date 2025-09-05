@@ -40,7 +40,6 @@ export function NewPasswordScreen() {
         try {
             setIsLoading(true);
 
-            // Pegar email e código do localStorage
             const email = PasswordResetService.getEmail();
             const code = PasswordResetService.getCode();
 
@@ -48,20 +47,17 @@ export function NewPasswordScreen() {
                 throw new Error('Dados de reset não encontrados. Volte para a tela anterior.');
             }
 
-            // Chamar API para resetar senha
             await resetPassword({
                 email,
                 code,
                 newPassword: data.newPassword
             });
 
-            // Limpar dados do localStorage
             PasswordResetService.clearData();
 
             setIsSuccess(true);
         } catch (error: unknown) {
             console.error('Erro ao resetar senha:', error);
-            // Aqui você pode adicionar um toast ou notificação de erro
         } finally {
             setIsLoading(false);
         }

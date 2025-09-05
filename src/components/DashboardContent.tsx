@@ -15,14 +15,14 @@ const chartData = [
 export function DashboardContent() {
   return (
     <div className="flex-1 p-8 ml-20">
-      {/* Welcome Section */}
+
       <div className="mb-8">
         <h1 className="text-white text-3xl font-bold mb-2">Good morning, Sajibur</h1>
         <p className="text-white/60">Stay on top of your tasks, monitor progress, and track status.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Balance Card */}
+
         <div className="lg:col-span-1">
           <Card className="bg-white/10 backdrop-blur-md border-white/20 p-6 text-white">
             <div className="flex items-center justify-between mb-4">
@@ -54,9 +54,8 @@ export function DashboardContent() {
           </Card>
         </div>
 
-        {/* Metrics Cards */}
         <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-          {/* Total Earnings */}
+
           <Card className="bg-[#ff6b35] p-6 text-white">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm opacity-90">Total Earnings</span>
@@ -66,7 +65,6 @@ export function DashboardContent() {
             <div className="text-sm opacity-75">+27% this month</div>
           </Card>
 
-          {/* Total Spending */}
           <Card className="bg-black/40 backdrop-blur-md border-white/20 p-6 text-white">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-white/60">Total Spending</span>
@@ -76,7 +74,6 @@ export function DashboardContent() {
             <div className="text-sm text-white/60">This month</div>
           </Card>
 
-          {/* Total Income */}
           <Card className="bg-black/40 backdrop-blur-md border-white/20 p-6 text-white">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-white/60">Total Income</span>
@@ -86,7 +83,6 @@ export function DashboardContent() {
             <div className="text-sm text-white/60">This month</div>
           </Card>
 
-          {/* Total Revenue */}
           <Card className="bg-black/40 backdrop-blur-md border-white/20 p-6 text-white">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-white/60">Total Revenue</span>
@@ -98,7 +94,6 @@ export function DashboardContent() {
         </div>
       </div>
 
-      {/* Chart Section */}
       <div className="mt-8">
         <Card className="bg-white/10 backdrop-blur-md border-white/20 p-6">
           <div className="flex items-center justify-between mb-6">

@@ -32,7 +32,6 @@ export function Navbar({ isDark, toggleTheme }: NavbarProps) {
     <div className={`fixed top-0 right-0 z-50 w-[calc(100%-20%)] p-4 transition-all duration-300 bg-transparent`}>
       <div className="flex items-center justify-between gap-4">
 
-        {/* Navigation Menu Card */}
         <div className="bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
           <nav className="flex items-center gap-6">
             {navItems.map((item) => (
@@ -46,7 +45,6 @@ export function Navbar({ isDark, toggleTheme }: NavbarProps) {
           </nav>
         </div>
 
-        {/* Action Icons Card */}
         <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-3 border border-white/20">
           <div className="flex items-center gap-3">
             <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded ? 'w-56' : 'w-8'
@@ -97,7 +95,6 @@ export function Navbar({ isDark, toggleTheme }: NavbarProps) {
           </div>
         </div>
 
-        {/* Profile Card */}
         <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer">
           <div className="flex items-center gap-3">
             <Avatar className="w-8 h-8">

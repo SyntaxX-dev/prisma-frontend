@@ -14,11 +14,11 @@ export default function DashboardPage() {
 
 	return (
 		<div className={`min-h-screen ${isDark ? 'dark' : ''}`}>
-			{/* Background */}
+
 			<div
 				className={`fixed inset-0 transition-all duration-300 ${isDark
-					? 'bg-gray-950' /* Quase preto no modo escuro */
-					: 'bg-gray-500' /* Gray médio no modo claro */
+					? 'bg-gray-950'
+					: 'bg-gray-500'
 					}`}
 				style={{
 					backgroundImage: isDark
@@ -33,7 +33,6 @@ export default function DashboardPage() {
 				}}
 			/>
 
-			{/* Accent lime gradient overlay */}
 			<div
 				className="fixed inset-0 pointer-events-none"
 				aria-hidden="true"
@@ -45,13 +44,11 @@ export default function DashboardPage() {
 				}}
 			/>
 
-			{/* Glass overlay */}
 			<div
 				className={`fixed inset-0 backdrop-blur-sm transition-all duration-300 ${isDark ? 'bg-black/30' : 'bg-black/10'
 					}`}
 			/>
 
-			{/* Railway dots overlay */}
 			<div
 				className="fixed inset-0 pointer-events-none"
 				aria-hidden="true"
@@ -62,7 +59,6 @@ export default function DashboardPage() {
 				}}
 			/>
 
-			{/* Content */}
 			<div className="relative z-10 flex">
 				<Sidebar isDark={isDark} toggleTheme={toggleTheme} />
 				<div className="flex-1 pt-16">

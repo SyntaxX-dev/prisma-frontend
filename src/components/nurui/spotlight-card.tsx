@@ -8,7 +8,7 @@ interface GlowCardProps {
   size?: "sm" | "md" | "lg";
   width?: string | number;
   height?: string | number;
-  customSize?: boolean; // When true, ignores size prop and uses width/height or className
+  customSize?: boolean;
 }
 
 const glowColorMap = {
@@ -61,10 +61,9 @@ const GlowCard: React.FC<GlowCardProps> = ({
 
   const { base, spread } = glowColorMap[glowColor];
 
-  // Determine sizing
   const getSizeClasses = () => {
     if (customSize) {
-      return ""; // Let className or inline styles handle sizing
+      return "";
     }
     return sizeMap[size];
   };
@@ -100,7 +99,6 @@ const GlowCard: React.FC<GlowCardProps> = ({
       touchAction: "none",
     };
 
-    // Add width and height if provided
     if (width !== undefined) {
       baseStyles.width = typeof width === "number" ? `${width}px` : width;
     }

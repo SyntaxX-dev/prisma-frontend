@@ -36,30 +36,27 @@ export function VerifyCodeScreen() {
         try {
             setIsLoading(true);
 
-            // Pegar email do localStorage
             const email = PasswordResetService.getEmail();
             if (!email) {
                 throw new Error('Email não encontrado. Volte para a tela anterior.');
             }
 
-            // Chamar API para verificar código
             const response = await verifyResetCode({
                 email,
                 code: data.code
             });
 
             if (response.valid) {
-                // Salvar código no localStorage
+
                 PasswordResetService.saveCode(data.code);
 
-                // Se o código for válido, redirecionar para a tela de nova senha
                 router.push('/reset-password/new-password');
             } else {
                 throw new Error('Código inválido');
             }
         } catch (error: unknown) {
             console.error('Erro ao verificar código:', error);
-            // Aqui você pode adicionar um toast ou notificação de erro
+
         } finally {
             setIsLoading(false);
         }

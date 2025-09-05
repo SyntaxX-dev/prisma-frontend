@@ -18,10 +18,16 @@ import {
   registerSchema,
   LoginFormData,
   RegisterFormData
-} from '@/lib/validators/auth';
-import { EducationLevel } from '@/types/education';
+} from '@/lib/validators/auth-forms';
+import { EducationLevel, educationLevelEnToPt } from '@/types/education';
 import { EDUCATION_OPTIONS } from '@/lib/constants';
+import { EducationLevel as ApiEducationLevel } from '@/types/auth-api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { loginUser } from '@/api/auth/login';
+import { registerUser } from '@/api/auth/register';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 
 
@@ -31,6 +37,10 @@ export function AuthScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
+  const router = useRouter();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -52,12 +62,44 @@ export function AuthScreen() {
     },
   });
 
-  const onLoginSubmit = (data: LoginFormData) => {
-    console.log('Login:', data);
+  const onLoginSubmit = async (data: LoginFormData) => {
+    try {
+      setIsLoading(true);
+      const response = await loginUser(data);
+
+      login(response.token, response.user);
+
+      toast.success('Login realizado com sucesso!');
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      toast.error(error.message || 'Erro ao fazer login');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const onRegisterSubmit = (data: RegisterFormData) => {
-    console.log('Register:', data);
+  const onRegisterSubmit = async (data: RegisterFormData) => {
+    try {
+      setIsLoading(true);
+
+      const apiData = {
+        ...data,
+        educationLevel: educationLevelEnToPt[data.educationLevel] as ApiEducationLevel
+      };
+
+      const response = await registerUser(apiData);
+
+      login(response.token, response.user);
+
+      toast.success('Conta criada com sucesso!');
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Erro no registro:', error);
+      toast.error(error.message || 'Erro ao criar conta');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleToggleForm = () => {
@@ -288,7 +330,7 @@ export function AuthScreen() {
                         >
                           <Button
                             type="submit"
-                            disabled={loginForm.formState.isSubmitting}
+                            disabled={isLoading}
                             className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <motion.span
@@ -298,7 +340,7 @@ export function AuthScreen() {
                               }}
                               transition={{ duration: 2, repeat: Infinity }}
                             >
-                              {loginForm.formState.isSubmitting ? 'Entrando...' : 'Entrar'}
+                              {isLoading ? 'Entrando...' : 'Entrar'}
                             </motion.span>
                           </Button>
                         </motion.div>
@@ -451,7 +493,7 @@ export function AuthScreen() {
                         >
                           <Button
                             type="submit"
-                            disabled={registerForm.formState.isSubmitting}
+                            disabled={isLoading}
                             className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <motion.span
@@ -461,7 +503,7 @@ export function AuthScreen() {
                               }}
                               transition={{ duration: 2, repeat: Infinity }}
                             >
-                              {registerForm.formState.isSubmitting ? 'Criando conta...' : 'CRIAR CONTA'}
+                              {isLoading ? 'Criando conta...' : 'CRIAR CONTA'}
                             </motion.span>
                           </Button>
                         </motion.div>

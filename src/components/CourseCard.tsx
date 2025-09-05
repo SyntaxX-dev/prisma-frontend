@@ -32,7 +32,7 @@ export function CourseCard({
   return (
     <Card className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer group">
       <CardHeader className="p-0">
-        {/* Thumbnail */}
+
         <div className="relative aspect-video overflow-hidden rounded-t-lg">
           <div
             className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center"
@@ -45,7 +45,6 @@ export function CourseCard({
             </div>
           </div>
 
-          {/* Badge */}
           <div className="absolute top-3 right-3">
             {isSubscriber && (
               <div className="bg-purple-500/20 backdrop-blur-md border border-purple-400/30 rounded-full px-3 py-1">
@@ -62,18 +61,16 @@ export function CourseCard({
       </CardHeader>
 
       <CardContent className="p-4">
-        {/* Title */}
+
         <h3 className="text-white font-medium text-sm mb-2 line-clamp-2 leading-tight">
           {title}
         </h3>
 
-        {/* Instructor */}
         <div className="flex items-center gap-2 mb-3">
           <User className="w-3 h-3 text-white/60" />
           <span className="text-white/70 text-xs">{instructor}</span>
         </div>
 
-        {/* Course Info */}
         <div className="flex items-center justify-between text-white/60 text-xs">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />

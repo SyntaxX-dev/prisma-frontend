@@ -32,16 +32,15 @@ export function ForgotPasswordScreen() {
     const onSubmit = async (data: RequestPasswordResetFormData) => {
         try {
             setIsLoading(true);
-            // Chamar API para solicitar reset de senha
+
             const response = await requestPasswordReset(data);
 
-            // Salvar email no localStorage
             PasswordResetService.saveEmail(data.email);
 
             setIsSubmitted(true);
         } catch (error: unknown) {
             console.error('Erro ao solicitar reset de senha:', error);
-            // Aqui você pode adicionar um toast ou notificação de erro
+
         } finally {
             setIsLoading(false);
         }

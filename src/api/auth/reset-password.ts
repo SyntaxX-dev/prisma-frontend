@@ -1,13 +1,26 @@
 import { httpClient } from '../http/client';
-import { ResetPasswordDto, ResetPasswordResponse } from '@/types/auth';
-import { ApiError } from '@/types/api';
+import { ResetPasswordDto, ApiResponse } from '../../types/auth-api';
+import { ApiError } from '../http/client';
 
-export async function resetPassword(data: ResetPasswordDto): Promise<ResetPasswordResponse> {
+export async function resetPassword(data: ResetPasswordDto): Promise<ApiResponse> {
   try {
-    const response = await httpClient.post<ResetPasswordResponse>('/auth/reset-password', data);
+
+    if (!data.email && typeof window !== 'undefined') {
+      const storedEmail = localStorage.getItem('reset_email');
+      if (!storedEmail) {
+        throw new Error('Email não encontrado. Por favor, solicite o reset novamente.');
+      }
+      data.email = storedEmail;
+    }
+    
+    const response = await httpClient.post<ApiResponse>('/auth/reset-password', data);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('reset_email');
+    }
+    
     return response;
-  } catch (error: unknown) {
-    const apiError = error as ApiError;
-    throw new Error(apiError.response?.data?.message || 'Erro ao resetar senha');
+  } catch (error) {
+    throw error as ApiError;
   }
-} 
+}

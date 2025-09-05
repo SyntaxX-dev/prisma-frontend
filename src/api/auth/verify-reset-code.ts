@@ -1,13 +1,21 @@
 import { httpClient } from '../http/client';
-import { VerifyResetCodeDto, VerifyResetCodeResponse } from '@/types/auth';
-import { ApiError } from '@/types/api';
+import { VerifyResetCodeDto, ApiResponse } from '../../types/auth-api';
+import { ApiError } from '../http/client';
 
-export async function verifyResetCode(data: VerifyResetCodeDto): Promise<VerifyResetCodeResponse> {
+export async function verifyResetCode(data: VerifyResetCodeDto): Promise<ApiResponse> {
   try {
-    const response = await httpClient.post<VerifyResetCodeResponse>('/auth/verify-reset-code', data);
+
+    if (!data.email && typeof window !== 'undefined') {
+      const storedEmail = localStorage.getItem('reset_email');
+      if (!storedEmail) {
+        throw new Error('Email não encontrado. Por favor, solicite o reset novamente.');
+      }
+      data.email = storedEmail;
+    }
+    
+    const response = await httpClient.post<ApiResponse>('/auth/verify-reset-code', data);
     return response;
-  } catch (error: unknown) {
-    const apiError = error as ApiError;
-    throw new Error(apiError.response?.data?.message || 'Erro ao verificar código');
+  } catch (error) {
+    throw error as ApiError;
   }
-} 
+}
