@@ -1,7 +1,7 @@
-import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, Star, ChevronDown, Volume2, VolumeX, Maximize, Settings } from "lucide-react";
+import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, Star, ChevronDown } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
@@ -24,11 +24,7 @@ interface Module {
   videos: Video[];
 }
 
-interface CourseDetailProps {
-  onVideoChange?: (videoId: string) => void;
-}
-
-export function CourseDetail({ onVideoChange }: CourseDetailProps) {
+export function CourseDetail() {
   const [selectedVideo, setSelectedVideo] = useState<Video>({
     id: "1",
     title: "Introdução ao Node.js e seu ecossistema",
@@ -40,14 +36,13 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
   });
   
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
 
-  useEffect(() => {
-    if (onVideoChange && selectedVideo.youtubeId) {
-      onVideoChange(selectedVideo.youtubeId);
-    }
-  }, [selectedVideo.youtubeId, onVideoChange]);
+  // useEffect para onVideoChange removido, pois o background dinâmico foi removido
+  // useEffect(() => {
+  //   if (onVideoChange && selectedVideo.youtubeId) {
+  //     onVideoChange(selectedVideo.youtubeId);
+  //   }
+  // }, [selectedVideo.youtubeId, onVideoChange]);
 
   const course = {
     title: "Node.js Avançado",
@@ -283,7 +278,6 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
   const handleVideoSelect = (video: Video) => {
     if (!video.locked) {
       setSelectedVideo(video);
-      setIsPlaying(false);
     }
   };
 
@@ -296,7 +290,7 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
               <iframe
                 width="100%"
                 height="100%"
-                src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=${isPlaying ? 1 : 0}&mute=${isMuted ? 1 : 0}&rel=0&modestbranding=1&controls=1`}
+                src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=${false}&mute=${false}&rel=0&modestbranding=1&controls=1`}
                 title={selectedVideo.title}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -316,7 +310,7 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
               <Button
                 size="lg"
                 className="bg-green-500 hover:bg-green-600 rounded-full w-20 h-20 p-0 shadow-2xl hover:shadow-green-500/25 transition-all"
-                onClick={() => setIsPlaying(true)}
+                onClick={() => {}}
               >
                 <Play className="w-10 h-10 text-black ml-1" fill="black" />
               </Button>
@@ -397,16 +391,21 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                  className="text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                 >
                   <Download className="w-5 h-5" />
                 </Button>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                  className="text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                 >
                   <Share2 className="w-5 h-5" />
+                </Button>
+                <Button 
+                  className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer"
+                >
+                  Finalizar Aula <CheckCircle className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </div>
@@ -416,20 +415,20 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
             <TabsList className="bg-white/5 backdrop-blur-sm border-b border-white/10 w-full justify-start h-12 px-1 py-1 rounded-3xl">
               <TabsTrigger 
                 value="overview" 
-                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl"
+                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
               >
                 Visão Geral
               </TabsTrigger>
               <TabsTrigger 
                 value="notes" 
-                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl"
+                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Anotações
               </TabsTrigger>
               <TabsTrigger 
                 value="comments" 
-                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl"
+                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Comentários
@@ -492,7 +491,7 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
                 <FileText className="w-12 h-12 text-white/30 mx-auto mb-3" />
                 <p className="text-white/60 mb-4">Suas anotações aparecerão aqui</p>
-                <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all">
+                <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer">
                   Criar primeira anotação
                 </Button>
               </div>
@@ -507,7 +506,7 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
                     rows={3}
                   />
                   <div className="flex justify-end mt-3">
-                    <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all">
+                    <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer">
                       Comentar
                     </Button>
                   </div>
@@ -540,7 +539,7 @@ export function CourseDetail({ onVideoChange }: CourseDetailProps) {
               <div key={module.id} className="bg-white/5 backdrop-blur-sm rounded-lg overflow-hidden border border-white/10 hover:bg-white/[0.07] transition-colors">
                 <button
                   onClick={() => toggleModule(module.id)}
-                  className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+                  className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-semibold text-green-400 border border-green-500/20">

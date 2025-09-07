@@ -2,8 +2,28 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "./ui/button";
 import { CourseCard } from "./CourseCard";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "./ui/carousel";
+import { useState, useEffect } from "react";
 
-export function LearningDashboard() {
+export function LearningDashboard({ userName }: { userName?: string }) {
+  const [greeting, setGreeting] = useState("");
+
+  useEffect(() => {
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) return "Bom dia";
+      if (hour < 18) return "Boa tarde";
+      return "Boa noite";
+    };
+    setGreeting(getGreeting());
+
+    // Atualiza a saudação a cada hora (opcional, mas bom para garantir a precisão)
+    const intervalId = setInterval(() => {
+      setGreeting(getGreeting());
+    }, 60 * 60 * 1000); // A cada hora
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   const recommendedCourses = [
     {
       title: "Soft Skills",
@@ -203,7 +223,7 @@ export function LearningDashboard() {
     <div className="flex-1 p-6 ml-10 pt-10">
 
       <div className="mb-8">
-        <h1 className="text-white text-2xl font-bold mb-2">Bom dia, Sajibur!</h1>
+        <h1 className="text-white text-2xl font-bold mb-2">{greeting}, {userName || "Usuário"}!</h1>
         <p className="text-white/60 text-sm">Continue aprendendo e desenvolvendo suas habilidades em tecnologia.</p>
       </div>
 

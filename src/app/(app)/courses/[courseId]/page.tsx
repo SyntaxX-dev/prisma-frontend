@@ -62,7 +62,7 @@ export default function CoursePage() {
 
       <div className="relative z-10 flex">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-        <div className="flex-1 pt-16">
+        <div className="flex-1 pt-4">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
           <CourseDetail />
         </div>

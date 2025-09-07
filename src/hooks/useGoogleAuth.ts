@@ -18,6 +18,7 @@ export function useGoogleAuth() {
       const user = {
         id: email,
         name,
+        nome: name, // Adicionado para corresponder à interface UserProfile
         email,
         age: 25,
         educationLevel: 'GRADUACAO' as const,

@@ -8,7 +8,7 @@ import { useAuth } from "../../../hooks/useAuth";
 
 export default function DashboardPage() {
 	const [isDark, setIsDark] = useState(true);
-	const { login } = useAuth();
+	const { login, user } = useAuth();
 
 	const toggleTheme = () => {
 		setIsDark(!isDark);
@@ -25,6 +25,7 @@ export default function DashboardPage() {
 			const user = {
 				id: email,
 				name,
+				nome: name, // Adicionado para corresponder à interface UserProfile
 				email,
 				age: 25,
 				educationLevel: 'GRADUACAO' as const,
@@ -91,7 +92,7 @@ export default function DashboardPage() {
 				<Sidebar isDark={isDark} toggleTheme={toggleTheme} />
 				<div className="flex-1 pt-16">
 					<Navbar isDark={isDark} toggleTheme={toggleTheme} />
-					<LearningDashboard />
+					<LearningDashboard userName={user?.nome} />
 				</div>
 			</div>
 		</div>
