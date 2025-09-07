@@ -25,7 +25,7 @@ export default function DashboardPage() {
 			const user = {
 				id: email,
 				name,
-				nome: name, // Adicionado para corresponder à interface UserProfile
+				nome: name,
 				email,
 				age: 25,
 				educationLevel: 'GRADUACAO' as const,

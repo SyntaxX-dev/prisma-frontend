@@ -26,7 +26,7 @@ export function CourseCard({
   isSubscriber,
   isFree = false,
   iconColor,
-  courseId: propCourseId // Renomeia a prop para evitar conflito
+  courseId: propCourseId
 }: CourseCardProps) {
   const displayCourseId = propCourseId || title.toLowerCase()
     .normalize("NFD")

@@ -16,10 +16,9 @@ export function LearningDashboard({ userName }: { userName?: string }) {
     };
     setGreeting(getGreeting());
 
-    // Atualiza a saudação a cada hora (opcional, mas bom para garantir a precisão)
     const intervalId = setInterval(() => {
       setGreeting(getGreeting());
-    }, 60 * 60 * 1000); // A cada hora
+    }, 60 * 60 * 1000);
 
     return () => clearInterval(intervalId);
   }, []);

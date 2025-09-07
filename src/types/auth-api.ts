@@ -45,7 +45,7 @@ export interface AuthResponse {
 export interface UserProfile {
   id: string;
   name: string;
-  nome: string; // Adicionado para corresponder à resposta do endpoint de login
+  nome: string;
   email: string;
   age: number;
   educationLevel: EducationLevel;
