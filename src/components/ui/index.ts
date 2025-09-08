@@ -1,5 +1,5 @@
 // Re-exports opcionais de componentes base (shadcn) ficarão aqui futuramente
-export {};
+export { Loading } from "./loading";
 
 
 

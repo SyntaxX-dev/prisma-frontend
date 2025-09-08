@@ -28,6 +28,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Loading } from './ui/loading';
 
 
 
@@ -335,17 +336,24 @@ export function AuthScreen() {
                             <Button
                               type="submit"
                               disabled={isLoading}
-                              className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                              <motion.span
-                                initial={false}
-                                animate={{
-                                  textShadow: ['0 0 0px rgba(0,0,0,0)', '0 0 10px rgba(0,0,0,0.3)', '0 0 0px rgba(0,0,0,0)'],
-                                }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                              >
-                                {isLoading ? 'Entrando...' : 'Entrar'}
-                              </motion.span>
+                              {isLoading ? (
+                                <>
+                                  <Loading type="login" size="sm" className="text-black" />
+                                  <span>Entrando...</span>
+                                </>
+                              ) : (
+                                <motion.span
+                                  initial={false}
+                                  animate={{
+                                    textShadow: ['0 0 0px rgba(0,0,0,0)', '0 0 10px rgba(0,0,0,0.3)', '0 0 0px rgba(0,0,0,0)'],
+                                  }}
+                                  transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                  Entrar
+                                </motion.span>
+                              )}
                             </Button>
                           </motion.div>
                         </form>
@@ -529,17 +537,24 @@ export function AuthScreen() {
                           <Button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
-                            <motion.span
-                              initial={false}
-                              animate={{
-                                textShadow: ['0 0 0px rgba(0,0,0,0)', '0 0 10px rgba(0,0,0,0.3)', '0 0 0px rgba(0,0,0,0)'],
-                              }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                            >
-                              {isLoading ? 'Criando conta...' : 'CRIAR CONTA'}
-                            </motion.span>
+                            {isLoading ? (
+                              <>
+                                <Loading type="login" size="sm" className="text-black" />
+                                <span>Criando conta...</span>
+                              </>
+                            ) : (
+                              <motion.span
+                                initial={false}
+                                animate={{
+                                  textShadow: ['0 0 0px rgba(0,0,0,0)', '0 0 10px rgba(0,0,0,0.3)', '0 0 0px rgba(0,0,0,0)'],
+                                }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                              >
+                                CRIAR CONTA
+                              </motion.span>
+                            )}
                           </Button>
                         </motion.div>
                       </form>

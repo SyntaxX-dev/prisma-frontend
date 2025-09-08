@@ -1,9 +1,11 @@
-import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, Star, ChevronDown } from "lucide-react";
+import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, Star, ChevronDown, ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { useRouter } from "next/navigation";
+import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 
 interface Video {
   id: string;
@@ -25,6 +27,8 @@ interface Module {
 }
 
 export function CourseDetail() {
+  const { navigateWithLoading } = useNavigationWithLoading();
+  const router = useRouter();
   const [selectedVideo, setSelectedVideo] = useState<Video>({
     id: "1",
     title: "Introdução ao Node.js e seu ecossistema",
@@ -284,6 +288,20 @@ export function CourseDetail() {
   return (
     <div className="relative flex flex-1 h-[calc(100vh-4rem)] bg-transparent overflow-hidden ml-4">
       <div className="relative z-10 flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent">
+        <div className="p-4 pb-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              navigateWithLoading('', 'Voltando...');
+              router.back();
+            }}
+            className="text-white/70 hover:text-white hover:bg-white/10 transition-all cursor-pointer mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+        </div>
         <div className="relative bg-black aspect-video shadow-2xl rounded-4xl">
           {selectedVideo.youtubeId ? (
             <>

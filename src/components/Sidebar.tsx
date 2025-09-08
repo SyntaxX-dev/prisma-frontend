@@ -1,6 +1,7 @@
 import { ChevronDown, Home, Wallet, ArrowLeftRight, Clock, CreditCard, RotateCcw, FolderOpen, Zap, Settings, HelpCircle, X, PenTool } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   isDark: boolean;
@@ -8,6 +9,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isDark, toggleTheme }: SidebarProps) {
+  const router = useRouter();
   const [collapsedSections, setCollapsedSections] = useState({
     main: false,
     features: false,
@@ -19,6 +21,13 @@ export function Sidebar({ isDark, toggleTheme }: SidebarProps) {
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  const handleNavigation = (item: string) => {
+    if (item === "Dashboard") {
+      router.push('/dashboard');
+    }
+    // Adicionar outras rotas conforme necessário
   };
 
   const mainItems = [
@@ -89,6 +98,7 @@ export function Sidebar({ isDark, toggleTheme }: SidebarProps) {
                   <div key={index} className="relative">
                     <Button
                       variant="ghost"
+                      onClick={() => handleNavigation(item.label)}
                       className={`w-full justify-start text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg px-3 py-2 cursor-pointer ${item.active ? 'bg-[#C9FE02] text-black' : ''
                         }`}
                     >

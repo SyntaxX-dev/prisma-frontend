@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Clock, BarChart, User } from "lucide-react";
-import Link from "next/link";
+import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 
 interface CourseCardProps {
   title: string;
@@ -15,6 +15,8 @@ interface CourseCardProps {
   thumbnailUrl: string;
   iconColor: string;
   courseId?: string;
+  isInCategoryPage?: boolean;
+  category?: string;
 }
 
 export function CourseCard({
@@ -26,16 +28,69 @@ export function CourseCard({
   isSubscriber,
   isFree = false,
   iconColor,
-  courseId: propCourseId
+  courseId: propCourseId,
+  isInCategoryPage = false,
+  category: propCategory
 }: CourseCardProps) {
+  const { navigateWithLoading } = useNavigationWithLoading();
   const displayCourseId = propCourseId || title.toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, '-')
     .replace(/[^\w-]+/g, '');
 
+  const getCategoryFromCourseId = (courseId: string) => {
+    const categoryMap: Record<string, string> = {
+      'nodejs': 'nodejs',
+      'nodejs-avancado': 'nodejs',
+      'nodejs-iniciantes': 'nodejs',
+      'nodejs-apis': 'nodejs',
+      
+      'react-completo': 'react',
+      'react-hooks': 'react',
+      'react-native-expo': 'react',
+      
+      'python-django': 'python',
+      'python-data-science': 'python',
+      
+      'android-kotlin': 'mobile',
+      'ios-swift': 'mobile',
+      
+      'soft-skills': 'soft-skills',
+      'ingles-para-devs': 'soft-skills',
+      
+      'tech-lead': 'leadership',
+      
+      'logica-programacao': 'fundamentals',
+      'dev-global-starter': 'fundamentals',
+      'discover': 'fundamentals',
+      
+      'angular-intro': 'angular',
+      
+      'go-intro': 'go',
+      
+      'csharp-dotnet-intro': 'csharp'
+    };
+    
+    return categoryMap[courseId] || 'fundamentals';
+  };
+
+  const category = propCategory || getCategoryFromCourseId(displayCourseId);
+  
+  const href = isInCategoryPage 
+    ? `/courses/${category}/${displayCourseId}`
+    : `/courses/${category}`;
+
+  const handleClick = () => {
+    const message = isInCategoryPage 
+      ? `Carregando ${title}...`
+      : `Carregando cursos de ${category}...`;
+    
+    navigateWithLoading(href, message);
+  };
+
   return (
-    <Link href={`/courses/${displayCourseId}`} className="block">
+    <button onClick={handleClick} className="block w-full">
       <Card className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer">
         <CardHeader className="p-0">
           <div className="relative aspect-video overflow-hidden rounded-t-lg">
@@ -66,7 +121,7 @@ export function CourseCard({
         </CardHeader>
 
         <CardContent className="p-4">
-          <h3 className="text-white font-medium text-sm mb-2 line-clamp-2 leading-tight group-hover:text-green-400 transition-colors">
+          <h3 className="text-white text-left font-medium text-sm mb-2 line-clamp-2 leading-tight group-hover:text-green-400 transition-colors">
             {title}
           </h3>
 
@@ -87,6 +142,6 @@ export function CourseCard({
           </div>
         </CardContent>
       </Card>
-    </Link>
+    </button>
   );
 }

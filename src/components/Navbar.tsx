@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
 
 interface NavbarProps {
@@ -25,12 +25,26 @@ export function Navbar({ isDark, toggleTheme }: NavbarProps) {
   const navItems = ["Dashboard", "Cursos", "Trilhas", "Certificados", "Minha Conta", "Suporte"];
   const [searchExpanded, setSearchExpanded] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout } = useAuth();
 
 
   const handleLogout = () => {
     logout();
     router.push('/auth/login');
+  };
+
+  const handleNavClick = (item: string) => {
+    if (item === "Dashboard") {
+      router.push('/dashboard');
+    }
+  };
+
+  const isActive = (item: string) => {
+    if (item === "Dashboard") {
+      return pathname === '/dashboard';
+    }
+    return false;
   };
 
   return (
@@ -42,7 +56,12 @@ export function Navbar({ isDark, toggleTheme }: NavbarProps) {
             {navItems.map((item) => (
               <button
                 key={item}
-                className="text-white/80 hover:text-[#B3E240] transition-colors cursor-pointer"
+                onClick={() => handleNavClick(item)}
+                className={`transition-colors cursor-pointer ${
+                  isActive(item) 
+                    ? 'text-[#B3E240]' 
+                    : 'text-white/80 hover:text-[#B3E240]'
+                }`}
               >
                 {item}
               </button>
