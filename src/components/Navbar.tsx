@@ -11,22 +11,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./ui/popover";
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
+import { useStreak } from "../hooks/useStreak";
+import { StreakIcon } from "./StreakIcon";
+import { StreakCalendar } from "./StreakCalendar";
 
 interface NavbarProps {
-  isDark: boolean;
-  toggleTheme: () => void;
+  isDark?: boolean;
+  toggleTheme?: () => void;
 }
 
-export function Navbar({ isDark, toggleTheme }: NavbarProps) {
+export function Navbar({ }: NavbarProps) {
 
   const navItems = ["Dashboard", "Cursos", "Trilhas", "Certificados", "Minha Conta", "Suporte"];
   const [searchExpanded, setSearchExpanded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { streakData, isStreakActive } = useStreak();
 
 
   const handleLogout = () => {
@@ -68,6 +77,29 @@ export function Navbar({ isDark, toggleTheme }: NavbarProps) {
             ))}
           </nav>
         </div>
+
+        {/* Sistema de Ofensiva */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-3 border border-white/20 cursor-pointer hover:bg-white/25 transition-all duration-200 ease-out group">
+              <StreakIcon 
+                count={streakData.currentStreak} 
+                isActive={isStreakActive}
+                className="text-white"
+              />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent 
+            className="w-96 p-0 border-0 bg-transparent"
+            side="bottom"
+            align="end"
+            sideOffset={8}
+          >
+            <div className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-300 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-top-1">
+              <StreakCalendar streakData={streakData} />
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-3 border border-white/20">
           <div className="flex items-center gap-3">

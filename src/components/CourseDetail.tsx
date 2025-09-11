@@ -1,7 +1,7 @@
 import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, Star, ChevronDown, ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useRouter } from "next/navigation";
@@ -26,7 +26,12 @@ interface Module {
   videos: Video[];
 }
 
-export function CourseDetail() {
+interface CourseDetailProps {
+  onVideoPlayingChange?: (isPlaying: boolean) => void;
+  isVideoPlaying?: boolean;
+}
+
+export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: CourseDetailProps) {
   const { navigateWithLoading } = useNavigationWithLoading();
   const router = useRouter();
   const [selectedVideo, setSelectedVideo] = useState<Video>({
@@ -40,13 +45,14 @@ export function CourseDetail() {
   });
   
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
+  const [localVideoPlaying, setLocalVideoPlaying] = useState(false);
 
-  // useEffect para onVideoChange removido, pois o background dinâmico foi removido
-  // useEffect(() => {
-  //   if (onVideoChange && selectedVideo.youtubeId) {
-  //     onVideoChange(selectedVideo.youtubeId);
-  //   }
-  // }, [selectedVideo.youtubeId, onVideoChange]);
+  // Notifica o componente pai quando o estado do vídeo muda
+  useEffect(() => {
+    if (onVideoPlayingChange) {
+      onVideoPlayingChange(localVideoPlaying);
+    }
+  }, [localVideoPlaying, onVideoPlayingChange]);
 
   const course = {
     title: "Node.js Avançado",
@@ -286,9 +292,9 @@ export function CourseDetail() {
   };
 
   return (
-    <div className="relative flex flex-1 h-[calc(100vh-4rem)] bg-transparent overflow-hidden ml-4">
+    <div className={`relative flex flex-1 h-[calc(100vh-4rem)] bg-transparent overflow-hidden transition-all duration-300 ease-in-out ${isVideoPlaying ? 'ml-0 right-16' : 'ml-4 right-0'}`}>
       <div className="relative z-10 flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent">
-        <div className="p-4 pb-0">
+        <div className={`pb-0 transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-1' : 'p-4'}`}>
           <Button
             variant="ghost"
             size="sm"
@@ -315,6 +321,36 @@ export function CourseDetail() {
                 allowFullScreen
                 className="absolute inset-0 w-full h-full rounded-3xl"
               />
+              
+              {/* Botão de play customizado que aparece quando o vídeo não está tocando */}
+              {!isVideoPlaying && (
+                <div 
+                  className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-3xl cursor-pointer z-10 hover:bg-black/30 transition-all duration-300"
+                  onClick={() => {
+                    setLocalVideoPlaying(true);
+                  }}
+                >
+                  <div className="bg-green-500 hover:bg-green-600 rounded-full w-20 h-20 flex items-center justify-center shadow-2xl hover:shadow-green-500/25 transition-all">
+                    <Play className="w-10 h-10 text-black ml-1" fill="black" />
+                  </div>
+                </div>
+              )}
+
+              {/* Botão de pause que aparece quando o vídeo está tocando */}
+              {isVideoPlaying && (
+                <div 
+                  className="absolute top-4 right-4 z-20"
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm border border-white/20"
+                    onClick={() => setLocalVideoPlaying(false)}
+                  >
+                    Pausar
+                  </Button>
+                </div>
+              )}
               
               <div 
                 className="absolute -inset-1 opacity-0 group-hover:opacity-30 blur-xl pointer-events-none transition-opacity duration-500"
@@ -377,7 +413,7 @@ export function CourseDetail() {
           </div> */}
         </div>
 
-        <div className="p-6 lg:p-8">
+        <div className={`transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-2 lg:p-4' : 'p-6 lg:p-8'}`}>
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-white mb-4">{selectedVideo.title}</h1>
             
@@ -536,7 +572,7 @@ export function CourseDetail() {
         </div>
       </div>
 
-      <div className="relative z-10 w-96 bg-transparent backdrop-blur-md border-l border-white/10 flex flex-col">
+      <div className={`relative z-10 bg-transparent backdrop-blur-md border-l border-white/10 flex flex-col transition-all duration-300 ease-in-out ${isVideoPlaying ? 'w-96' : 'w-96'}`}>
         <div className="p-4 border-b border-white/10">
           <h2 className="text-white font-semibold mb-2">Conteúdo</h2>
           <div className="flex items-center justify-between text-sm">
