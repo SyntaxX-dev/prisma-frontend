@@ -78,31 +78,9 @@ export function Navbar({ }: NavbarProps) {
           </nav>
         </div>
 
-        {/* Sistema de Ofensiva */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-3 border border-white/20 cursor-pointer hover:bg-white/25 transition-all duration-200 ease-out group">
-              <StreakIcon 
-                count={streakData.currentStreak} 
-                isActive={isStreakActive}
-                className="text-white"
-              />
-            </div>
-          </PopoverTrigger>
-          <PopoverContent 
-            className="w-96 p-0 border-0 bg-transparent"
-            side="bottom"
-            align="end"
-            sideOffset={8}
-          >
-            <div className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-300 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-top-1">
-              <StreakCalendar streakData={streakData} />
-            </div>
-          </PopoverContent>
-        </Popover>
-
         <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-3 border border-white/20">
           <div className="flex items-center gap-3">
+            {/* Sistema de Ofensiva */}
             <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded ? 'w-56' : 'w-8'
               }`}>
               {searchExpanded ? (
@@ -133,12 +111,33 @@ export function Navbar({ }: NavbarProps) {
                 </Button>
               )}
             </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="cursor-pointer hover:bg-white/10 rounded-full w-12 h-8 flex items-center justify-center transition-all duration-200 ease-out group">
+                  <StreakIcon 
+                    count={streakData.currentStreak} 
+                    isActive={isStreakActive}
+                    className="text-white"
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-96 p-0 border-0 bg-transparent"
+                side="bottom"
+                align="end"
+                sideOffset={8}
+              >
+                <div className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-300 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-top-1 mt-4">
+                  <StreakCalendar streakData={streakData} />
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               size="sm"
               className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 relative cursor-pointer"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-6 h-6" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#B3E240] rounded-full"></span>
             </Button>
             <Button

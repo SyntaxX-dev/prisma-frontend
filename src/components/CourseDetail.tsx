@@ -46,13 +46,19 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
   
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
   const [localVideoPlaying, setLocalVideoPlaying] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
 
-  // Notifica o componente pai quando o estado do vídeo muda
   useEffect(() => {
     if (onVideoPlayingChange) {
       onVideoPlayingChange(localVideoPlaying);
     }
   }, [localVideoPlaying, onVideoPlayingChange]);
+
+  useEffect(() => {
+    if (localVideoPlaying) {
+      setIframeKey(prev => prev + 1);
+    }
+  }, [localVideoPlaying]);
 
   const course = {
     title: "Node.js Avançado",
@@ -288,6 +294,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
   const handleVideoSelect = (video: Video) => {
     if (!video.locked) {
       setSelectedVideo(video);
+      setLocalVideoPlaying(false);
     }
   };
 
@@ -312,18 +319,20 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
           {selectedVideo.youtubeId ? (
             <>
               <iframe
+                key={iframeKey}
                 width="100%"
                 height="100%"
-                src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=${false}&mute=${false}&rel=0&modestbranding=1&controls=1`}
+                src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=${localVideoPlaying ? 1 : 0}&mute=${false}&rel=0&modestbranding=1&controls=1&enablejsapi=1`}
                 title={selectedVideo.title}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="absolute inset-0 w-full h-full rounded-3xl"
+                id={`youtube-player-${selectedVideo.id}`}
               />
               
               {/* Botão de play customizado que aparece quando o vídeo não está tocando */}
-              {!isVideoPlaying && (
+              {!localVideoPlaying && (
                 <div 
                   className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-3xl cursor-pointer z-10 hover:bg-black/30 transition-all duration-300"
                   onClick={() => {
@@ -337,7 +346,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
               )}
 
               {/* Botão de pause que aparece quando o vídeo está tocando */}
-              {isVideoPlaying && (
+              {localVideoPlaying && (
                 <div 
                   className="absolute top-4 right-4 z-20"
                 >

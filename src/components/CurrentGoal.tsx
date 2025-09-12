@@ -8,7 +8,7 @@ interface CurrentGoalProps {
 
 export function CurrentGoal({ current, target }: CurrentGoalProps) {
   const percentage = Math.min((current / target) * 100, 100);
-  const circumference = 2 * Math.PI * 40; // raio 40
+  const circumference = 2 * Math.PI * 40;
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 

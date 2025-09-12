@@ -15,20 +15,17 @@ export function useStreak() {
     isActive: false
   });
 
-  // Mock data - em produção viria de uma API
   useEffect(() => {
-    // Simula dados mockados baseados no sistema de ofensiva
     const mockData: StreakData = {
-      currentStreak: 0, // Usuário não tem ofensiva ativa
-      bestStreak: 13, // Melhor ofensiva foi de 13 dias
-      lastStudyDate: null, // Não estudou recentemente
-      isActive: false // Ofensiva inativa
+      currentStreak: 0,
+      bestStreak: 13,
+      lastStudyDate: null,
+      isActive: false
     };
 
     setStreakData(mockData);
   }, []);
 
-  // Função para verificar se a ofensiva está ativa
   const checkStreakStatus = () => {
     const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -37,21 +34,17 @@ export function useStreak() {
       return false;
     }
 
-    // Se estudou hoje, ofensiva ativa
     if (streakData.lastStudyDate === today) {
       return true;
     }
 
-    // Se estudou ontem, ofensiva ainda ativa
     if (streakData.lastStudyDate === yesterday) {
       return true;
     }
 
-    // Se não estudou nos últimos 2 dias, ofensiva quebrada
     return false;
   };
 
-  // Função para adicionar um dia de estudo
   const addStudyDay = () => {
     const today = new Date().toISOString().split('T')[0];
     
@@ -72,7 +65,6 @@ export function useStreak() {
     });
   };
 
-  // Função para quebrar a ofensiva
   const breakStreak = () => {
     setStreakData(prev => ({
       ...prev,

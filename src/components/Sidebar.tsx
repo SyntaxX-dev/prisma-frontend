@@ -1,6 +1,6 @@
 import { ChevronDown, Home, Wallet, ArrowLeftRight, Clock, CreditCard, RotateCcw, FolderOpen, Zap, Settings, HelpCircle, PenTool } from "lucide-react";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface SidebarProps {
@@ -17,9 +17,21 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     tools: false
   });
   const [isHovered, setIsHovered] = useState(false);
+  const [showText, setShowText] = useState(false);
 
-  // A sidebar está expandida quando não está tocando vídeo OU quando está sendo hovered
   const isExpanded = !isVideoPlaying || isHovered;
+
+  useEffect(() => {
+    if (isExpanded) {
+      const timer = setTimeout(() => {
+        setShowText(true);
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setShowText(false);
+    }
+  }, [isExpanded]);
 
   const toggleSection = (section: keyof typeof collapsedSections) => {
     setCollapsedSections(prev => ({
@@ -32,7 +44,6 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     if (item === "Dashboard") {
       router.push('/dashboard');
     }
-    // Adicionar outras rotas conforme necessário
   };
 
   const mainItems = [
@@ -92,9 +103,11 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             {isExpanded && (
               <button
                 onClick={() => toggleSection('main')}
-                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer"
+                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
-                <span>MAIN</span>
+                <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                  MAIN
+                </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ease-in-out ${collapsedSections.main ? 'rotate-180' : ''}`} />
               </button>
             )}
@@ -127,9 +140,11 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             {isExpanded && (
               <button
                 onClick={() => toggleSection('features')}
-                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer"
+                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
-                <span>FEATURES</span>
+                <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                  FEATURES
+                </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ease-in-out ${collapsedSections.features ? 'rotate-180' : ''}`} />
               </button>
             )}
@@ -161,9 +176,11 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             {isExpanded && (
               <button
                 onClick={() => toggleSection('tools')}
-                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer"
+                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
-                <span>TOOLS</span>
+                <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                  TOOLS
+                </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ease-in-out ${collapsedSections.tools ? 'rotate-180' : ''}`} />
               </button>
             )}
@@ -195,7 +212,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
         {isExpanded && (
           <div className="p-4 border-t border-white/20">
             <div
-              className="rounded-2xl p-6 relative w-full"
+              className="rounded-2xl p-6 relative w-full overflow-hidden"
               style={{
                 background: 'rgba(201, 254, 2, 0.2)',
                 borderRadius: '16px',
@@ -205,12 +222,12 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                 border: '1px solid rgba(201, 254, 2, 0.3)'
               }}
             >
-              <div className="flex items-center gap-3 mb-2">
+              <div className={`flex items-center gap-3 mb-2 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                 <PenTool className="w-5 h-5 text-[#C9FE02]" />
                 <span className="text-[#C9FE02] font-bold text-sm">Upgrade Pro!</span>
               </div>
 
-              <p className="text-[#C9FE02] text-xs leading-relaxed">
+              <p className={`text-[#C9FE02] text-xs leading-relaxed transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                 Upgrade to Pro and elevate your experience today
               </p>
             </div>

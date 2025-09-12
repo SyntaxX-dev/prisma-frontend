@@ -87,7 +87,7 @@ export function HorizontalCarousel({ courses, itemWidth = 280 }: HorizontalCarou
         <div 
           className="flex gap-4 pb-4"
           style={{ 
-            width: `${courses.length * (itemWidth + 16)}px` // 16px for gap
+            width: `${courses.length * (itemWidth + 16)}px`
           }}
         >
           {courses.map((course, index) => (

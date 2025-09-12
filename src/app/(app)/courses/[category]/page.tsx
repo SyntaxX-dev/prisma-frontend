@@ -37,7 +37,6 @@ export default function CourseCategoryPage() {
     router.back();
   };
 
-  // Desliga o loading quando a página carrega
   usePageLoadComplete();
 
   const toggleTheme = () => {

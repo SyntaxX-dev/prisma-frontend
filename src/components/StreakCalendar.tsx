@@ -31,12 +31,10 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
 
     const days = [];
     
-    // Adicionar dias vazios do mês anterior
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
 
-    // Adicionar dias do mês atual
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day);
     }
@@ -50,8 +48,6 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
     const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     const dateString = checkDate.toISOString().split('T')[0];
     
-    // Mock: simula dias com ofensiva baseado no padrão da imagem
-    // Dias 5 e 20 têm foguinho como na imagem
     const mockStreakDays = [5, 20];
     return mockStreakDays.includes(day);
   };
@@ -92,7 +88,6 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
         </div>
       </div>
 
-      {/* Cabeçalho dos dias da semana */}
       <div className="grid grid-cols-7 gap-1 mb-2 animate-in fade-in-0 slide-in-from-top-1 duration-300 delay-75">
         {daysOfWeek.map((day, index) => (
           <div key={index} className="text-center text-white/60 text-sm font-medium py-2">
@@ -101,7 +96,6 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
         ))}
       </div>
 
-      {/* Grid do calendário */}
       <div className="grid grid-cols-7 gap-1 animate-in fade-in-0 slide-in-from-top-1 duration-300 delay-150">
         {days.map((day, index) => (
           <div key={index} className="aspect-square flex items-center justify-center relative">
@@ -110,7 +104,7 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
                 <span className="text-white/80 text-sm font-medium">{day}</span>
                 {hasStreakOnDay(day) && (
                   <div className="absolute -top-1 -right-1">
-                    <Flame className="w-3 h-3 text-orange-500 drop-shadow-sm" />
+                    <Flame className="w-5 h-5 text-orange-500 drop-shadow-sm" />
                   </div>
                 )}
               </div>
@@ -121,7 +115,6 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
         ))}
       </div>
 
-      {/* Estatísticas */}
       <div className="mt-6 pt-4 border-t border-white/20 animate-in fade-in-0 slide-in-from-top-1 duration-300 delay-300">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
