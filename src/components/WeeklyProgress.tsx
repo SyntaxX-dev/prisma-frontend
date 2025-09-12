@@ -52,7 +52,6 @@ export function WeeklyProgress() {
         </div>
       </div>
 
-      {/* Barras de progresso semanal */}
       <div className="space-y-4">
         {weeks.map((week, index) => (
           <div key={week.id} className="space-y-2">

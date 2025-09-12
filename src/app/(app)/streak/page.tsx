@@ -75,26 +75,21 @@ export default function StreakPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Calendário de Ofensiva */}
               <div>
                 <StreakCalendar streakData={streakData} />
               </div>
 
-              {/* Progresso Semanal */}
               <div>
                 <WeeklyProgress />
               </div>
 
-              {/* Meta Atual */}
               <div>
                 <CurrentGoal current={streakData.currentStreak} target={5} />
               </div>
             </div>
 
-            {/* Controles e Estatísticas */}
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
-                {/* Status da Ofensiva */}
                 <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
                   <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
                     <Target className="w-5 h-5 text-orange-500" />
@@ -121,7 +116,6 @@ export default function StreakPage() {
                   </div>
                 </div>
 
-                {/* Controles de Teste */}
                 <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
                   <h3 className="text-white font-semibold text-lg mb-4">Controles de Teste</h3>
                   
@@ -143,7 +137,6 @@ export default function StreakPage() {
                   </div>
                 </div>
 
-                {/* Meta Atual */}
                 <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
                   <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-green-500" />
@@ -185,7 +178,6 @@ export default function StreakPage() {
                 </div>
               </div>
 
-              {/* Contador de Tempo */}
               <div className="space-y-6">
                 <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
                   <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">

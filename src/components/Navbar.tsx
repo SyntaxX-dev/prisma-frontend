@@ -80,7 +80,6 @@ export function Navbar({ }: NavbarProps) {
 
         <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-3 border border-white/20">
           <div className="flex items-center gap-3">
-            {/* Sistema de Ofensiva */}
             <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded ? 'w-56' : 'w-8'
               }`}>
               {searchExpanded ? (

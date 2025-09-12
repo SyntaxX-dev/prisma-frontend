@@ -28,7 +28,6 @@ export function CurrentGoal({ current, target }: CurrentGoalProps) {
       <div className="flex flex-col items-center">
         <div className="relative w-32 h-32 mb-4">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-            {/* Círculo de fundo */}
             <circle
               cx="50"
               cy="50"
@@ -37,7 +36,6 @@ export function CurrentGoal({ current, target }: CurrentGoalProps) {
               strokeWidth="8"
               fill="none"
             />
-            {/* Círculo de progresso */}
             <circle
               cx="50"
               cy="50"
@@ -52,7 +50,6 @@ export function CurrentGoal({ current, target }: CurrentGoalProps) {
             />
           </svg>
           
-          {/* Conteúdo central */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="text-2xl font-bold text-white">

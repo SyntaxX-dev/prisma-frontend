@@ -331,21 +331,19 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                 id={`youtube-player-${selectedVideo.id}`}
               />
               
-              {/* Botão de play customizado que aparece quando o vídeo não está tocando */}
               {!localVideoPlaying && (
                 <div 
-                  className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-3xl cursor-pointer z-10 hover:bg-black/30 transition-all duration-300"
+                  className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-3xl cursor-pointer z-10 hover:bg-black/30 transition-all duration-300"
                   onClick={() => {
                     setLocalVideoPlaying(true);
                   }}
                 >
-                  <div className="bg-green-500 hover:bg-green-600 rounded-full w-20 h-20 flex items-center justify-center shadow-2xl hover:shadow-green-500/25 transition-all">
+                  <div className="bg-green-500 hover:bg-green-600 rounded-full w-24 h-24 flex items-center justify-center shadow-2xl hover:shadow-green-500/25 transition-all">
                     <Play className="w-10 h-10 text-black ml-1" fill="black" />
                   </div>
                 </div>
               )}
 
-              {/* Botão de pause que aparece quando o vídeo está tocando */}
               {localVideoPlaying && (
                 <div 
                   className="absolute top-4 right-4 z-20"
@@ -380,7 +378,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
             </div>
           )}
           
-          {/* Video Controls Overlay (opcional - aparece no hover) */}
           {/* <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 opacity-0 hover:opacity-100 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
