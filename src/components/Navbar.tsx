@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, HelpCircle, X, LogOut, User, Settings } from "lucide-react";
+import { Search, Bell, HelpCircle, X, LogOut, User, Settings, AlertCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -22,20 +22,27 @@ import { useAuth } from "../hooks/useAuth";
 import { useStreak } from "../hooks/useStreak";
 import { StreakIcon } from "./StreakIcon";
 import { StreakCalendar } from "./StreakCalendar";
+import { ProfileCompletionModal } from "./ProfileCompletionModal";
 
 interface NavbarProps {
   isDark?: boolean;
   toggleTheme?: () => void;
 }
 
-export function Navbar({ }: NavbarProps) {
+export function Navbar({}: NavbarProps) {
 
   const navItems = ["Dashboard", "Cursos", "Trilhas", "Certificados", "Minha Conta", "Suporte"];
   const [searchExpanded, setSearchExpanded] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { streakData, isStreakActive } = useStreak();
+
+  // Verificar se há notificações
+  const hasNotification = user?.notification?.hasNotification || false;
+  const notificationData = user?.notification;
 
 
   const handleLogout = () => {
@@ -66,11 +73,10 @@ export function Navbar({ }: NavbarProps) {
               <button
                 key={item}
                 onClick={() => handleNavClick(item)}
-                className={`transition-colors cursor-pointer ${
-                  isActive(item) 
-                    ? 'text-[#B3E240]' 
-                    : 'text-white/80 hover:text-[#B3E240]'
-                }`}
+                className={`transition-colors cursor-pointer ${isActive(item)
+                  ? 'text-[#B3E240]'
+                  : 'text-white/80 hover:text-[#B3E240]'
+                  }`}
               >
                 {item}
               </button>
@@ -113,14 +119,14 @@ export function Navbar({ }: NavbarProps) {
             <Popover>
               <PopoverTrigger asChild>
                 <div className="cursor-pointer hover:bg-white/10 rounded-full w-12 h-8 flex items-center justify-center transition-all duration-200 ease-out group">
-                  <StreakIcon 
-                    count={streakData.currentStreak} 
+                  <StreakIcon
+                    count={streakData.currentStreak}
                     isActive={isStreakActive}
                     className="text-white"
                   />
                 </div>
               </PopoverTrigger>
-              <PopoverContent 
+              <PopoverContent
                 className="w-96 p-0 border-0 bg-transparent"
                 side="bottom"
                 align="end"
@@ -131,14 +137,76 @@ export function Navbar({ }: NavbarProps) {
                 </div>
               </PopoverContent>
             </Popover>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 relative cursor-pointer"
-            >
-              <Bell className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#B3E240] rounded-full"></span>
-            </Button>
+            <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 relative cursor-pointer transition-all duration-300"
+                >
+                  <Bell className="w-6 h-6 transition-all duration-300" />
+                  {hasNotification && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full animate-ping"></span>
+                  )}
+                  {hasNotification && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full"></span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-80 p-0 border-0 bg-transparent"
+                side="bottom"
+                align="end"
+                sideOffset={8}
+              >
+                <div className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-300 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-top-1 mt-4">
+                  {hasNotification ? (
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertCircle className="w-5 h-5 text-yellow-400" />
+                        <h3 className="font-semibold text-white">Notificação</h3>
+                      </div>
+                      <div className="space-y-3">
+                        <p className="text-white/80 text-sm">
+                          {notificationData?.message}
+                        </p>
+                        {notificationData?.missingFields && notificationData.missingFields.length > 0 && (
+                          <div>
+                            <p className="text-white/60 text-xs mb-2">Campos pendentes:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {notificationData.missingFields.map((field: string, index: number) => (
+                                <span
+                                  key={index}
+                                  className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs border border-yellow-500/30"
+                                >
+                                  {field}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="pt-2 border-t border-white/20">
+                          <Button
+                            onClick={() => {
+                              setNotificationOpen(false);
+                              setProfileModalOpen(true);
+                            }}
+                            className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black text-sm"
+                          >
+                            Completar Perfil
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center">
+                      <Bell className="w-8 h-8 text-white/40 mx-auto mb-2" />
+                      <p className="text-white/60 text-sm">Nenhuma notificação</p>
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               size="sm"
@@ -214,6 +282,15 @@ export function Navbar({ }: NavbarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Modal de completar perfil */}
+      {notificationData && (
+        <ProfileCompletionModal
+          isOpen={profileModalOpen}
+          onClose={() => setProfileModalOpen(false)}
+          notificationData={notificationData}
+        />
+      )}
     </div>
   );
 }
