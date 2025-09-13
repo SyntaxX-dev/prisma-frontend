@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './useAuth';
 import { getProfile } from '@/api/auth/get-profile';
@@ -6,8 +6,11 @@ import { getProfile } from '@/api/auth/get-profile';
 export function useGoogleAuth() {
   const router = useRouter();
   const { login } = useAuth();
+  const hasProcessedCallback = useRef(false);
 
   useEffect(() => {
+    if (hasProcessedCallback.current) return;
+
     const handleGoogleCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
@@ -15,24 +18,18 @@ export function useGoogleAuth() {
       const email = urlParams.get('email');
 
       if (token && name && email) {
+        hasProcessedCallback.current = true;
+        
         try {
-          // Primeiro salvar o token no localStorage
           localStorage.setItem('auth_token', token);
-          
-          // Depois chamar o endpoint auth/profile
+          console.log('🔍 Google OAuth: Chamando auth/profile...');
           const userProfile = await getProfile();
-
-          // Por último, atualizar o estado do useAuth
+          console.log('✅ Google OAuth: Profile recebido:', userProfile);
           login(token, userProfile, true);
 
           window.history.replaceState({}, document.title, '/dashboard');
-
           router.push('/dashboard');
-
-          console.log('Usuário logado via Google:', { name, email });
-        } catch (error) {
-          console.error('Erro ao obter perfil do usuário:', error);
-          // Fallback para dados básicos se o profile falhar
+        } catch {
           const user = {
             id: email,
             name,
