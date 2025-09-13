@@ -24,6 +24,7 @@ import { EducationLevel as ApiEducationLevel } from '@/types/auth-api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { loginUser } from '@/api/auth/login';
 import { registerUser } from '@/api/auth/register';
+import { getProfile } from '@/api/auth/get-profile';
 import { useAuth } from '@/hooks/useAuth';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { useRouter } from 'next/navigation';
@@ -69,7 +70,9 @@ export function AuthScreen() {
       setIsLoading(true);
       const response = await loginUser(data);
 
-      login(response.token, response.user, rememberMe);
+      const userProfile = await getProfile();
+
+      login(response.token, userProfile, rememberMe);
 
       toast.success('Login realizado com sucesso!');
       router.push('/dashboard');
@@ -93,7 +96,10 @@ export function AuthScreen() {
 
       const response = await registerUser(apiData);
 
-      login(response.token, response.user, false); // Registro sempre false para lembrar
+      // Chamar o endpoint auth/profile após o registro
+      const userProfile = await getProfile();
+
+      login(response.token, userProfile, false); // Registro sempre false para lembrar
 
       toast.success('Conta criada com sucesso!');
       router.push('/dashboard');
