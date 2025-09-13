@@ -3,6 +3,9 @@ import { AuthState, getAuthState, clearAuthState } from '../lib/auth';
 import { UserProfile } from '../types/auth-api';
 import { getProfile } from '../api/auth/get-profile';
 
+// Estado global para controlar se já foi carregado
+let globalAuthLoaded = false;
+
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({ 
     isAuthenticated: false, 
@@ -12,29 +15,30 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (globalAuthLoaded) {
+      setIsLoading(false);
+      return;
+    }
+    
     const loadAuthState = async () => {
       try {
         const state = getAuthState();
         
         if (state.isAuthenticated && state.token) {
-          // Se há um token válido, buscar dados atualizados do perfil
           try {
             const userProfile = await getProfile();
             setAuthState({ ...state, user: userProfile });
-            console.log('Perfil atualizado do servidor:', userProfile);
-          } catch (error) {
-            console.error('Erro ao buscar perfil do servidor:', error);
-            // Se falhar, usar dados do localStorage
+          } catch {
             setAuthState(state);
           }
         } else {
           setAuthState(state);
         }
-      } catch (error) {
-        console.error('Erro ao carregar estado de autenticação:', error);
+      } catch {
         setAuthState({ isAuthenticated: false, user: null, token: null });
       } finally {
         setIsLoading(false);
+        globalAuthLoaded = true;
       }
     };
 
@@ -62,6 +66,7 @@ export function useAuth() {
     localStorage.removeItem('remember_me');
     localStorage.removeItem('auth_expires');
     setAuthState({ isAuthenticated: false, user: null, token: null });
+    globalAuthLoaded = false; // Reset para permitir novo carregamento
   };
 
   const updateUser = (user: UserProfile) => {

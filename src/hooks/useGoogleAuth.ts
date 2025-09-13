@@ -16,9 +16,13 @@ export function useGoogleAuth() {
 
       if (token && name && email) {
         try {
-          // Chamar o endpoint auth/profile após o login OAuth
+          // Primeiro salvar o token no localStorage
+          localStorage.setItem('auth_token', token);
+          
+          // Depois chamar o endpoint auth/profile
           const userProfile = await getProfile();
 
+          // Por último, atualizar o estado do useAuth
           login(token, userProfile, true);
 
           window.history.replaceState({}, document.title, '/dashboard');

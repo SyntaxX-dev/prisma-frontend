@@ -70,14 +70,18 @@ export function AuthScreen() {
       setIsLoading(true);
       const response = await loginUser(data);
 
-      const userProfile = await getProfile();
+      const token = response.token || (response as { accessToken?: string }).accessToken;
+      if (!token) {
+        throw new Error('Token não recebido do servidor');
+      }
 
-      login(response.token, userProfile, rememberMe);
+      localStorage.setItem('auth_token', token);
+      const userProfile = await getProfile();
+      login(token, userProfile, rememberMe);
 
       toast.success('Login realizado com sucesso!');
       router.push('/dashboard');
     } catch (error: unknown) {
-      console.error('Erro no login:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer login';
       toast.error(errorMessage);
     } finally {
@@ -96,10 +100,20 @@ export function AuthScreen() {
 
       const response = await registerUser(apiData);
 
-      // Chamar o endpoint auth/profile após o registro
+      // Verificar se o token existe (pode ser 'token' ou 'accessToken')
+      const token = response.token || (response as { accessToken?: string }).accessToken;
+      if (!token) {
+        throw new Error('Token não recebido do servidor');
+      }
+
+      // Primeiro salvar o token no localStorage
+      localStorage.setItem('auth_token', token);
+
+      // Depois chamar o endpoint auth/profile
       const userProfile = await getProfile();
 
-      login(response.token, userProfile, false); // Registro sempre false para lembrar
+      // Por último, atualizar o estado do useAuth
+      login(token, userProfile, false); // Registro sempre false para lembrar
 
       toast.success('Conta criada com sucesso!');
       router.push('/dashboard');
