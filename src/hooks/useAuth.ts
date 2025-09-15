@@ -3,8 +3,7 @@ import { AuthState, getAuthState, clearAuthState } from '../lib/auth';
 import { UserProfile } from '../types/auth-api';
 import { getProfile } from '../api/auth/get-profile';
 
-// Estado global para controlar se já foi carregado
-let globalAuthLoaded = false;
+// Hook de autenticação
 
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({ 
@@ -15,11 +14,6 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (globalAuthLoaded) {
-      setIsLoading(false);
-      return;
-    }
-    
     const loadAuthState = async () => {
       try {
         const state = getAuthState();
@@ -38,7 +32,6 @@ export function useAuth() {
         setAuthState({ isAuthenticated: false, user: null, token: null });
       } finally {
         setIsLoading(false);
-        globalAuthLoaded = true;
       }
     };
 
@@ -66,7 +59,6 @@ export function useAuth() {
     localStorage.removeItem('remember_me');
     localStorage.removeItem('auth_expires');
     setAuthState({ isAuthenticated: false, user: null, token: null });
-    globalAuthLoaded = false; // Reset para permitir novo carregamento
   };
 
   const updateUser = (user: UserProfile) => {

@@ -1,7 +1,5 @@
-export default function ProfilePage() {
-	return (
-		<h1 className="text-2xl font-semibold">Perfil</h1>
-	);
+import { ProfilePage } from '@/components/ProfilePage';
+
+export default function Profile() {
+  return <ProfilePage />;
 }
-
-
