@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AuthState, getAuthState, clearAuthState } from '../lib/auth';
 import { UserProfile } from '../types/auth-api';
 import { getProfile } from '../api/auth/get-profile';
+import { useNotifications } from './useNotifications';
 
 // Hook de autenticação
 
@@ -12,6 +13,7 @@ export function useAuth() {
     token: null 
   });
   const [isLoading, setIsLoading] = useState(true);
+  const { showSuccess, showError } = useNotifications();
 
   useEffect(() => {
     const loadAuthState = async () => {
@@ -46,19 +48,21 @@ export function useAuth() {
     localStorage.setItem('remember_me', rememberMe.toString());
     
     if (rememberMe) {
-
       localStorage.setItem('auth_expires', (Date.now() + 30 * 24 * 60 * 60 * 1000).toString()); // 30 dias
     } else {
-
       localStorage.setItem('auth_expires', (Date.now() + 24 * 60 * 60 * 1000).toString()); // 24 horas
     }
+    
+    showSuccess(`Bem-vindo, ${user.name || user.nome}!`);
   };
 
   const logout = () => {
+    const userName = authState.user?.name || authState.user?.nome || 'Usuário';
     clearAuthState();
     localStorage.removeItem('remember_me');
     localStorage.removeItem('auth_expires');
     setAuthState({ isAuthenticated: false, user: null, token: null });
+    showSuccess(`Até logo, ${userName}!`);
   };
 
   const updateUser = (user: UserProfile) => {

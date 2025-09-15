@@ -28,7 +28,7 @@ import { getProfile } from '@/api/auth/get-profile';
 import { useAuth } from '@/hooks/useAuth';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { useNotifications } from '@/hooks/useNotifications';
 import { Loading } from './ui/loading';
 
 
@@ -43,6 +43,7 @@ export function AuthScreen() {
 
   const { login } = useAuth();
   const { handleGoogleLogin } = useGoogleAuth();
+  const { showSuccess, showError, showLoading, updateToast, dismiss } = useNotifications();
   const router = useRouter();
 
   const loginForm = useForm<LoginFormData>({
@@ -66,6 +67,8 @@ export function AuthScreen() {
   });
 
   const onLoginSubmit = async (data: LoginFormData) => {
+    const loadingToast = showLoading('Fazendo login...');
+    
     try {
       setIsLoading(true);
       const response = await loginUser(data);
@@ -79,17 +82,19 @@ export function AuthScreen() {
       const userProfile = await getProfile();
       login(token, userProfile, rememberMe);
 
-      toast.success('Login realizado com sucesso!');
+      updateToast(loadingToast, 'Login realizado com sucesso!', 'success');
       router.push('/dashboard');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer login';
-      toast.error(errorMessage);
+      updateToast(loadingToast, errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
   const onRegisterSubmit = async (data: RegisterFormData) => {
+    const loadingToast = showLoading('Criando conta...');
+    
     try {
       setIsLoading(true);
 
@@ -115,12 +120,12 @@ export function AuthScreen() {
       // Por último, atualizar o estado do useAuth
       login(token, userProfile, false); // Registro sempre false para lembrar
 
-      toast.success('Conta criada com sucesso!');
+      updateToast(loadingToast, 'Conta criada com sucesso!', 'success');
       router.push('/dashboard');
     } catch (error: unknown) {
       console.error('Erro no registro:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro ao criar conta';
-      toast.error(errorMessage);
+      updateToast(loadingToast, errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }

@@ -107,12 +107,12 @@ export function CourseCard({
 
             <div className="absolute top-3 right-3">
               {isSubscriber && (
-                <div className="bg-purple-500/20 backdrop-blur-md border border-purple-400/30 rounded-full px-3 py-1">
+                <div className="bg-purple-500/20 backdrop-blur-md border border-purple-400/30 rounded-full px-3 py-1 text-center flex w-24 justify-center">
                   <span className="text-purple-300 text-xs font-medium">ASSINANTE</span>
                 </div>
               )}
               {isFree && (
-                <div className="bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-full px-3 py-1">
+                <div className="bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-full px-3 py-1 text-center flex w-24 justify-center">
                   <span className="text-green-300 text-xs font-medium">GRÁTIS</span>
                 </div>
               )}

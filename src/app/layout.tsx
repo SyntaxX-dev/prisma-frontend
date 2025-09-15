@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { defaultMetadata } from "@/lib/seo";
-import { Toaster } from "sonner";
 import { LoadingProvider } from "@/contexts/LoadingContext";
 import { LoadingWrapper } from "@/components/LoadingWrapper";
+import { NotificationProvider } from "@/components/NotificationProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +32,7 @@ export default function RootLayout({
           <LoadingWrapper>
             {children}
           </LoadingWrapper>
-          <Toaster position="top-right" richColors />
+          <NotificationProvider />
         </LoadingProvider>
       </body>
     </html>

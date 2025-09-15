@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Navbar } from "../../../../components/Navbar";
 import { Sidebar } from "../../../../components/Sidebar";
 import { CourseCard } from "../../../../components/CourseCard";
 import { useAuth } from "../../../../hooks/useAuth";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
@@ -16,6 +16,7 @@ import { usePageLoadComplete } from "@/hooks/usePageLoadComplete";
 export default function CourseCategoryPage() {
   const [isDark, setIsDark] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -35,6 +36,21 @@ export default function CourseCategoryPage() {
   const handleGoBack = () => {
     setLoading(true, 'Voltando...');
     router.back();
+  };
+
+  const handleSearch = (query: string) => {
+    // A busca local já é feita pelo filtro, não precisa de função separada
+    // Esta função pode ser removida ou usada para outras funcionalidades
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    // O filtro é feito automaticamente pelo useMemo
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
   };
 
   usePageLoadComplete();
@@ -410,7 +426,19 @@ export default function CourseCategoryPage() {
   };
 
   const currentCategory = categoryInfo[category];
-  const courses = coursesByCategory[category] || [];
+  const allCourses = coursesByCategory[category] || [];
+
+  const filteredCourses = useMemo(() => {
+    if (!searchInput.trim()) return allCourses;
+    
+    const query = searchInput.toLowerCase().trim();
+    return allCourses.filter(course => 
+      course.title.toLowerCase().includes(query) ||
+      course.instructor.toLowerCase().includes(query) ||
+      course.technology.toLowerCase().includes(query) ||
+      course.level.toLowerCase().includes(query)
+    );
+  }, [allCourses, searchInput]);
   if (!currentCategory) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -487,7 +515,7 @@ export default function CourseCategoryPage() {
                 Voltar
               </Button>
               
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-4 mb-6">
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
                   style={{ backgroundColor: currentCategory.color }}
@@ -499,15 +527,52 @@ export default function CourseCategoryPage() {
                   <p className="text-white/60 text-lg">{currentCategory.description}</p>
                 </div>
               </div>
+
+              <div className="">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      placeholder={`Pesquisar em ${currentCategory.title}...`}
+                      value={searchInput}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-4 py-3 text-sm outline-none border border-white/20 focus:border-green-400 transition-colors pr-10"
+                    />
+                    {searchInput && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClearSearch}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg w-8 h-8 p-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => {
+                      // A busca já é feita automaticamente pelo filtro
+                      // Este botão pode ser usado para outras funcionalidades se necessário
+                    }}
+                    className="bg-green-500 hover:bg-green-600 text-black px-6 py-3 rounded-xl font-medium"
+                  >
+                    Buscar
+                  </Button>
+                </div>
+              </div>
             </div>
 
             <div>
               <h2 className="text-white text-xl font-semibold mb-6">
-                Cursos disponíveis ({courses.length})
+                {searchInput.trim() 
+                  ? `Resultados da busca (${filteredCourses.length})` 
+                  : `Cursos disponíveis (${allCourses.length})`
+                }
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {courses.map((course, index) => (
+              {filteredCourses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredCourses.map((course, index) => (
                   <CourseCard
                     key={index}
                     title={course.title}
@@ -524,8 +589,23 @@ export default function CourseCategoryPage() {
                     isInCategoryPage={true}
                     category={category}
                   />
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-white/40 text-6xl mb-4">🔍</div>
+                  <h3 className="text-white text-lg font-semibold mb-2">Nenhum curso encontrado</h3>
+                  <p className="text-white/60 text-sm mb-6">
+                    Não encontramos cursos para "{searchInput}" nesta categoria.
+                  </p>
+                  <Button 
+                    onClick={handleClearSearch} 
+                    className="bg-green-500 hover:bg-green-600 text-black"
+                  >
+                    Limpar busca
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

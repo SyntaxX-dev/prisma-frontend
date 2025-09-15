@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
 import { LearningDashboard } from "../../../components/LearningDashboard";
 import { useAuth } from "../../../hooks/useAuth";
 
-export default function DashboardPage() {
+function DashboardContent() {
 	const [isDark, setIsDark] = useState(true);
 	const { login, user } = useAuth();
 
@@ -96,6 +96,18 @@ export default function DashboardPage() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+export default function DashboardPage() {
+	return (
+		<Suspense fallback={
+			<div className="min-h-screen bg-gray-950 flex items-center justify-center">
+				<div className="text-white text-lg">Carregando...</div>
+			</div>
+		}>
+			<DashboardContent />
+		</Suspense>
 	);
 }
 

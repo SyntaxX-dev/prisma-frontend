@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Navbar } from "../../../components/Navbar";
 import { StreakCalendar } from "../../../components/StreakCalendar";
 import { WeeklyProgress } from "../../../components/WeeklyProgress";
@@ -9,7 +9,7 @@ import { useStreak } from "../../../hooks/useStreak";
 import { Button } from "../../../components/ui/button";
 import { Flame, Target, Calendar, Clock } from "lucide-react";
 
-export default function StreakPage() {
+function StreakContent() {
   const { streakData, isStreakActive, addStudyDay, breakStreak } = useStreak();
   const [isDark] = useState(true);
 
@@ -200,5 +200,17 @@ export default function StreakPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function StreakPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white text-lg">Carregando...</div>
+      </div>
+    }>
+      <StreakContent />
+    </Suspense>
   );
 }

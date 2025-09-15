@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, HelpCircle, X, LogOut, User, Settings, AlertCircle } from "lucide-react";
+import { Search, Bell, HelpCircle, X, LogOut, User, Settings, AlertCircle, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -20,6 +20,7 @@ import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
 import { useStreak } from "../hooks/useStreak";
+import { useSearch } from "../hooks/useSearch";
 import { StreakIcon } from "./StreakIcon";
 import { StreakCalendar } from "./StreakCalendar";
 import { ProfileCompletionModal } from "./ProfileCompletionModal";
@@ -39,6 +40,7 @@ export function Navbar({}: NavbarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { streakData, isStreakActive } = useStreak();
+  const { searchQuery, updateSearch, clearSearch, isSearching, isLoading } = useSearch();
 
   // Verificar se há notificações
   const hasNotification = user?.notification?.hasNotification || false;
@@ -53,12 +55,16 @@ export function Navbar({}: NavbarProps) {
   const handleNavClick = (item: string) => {
     if (item === "Dashboard") {
       router.push('/dashboard');
+    } else if (item === "Cursos") {
+      router.push('/courses');
     }
   };
 
   const isActive = (item: string) => {
     if (item === "Dashboard") {
       return pathname === '/dashboard';
+    } else if (item === "Cursos") {
+      return pathname.startsWith('/courses');
     }
     return false;
   };
@@ -86,21 +92,50 @@ export function Navbar({}: NavbarProps) {
 
         <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-3 border border-white/20">
           <div className="flex items-center gap-3">
-            <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded ? 'w-56' : 'w-8'
+            <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-64' : 'w-8'
               }`}>
-              {searchExpanded ? (
+              {searchExpanded || isSearching ? (
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="Pesquisar..."
-                    className="bg-white/20 text-white placeholder-white/60 rounded-full px-3 py-1 text-sm outline-none border border-white/20 focus:border-[#B3E240] transition-colors w-full"
-                    autoFocus
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Pesquisar..."
+                      value={searchQuery}
+                      onChange={(e) => updateSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          updateSearch(searchQuery);
+                        }
+                      }}
+                      className="bg-white/20 text-white placeholder-white/60 rounded-full px-3 py-1 pr-8 text-sm outline-none border border-white/20 focus:border-[#B3E240] transition-colors w-full"
+                      autoFocus
+                    />
+                    {isLoading && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 text-white/60 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer flex-shrink-0"
-                    onClick={() => setSearchExpanded(false)}
+                    onClick={() => updateSearch(searchQuery)}
+                    title="Pesquisar"
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer flex-shrink-0"
+                    onClick={() => {
+                      clearSearch();
+                      setSearchExpanded(false);
+                    }}
+                    title="Fechar"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -111,6 +146,7 @@ export function Navbar({}: NavbarProps) {
                   size="sm"
                   className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer"
                   onClick={() => setSearchExpanded(true)}
+                  title="Abrir pesquisa"
                 >
                   <Search className="w-4 h-4" />
                 </Button>
