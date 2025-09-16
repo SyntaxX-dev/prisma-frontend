@@ -1,4 +1,4 @@
-import { ChevronDown, Home, Wallet, ArrowLeftRight, Clock, CreditCard, RotateCcw, FolderOpen, Zap, Settings, HelpCircle, PenTool } from "lucide-react";
+import { ChevronDown, Home, BookOpen, Users, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,10 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
   });
   const [isHovered, setIsHovered] = useState(false);
   const [showText, setShowText] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const isExpanded = !isVideoPlaying || isHovered;
 
@@ -26,18 +30,59 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
       const timer = setTimeout(() => {
         setShowText(true);
       }, 200);
-      
+
       return () => clearTimeout(timer);
     } else {
       setShowText(false);
     }
   }, [isExpanded]);
 
+  useEffect(() => {
+    return () => {
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+      }
+    };
+  }, [hideTimeout]);
+
   const toggleSection = (section: keyof typeof collapsedSections) => {
     setCollapsedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent, label: string) => {
+
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      setHideTimeout(null);
+    }
+
+    setTooltipPosition({ x: e.clientX, y: e.clientY });
+    setShowTooltip(label);
+    setIsTooltipVisible(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (showTooltip) {
+      setTooltipPosition({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      setIsTooltipVisible(false);
+      setTimeout(() => {
+        setShowTooltip(null);
+      }, 300);
+    }, 150);
+
+    setHideTimeout(timeout);
   };
 
   const handleNavigation = (item: string) => {
@@ -48,26 +93,26 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
 
   const mainItems = [
     { icon: Home, label: "Dashboard", active: true },
-    { icon: Wallet, label: "My Wallet" },
-    { icon: ArrowLeftRight, label: "Transfer" },
-    { icon: Clock, label: "Transactions" },
-    { icon: CreditCard, label: "Payment" },
-    { icon: RotateCcw, label: "Exchange" }
+    { icon: BookOpen, label: "Cursos" },
+    { icon: Users, label: "Comunidades" },
+    { icon: MessageCircle, label: "Chats" },
+    { icon: Eye, label: "Vistos atualmente" },
+    { icon: FileText, label: "Meu resumo" }
   ];
 
   const featuresItems = [
-    { icon: FolderOpen, label: "Integration" },
-    { icon: Zap, label: "Automation" }
+    { icon: FolderOpen, label: "Questões", disabled: true },
+    { icon: Zap, label: "IA study", disabled: true }
   ];
 
   const toolsItems = [
-    { icon: Settings, label: "Settings" },
-    { icon: HelpCircle, label: "Help center" }
+    { icon: User, label: "Perfil" },
+    { icon: Settings, label: "Configurações" }
   ];
 
   return (
-    <div 
-      className={`fixed left-4 top-4 h-[calc(100vh-2rem)] z-50 transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-16'}`}
+    <div
+      className={`fixed left-4 top-4 h-[calc(100vh-2rem)] z-50 transition-all duration-300 ease-in-out overflow-visible ${isExpanded ? 'w-64' : 'w-16'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -150,15 +195,26 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             )}
 
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? (collapsedSections.features ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100') : 'max-h-none opacity-100'
+              className={`overflow-visible transition-all duration-300 ease-in-out ${isExpanded ? (collapsedSections.features ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100') : 'max-h-none opacity-100'
                 }`}
             >
               <div className={`space-y-1 transition-transform duration-300 ease-in-out ${isExpanded ? `ml-2 ${collapsedSections.features ? '-translate-x-4' : 'translate-x-0'}` : 'ml-0'}`}>
                 {featuresItems.map((item, index) => (
-                  <div key={index} className="relative">
+                  <div
+                    key={index}
+                    className="relative group"
+                    onMouseEnter={(e) => {
+                      if (item.disabled) {
+                        handleMouseEnter(e, item.label);
+                      }
+                    }}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleMouseLeave}
+                  >
                     <Button
                       variant="ghost"
-                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isExpanded ? 'justify-start px-3 py-2' : 'justify-center px-2 py-2'}`}
+                      disabled={item.disabled}
+                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg transition-all duration-300 ease-in-out ${isExpanded ? 'justify-start px-3 py-2' : 'justify-center px-2 py-2'} ${item.disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-300' : 'cursor-pointer'}`}
                     >
                       <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                       {isExpanded && item.label}
@@ -234,6 +290,69 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
           </div>
         )}
       </div>
+
+      {showTooltip && (
+        <div
+          className={`fixed pointer-events-none z-[9999] ${isTooltipVisible
+            ? 'animate-tooltip-in'
+            : 'animate-tooltip-out'
+            }`}
+          style={{
+            left: tooltipPosition.x + 15,
+            top: tooltipPosition.y - 40,
+            animationDuration: '300ms',
+            animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            animationFillMode: 'both'
+          }}
+        >
+          <div
+            className="px-4 py-2 text-white text-sm"
+            style={{
+              background: 'rgba(179, 226, 64, 0.14)',
+              borderRadius: '16px',
+              boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+              backdropFilter: 'blur(6.3px)',
+              WebkitBackdropFilter: 'blur(6.3px)',
+              border: '1px solid rgba(179, 226, 64, 0.07)'
+            }}
+          >
+            <span className="font-medium">Em breve</span>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes tooltip-in {
+          0% {
+            opacity: 0;
+            transform: scale(0.8) translateY(10px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        @keyframes tooltip-out {
+          0% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(0.8) translateY(10px);
+          }
+        }
+
+        .animate-tooltip-in {
+          animation-name: tooltip-in;
+        }
+
+        .animate-tooltip-out {
+          animation-name: tooltip-out;
+        }
+      `}</style>
+
     </div>
   );
 }

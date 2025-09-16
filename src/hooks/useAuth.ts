@@ -4,7 +4,6 @@ import { UserProfile } from '../types/auth-api';
 import { getProfile } from '../api/auth/get-profile';
 import { useNotifications } from './useNotifications';
 
-// Hook de autenticação
 
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({ 

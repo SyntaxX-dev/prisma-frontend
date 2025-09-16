@@ -1,37 +1,174 @@
 'use client';
 
 import { useState } from 'react';
-import { UserProfile, BADGE_MAPPING, USER_FOCUS_LABELS, CONTEST_TYPE_LABELS, COLLEGE_COURSE_LABELS, EDUCATION_LEVEL_LABELS } from '@/types/auth-api';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
+import { useRouter } from 'next/navigation';
+import {
+    DndContext,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    rectIntersection,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { UserProfile } from '@/types/auth-api';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { RichTextEditor } from './RichTextEditor';
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from './ui/popover';
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from './ui/dialog';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from './ui/select';
 import {
     Edit3,
-    Camera,
     Plus,
     Rocket,
     CheckCircle2,
     Circle,
-    ArrowUp,
-    Menu,
-    Search,
-    Bell,
-    X,
-    Flame,
-    AlertCircle
+    Globe,
+    Linkedin,
+    Instagram,
+    Twitter,
+    Github,
+    GripVertical,
+    ArrowLeft
 } from 'lucide-react';
+import { countries } from '@/lib/constants/countries';
+import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS } from '@/types/auth-api';
+
+function SortableLinkItem({
+    id,
+    field,
+    label,
+    icon: Icon,
+    value,
+    placeholder,
+    onChange
+}: {
+    id: string;
+    field: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    value: string;
+    placeholder: string;
+    onChange: (field: string, value: string) => void;
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition: isDragging ? 'none' : transition,
+        opacity: isDragging ? 0.8 : 1,
+        zIndex: isDragging ? 1000 : 'auto',
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className="space-y-2">
+            <div className="flex items-center space-x-2">
+                <div className="w-6"></div>
+                <label className="text-sm text-gray-300">
+                    {label}
+                </label>
+            </div>
+            <div className="flex items-center space-x-2">
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-white/5 rounded"
+                >
+                    <GripVertical className="w-4 h-4 text-gray-400" />
+                </div>
+                <div className="relative flex-1">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                        <Icon className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <Input
+                        type="url"
+                        value={value}
+                        onChange={(e) => onChange(field, e.target.value)}
+                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer pl-12 h-12"
+                        placeholder={placeholder}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export function ProfilePage() {
-    const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
+    const router = useRouter();
     const [avatarImage, setAvatarImage] = useState<string | null>(null);
-    const [notificationOpen, setNotificationOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
+    const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
+    const [isLinksModalOpen, setIsLinksModalOpen] = useState(false);
+    const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState<string | null>(null);
+    const [formData, setFormData] = useState<Record<string, string>>({});
+    const [basicInfoData, setBasicInfoData] = useState<Record<string, string>>({
+        nome: 'Aran Leite de Gusmão',
+        areaAtuacao: '',
+        empresa: '',
+        nacionalidade: '',
+        cidade: ''
+    });
+    const [selectedFocus, setSelectedFocus] = useState<string>('');
+    const [selectedCourse, setSelectedCourse] = useState<string>('');
+    const [selectedContest, setSelectedContest] = useState<string>('');
+    const [linksData, setLinksData] = useState<Record<string, string>>({
+        sitePessoal: '',
+        linkedin: '',
+        instagram: '',
+        twitter: '',
+        github: ''
+    });
+    const [linkFieldsOrder, setLinkFieldsOrder] = useState([
+        { id: 'sitePessoal', field: 'sitePessoal', label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
+        { id: 'linkedin', field: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/seuusuario' },
+        { id: 'instagram', field: 'instagram', label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/seuusuario' },
+        { id: 'twitter', field: 'twitter', label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' },
+        { id: 'github', field: 'github', label: 'GitHub', icon: Github, placeholder: 'https://github.com/seuusuario' }
+    ]);
+    const [aboutText, setAboutText] = useState<string>('');
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     const user: UserProfile = {
         id: 'd99f095c-32e1-496e-b20e-73a554bb9538',
@@ -82,13 +219,165 @@ export function ProfilePage() {
     const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            setIsUploading(true);
             const reader = new FileReader();
             reader.onload = (e) => {
                 setAvatarImage(e.target?.result as string);
-                setIsUploading(false);
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleTaskClick = (taskLabel: string) => {
+        setSelectedTask(taskLabel);
+        setIsModalOpen(true);
+    };
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedTask(null);
+        setFormData({});
+    };
+
+    const handleFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        console.log('Dados do formulário:', formData);
+        handleModalClose();
+    };
+
+    const handleInputChange = (field: string, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleBasicInfoChange = (field: string, value: string) => {
+        setBasicInfoData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleBasicInfoSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        console.log('Dados das informações básicas:', basicInfoData);
+        setIsBasicInfoModalOpen(false);
+    };
+
+    const handleBasicInfoModalClose = () => {
+        setIsBasicInfoModalOpen(false);
+    };
+
+    const handleFocusModalClose = () => {
+        setIsFocusModalOpen(false);
+        setSelectedFocus('');
+        setSelectedCourse('');
+        setSelectedContest('');
+    };
+
+    const handleFocusSelect = (focus: string) => {
+        setSelectedFocus(focus);
+        if (focus === 'FACULDADE') {
+            setSelectedCourse('');
+        } else if (focus === 'CONCURSO') {
+            setSelectedContest('');
+        }
+    };
+
+    const handleFocusSubmit = () => {
+        console.log('Foco selecionado:', {
+            focus: selectedFocus,
+            course: selectedCourse,
+            contest: selectedContest
+        });
+        handleFocusModalClose();
+    };
+
+    const handleLinksChange = (field: string, value: string) => {
+        setLinksData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleLinksSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        console.log('Dados dos links:', linksData);
+        setIsLinksModalOpen(false);
+    };
+
+    const handleLinksModalClose = () => {
+        setIsLinksModalOpen(false);
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            setLinkFieldsOrder((items) => {
+                const oldIndex = items.findIndex((item) => item.id === active.id);
+                const newIndex = items.findIndex((item) => item.id === over.id);
+
+                return arrayMove(items, oldIndex, newIndex);
+            });
+        }
+    };
+
+    const handleAboutModalClose = () => {
+        setIsAboutModalOpen(false);
+    };
+
+    const handleAboutSubmit = () => {
+        console.log('Sobre atualizado:', aboutText);
+        handleAboutModalClose();
+    };
+
+    const handleGoBack = () => {
+        router.back();
+    };
+
+    const getModalFields = (taskLabel: string) => {
+        switch (taskLabel) {
+            case 'Informações básicas':
+                return [
+                    { key: 'nome', label: 'Nome completo', type: 'text' },
+                    { key: 'email', label: 'E-mail', type: 'email' },
+                    { key: 'idade', label: 'Idade', type: 'number' }
+                ];
+            case 'Foto do perfil':
+                return [
+                    { key: 'foto', label: 'Upload da foto', type: 'file' }
+                ];
+            case 'Imagem de capa':
+                return [
+                    { key: 'capa', label: 'Upload da imagem de capa', type: 'file' }
+                ];
+            case 'Links':
+                return [
+                    { key: 'linkedin', label: 'LinkedIn', type: 'url' },
+                    { key: 'github', label: 'GitHub', type: 'url' },
+                    { key: 'portfolio', label: 'Portfolio', type: 'url' }
+                ];
+            case 'Sobre você':
+                return [
+                    { key: 'sobre', label: 'Conte um pouco sobre você', type: 'textarea' }
+                ];
+            case 'Destaques':
+                return [
+                    { key: 'projeto1', label: 'Projeto 1', type: 'url' },
+                    { key: 'projeto2', label: 'Projeto 2', type: 'url' },
+                    { key: 'projeto3', label: 'Projeto 3', type: 'url' }
+                ];
+            case 'Habilidades':
+                return [
+                    { key: 'habilidades', label: 'Suas principais habilidades', type: 'textarea' }
+                ];
+            case 'Momento de carreira':
+                return [
+                    { key: 'carreira', label: 'Descreva seu momento atual na carreira', type: 'textarea' }
+                ];
+            default:
+                return [];
         }
     };
 
@@ -129,174 +418,25 @@ export function ProfilePage() {
                 }}
             />
 
-            <header className="bg-[#202024] border-b border-[#323238] px-6 py-3 sticky top-0 z-50">
-                <div className="flex items-center justify-between max-w-full">
 
-                    <div className="flex items-center space-x-6">
-                        <Button
-                            className="bg-transparent hover:bg-white/5 text-white p-2 h-auto cursor-pointer"
-                            size="sm"
-                        >
-                            <Menu className="w-5 h-5" />
-                        </Button>
+            <div className="fixed top-4 left-4 z-50 mt-4 ml-4">
+                <Button
+                    onClick={handleGoBack}
+                    variant="ghost"
+                    className="text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar
+                </Button>
+            </div>
 
-                        <div className="flex items-center space-x-3">
-
-                            <div className="flex items-center space-x-3">
-                                <img
-                                    src="/logo-prisma.png"
-                                    alt="Prisma Logo"
-                                    className="w-10 h-10"
-                                />
-                                <span className="text-white font-bold text-lg tracking-wider">Prisma</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 max-w-md mx-8">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <input
-                                type="text"
-                                placeholder="Busque por assuntos e aulas"
-                                className="w-full bg-[#29292E] border border-[#323238] rounded-md pl-11 pr-12 py-2.5 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3E240] focus:border-transparent transition-all cursor-text"
-                            />
-                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                                <kbd className="bg-[#202024] text-gray-400 text-xs px-2 py-1 rounded border border-[#323238] font-mono">
-                                    /
-                                </kbd>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center space-x-6">
-
-                        <div className="flex items-center gap-2 cursor-pointer">
-                            <div className="relative">
-                                <Flame
-                                    className="w-5 h-5 text-orange-500 drop-shadow-md"
-                                    style={{
-                                        filter: 'drop-shadow(0 0 8px rgba(249, 115, 22, 0.6))'
-                                    }}
-                                />
-                                <div className="absolute inset-0 animate-pulse">
-                                    <Flame className="w-5 h-5 text-orange-400 opacity-40" />
-                                </div>
-                            </div>
-                            <span className="text-sm font-semibold text-orange-500">
-                                0
-                            </span>
-                        </div>
-
-                        <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 relative cursor-pointer transition-all duration-300"
-                                >
-                                    <Bell className="w-6 h-6 transition-all duration-300" />
-                                    {user.notification?.hasNotification && (
-                                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full animate-ping"></span>
-                                    )}
-                                    {user.notification?.hasNotification && (
-                                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full"></span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent
-                                className="w-80 p-0 border-0 bg-transparent"
-                                side="bottom"
-                                align="end"
-                                sideOffset={8}
-                            >
-                                <div className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-300 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-top-1 mt-4">
-                                    {user.notification?.hasNotification ? (
-                                        <div className="p-4">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <AlertCircle className="w-5 h-5 text-yellow-400" />
-                                                <h3 className="font-semibold text-white">Notificação</h3>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <p className="text-white/80 text-sm">
-                                                    {user.notification?.message}
-                                                </p>
-                                                {user.notification?.missingFields && user.notification.missingFields.length > 0 && (
-                                                    <div>
-                                                        <p className="text-white/60 text-xs mb-2">Campos pendentes:</p>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {user.notification.missingFields.map((field: string, index: number) => (
-                                                                <span
-                                                                    key={index}
-                                                                    className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs border border-yellow-500/30"
-                                                                >
-                                                                    {field}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <div className="pt-2 border-t border-white/20">
-                                                    <Button
-                                                        className="w-full bg-[#B3E240] hover:bg-[#A3D030] text-black font-medium"
-                                                        onClick={() => setNotificationOpen(false)}
-                                                    >
-                                                        Entendi
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="p-4 text-center">
-                                            <Bell className="w-8 h-8 text-white/40 mx-auto mb-2" />
-                                            <p className="text-white/60 text-sm">Nenhuma notificação</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-
-                        <div className="w-12 h-12 rounded-lg overflow-hidden cursor-pointer">
-                            <div className="w-full h-full rounded-lg overflow-hidden bg-[#B3E240] flex items-center justify-center">
-                                {avatarImage ? (
-                                    <img
-                                        src={avatarImage}
-                                        alt="Avatar"
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <span className="text-black text-lg font-bold">
-                                        {getInitials(user)}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <div className="relative z-10 p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="relative z-10 p-6 min-h-screen flex items-center">
+                <div className="max-w-7xl mx-auto w-full">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-1">
                             <div className="space-y-6">
                                 <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="flex items-center space-x-2">
-                                            <Button
-                                                className="bg-transparent hover:bg-white/5 text-white p-2 rounded-lg border border-[#323238] cursor-pointer"
-                                                size="sm"
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black p-2 rounded-lg cursor-pointer"
-                                                size="sm"
-                                            >
-                                                <Camera className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
+
 
                                     <div className="text-center mb-6">
                                         <div className="relative inline-block group mb-4">
@@ -326,23 +466,31 @@ export function ProfilePage() {
                                     </div>
 
                                     <div className="space-y-3 mb-6">
-                                        <Button className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer">
+                                        <Button
+                                            className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
+                                            onClick={() => setIsBasicInfoModalOpen(true)}
+                                        >
                                             <Plus className="w-4 h-4 mr-2" />
                                             Título
                                         </Button>
-                                        <Button className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer">
+                                        <Button
+                                            className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
+                                            onClick={() => setIsBasicInfoModalOpen(true)}
+                                        >
                                             <Plus className="w-4 h-4 mr-2" />
                                             Localização
                                         </Button>
+                                        <Button
+                                            className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
+                                            onClick={() => setIsFocusModalOpen(true)}
+                                        >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Escolha seu foco
+                                        </Button>
                                     </div>
 
-                                    <Button className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 mb-6 cursor-pointer">
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Destacar tecnologias
-                                    </Button>
-
                                     <p className="text-gray-500 text-sm text-center">
-                                        Embarcou na Rocketseat 30/03/2020
+                                        No Prisma desde 30/03/2020
                                     </p>
                                 </div>
 
@@ -352,6 +500,7 @@ export function ProfilePage() {
                                         <Button
                                             className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
                                             size="sm"
+                                            onClick={() => setIsLinksModalOpen(true)}
                                         >
                                             <Edit3 className="w-4 h-4" />
                                         </Button>
@@ -361,6 +510,7 @@ export function ProfilePage() {
                                             <div
                                                 key={i}
                                                 className="aspect-square bg-transparent border-2 border-dashed border-[#323238] rounded-lg flex items-center justify-center hover:border-gray-600 transition-colors cursor-pointer"
+                                                onClick={() => setIsLinksModalOpen(true)}
                                             >
                                                 <Plus className="w-5 h-5 text-gray-600" />
                                             </div>
@@ -405,7 +555,11 @@ export function ProfilePage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {profileTasks.map((task, index) => (
-                                        <div key={index} className="flex items-center space-x-3">
+                                        <div
+                                            key={index}
+                                            className="flex items-center space-x-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+                                            onClick={() => handleTaskClick(task.label)}
+                                        >
                                             {task.completed ? (
                                                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                                             ) : (
@@ -425,6 +579,7 @@ export function ProfilePage() {
                                     <Button
                                         className="bg-transparent hover:bg-white/5 text-gray-400 p-1 cursor-pointer"
                                         size="sm"
+                                        onClick={() => setIsAboutModalOpen(true)}
                                     >
                                         <Edit3 className="w-4 h-4" />
                                     </Button>
@@ -462,6 +617,430 @@ export function ProfilePage() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal para editar informações do perfil */}
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-white text-lg font-semibold">
+                            {selectedTask}
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <form onSubmit={handleFormSubmit} className="space-y-4">
+                        {selectedTask && getModalFields(selectedTask).map((field) => (
+                            <div key={field.key} className="space-y-2">
+                                <label className="text-sm text-gray-300">
+                                    {field.label}
+                                </label>
+                                {field.type === 'textarea' ? (
+                                    <Textarea
+                                        value={formData[field.key] || ''}
+                                        onChange={(e) => handleInputChange(field.key, e.target.value)}
+                                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
+                                        placeholder={`Digite ${field.label.toLowerCase()}...`}
+                                        rows={3}
+                                    />
+                                ) : field.type === 'file' ? (
+                                    <Input
+                                        type="file"
+                                        onChange={(e) => handleInputChange(field.key, e.target.value)}
+                                        className="bg-[#29292E] border-[#323238] text-white file:bg-[#B3E240] file:text-black file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3"
+                                    />
+                                ) : (
+                                    <Input
+                                        type={field.type}
+                                        value={formData[field.key] || ''}
+                                        onChange={(e) => handleInputChange(field.key, e.target.value)}
+                                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
+                                        placeholder={`Digite ${field.label.toLowerCase()}...`}
+                                    />
+                                )}
+                            </div>
+                        ))}
+
+                        <div className="flex justify-end space-x-3 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleModalClose}
+                                className="border-[#323238] text-gray-300 hover:bg-white/5"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black"
+                            >
+                                Salvar
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal para editar informações básicas */}
+            <Dialog open={isBasicInfoModalOpen} onOpenChange={setIsBasicInfoModalOpen}>
+                <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-white text-lg font-semibold">
+                            Editar informações básicas
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <form onSubmit={handleBasicInfoSubmit} className="space-y-4">
+                        {/* Nome */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                Nome
+                            </label>
+                            <Input
+                                type="text"
+                                value={basicInfoData.nome}
+                                className="bg-[#1a1a1a] border-[#323238] text-gray-400 cursor-not-allowed"
+                                placeholder="Nome não pode ser alterado"
+                                readOnly
+                                disabled
+                            />
+                        </div>
+
+                        {/* Área de atuação */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                Área de atuação
+                            </label>
+                            <Input
+                                type="text"
+                                value={basicInfoData.areaAtuacao}
+                                onChange={(e) => handleBasicInfoChange('areaAtuacao', e.target.value)}
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
+                                placeholder="Em uma frase, o que você faz?"
+                            />
+                        </div>
+
+                        {/* Empresa */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                Empresa
+                            </label>
+                            <Input
+                                type="text"
+                                value={basicInfoData.empresa}
+                                onChange={(e) => handleBasicInfoChange('empresa', e.target.value)}
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
+                                placeholder="Você trabalha atualmente em alguma empresa?"
+                            />
+                        </div>
+
+
+                        {/* Nacionalidade */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                Nacionalidade
+                            </label>
+                            <Select
+                                value={basicInfoData.nacionalidade}
+                                onValueChange={(value) => handleBasicInfoChange('nacionalidade', value)}
+                            >
+                                <SelectTrigger className="bg-[#29292E] border-[#323238] text-white focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer">
+                                    <SelectValue placeholder="Em que país você nasceu?" />
+                                </SelectTrigger>
+                                <SelectContent
+                                    className="bg-[#29292E] border-[#323238] text-white max-h-60 z-50 !animate-none !transition-none"
+                                    position="popper"
+                                    sideOffset={4}
+                                    align="start"
+                                    style={{
+                                        animation: 'none',
+                                        transition: 'none'
+                                    }}
+                                >
+                                    {countries.map((country) => (
+                                        <SelectItem
+                                            key={country.code}
+                                            value={country.name}
+                                            className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                                        >
+                                            {country.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Cidade */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                Cidade
+                            </label>
+                            <Input
+                                type="text"
+                                value={basicInfoData.cidade}
+                                onChange={(e) => handleBasicInfoChange('cidade', e.target.value)}
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
+                                placeholder="Em qual cidade você mora atualmente?"
+                            />
+                        </div>
+
+                        <div className="flex justify-end space-x-3 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleBasicInfoModalClose}
+                                className="border-[#323238] text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 cursor-pointer transition-colors"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                            >
+                                Salvar
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal para escolher foco */}
+            <Dialog open={isFocusModalOpen} onOpenChange={setIsFocusModalOpen}>
+                <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-white text-lg font-semibold">
+                            Escolha seu foco
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        {/* Seleção do foco principal */}
+                        <div className="space-y-3">
+                            <h3 className="text-sm text-gray-300">Qual é o seu foco principal?</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Button
+                                    variant={selectedFocus === 'ENEM' ? 'default' : 'outline'}
+                                    onClick={() => handleFocusSelect('ENEM')}
+                                    className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'ENEM'
+                                        ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
+                                        : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                        }`}
+                                >
+                                    ENEM
+                                </Button>
+                                <Button
+                                    variant={selectedFocus === 'CONCURSO' ? 'default' : 'outline'}
+                                    onClick={() => handleFocusSelect('CONCURSO')}
+                                    className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'CONCURSO'
+                                        ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
+                                        : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                        }`}
+                                >
+                                    Concurso
+                                </Button>
+                                <Button
+                                    variant={selectedFocus === 'FACULDADE' ? 'default' : 'outline'}
+                                    onClick={() => handleFocusSelect('FACULDADE')}
+                                    className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'FACULDADE'
+                                        ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
+                                        : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                        }`}
+                                >
+                                    Faculdade
+                                </Button>
+                                <Button
+                                    variant={selectedFocus === 'ENSINO_MEDIO' ? 'default' : 'outline'}
+                                    onClick={() => handleFocusSelect('ENSINO_MEDIO')}
+                                    className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'ENSINO_MEDIO'
+                                        ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
+                                        : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                        }`}
+                                >
+                                    Ensino Médio
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Seleção de curso (se faculdade) */}
+                        {selectedFocus === 'FACULDADE' && (
+                            <div className="space-y-3">
+                                <h3 className="text-sm text-gray-300">Qual curso você pretende fazer?</h3>
+                                <Select
+                                    value={selectedCourse}
+                                    onValueChange={setSelectedCourse}
+                                >
+                                    <SelectTrigger className="bg-[#29292E] border-[#323238] text-white focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer">
+                                        <SelectValue placeholder="Selecione um curso" />
+                                    </SelectTrigger>
+                                    <SelectContent
+                                        className="bg-[#29292E] border-[#323238] text-white max-h-60 z-50 !animate-none !transition-none"
+                                        position="popper"
+                                        sideOffset={4}
+                                        align="start"
+                                        style={{
+                                            animation: 'none',
+                                            transition: 'none'
+                                        }}
+                                    >
+                                        {Object.entries(COLLEGE_COURSE_LABELS).map(([key, label]) => (
+                                            <SelectItem
+                                                key={key}
+                                                value={key}
+                                                className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                                            >
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {/* Seleção de concurso (se concurso) */}
+                        {selectedFocus === 'CONCURSO' && (
+                            <div className="space-y-3">
+                                <h3 className="text-sm text-gray-300">Qual concurso você pretende fazer?</h3>
+                                <Select
+                                    value={selectedContest}
+                                    onValueChange={setSelectedContest}
+                                >
+                                    <SelectTrigger className="bg-[#29292E] border-[#323238] text-white focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer">
+                                        <SelectValue placeholder="Selecione um concurso" />
+                                    </SelectTrigger>
+                                    <SelectContent
+                                        className="bg-[#29292E] border-[#323238] text-white max-h-60 z-50 !animate-none !transition-none"
+                                        position="popper"
+                                        sideOffset={4}
+                                        align="start"
+                                        style={{
+                                            animation: 'none',
+                                            transition: 'none'
+                                        }}
+                                    >
+                                        {Object.entries(CONTEST_TYPE_LABELS).map(([key, label]) => (
+                                            <SelectItem
+                                                key={key}
+                                                value={key}
+                                                className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                                            >
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end space-x-3 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleFocusModalClose}
+                                className="border-[#323238] text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 cursor-pointer transition-colors"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleFocusSubmit}
+                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                                disabled={!selectedFocus || (selectedFocus === 'FACULDADE' && !selectedCourse) || (selectedFocus === 'CONCURSO' && !selectedContest)}
+                            >
+                                Salvar
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal para editar links */}
+            <Dialog open={isLinksModalOpen} onOpenChange={setIsLinksModalOpen}>
+                <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-white text-lg font-semibold">
+                            Editar links
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <form onSubmit={handleLinksSubmit} className="space-y-6">
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={rectIntersection}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={linkFieldsOrder.map(item => item.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {linkFieldsOrder.map((item) => (
+                                    <SortableLinkItem
+                                        key={item.id}
+                                        id={item.id}
+                                        field={item.field}
+                                        label={item.label}
+                                        icon={item.icon}
+                                        value={linksData[item.field as keyof typeof linksData]}
+                                        placeholder={item.placeholder}
+                                        onChange={handleLinksChange}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
+
+                        <div className="flex justify-end space-x-3 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleLinksModalClose}
+                                className="border-[#323238] text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 cursor-pointer transition-colors"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer transition-colors"
+                            >
+                                Salvar
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal para editar sobre */}
+            <Dialog open={isAboutModalOpen} onOpenChange={setIsAboutModalOpen}>
+                <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-white text-lg font-semibold">
+                            Editar sobre
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        <RichTextEditor
+                            content={aboutText}
+                            onChange={setAboutText}
+                            placeholder="Conte um pouco sobre você..."
+                        />
+                    </div>
+
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleAboutModalClose}
+                            className="border-[#323238] text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 cursor-pointer transition-colors"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleAboutSubmit}
+                            className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer transition-colors"
+                        >
+                            Salvar
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -42,7 +42,6 @@ export function Navbar({}: NavbarProps) {
   const { streakData, isStreakActive } = useStreak();
   const { searchQuery, updateSearch, clearSearch, isSearching, isLoading } = useSearch();
 
-  // Verificar se há notificações
   const hasNotification = user?.notification?.hasNotification || false;
   const notificationData = user?.notification;
 
@@ -116,7 +115,7 @@ export function Navbar({}: NavbarProps) {
                       </div>
                     )}
                   </div>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -126,7 +125,7 @@ export function Navbar({}: NavbarProps) {
                   >
                     <Search className="w-4 h-4" />
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -319,7 +318,6 @@ export function Navbar({}: NavbarProps) {
         </DropdownMenu>
       </div>
 
-      {/* Modal de completar perfil */}
       {notificationData && (
         <ProfileCompletionModal
           isOpen={profileModalOpen}

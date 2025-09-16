@@ -11,11 +11,11 @@ import { Switch } from "../../../components/ui/switch";
 import { Slider } from "../../../components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { Separator } from "../../../components/ui/separator";
-import { 
-  Settings, 
-  Bell, 
-  Palette, 
-  Shield, 
+import {
+  Settings,
+  Bell,
+  Palette,
+  Shield,
   Download,
   Trash2,
   Save,
@@ -30,7 +30,6 @@ function SettingsContent() {
   const { user } = useAuth();
   const { showSuccess, showError } = useNotifications();
 
-  // Configurações de notificações
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -39,7 +38,6 @@ function SettingsContent() {
     weeklyReport: true
   });
 
-  // Configurações de aparência
   const [appearance, setAppearance] = useState({
     theme: 'dark',
     fontSize: 14,
@@ -48,7 +46,6 @@ function SettingsContent() {
   });
 
 
-  // Configurações de privacidade
   const [privacy, setPrivacy] = useState({
     profileVisibility: 'public',
     dataCollection: true,
@@ -59,7 +56,7 @@ function SettingsContent() {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 800);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -68,12 +65,10 @@ function SettingsContent() {
   };
 
   const handleSaveSettings = () => {
-    // Simular salvamento
     showSuccess('Configurações salvas com sucesso!');
   };
 
   const handleResetSettings = () => {
-    // Resetar para padrões
     setNotifications({
       email: true,
       push: true,
@@ -115,8 +110,8 @@ function SettingsContent() {
     <div className={`min-h-screen ${isDark ? 'dark' : ''}`}>
       <div
         className={`fixed inset-0 transition-all duration-300 ${isDark
-            ? 'bg-gray-950'
-            : 'bg-gray-500'
+          ? 'bg-gray-950'
+          : 'bg-gray-500'
           }`}
         style={{
           backgroundImage: isDark
@@ -176,7 +171,6 @@ function SettingsContent() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Notificações */}
               <Card className="bg-white/5 backdrop-blur-sm border-white/10">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
@@ -192,12 +186,12 @@ function SettingsContent() {
                     </div>
                     <Switch
                       checked={notifications.email}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNotifications(prev => ({ ...prev, email: checked }))
                       }
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-white font-medium">Notificações push</p>
@@ -205,7 +199,7 @@ function SettingsContent() {
                     </div>
                     <Switch
                       checked={notifications.push}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNotifications(prev => ({ ...prev, push: checked }))
                       }
                     />
@@ -218,7 +212,7 @@ function SettingsContent() {
                     </div>
                     <Switch
                       checked={notifications.achievements}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNotifications(prev => ({ ...prev, achievements: checked }))
                       }
                     />
@@ -231,7 +225,7 @@ function SettingsContent() {
                     </div>
                     <Switch
                       checked={notifications.reminders}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNotifications(prev => ({ ...prev, reminders: checked }))
                       }
                     />
@@ -239,7 +233,6 @@ function SettingsContent() {
                 </CardContent>
               </Card>
 
-              {/* Aparência */}
               <Card className="bg-white/5 backdrop-blur-sm border-white/10">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
@@ -252,7 +245,7 @@ function SettingsContent() {
                     <p className="text-white font-medium">Tema</p>
                     <Select
                       value={appearance.theme}
-                      onValueChange={(value) => 
+                      onValueChange={(value) =>
                         setAppearance(prev => ({ ...prev, theme: value }))
                       }
                     >
@@ -286,7 +279,7 @@ function SettingsContent() {
                     <p className="text-white font-medium">Tamanho da fonte: {appearance.fontSize}px</p>
                     <Slider
                       value={[appearance.fontSize]}
-                      onValueChange={([value]) => 
+                      onValueChange={([value]) =>
                         setAppearance(prev => ({ ...prev, fontSize: value }))
                       }
                       min={12}
@@ -303,7 +296,7 @@ function SettingsContent() {
                     </div>
                     <Switch
                       checked={appearance.compactMode}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setAppearance(prev => ({ ...prev, compactMode: checked }))
                       }
                     />
@@ -316,7 +309,7 @@ function SettingsContent() {
                     </div>
                     <Switch
                       checked={appearance.animations}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setAppearance(prev => ({ ...prev, animations: checked }))
                       }
                     />
@@ -325,7 +318,6 @@ function SettingsContent() {
               </Card>
 
 
-              {/* Privacidade */}
               <Card className="bg-white/5 backdrop-blur-sm border-white/10">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
@@ -338,7 +330,7 @@ function SettingsContent() {
                     <p className="text-white font-medium">Visibilidade do perfil</p>
                     <Select
                       value={privacy.profileVisibility}
-                      onValueChange={(value) => 
+                      onValueChange={(value) =>
                         setPrivacy(prev => ({ ...prev, profileVisibility: value }))
                       }
                     >
@@ -360,7 +352,7 @@ function SettingsContent() {
                     </div>
                     <Switch
                       checked={privacy.dataCollection}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPrivacy(prev => ({ ...prev, dataCollection: checked }))
                       }
                     />
@@ -373,7 +365,7 @@ function SettingsContent() {
                     </div>
                     <Switch
                       checked={privacy.analytics}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPrivacy(prev => ({ ...prev, analytics: checked }))
                       }
                     />
@@ -382,10 +374,9 @@ function SettingsContent() {
               </Card>
             </div>
 
-            {/* Ações */}
             <div className="mt-8 space-y-4">
               <Separator className="bg-white/10" />
-              
+
               <div className="flex flex-wrap gap-4">
                 <Button
                   onClick={handleSaveSettings}

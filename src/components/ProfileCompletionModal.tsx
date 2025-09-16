@@ -143,7 +143,6 @@ export function ProfileCompletionModal({
                 </DialogHeader>
 
                 <div className="space-y-6">
-                    {/* Campos pendentes */}
                     {notificationData.missingFields.length > 0 && (
                         <div>
                             <h3 className="text-sm font-medium text-white/60 mb-2">Campos pendentes:</h3>
@@ -161,7 +160,6 @@ export function ProfileCompletionModal({
                         </div>
                     )}
 
-                    {/* Seleção de foco */}
                     <div className="space-y-4">
                         <div>
                             <label className="text-sm font-medium text-white mb-2 block">
@@ -185,7 +183,6 @@ export function ProfileCompletionModal({
                             </Select>
                         </div>
 
-                        {/* Seleção de concurso */}
                         {userFocus === 'CONCURSO' && (
                             <div>
                                 <label className="text-sm font-medium text-white mb-2 block">
@@ -210,7 +207,6 @@ export function ProfileCompletionModal({
                             </div>
                         )}
 
-                        {/* Seleção de curso */}
                         {userFocus === 'FACULDADE' && (
                             <div>
                                 <label className="text-sm font-medium text-white mb-2 block">
@@ -235,7 +231,6 @@ export function ProfileCompletionModal({
                             </div>
                         )}
 
-                        {/* Preview do badge */}
                         {getBadgePreview() && (
                             <div className="bg-[#B3E240]/10 border border-[#B3E240]/30 rounded-lg p-4">
                                 <div className="flex items-center gap-2 text-[#B3E240]">
@@ -249,7 +244,6 @@ export function ProfileCompletionModal({
                         )}
                     </div>
 
-                    {/* Botões */}
                     <div className="flex gap-3 pt-4">
                         <Button
                             onClick={handleSubmit}

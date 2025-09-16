@@ -19,18 +19,18 @@ function CourseSearchContent() {
   const searchParams = useSearchParams();
   const { setLoading } = useLoading();
   const { showInfo } = useNotifications();
-  
+
   const searchQuery = searchParams.get('q') || '';
 
   useEffect(() => {
     setSearchInput(searchQuery);
   }, [searchQuery]);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 800);
-    
+
     return () => {
       clearTimeout(timer);
       if (debounceRef.current) {
@@ -55,16 +55,16 @@ function CourseSearchContent() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchInput(value);
-    
+
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
-    
+
     if (!value.trim()) {
       router.push('/courses');
       return;
     }
-    
+
     debounceRef.current = setTimeout(() => {
       if (value.trim()) {
         handleSearch(value);
@@ -84,7 +84,6 @@ function CourseSearchContent() {
   };
 
   const allCourses = useMemo(() => [
-    // Node.js
     {
       title: "Node.js",
       instructor: "Diego Fernandes",
@@ -141,7 +140,6 @@ function CourseSearchContent() {
       courseId: "nodejs-apis",
       category: "nodejs"
     },
-    // React
     {
       title: "React Completo",
       instructor: "Diego Fernandes",
@@ -185,7 +183,6 @@ function CourseSearchContent() {
       courseId: "react-native-expo",
       category: "react"
     },
-    // Python
     {
       title: "Python com Django",
       instructor: "Sabrina Silva",
@@ -229,7 +226,6 @@ function CourseSearchContent() {
       courseId: "python-data-science",
       category: "python"
     },
-    // Mobile
     {
       title: "Android com Kotlin",
       instructor: "Bernardo Medeiros",
@@ -258,7 +254,6 @@ function CourseSearchContent() {
       courseId: "ios-swift",
       category: "mobile"
     },
-    // Soft Skills
     {
       title: "Soft Skills",
       instructor: "Diego Fernandes",
@@ -287,7 +282,6 @@ function CourseSearchContent() {
       courseId: "ingles-para-devs",
       category: "soft-skills"
     },
-    // Leadership
     {
       title: "Tech Lead",
       instructor: "Ana Santos",
@@ -302,7 +296,6 @@ function CourseSearchContent() {
       courseId: "tech-lead",
       category: "leadership"
     },
-    // Fundamentals
     {
       title: "Lógica de Programação",
       instructor: "Carlos Silva",
@@ -347,7 +340,6 @@ function CourseSearchContent() {
       courseId: "discover",
       category: "fundamentals"
     },
-    // Angular
     {
       title: "Angular - Curso Introdutório",
       instructor: "Vinícius de Oliveira",
@@ -363,7 +355,6 @@ function CourseSearchContent() {
       courseId: "angular-intro",
       category: "angular"
     },
-    // Go
     {
       title: "Go - Curso Introdutório",
       instructor: "Lea Carvalho de Andrade",
@@ -379,7 +370,6 @@ function CourseSearchContent() {
       courseId: "go-intro",
       category: "go"
     },
-    // C#
     {
       title: "C# e .NET - Curso Introdutório",
       instructor: "Welisson Reily",
@@ -399,19 +389,19 @@ function CourseSearchContent() {
 
   const filteredCourses = useMemo(() => {
     if (!searchQuery.trim()) return allCourses;
-    
+
     const query = searchQuery.toLowerCase().trim();
-    const results = allCourses.filter(course => 
+    const results = allCourses.filter(course =>
       course.title.toLowerCase().includes(query) ||
       course.instructor.toLowerCase().includes(query) ||
       course.technology.toLowerCase().includes(query) ||
       course.level.toLowerCase().includes(query)
     );
-    
+
     if (searchQuery.trim() && results.length === 0) {
       showInfo(`Nenhum curso encontrado para "${searchQuery}"`);
     }
-    
+
     return results;
   }, [searchQuery, allCourses, showInfo]);
 
@@ -483,7 +473,7 @@ function CourseSearchContent() {
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
         <div className="flex-1 pt-16">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-          
+
           <div className="p-6 ml-10 pt-10">
             <div className="mb-8">
               <Button
@@ -495,7 +485,7 @@ function CourseSearchContent() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Voltar
               </Button>
-              
+
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center text-3xl">
                   <Search className="w-8 h-8 text-green-400" />
@@ -569,8 +559,8 @@ function CourseSearchContent() {
                   <p className="text-white/60 text-sm mb-6">
                     Não encontramos cursos para &quot;{searchQuery}&quot;. Tente pesquisar por outros termos.
                   </p>
-                  <Button 
-                    onClick={() => router.push('/dashboard')} 
+                  <Button
+                    onClick={() => router.push('/dashboard')}
                     className="bg-green-500 hover:bg-green-600 text-black"
                   >
                     Voltar ao Dashboard

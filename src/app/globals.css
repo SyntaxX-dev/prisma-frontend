@@ -130,9 +130,6 @@
   }
 }
 
-/**
- * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
- */
 @layer base {
   :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
     h1 {
@@ -224,7 +221,7 @@ html {
 
 .loader-dots::after,
 .loader-dots::before {
-  content: '';  
+  content: '';
   box-sizing: border-box;
   width: 16px;
   height: 16px;
@@ -248,10 +245,12 @@ html {
     top: 0;
     color: white;
   }
+
   50% {
     top: 30px;
     color: rgba(255, 255, 255, 0.2);
   }
+
   100% {
     top: 0;
     color: white;
@@ -271,6 +270,7 @@ html {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

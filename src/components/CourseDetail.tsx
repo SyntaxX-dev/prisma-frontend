@@ -43,7 +43,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
     description: "Nesta aula, exploramos a história do Node.js, desde sua fundação em 2009 até o presente. Discutimos o impacto dos IDEs, como IntelliJ e Android Studio, e como Kotlin surgiu como uma alternativa moderna ao Java.",
     youtubeId: "hHM-hr9q4mo"
   });
-  
+
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
   const [localVideoPlaying, setLocalVideoPlaying] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -330,9 +330,9 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                 className="absolute inset-0 w-full h-full rounded-3xl"
                 id={`youtube-player-${selectedVideo.id}`}
               />
-              
+
               {!localVideoPlaying && (
-                <div 
+                <div
                   className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-3xl cursor-pointer z-10 hover:bg-black/30 transition-all duration-300"
                   onClick={() => {
                     setLocalVideoPlaying(true);
@@ -345,7 +345,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
               )}
 
               {localVideoPlaying && (
-                <div 
+                <div
                   className="absolute top-4 right-4 z-20"
                 >
                   <Button
@@ -358,8 +358,8 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                   </Button>
                 </div>
               )}
-              
-              <div 
+
+              <div
                 className="absolute -inset-1 opacity-0 group-hover:opacity-30 blur-xl pointer-events-none transition-opacity duration-500"
                 style={{
                   background: `inherit`,
@@ -377,64 +377,24 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
               </Button>
             </div>
           )}
-          
-          {/* <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 opacity-0 hover:opacity-100 transition-all duration-300">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
-                  onClick={() => setIsPlaying(!isPlaying)}
-                >
-                  {isPlaying ? <Play className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
-                  onClick={() => setIsMuted(!isMuted)}
-                >
-                  {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                </Button>
-                <span className="text-white text-sm ml-2">{selectedVideo.duration}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
-                >
-                  <Settings className="w-5 h-5" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
-                >
-                  <Maximize className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-          </div> */}
+
         </div>
 
         <div className={`transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-2 lg:p-4' : 'p-6 lg:p-8'}`}>
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-white mb-4">{selectedVideo.title}</h1>
-            
+
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-white/60" />
                   <span className="text-white/70">{selectedVideo.duration}</span>
                 </div>
-                <Badge 
-                  className={`${
-                    selectedVideo.watched 
-                      ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                <Badge
+                  className={`${selectedVideo.watched
+                      ? 'bg-green-500/20 text-green-400 border-green-500/30'
                       : 'bg-white/10 text-white/60 border-white/20'
-                  } backdrop-blur-sm`}
+                    } backdrop-blur-sm`}
                 >
                   {selectedVideo.watched ? (
                     <>
@@ -446,23 +406,23 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                   )}
                 </Badge>
               </div>
-              
+
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                 >
                   <Download className="w-5 h-5" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                 >
                   <Share2 className="w-5 h-5" />
                 </Button>
-                <Button 
+                <Button
                   className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer"
                 >
                   Finalizar Aula <CheckCircle className="w-4 h-4 ml-2" />
@@ -473,21 +433,21 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
 
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="bg-white/5 backdrop-blur-sm border-b border-white/10 w-full justify-start h-12 px-1 py-1 rounded-3xl">
-              <TabsTrigger 
-                value="overview" 
+              <TabsTrigger
+                value="overview"
                 className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
               >
                 Visão Geral
               </TabsTrigger>
-              <TabsTrigger 
-                value="notes" 
+              <TabsTrigger
+                value="notes"
                 className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Anotações
               </TabsTrigger>
-              <TabsTrigger 
-                value="comments" 
+              <TabsTrigger
+                value="comments"
                 className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
@@ -507,8 +467,8 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:bg-white/[0.07] transition-colors">
                   <h3 className="text-white font-semibold mb-4">Instrutor</h3>
                   <div className="flex items-center gap-4">
-                    <img 
-                      src={course.instructor.avatar} 
+                    <img
+                      src={course.instructor.avatar}
                       alt={course.instructor.name}
                       className="w-14 h-14 rounded-full ring-2 ring-white/20"
                     />
@@ -560,7 +520,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
             <TabsContent value="comments" className="mt-6">
               <div className="space-y-4">
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                  <textarea 
+                  <textarea
                     placeholder="Deixe um comentário..."
                     className="w-full bg-transparent text-white placeholder-white/40 outline-none resize-none"
                     rows={3}
@@ -586,7 +546,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
             <span className="text-green-400 font-medium">{course.progress}%</span>
           </div>
           <div className="w-full bg-white/10 rounded-full h-2 mt-2 overflow-hidden">
-            <div 
+            <div
               className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-500 shadow-lg shadow-green-500/30"
               style={{ width: `${course.progress}%` }}
             />
@@ -612,13 +572,12 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                       </p>
                     </div>
                   </div>
-                  <ChevronDown 
-                    className={`w-4 h-4 text-white/60 transition-transform ${
-                      expandedModules.has(module.id) ? 'rotate-180' : ''
-                    }`}
+                  <ChevronDown
+                    className={`w-4 h-4 text-white/60 transition-transform ${expandedModules.has(module.id) ? 'rotate-180' : ''
+                      }`}
                   />
                 </button>
-                
+
                 {expandedModules.has(module.id) && (
                   <div className="border-t border-white/5">
                     {module.videos.map((video) => (
@@ -626,13 +585,11 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                         key={video.id}
                         onClick={() => handleVideoSelect(video)}
                         disabled={video.locked}
-                        className={`w-full px-3 py-2.5 flex items-center gap-3 hover:bg-white/5 transition-all ${
-                          video.locked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                        } ${
-                          selectedVideo?.id === video.id 
-                            ? 'bg-green-500/10 border-l-2 border-green-500 hover:bg-green-500/15' 
+                        className={`w-full px-3 py-2.5 flex items-center gap-3 hover:bg-white/5 transition-all ${video.locked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                          } ${selectedVideo?.id === video.id
+                            ? 'bg-green-500/10 border-l-2 border-green-500 hover:bg-green-500/15'
                             : ''
-                        }`}
+                          }`}
                       >
                         <div className="flex-shrink-0">
                           {video.locked ? (
@@ -650,11 +607,10 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                           )}
                         </div>
                         <div className="flex-1 text-left">
-                          <p className={`text-sm ${
-                            selectedVideo?.id === video.id 
-                              ? 'text-green-400 font-medium' 
+                          <p className={`text-sm ${selectedVideo?.id === video.id
+                              ? 'text-green-400 font-medium'
                               : 'text-white/80'
-                          } line-clamp-1`}>
+                            } line-clamp-1`}>
                             {video.title}
                           </p>
                           <p className="text-xs text-white/40">{video.duration}</p>

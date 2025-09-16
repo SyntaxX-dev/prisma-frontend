@@ -68,7 +68,7 @@ export function AuthScreen() {
 
   const onLoginSubmit = async (data: LoginFormData) => {
     const loadingToast = showLoading('Fazendo login...');
-    
+
     try {
       setIsLoading(true);
       const response = await loginUser(data);
@@ -94,7 +94,7 @@ export function AuthScreen() {
 
   const onRegisterSubmit = async (data: RegisterFormData) => {
     const loadingToast = showLoading('Criando conta...');
-    
+
     try {
       setIsLoading(true);
 
@@ -105,19 +105,15 @@ export function AuthScreen() {
 
       const response = await registerUser(apiData);
 
-      // Verificar se o token existe (pode ser 'token' ou 'accessToken')
       const token = response.token || (response as { accessToken?: string }).accessToken;
       if (!token) {
         throw new Error('Token não recebido do servidor');
       }
 
-      // Primeiro salvar o token no localStorage
       localStorage.setItem('auth_token', token);
 
-      // Depois chamar o endpoint auth/profile
       const userProfile = await getProfile();
 
-      // Por último, atualizar o estado do useAuth
       login(token, userProfile, false); // Registro sempre false para lembrar
 
       updateToast(loadingToast, 'Conta criada com sucesso!', 'success');
@@ -383,7 +379,6 @@ export function AuthScreen() {
                           </motion.div>
                         </form>
 
-                        {/* Divider */}
                         <div className="relative my-6">
                           <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-white/20"></div>
@@ -393,7 +388,6 @@ export function AuthScreen() {
                           </div>
                         </div>
 
-                        {/* Google OAuth Button */}
                         <motion.div
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}

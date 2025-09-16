@@ -23,13 +23,13 @@ export default function CourseCategoryPage() {
   const category = params.category as string;
   const { setLoading } = useLoading();
   const { navigateWithLoading } = useNavigationWithLoading();
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
       setLoading(false);
     }, 800);
-    
+
     return () => clearTimeout(timer);
   }, [setLoading]);
 
@@ -39,14 +39,11 @@ export default function CourseCategoryPage() {
   };
 
   const handleSearch = (query: string) => {
-    // A busca local já é feita pelo filtro, não precisa de função separada
-    // Esta função pode ser removida ou usada para outras funcionalidades
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchInput(value);
-    // O filtro é feito automaticamente pelo useMemo
   };
 
   const handleClearSearch = () => {
@@ -430,9 +427,9 @@ export default function CourseCategoryPage() {
 
   const filteredCourses = useMemo(() => {
     if (!searchInput.trim()) return allCourses;
-    
+
     const query = searchInput.toLowerCase().trim();
-    return allCourses.filter(course => 
+    return allCourses.filter(course =>
       course.title.toLowerCase().includes(query) ||
       course.instructor.toLowerCase().includes(query) ||
       course.technology.toLowerCase().includes(query) ||
@@ -502,7 +499,7 @@ export default function CourseCategoryPage() {
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
         <div className="flex-1 pt-16">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-          
+
           <div className="p-6 ml-10 pt-10">
             <div className="mb-8">
               <Button
@@ -514,7 +511,7 @@ export default function CourseCategoryPage() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Voltar
               </Button>
-              
+
               <div className="flex items-center gap-4 mb-6">
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
@@ -551,8 +548,6 @@ export default function CourseCategoryPage() {
                   </div>
                   <Button
                     onClick={() => {
-                      // A busca já é feita automaticamente pelo filtro
-                      // Este botão pode ser usado para outras funcionalidades se necessário
                     }}
                     className="bg-green-500 hover:bg-green-600 text-black px-6 py-3 rounded-xl font-medium"
                   >
@@ -564,31 +559,31 @@ export default function CourseCategoryPage() {
 
             <div>
               <h2 className="text-white text-xl font-semibold mb-6">
-                {searchInput.trim() 
-                  ? `Resultados da busca (${filteredCourses.length})` 
+                {searchInput.trim()
+                  ? `Resultados da busca (${filteredCourses.length})`
                   : `Cursos disponíveis (${allCourses.length})`
                 }
               </h2>
-              
+
               {filteredCourses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {filteredCourses.map((course, index) => (
-                  <CourseCard
-                    key={index}
-                    title={course.title}
-                    instructor={course.instructor}
-                    duration={course.duration}
-                    level={course.level}
-                    year={course.year}
-                    technology={course.technology}
-                    icon={course.icon}
-                    isSubscriber={course.isSubscriber}
-                    thumbnailUrl={course.thumbnailUrl}
-                    iconColor={course.iconColor}
-                    courseId={course.courseId}
-                    isInCategoryPage={true}
-                    category={category}
-                  />
+                    <CourseCard
+                      key={index}
+                      title={course.title}
+                      instructor={course.instructor}
+                      duration={course.duration}
+                      level={course.level}
+                      year={course.year}
+                      technology={course.technology}
+                      icon={course.icon}
+                      isSubscriber={course.isSubscriber}
+                      thumbnailUrl={course.thumbnailUrl}
+                      iconColor={course.iconColor}
+                      courseId={course.courseId}
+                      isInCategoryPage={true}
+                      category={category}
+                    />
                   ))}
                 </div>
               ) : (
@@ -598,8 +593,8 @@ export default function CourseCategoryPage() {
                   <p className="text-white/60 text-sm mb-6">
                     Não encontramos cursos para "{searchInput}" nesta categoria.
                   </p>
-                  <Button 
-                    onClick={handleClearSearch} 
+                  <Button
+                    onClick={handleClearSearch}
                     className="bg-green-500 hover:bg-green-600 text-black"
                   >
                     Limpar busca

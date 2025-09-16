@@ -1,4 +1,3 @@
-// DTOs de Autenticação
 export interface RegisterUserDto {
   name: string;
   email: string;
@@ -36,7 +35,6 @@ export type EducationLevel =
   | 'MESTRADO' 
   | 'DOUTORADO';
 
-// Respostas da API
 export interface AuthResponse {
   token: string;
   user: UserProfile;
@@ -93,7 +91,6 @@ export interface ApiResponse<T = unknown> {
 }
 
 
-// Mapeamento de níveis educacionais para português
 export const EDUCATION_LEVEL_LABELS: Record<EducationLevel, string> = {
   FUNDAMENTAL: 'Ensino Fundamental',
   ENSINO_MEDIO: 'Ensino Médio',
@@ -103,12 +100,9 @@ export const EDUCATION_LEVEL_LABELS: Record<EducationLevel, string> = {
   DOUTORADO: 'Doutorado'
 };
 
-// Mapeamento de badges
 export const BADGE_MAPPING: Record<string, string> = {
-  // ENEM
   'ENEM': 'ENEM_BADGE',
   
-  // CONCURSOS
   'PRF': 'PRF_BADGE',
   'ESA': 'ESA_BADGE',
   'DATAPREV': 'DATAPREV_BADGE',
@@ -130,7 +124,6 @@ export const BADGE_MAPPING: Record<string, string> = {
   'PREVIC': 'PREVIC_BADGE',
   'OUTROS': 'OUTROS_BADGE',
   
-  // CURSOS DE FACULDADE
   'MEDICINA': 'MEDICINA_BADGE',
   'ENGENHARIA': 'ENGENHARIA_BADGE',
   'DIREITO': 'DIREITO_BADGE',
@@ -152,11 +145,9 @@ export const BADGE_MAPPING: Record<string, string> = {
   'ECONOMIA': 'ECONOMIA_BADGE',
   'RELACOES_INTERNACIONAIS': 'RELACOES_INTERNACIONAIS_BADGE',
   
-  // ENSINO MÉDIO
   'ENSINO_MEDIO': 'ENSINO_MEDIO_BADGE'
 };
 
-// Labels para exibição
 export const USER_FOCUS_LABELS: Record<UserFocus, string> = {
   ENEM: 'ENEM',
   CONCURSO: 'Concurso Público',
