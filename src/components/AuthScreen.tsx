@@ -82,7 +82,7 @@ export function AuthScreen() {
       const userProfile = await getProfile();
       login(token, userProfile, rememberMe);
 
-      updateToast(loadingToast, 'Login realizado com sucesso!', 'success');
+      dismiss(loadingToast);
       router.push('/dashboard');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer login';

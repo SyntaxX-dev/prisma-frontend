@@ -288,7 +288,6 @@ export function Navbar({}: NavbarProps) {
             }}
             avoidCollisions={true}
             collisionPadding={16}
-            alignOffset={-20}
           >
             <DropdownMenuLabel className="text-gray-300 font-medium px-3 py-2">Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/20" />

@@ -1,7 +1,6 @@
 "use client";
 
 import { Toaster } from 'react-hot-toast';
-import { useTheme } from 'next-themes';
 
 export function NotificationProvider() {
   return (
@@ -27,8 +26,9 @@ export function NotificationProvider() {
         success: {
           duration: 3000,
           style: {
-            background: 'rgba(16, 185, 129, 0.9)',
+            background: 'rgba(0, 0, 0, 0.2)',
             color: '#fff',
+            backdropFilter: 'blur(10px)',
             border: '1px solid rgba(16, 185, 129, 0.3)',
           },
           iconTheme: {
@@ -39,8 +39,9 @@ export function NotificationProvider() {
         error: {
           duration: 5000,
           style: {
-            background: 'rgba(239, 68, 68, 0.9)',
+            background: 'rgba(0, 0, 0, 0.2)',
             color: '#fff',
+            backdropFilter: 'blur(10px)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
           },
           iconTheme: {
@@ -51,8 +52,9 @@ export function NotificationProvider() {
         loading: {
           duration: Infinity,
           style: {
-            background: 'rgba(59, 130, 246, 0.9)',
+            background: 'rgba(0, 0, 0, 0.2)',
             color: '#fff',
+            backdropFilter: 'blur(10px)',
             border: '1px solid rgba(59, 130, 246, 0.3)',
           },
           iconTheme: {

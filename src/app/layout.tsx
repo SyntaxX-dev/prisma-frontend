@@ -5,6 +5,7 @@ import { defaultMetadata } from "@/lib/seo";
 import { LoadingProvider } from "@/contexts/LoadingContext";
 import { LoadingWrapper } from "@/components/LoadingWrapper";
 import { NotificationProvider } from "@/components/NotificationProvider";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,12 +29,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <LoadingProvider>
-          <LoadingWrapper>
-            {children}
-          </LoadingWrapper>
-          <NotificationProvider />
-        </LoadingProvider>
+        <QueryProvider>
+          <LoadingProvider>
+            <LoadingWrapper>
+              {children}
+            </LoadingWrapper>
+            <NotificationProvider />
+          </LoadingProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -276,9 +276,7 @@ html {
   }
 }
 
-* {
-  transition: all 0.2s ease-in-out;
-}
+/* Removed global transition that was interfering with dropdown animations */
 
 ::-webkit-scrollbar {
   width: 8px;
