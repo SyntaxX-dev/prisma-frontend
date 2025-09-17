@@ -2,6 +2,7 @@ import { ChevronDown, Home, BookOpen, Users, MessageCircle, Eye, FileText, Folde
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useNavigationWithLoading } from "../hooks/useNavigationWithLoading";
 
 interface SidebarProps {
   isDark: boolean;
@@ -11,6 +12,7 @@ interface SidebarProps {
 
 export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: SidebarProps) {
   const router = useRouter();
+  const { navigateWithLoading } = useNavigationWithLoading();
   const [collapsedSections, setCollapsedSections] = useState({
     main: false,
     features: false,
@@ -87,7 +89,21 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
 
   const handleNavigation = (item: string) => {
     if (item === "Dashboard") {
-      router.push('/dashboard');
+      navigateWithLoading('/dashboard', 'Carregando Dashboard...');
+    } else if (item === "Cursos") {
+      navigateWithLoading('/courses', 'Carregando Cursos...');
+    } else if (item === "Comunidades") {
+      navigateWithLoading('/courses', 'Carregando Comunidades...');
+    } else if (item === "Chats") {
+      navigateWithLoading('/courses', 'Carregando Chats...');
+    } else if (item === "Vistos atualmente") {
+      navigateWithLoading('/courses', 'Carregando Vistos atualmente...');
+    } else if (item === "Meu resumo") {
+      navigateWithLoading('/courses', 'Carregando Meu resumo...');
+    } else if (item === "Perfil") {
+      navigateWithLoading('/profile', 'Carregando Perfil...');
+    } else if (item === "Configurações") {
+      navigateWithLoading('/settings', 'Carregando Configurações...');
     }
   };
 

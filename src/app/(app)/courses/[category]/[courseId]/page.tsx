@@ -5,22 +5,23 @@ import { Navbar } from "../../../../../components/Navbar";
 import { Sidebar } from "../../../../../components/Sidebar";
 import { CourseDetail } from "../../../../../components/CourseDetail";
 import { useLoading } from "@/contexts/LoadingContext";
-import { usePageLoadComplete } from "@/hooks/usePageLoadComplete";
+import { useVideoPageLoad } from "@/hooks/useVideoPageLoad";
 
 export default function CourseDetailPage() {
   const [isDark, setIsDark] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const { setLoading } = useLoading();
   
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [setLoading]);
-
-  usePageLoadComplete();
+    setIsDataLoading(false);
+  }, []);
+  
+  useVideoPageLoad({
+    waitForVideo: true,
+    videoLoading: isDataLoading,
+    customDelay: 400
+  });
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -75,9 +76,11 @@ export default function CourseDetailPage() {
 
       <div className="relative z-10 flex">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} isVideoPlaying={isVideoPlaying} />
-        <div className="flex-1 pt-16">
+        <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-          <CourseDetail onVideoPlayingChange={setIsVideoPlaying} isVideoPlaying={isVideoPlaying} />
+          <div style={{ marginTop: '80px' }}>
+            <CourseDetail onVideoPlayingChange={setIsVideoPlaying} isVideoPlaying={isVideoPlaying} />
+          </div>
         </div>
       </div>
     </div>

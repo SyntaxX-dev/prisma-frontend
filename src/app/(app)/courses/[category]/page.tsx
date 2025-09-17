@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Navbar } from "../../../../components/Navbar";
 import { Sidebar } from "../../../../components/Sidebar";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
@@ -9,11 +9,12 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 import { useLoading } from "@/contexts/LoadingContext";
-import { usePageLoadComplete } from "@/hooks/usePageLoadComplete";
+import { usePageDataLoad } from "@/hooks/usePageDataLoad";
 
 export default function CourseCategoryPage() {
   const [isDark, setIsDark] = useState(true);
   const [searchInput, setSearchInput] = useState('');
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const router = useRouter();
   const params = useParams();
   const category = params.category as string;
@@ -21,12 +22,14 @@ export default function CourseCategoryPage() {
   const { navigateWithLoading } = useNavigationWithLoading();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
+    setIsDataLoading(false);
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [setLoading]);
+  usePageDataLoad({
+    waitForData: true,
+    dataLoading: isDataLoading,
+    customDelay: 300
+  });
 
   const handleGoBack = () => {
     setLoading(true, 'Voltando...');
@@ -42,8 +45,6 @@ export default function CourseCategoryPage() {
   const handleClearSearch = () => {
     setSearchInput('');
   };
-
-  usePageLoadComplete();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -130,310 +131,310 @@ export default function CourseCategoryPage() {
       thumbnailUrl: string;
       courseId: string;
     }>> = {
-      "nodejs": [
-        {
-          title: "Node.js",
-          instructor: "Diego Fernandes",
-          duration: "40h",
-          level: "Intermediário" as const,
-          year: "2023",
-          technology: "Node.js",
-          icon: "⚡",
-          iconColor: "#10b981",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
-          courseId: "nodejs"
-        },
-        {
-          title: "Node.js Avançado",
-          instructor: "Diego Fernandes",
-          duration: "40h",
-          level: "Intermediário" as const,
-          year: "2025",
-          technology: "Node.js",
-          icon: "⚡",
-          iconColor: "#10b981",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
-          courseId: "nodejs-avancado"
-        },
-        {
-          title: "Node.js para Iniciantes",
-          instructor: "Carlos Silva",
-          duration: "25h",
-          level: "Iniciante" as const,
-          year: "2024",
-          technology: "Node.js",
-          icon: "⚡",
-          iconColor: "#10b981",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
-          courseId: "nodejs-iniciantes"
-        },
-        {
-          title: "APIs REST com Node.js",
-          instructor: "Ana Santos",
-          duration: "30h",
-          level: "Intermediário" as const,
-          year: "2024",
-          technology: "Node.js",
-          icon: "⚡",
-          iconColor: "#10b981",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
-          courseId: "nodejs-apis"
-        }
-      ],
-      "react": [
-        {
-          title: "React Completo",
-          instructor: "Diego Fernandes",
-          duration: "45h",
-          level: "Intermediário" as const,
-          year: "2025",
-          technology: "React",
-          icon: "⚛️",
-          iconColor: "#06b6d4",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1555949963-ff9fe37c3d97?w=400&h=200&fit=crop",
-          courseId: "react-completo"
-        },
-        {
-          title: "React Hooks Avançados",
-          instructor: "Maria Oliveira",
-          duration: "20h",
-          level: "Avançado" as const,
-          year: "2024",
-          technology: "React",
-          icon: "⚛️",
-          iconColor: "#06b6d4",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1555949963-ff9fe37c3d97?w=400&h=200&fit=crop",
-          courseId: "react-hooks"
-        },
-        {
-          title: "React Native com Expo",
-          instructor: "Rodrigo de Castro",
-          duration: "16h",
-          level: "Intermediário" as const,
-          year: "2024",
-          technology: "React Native",
-          icon: "⚛️",
-          iconColor: "#06b6d4",
-          isSubscriber: false,
-          isFree: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop",
-          courseId: "react-native-expo"
-        }
-      ],
-      "python": [
-        {
-          title: "Python com Django",
-          instructor: "Sabrina Silva",
-          duration: "20h",
-          level: "Intermediário" as const,
-          year: "2024",
-          technology: "Python",
-          icon: "🐍",
-          iconColor: "#f59e0b",
-          isSubscriber: false,
-          isFree: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
-          courseId: "python-django"
-        },
-        {
-          title: "Python com Django Avançado",
-          instructor: "Sabrina Silva",
-          duration: "35h",
-          level: "Intermediário" as const,
-          year: "2024",
-          technology: "Python",
-          icon: "🐍",
-          iconColor: "#f59e0b",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
-          courseId: "python-django-avancado"
-        },
-        {
-          title: "Python para Data Science",
-          instructor: "João Pedro",
-          duration: "50h",
-          level: "Avançado" as const,
-          year: "2024",
-          technology: "Python",
-          icon: "🐍",
-          iconColor: "#f59e0b",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
-          courseId: "python-data-science"
-        }
-      ],
-      "mobile": [
-        {
-          title: "Android com Kotlin",
-          instructor: "Bernardo Medeiros",
-          duration: "60h",
-          level: "Avançado" as const,
-          year: "2025",
-          technology: "Kotlin",
-          icon: "📱",
-          iconColor: "#8b5cf6",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop",
-          courseId: "android-kotlin"
-        },
-        {
-          title: "iOS com Swift",
-          instructor: "Mateus Coelho",
-          duration: "45h",
-          level: "Intermediário" as const,
-          year: "2023",
-          technology: "Swift",
-          icon: "🍎",
-          iconColor: "#3b82f6",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=200&fit=crop",
-          courseId: "ios-swift"
-        }
-      ],
-      "soft-skills": [
-        {
-          title: "Soft Skills",
-          instructor: "Diego Fernandes",
-          duration: "30h",
-          level: "Iniciante" as const,
-          year: "2023",
-          technology: "Soft Skills",
-          icon: "💡",
-          iconColor: "#f59e0b",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=200&fit=crop",
-          courseId: "soft-skills"
-        },
-        {
-          title: "Inglês para Devs",
-          instructor: "Oliver Beck",
-          duration: "25h",
-          level: "Intermediário" as const,
-          year: "2025",
-          technology: "English",
-          icon: "🌎",
-          iconColor: "#ef4444",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=200&fit=crop",
-          courseId: "ingles-para-devs"
-        }
-      ],
-      "leadership": [
-        {
-          title: "Tech Lead",
-          instructor: "Ana Santos",
-          duration: "35h",
-          level: "Avançado" as const,
-          year: "2025",
-          technology: "Leadership",
-          icon: "👥",
-          iconColor: "#f97316",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=200&fit=crop",
-          courseId: "tech-lead"
-        }
-      ],
-      "fundamentals": [
-        {
-          title: "Lógica de Programação",
-          instructor: "Carlos Silva",
-          duration: "20h",
-          level: "Iniciante" as const,
-          year: "2024",
-          technology: "Logic",
-          icon: "🧩",
-          iconColor: "#ec4899",
-          isSubscriber: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&h=200&fit=crop",
-          courseId: "logica-programacao"
-        },
-        {
-          title: "Dev Global - Starter Pack",
-          instructor: "Equipe RichPath",
-          duration: "8h",
-          level: "Iniciante" as const,
-          year: "2024",
-          technology: "Starter",
-          icon: "🚀",
-          iconColor: "#06b6d4",
-          isSubscriber: false,
-          isFree: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=200&fit=crop",
-          courseId: "dev-global-starter"
-        },
-        {
-          title: "Discover",
-          instructor: "Alya Dana",
-          duration: "15h",
-          level: "Iniciante" as const,
-          year: "2022",
-          technology: "Discovery",
-          icon: "🔍",
-          iconColor: "#f59e0b",
-          isSubscriber: false,
-          isFree: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop",
-          courseId: "discover"
-        }
-      ],
-      "angular": [
-        {
-          title: "Angular - Curso Introdutório",
-          instructor: "Vinícius de Oliveira",
-          duration: "12h",
-          level: "Iniciante" as const,
-          year: "2023",
-          technology: "Angular",
-          icon: "🅰️",
-          iconColor: "#dc2626",
-          isSubscriber: false,
-          isFree: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1555949963-ff9fe37c3d97?w=400&h=200&fit=crop",
-          courseId: "angular-intro"
-        }
-      ],
-      "go": [
-        {
-          title: "Go - Curso Introdutório",
-          instructor: "Lea Carvalho de Andrade",
-          duration: "18h",
-          level: "Iniciante" as const,
-          year: "2024",
-          technology: "Go",
-          icon: "🐹",
-          iconColor: "#10b981",
-          isSubscriber: false,
-          isFree: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=200&fit=crop",
-          courseId: "go-intro"
-        }
-      ],
-      "csharp": [
-        {
-          title: "C# e .NET - Curso Introdutório",
-          instructor: "Welisson Reily",
-          duration: "22h",
-          level: "Iniciante" as const,
-          year: "2024",
-          technology: ".NET",
-          icon: "#️⃣",
-          iconColor: "#8b5cf6",
-          isSubscriber: false,
-          isFree: true,
-          thumbnailUrl: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=400&h=200&fit=crop",
-          courseId: "csharp-dotnet-intro"
-        }
-      ]
-    };
-    
-    const allCourses = coursesByCategory[category] || [];
-    
+    "nodejs": [
+      {
+        title: "Node.js",
+        instructor: "Diego Fernandes",
+        duration: "40h",
+        level: "Intermediário" as const,
+        year: "2023",
+        technology: "Node.js",
+        icon: "⚡",
+        iconColor: "#10b981",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
+        courseId: "nodejs"
+      },
+      {
+        title: "Node.js Avançado",
+        instructor: "Diego Fernandes",
+        duration: "40h",
+        level: "Intermediário" as const,
+        year: "2025",
+        technology: "Node.js",
+        icon: "⚡",
+        iconColor: "#10b981",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
+        courseId: "nodejs-avancado"
+      },
+      {
+        title: "Node.js para Iniciantes",
+        instructor: "Carlos Silva",
+        duration: "25h",
+        level: "Iniciante" as const,
+        year: "2024",
+        technology: "Node.js",
+        icon: "⚡",
+        iconColor: "#10b981",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
+        courseId: "nodejs-iniciantes"
+      },
+      {
+        title: "APIs REST com Node.js",
+        instructor: "Ana Santos",
+        duration: "30h",
+        level: "Intermediário" as const,
+        year: "2024",
+        technology: "Node.js",
+        icon: "⚡",
+        iconColor: "#10b981",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
+        courseId: "nodejs-apis"
+      }
+    ],
+    "react": [
+      {
+        title: "React Completo",
+        instructor: "Diego Fernandes",
+        duration: "45h",
+        level: "Intermediário" as const,
+        year: "2025",
+        technology: "React",
+        icon: "⚛️",
+        iconColor: "#06b6d4",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1555949963-ff9fe37c3d97?w=400&h=200&fit=crop",
+        courseId: "react-completo"
+      },
+      {
+        title: "React Hooks Avançados",
+        instructor: "Maria Oliveira",
+        duration: "20h",
+        level: "Avançado" as const,
+        year: "2024",
+        technology: "React",
+        icon: "⚛️",
+        iconColor: "#06b6d4",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1555949963-ff9fe37c3d97?w=400&h=200&fit=crop",
+        courseId: "react-hooks"
+      },
+      {
+        title: "React Native com Expo",
+        instructor: "Rodrigo de Castro",
+        duration: "16h",
+        level: "Intermediário" as const,
+        year: "2024",
+        technology: "React Native",
+        icon: "⚛️",
+        iconColor: "#06b6d4",
+        isSubscriber: false,
+        isFree: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop",
+        courseId: "react-native-expo"
+      }
+    ],
+    "python": [
+      {
+        title: "Python com Django",
+        instructor: "Sabrina Silva",
+        duration: "20h",
+        level: "Intermediário" as const,
+        year: "2024",
+        technology: "Python",
+        icon: "🐍",
+        iconColor: "#f59e0b",
+        isSubscriber: false,
+        isFree: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
+        courseId: "python-django"
+      },
+      {
+        title: "Python com Django Avançado",
+        instructor: "Sabrina Silva",
+        duration: "35h",
+        level: "Intermediário" as const,
+        year: "2024",
+        technology: "Python",
+        icon: "🐍",
+        iconColor: "#f59e0b",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
+        courseId: "python-django-avancado"
+      },
+      {
+        title: "Python para Data Science",
+        instructor: "João Pedro",
+        duration: "50h",
+        level: "Avançado" as const,
+        year: "2024",
+        technology: "Python",
+        icon: "🐍",
+        iconColor: "#f59e0b",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=200&fit=crop",
+        courseId: "python-data-science"
+      }
+    ],
+    "mobile": [
+      {
+        title: "Android com Kotlin",
+        instructor: "Bernardo Medeiros",
+        duration: "60h",
+        level: "Avançado" as const,
+        year: "2025",
+        technology: "Kotlin",
+        icon: "📱",
+        iconColor: "#8b5cf6",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=200&fit=crop",
+        courseId: "android-kotlin"
+      },
+      {
+        title: "iOS com Swift",
+        instructor: "Mateus Coelho",
+        duration: "45h",
+        level: "Intermediário" as const,
+        year: "2023",
+        technology: "Swift",
+        icon: "🍎",
+        iconColor: "#3b82f6",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=200&fit=crop",
+        courseId: "ios-swift"
+      }
+    ],
+    "soft-skills": [
+      {
+        title: "Soft Skills",
+        instructor: "Diego Fernandes",
+        duration: "30h",
+        level: "Iniciante" as const,
+        year: "2023",
+        technology: "Soft Skills",
+        icon: "💡",
+        iconColor: "#f59e0b",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=200&fit=crop",
+        courseId: "soft-skills"
+      },
+      {
+        title: "Inglês para Devs",
+        instructor: "Oliver Beck",
+        duration: "25h",
+        level: "Intermediário" as const,
+        year: "2025",
+        technology: "English",
+        icon: "🌎",
+        iconColor: "#ef4444",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=200&fit=crop",
+        courseId: "ingles-para-devs"
+      }
+    ],
+    "leadership": [
+      {
+        title: "Tech Lead",
+        instructor: "Ana Santos",
+        duration: "35h",
+        level: "Avançado" as const,
+        year: "2025",
+        technology: "Leadership",
+        icon: "👥",
+        iconColor: "#f97316",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=200&fit=crop",
+        courseId: "tech-lead"
+      }
+    ],
+    "fundamentals": [
+      {
+        title: "Lógica de Programação",
+        instructor: "Carlos Silva",
+        duration: "20h",
+        level: "Iniciante" as const,
+        year: "2024",
+        technology: "Logic",
+        icon: "🧩",
+        iconColor: "#ec4899",
+        isSubscriber: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&h=200&fit=crop",
+        courseId: "logica-programacao"
+      },
+      {
+        title: "Dev Global - Starter Pack",
+        instructor: "Equipe RichPath",
+        duration: "8h",
+        level: "Iniciante" as const,
+        year: "2024",
+        technology: "Starter",
+        icon: "🚀",
+        iconColor: "#06b6d4",
+        isSubscriber: false,
+        isFree: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=200&fit=crop",
+        courseId: "dev-global-starter"
+      },
+      {
+        title: "Discover",
+        instructor: "Alya Dana",
+        duration: "15h",
+        level: "Iniciante" as const,
+        year: "2022",
+        technology: "Discovery",
+        icon: "🔍",
+        iconColor: "#f59e0b",
+        isSubscriber: false,
+        isFree: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop",
+        courseId: "discover"
+      }
+    ],
+    "angular": [
+      {
+        title: "Angular - Curso Introdutório",
+        instructor: "Vinícius de Oliveira",
+        duration: "12h",
+        level: "Iniciante" as const,
+        year: "2023",
+        technology: "Angular",
+        icon: "🅰️",
+        iconColor: "#dc2626",
+        isSubscriber: false,
+        isFree: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1555949963-ff9fe37c3d97?w=400&h=200&fit=crop",
+        courseId: "angular-intro"
+      }
+    ],
+    "go": [
+      {
+        title: "Go - Curso Introdutório",
+        instructor: "Lea Carvalho de Andrade",
+        duration: "18h",
+        level: "Iniciante" as const,
+        year: "2024",
+        technology: "Go",
+        icon: "🐹",
+        iconColor: "#10b981",
+        isSubscriber: false,
+        isFree: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=200&fit=crop",
+        courseId: "go-intro"
+      }
+    ],
+    "csharp": [
+      {
+        title: "C# e .NET - Curso Introdutório",
+        instructor: "Welisson Reily",
+        duration: "22h",
+        level: "Iniciante" as const,
+        year: "2024",
+        technology: ".NET",
+        icon: "#️⃣",
+        iconColor: "#8b5cf6",
+        isSubscriber: false,
+        isFree: true,
+        thumbnailUrl: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=400&h=200&fit=crop",
+        courseId: "csharp-dotnet-intro"
+      }
+    ]
+  };
+
+  const allCourses = coursesByCategory[category] || [];
+
     if (!searchInput.trim()) return allCourses;
 
     const query = searchInput.toLowerCase().trim();
@@ -505,10 +506,10 @@ export default function CourseCategoryPage() {
 
       <div className="relative z-10 flex">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-        <div className="flex-1 pt-16">
+        <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-          <div className="p-6 ml-10 pt-10">
+          <div className="p-6 ml-10 pt-6" style={{ marginTop: '80px' }}>
             <div className="mb-8">
               <Button
                 variant="ghost"
@@ -524,32 +525,32 @@ export default function CourseCategoryPage() {
               <p className="text-white/60 text-lg mb-6">{currentCategory.description}</p>
 
               <div className="flex items-center gap-4 mb-6">
-                <div className="flex-1 relative">
-                  <input
-                    type="text"
-                    placeholder={`Pesquisar em ${currentCategory.title}...`}
-                    value={searchInput}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-4 py-3 text-sm outline-none border border-white/20 focus:border-green-400 transition-colors pr-10"
-                  />
-                  {searchInput && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClearSearch}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg w-8 h-8 p-0"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-                <Button
-                  onClick={() => {
-                  }}
-                  className="bg-green-500 hover:bg-green-600 text-black px-6 py-[1.4rem] rounded-[1rem] font-medium"
-                >
-                  Buscar
-                </Button>
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      placeholder={`Pesquisar em ${currentCategory.title}...`}
+                      value={searchInput}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-4 py-3 text-sm outline-none border border-white/20 focus:border-green-400 transition-colors pr-10"
+                    />
+                    {searchInput && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClearSearch}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg w-8 h-8 p-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => {
+                    }}
+                    className="bg-green-500 hover:bg-green-600 text-black px-6 py-[1.4rem] rounded-[1rem] font-medium"
+                  >
+                    Buscar
+                  </Button>
               </div>
             </div>
 
@@ -557,7 +558,7 @@ export default function CourseCategoryPage() {
               {filteredCourses.length > 0 ? (
                 filteredCourses.map((course, index) => (
                   <div
-                    key={index}
+                      key={index}
                     onClick={() => navigateWithLoading(`/courses/${category}/${course.courseId}`, `Carregando ${course.title}...`)}
                     className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 cursor-pointer hover:bg-white/10 transition-all duration-300 group"
                   >
@@ -604,7 +605,7 @@ export default function CourseCategoryPage() {
                         )}
                       </div>
                     </div>
-                  </div>
+                </div>
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">

@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Search, X } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLoading } from "@/contexts/LoadingContext";
-import { usePageLoadComplete } from "@/hooks/usePageLoadComplete";
+import { usePageDataLoad } from "@/hooks/usePageDataLoad";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
@@ -32,17 +32,12 @@ function CourseSearchContent() {
   }, [searchQuery]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
-
     return () => {
-      clearTimeout(timer);
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [setLoading]);
+  }, []);
 
   const handleGoBack = () => {
     setLoading(true, 'Voltando...');
@@ -82,7 +77,11 @@ function CourseSearchContent() {
     router.push('/courses');
   };
 
-  usePageLoadComplete();
+  usePageDataLoad({
+    waitForData: true,
+    dataLoading: isLoading,
+    customDelay: 300
+  });
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -161,10 +160,10 @@ function CourseSearchContent() {
 
       <div className="relative z-10 flex">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-        <div className="flex-1 pt-16">
+        <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-          <div className="p-6 ml-10 pt-10">
+          <div className="p-6 ml-10 pt-6" style={{ marginTop: '80px' }}>
             <div className="mb-8">
               <Button
                 variant="ghost"

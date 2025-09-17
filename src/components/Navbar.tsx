@@ -21,6 +21,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
 import { useStreak } from "../hooks/useStreak";
 import { useSearch } from "../hooks/useSearch";
+import { useNavigationWithLoading } from "../hooks/useNavigationWithLoading";
 import { StreakIcon } from "./StreakIcon";
 import { StreakCalendar } from "./StreakCalendar";
 import { ProfileCompletionModal } from "./ProfileCompletionModal";
@@ -41,6 +42,7 @@ export function Navbar({}: NavbarProps) {
   const { user, logout } = useAuth();
   const { streakData, isStreakActive } = useStreak();
   const { searchQuery, updateSearch, clearSearch, isSearching, isLoading } = useSearch();
+  const { navigateWithLoading } = useNavigationWithLoading();
 
   const hasNotification = user?.notification?.hasNotification || false;
   const notificationData = user?.notification;
@@ -53,9 +55,17 @@ export function Navbar({}: NavbarProps) {
 
   const handleNavClick = (item: string) => {
     if (item === "Dashboard") {
-      router.push('/dashboard');
+      navigateWithLoading('/dashboard', 'Carregando Dashboard...');
     } else if (item === "Cursos") {
-      router.push('/courses');
+      navigateWithLoading('/courses', 'Carregando Cursos...');
+    } else if (item === "Trilhas") {
+      navigateWithLoading('/courses', 'Carregando Trilhas...');
+    } else if (item === "Certificados") {
+      navigateWithLoading('/courses', 'Carregando Certificados...');
+    } else if (item === "Minha Conta") {
+      navigateWithLoading('/profile', 'Carregando Perfil...');
+    } else if (item === "Suporte") {
+      navigateWithLoading('/settings', 'Carregando Suporte...');
     }
   };
 
@@ -69,7 +79,15 @@ export function Navbar({}: NavbarProps) {
   };
 
   return (
-    <div className={`fixed top-0 right-0 z-50 w-[calc(100vw-20%)] p-4 transition-all duration-300 bg-transparent`}>
+    <div 
+      data-navbar
+      className={`fixed top-0 right-0 z-50 w-[calc(100vw-20%)] p-4 transition-all duration-300 bg-transparent`} 
+      style={{ 
+        transform: 'translateZ(0)', 
+        backfaceVisibility: 'hidden',
+        willChange: 'transform'
+      }}
+    >
       <div className="flex items-center justify-between gap-4 relative w-full">
 
         <div className="bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
@@ -292,14 +310,14 @@ export function Navbar({}: NavbarProps) {
             <DropdownMenuLabel className="text-gray-300 font-medium px-3 py-2">Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/20" />
             <DropdownMenuItem
-              onClick={() => router.push('/profile')}
+              onClick={() => navigateWithLoading('/profile', 'Carregando Perfil...')}
               className="text-gray-300 hover:text-gray-100 rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-white/30"
             >
               <User className="mr-3 h-4 w-4 text-[#B3E240]" />
               <span>Perfil</span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => router.push('/settings')}
+              onClick={() => navigateWithLoading('/settings', 'Carregando Configurações...')}
               className="text-gray-300 hover:text-gray-100 rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-white/30"
             >
               <Settings className="mr-3 h-4 w-4 text-[#B3E240]" />

@@ -320,6 +320,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
             <>
               <iframe
                 key={iframeKey}
+                data-video-iframe
                 width="100%"
                 height="100%"
                 src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=${localVideoPlaying ? 1 : 0}&mute=${false}&rel=0&modestbranding=1&controls=1&enablejsapi=1`}

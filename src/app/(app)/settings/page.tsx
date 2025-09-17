@@ -5,6 +5,7 @@ import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
 import { useAuth } from "../../../hooks/useAuth";
 import { useNotifications } from "../../../hooks/useNotifications";
+import { usePageDataLoad } from "@/hooks/usePageDataLoad";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Switch } from "../../../components/ui/switch";
@@ -26,9 +27,13 @@ import {
 
 function SettingsContent() {
   const [isDark, setIsDark] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const { showSuccess, showError } = useNotifications();
+
+  usePageDataLoad({
+    waitForData: false,
+    customDelay: 200
+  });
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -52,13 +57,6 @@ function SettingsContent() {
     analytics: true
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -98,13 +96,6 @@ function SettingsContent() {
     showError('Funcionalidade em desenvolvimento');
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-lg">Carregando configurações...</div>
-      </div>
-    );
-  }
 
   return (
     <div className={`min-h-screen ${isDark ? 'dark' : ''}`}>
@@ -154,10 +145,10 @@ function SettingsContent() {
 
       <div className="relative z-10 flex">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-        <div className="flex-1 pt-16">
+        <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-          <div className="p-6 ml-10 pt-10">
+          <div className="p-6 ml-10 pt-6" style={{ marginTop: '80px' }}>
             <div className="mb-8">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center text-3xl">

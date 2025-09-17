@@ -6,7 +6,7 @@ import { Sidebar } from "../../../components/Sidebar";
 import { useAuth } from "../../../hooks/useAuth";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 import { useLoading } from "@/contexts/LoadingContext";
-import { usePageLoadComplete } from "@/hooks/usePageLoadComplete";
+import { usePageDataLoad } from "@/hooks/usePageDataLoad";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -19,16 +19,12 @@ function CoursesContent() {
   const { navigateWithLoading } = useNavigationWithLoading();
   const router = useRouter();
   
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, [setLoading]);
 
-  usePageLoadComplete();
+  usePageDataLoad({
+    waitForData: true,
+    dataLoading: isLoading,
+    customDelay: 300
+  });
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -169,10 +165,10 @@ function CoursesContent() {
 
       <div className="relative z-10 flex">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-        <div className="flex-1 pt-16">
+        <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
           
-          <div className="p-6 ml-10 pt-10">
+          <div className="p-6 ml-10 pt-6" style={{ marginTop: '80px' }}>
             <div className="mb-8">
               <h1 className="text-white text-3xl font-bold mb-2">Cursos</h1>
               <p className="text-white/60 text-lg">Explore nossa biblioteca completa de cursos de tecnologia</p>

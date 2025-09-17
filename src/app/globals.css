@@ -184,6 +184,19 @@
 
 html {
   font-size: var(--font-size);
+  scroll-behavior: smooth;
+}
+
+/* Melhorar performance de scroll e evitar "trancos" */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Otimizar rendering para elementos fixos */
+.fixed {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 ::-webkit-scrollbar {

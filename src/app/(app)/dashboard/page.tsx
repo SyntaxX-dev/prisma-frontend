@@ -5,6 +5,7 @@ import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
 import { LearningDashboard } from "../../../components/LearningDashboard";
 import { useAuth } from "../../../hooks/useAuth";
+import { usePageDataLoad } from "@/hooks/usePageDataLoad";
 
 function DashboardContent() {
 	const [isDark, setIsDark] = useState(true);
@@ -13,6 +14,11 @@ function DashboardContent() {
 	const toggleTheme = () => {
 		setIsDark(!isDark);
 	};
+
+	usePageDataLoad({
+		waitForData: false,
+		customDelay: 200
+	});
 
 	useEffect(() => {
 
@@ -90,9 +96,11 @@ function DashboardContent() {
 
 			<div className="relative z-10 flex">
 				<Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-				<div className="flex-1 pt-16">
+				<div className="flex-1">
 					<Navbar isDark={isDark} toggleTheme={toggleTheme} />
-					<LearningDashboard userName={user?.nome} />
+					<div style={{ marginTop: '80px' }}>
+						<LearningDashboard userName={user?.nome} />
+					</div>
 				</div>
 			</div>
 		</div>
