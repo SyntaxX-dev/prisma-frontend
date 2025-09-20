@@ -19,7 +19,7 @@ export function usePageDataLoad(options: UsePageDataLoadOptions = {}) {
   const {
     waitForData = false,
     dataLoading = false,
-    customDelay = 200
+    customDelay = 0
   } = options;
 
   useEffect(() => {

@@ -1,12 +1,11 @@
 import { cn } from "@/lib/utils";
 
-interface LoadingProps {
-  type?: "page" | "login";
+interface CoffeeLoaderProps {
   size?: "sm" | "md" | "lg";
   className?: string;
 }
 
-export function Loading({ type = "page", size = "md", className }: LoadingProps) {
+export function CoffeeLoader({ size = "md", className }: CoffeeLoaderProps) {
   const sizeClasses = {
     sm: "scale-75",
     md: "scale-100", 
@@ -23,4 +22,3 @@ export function Loading({ type = "page", size = "md", className }: LoadingProps)
     />
   );
 }
-

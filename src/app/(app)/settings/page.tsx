@@ -32,7 +32,7 @@ function SettingsContent() {
 
   usePageDataLoad({
     waitForData: false,
-    customDelay: 200
+    customDelay: 0
   });
 
   const [notifications, setNotifications] = useState({

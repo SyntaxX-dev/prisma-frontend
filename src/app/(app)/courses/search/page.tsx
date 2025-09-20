@@ -80,7 +80,7 @@ function CourseSearchContent() {
   usePageDataLoad({
     waitForData: true,
     dataLoading: isLoading,
-    customDelay: 300
+    customDelay: 0
   });
 
   const toggleTheme = () => {

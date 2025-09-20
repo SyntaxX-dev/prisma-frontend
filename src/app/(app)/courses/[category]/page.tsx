@@ -28,7 +28,7 @@ export default function CourseCategoryPage() {
   usePageDataLoad({
     waitForData: true,
     dataLoading: isDataLoading,
-    customDelay: 300
+    customDelay: 0
   });
 
   const handleGoBack = () => {

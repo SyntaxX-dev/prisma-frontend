@@ -1,19 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { Navbar } from "../../../../../components/Navbar";
-import { Sidebar } from "../../../../../components/Sidebar";
-import { CourseDetail } from "../../../../../components/CourseDetail";
+import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/Sidebar";
+import { CourseDetail } from "@/components/CourseDetail";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useVideoPageLoad } from "@/hooks/useVideoPageLoad";
+import { useParams } from "next/navigation";
 
 export default function CourseDetailPage() {
-  const params = useParams();
   const [isDark, setIsDark] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const { setLoading } = useLoading();
+  const params = useParams();
+  const subCourseId = params.subCourseId as string;
   
   useEffect(() => {
     setIsDataLoading(false);
@@ -81,7 +82,7 @@ export default function CourseDetailPage() {
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
           <div style={{ marginTop: '80px' }}>
-            <CourseDetail onVideoPlayingChange={setIsVideoPlaying} isVideoPlaying={isVideoPlaying} subCourseId={params.courseId as string} />
+            <CourseDetail onVideoPlayingChange={setIsVideoPlaying} isVideoPlaying={isVideoPlaying} subCourseId={subCourseId} />
           </div>
         </div>
       </div>

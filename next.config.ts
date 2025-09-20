@@ -5,6 +5,30 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Configuração de imagens para permitir domínios externos
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'yt3.ggpht.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
+
   // Permitir acesso de dispositivos na rede local
   allowedDevOrigins: ['192.168.0.101'],
   // Configurar variáveis de ambiente para desenvolvimento

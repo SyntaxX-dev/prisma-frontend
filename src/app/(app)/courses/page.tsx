@@ -10,6 +10,16 @@ import { usePageDataLoad } from "@/hooks/usePageDataLoad";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../components/ui/button";
 import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+
+interface Course {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 function CoursesContent() {
   const [isDark, setIsDark] = useState(true);
@@ -23,98 +33,51 @@ function CoursesContent() {
   usePageDataLoad({
     waitForData: true,
     dataLoading: isLoading,
-    customDelay: 300
+    customDelay: 0
   });
 
   const toggleTheme = () => {
     setIsDark(!isDark);
   };
 
-  const categories = [
-    {
-      id: "nodejs",
-      title: "Node.js",
-      description: "Desenvolva aplicações backend escaláveis com Node.js",
-      icon: "⚡",
-      color: "#10b981",
-      courseCount: 4
-    },
-    {
-      id: "react",
-      title: "React",
-      description: "Crie interfaces modernas e interativas com React",
-      icon: "⚛️",
-      color: "#06b6d4",
-      courseCount: 3
-    },
-    {
-      id: "python",
-      title: "Python",
-      description: "Aprenda Python para web, data science e automação",
-      icon: "🐍",
-      color: "#f59e0b",
-      courseCount: 3
-    },
-    {
-      id: "mobile",
-      title: "Desenvolvimento Mobile",
-      description: "Desenvolva aplicativos para Android e iOS",
-      icon: "📱",
-      color: "#8b5cf6",
-      courseCount: 2
-    },
-    {
-      id: "soft-skills",
-      title: "Soft Skills",
-      description: "Desenvolva habilidades interpessoais e comunicação",
-      icon: "💡",
-      color: "#f59e0b",
-      courseCount: 2
-    },
-    {
-      id: "leadership",
-      title: "Liderança",
-      description: "Aprenda a liderar equipes e projetos de tecnologia",
-      icon: "👥",
-      color: "#f97316",
-      courseCount: 1
-    },
-    {
-      id: "fundamentals",
-      title: "Fundamentos",
-      description: "Aprenda os conceitos básicos da programação",
-      icon: "🧩",
-      color: "#ec4899",
-      courseCount: 3
-    },
-    {
-      id: "angular",
-      title: "Angular",
-      description: "Desenvolva aplicações web robustas com Angular",
-      icon: "🅰️",
-      color: "#dc2626",
-      courseCount: 1
-    },
-    {
-      id: "go",
-      title: "Go",
-      description: "Aprenda Go para desenvolvimento backend moderno",
-      icon: "🐹",
-      color: "#10b981",
-      courseCount: 1
-    },
-    {
-      id: "csharp",
-      title: "C# e .NET",
-      description: "Desenvolva aplicações com C# e .NET",
-      icon: "#️⃣",
-      color: "#8b5cf6",
-      courseCount: 1
-    }
-  ];
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCategoryClick = (categoryId: string) => {
-    navigateWithLoading(`/courses/${categoryId}`, `Carregando cursos de ${categoryId}...`);
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setCoursesLoading(true);
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          setCourses(data.data);
+        } else {
+          setError('Erro ao carregar cursos');
+        }
+      } catch (err) {
+        console.error('Erro ao carregar cursos:', err);
+        setError('Erro ao conectar com o servidor');
+      } finally {
+        setCoursesLoading(false);
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchCourses();
+    }
+  }, [user]);
+
+  const handleCourseClick = (courseId: string, courseName: string) => {
+    navigateWithLoading(`/courses/${courseId}`, `Carregando curso ${courseName}...`);
   };
 
   return (
@@ -174,36 +137,53 @@ function CoursesContent() {
               <p className="text-white/60 text-lg">Explore nossa biblioteca completa de cursos de tecnologia</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {categories.map((category) => (
-                <div
-                  key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
-                  className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 cursor-pointer hover:bg-white/10 transition-all duration-300 group"
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                      style={{ backgroundColor: category.color }}
-                    >
-                      {category.icon}
+            {coursesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-white text-lg">Carregando cursos...</div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-red-400 text-lg">{error}</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {courses.map((course) => (
+                  <div
+                    key={course.id}
+                    onClick={() => handleCourseClick(course.id, course.name)}
+                    className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 cursor-pointer hover:bg-white/10 transition-all duration-300 group"
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-white/10">
+                        {course.imageUrl ? (
+                          <Image 
+                            src={course.imageUrl} 
+                            alt={course.name} 
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-2xl">📚</div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">
+                          {course.name}
+                        </h3>
+                        <p className="text-white/60 text-sm">
+                          Curso disponível
+                        </p>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-green-400 group-hover:translate-x-1 transition-all" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">
-                        {category.title}
-                      </h3>
-                      <p className="text-white/60 text-sm">
-                        {category.courseCount} curso{category.courseCount !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-green-400 group-hover:translate-x-1 transition-all" />
+                    <p className="text-white/70 text-sm leading-relaxed">
+                      {course.description}
+                    </p>
                   </div>
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    {category.description}
-                  </p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

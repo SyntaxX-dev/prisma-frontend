@@ -1,13 +1,9 @@
 import { Card, CardContent, CardHeader } from "./ui/card";
-import { Clock, BarChart, User } from "lucide-react";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 
 interface CourseCardProps {
   title: string;
-  instructor: string;
-  duration: string;
-  level: "Iniciante" | "Intermediário" | "Avançado";
-  year: string;
+  description?: string;
   technology: string;
   icon: string;
   isSubscriber: boolean;
@@ -21,9 +17,7 @@ interface CourseCardProps {
 
 export function CourseCard({
   title,
-  instructor,
-  duration,
-  level,
+  description,
   icon,
   isSubscriber,
   isFree = false,
@@ -79,12 +73,12 @@ export function CourseCard({
   
   const href = isInCategoryPage 
     ? `/courses/${category}/${displayCourseId}`
-    : `/courses/${category}`;
+    : `/course/${propCourseId}/sub-courses`;
 
   const handleClick = () => {
     const message = isInCategoryPage 
       ? `Carregando ${title}...`
-      : `Carregando cursos de ${category}...`;
+      : `Carregando ${title}...`;
     
     navigateWithLoading(href, message);
   };
@@ -125,21 +119,11 @@ export function CourseCard({
             {title}
           </h3>
 
-          <div className="flex items-center gap-2 mb-3">
-            <User className="w-3 h-3 text-white/60" />
-            <span className="text-white/70 text-xs">{instructor}</span>
-          </div>
-
-          <div className="flex items-center justify-between text-white/60 text-xs">
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{duration}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <BarChart className="w-3 h-3" />
-              <span>{level}</span>
-            </div>
-          </div>
+          {description && (
+            <p className="text-white/70 text-xs leading-relaxed line-clamp-3 text-left">
+              {description}
+            </p>
+          )}
         </CardContent>
       </Card>
     </button>

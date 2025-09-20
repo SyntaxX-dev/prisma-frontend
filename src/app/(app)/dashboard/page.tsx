@@ -17,7 +17,7 @@ function DashboardContent() {
 
 	usePageDataLoad({
 		waitForData: false,
-		customDelay: 200
+		customDelay: 0
 	});
 
 	useEffect(() => {

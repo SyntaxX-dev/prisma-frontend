@@ -20,7 +20,7 @@ export function useVideoPageLoad(options: UseVideoPageLoadOptions = {}) {
   const {
     waitForVideo = false,
     videoLoading = false,
-    customDelay = 300
+    customDelay = 0
   } = options;
 
   useEffect(() => {

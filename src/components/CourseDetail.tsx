@@ -1,11 +1,17 @@
-import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, Star, ChevronDown, ArrowLeft } from "lucide-react";
+import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, ChevronDown, ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useRouter } from "next/navigation";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
+import { Loading } from "./ui/loading";
+import { markVideoCompleted } from "@/api/progress/mark-video-completed";
+import { getVideosWithProgress } from "@/api/videos/get-videos-with-progress";
+import type { VideoWithProgress } from "@/api/videos/get-videos-with-progress";
+import type { CourseProgress } from "@/types/progress";
+import Image from "next/image";
 
 interface Video {
   id: string;
@@ -15,6 +21,14 @@ interface Video {
   locked: boolean;
   description?: string;
   youtubeId?: string;
+  thumbnailUrl?: string;
+  url?: string;
+  order?: number;
+  channelTitle?: string;
+  channelThumbnailUrl?: string;
+  viewCount?: number;
+  isCompleted?: boolean;
+  completedAt?: string | null;
 }
 
 interface Module {
@@ -29,24 +43,102 @@ interface Module {
 interface CourseDetailProps {
   onVideoPlayingChange?: (isPlaying: boolean) => void;
   isVideoPlaying?: boolean;
+  subCourseId?: string;
 }
 
-export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: CourseDetailProps) {
+// Helper function to format duration from seconds to h:mm:ss or mm:ss
+const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  } else {
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+};
+
+export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, subCourseId }: CourseDetailProps) {
   const { navigateWithLoading } = useNavigationWithLoading();
   const router = useRouter();
-  const [selectedVideo, setSelectedVideo] = useState<Video>({
-    id: "1",
-    title: "Introdução ao Node.js e seu ecossistema",
-    duration: "15:30",
-    watched: false,
-    locked: false,
-    description: "Nesta aula, exploramos a história do Node.js, desde sua fundação em 2009 até o presente. Discutimos o impacto dos IDEs, como IntelliJ e Android Studio, e como Kotlin surgiu como uma alternativa moderna ao Java.",
-    youtubeId: "hHM-hr9q4mo"
-  });
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
   const [localVideoPlaying, setLocalVideoPlaying] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [lastFetchedSubCourseId, setLastFetchedSubCourseId] = useState<string | null>(null);
+  const [courseProgress, setCourseProgress] = useState<CourseProgress | null>(null);
+  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+  const fetchingRef = useRef(false);
+
+  // Fetch videos from API when subCourseId is provided
+  useEffect(() => {
+    const fetchVideos = async () => {
+      if (!subCourseId) return;
+
+      // Prevent concurrent requests
+      if (fetchingRef.current) return;
+
+      // Avoid refetching if we already have data for this subCourseId
+      if (lastFetchedSubCourseId === subCourseId && videos.length > 0) return;
+
+      try {
+        fetchingRef.current = true;
+        setLoading(true);
+
+        const data = await getVideosWithProgress(subCourseId);
+
+        if (data.success && data.data) {
+          // Transform API data to match our Video interface
+          const transformedVideos = data.data.map((video: VideoWithProgress) => ({
+            id: video.id,
+            title: video.title,
+            duration: formatDuration(video.duration),
+            watched: video.isCompleted,
+            locked: false,
+            description: video.description || "Descrição não disponível para esta aula.",
+            youtubeId: video.videoId,
+            thumbnailUrl: video.thumbnailUrl,
+            url: video.url,
+            order: video.order,
+            channelTitle: video.channelTitle,
+            channelThumbnailUrl: video.channelThumbnailUrl,
+            viewCount: video.viewCount,
+            isCompleted: video.isCompleted,
+            completedAt: video.completedAt
+          }));
+
+          setVideos(transformedVideos);
+          setLastFetchedSubCourseId(subCourseId);
+          if (transformedVideos.length > 0) {
+            setSelectedVideo(transformedVideos[0]);
+          }
+
+          if (data.courseProgress) {
+            setCourseProgress({
+              subCourseId: subCourseId,
+              subCourseName: "Curso",
+              totalVideos: data.courseProgress.totalVideos,
+              completedVideos: data.courseProgress.completedVideos,
+              progressPercentage: data.courseProgress.progressPercentage,
+              isCompleted: data.courseProgress.completedVideos === data.courseProgress.totalVideos
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar vídeos:', err);
+      } finally {
+        setLoading(false);
+        fetchingRef.current = false;
+      }
+    };
+
+    fetchVideos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subCourseId]);
 
   useEffect(() => {
     if (onVideoPlayingChange) {
@@ -60,224 +152,18 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
     }
   }, [localVideoPlaying]);
 
-  const course = {
-    title: "Node.js Avançado",
-    description: "Domine Node.js e construa aplicações escaláveis com as melhores práticas do mercado.",
-    instructor: {
-      name: "Diego Fernandes",
-      role: "CTO @ Rocketseat",
-      avatar: "https://github.com/diego3g.png"
-    },
-    rating: 4.9,
-    totalRatings: 2847,
-    students: 15234,
-    duration: "40h",
-    level: "Intermediário",
-    lastUpdated: "Janeiro 2025",
-    tags: ["Backend", "API REST", "TypeScript", "Docker"],
-    progress: 15
-  };
 
-  const modules: Module[] = [
+  // Create module from API videos
+  const modules: Module[] = videos.length > 0 ? [
     {
       id: "1",
-      title: "Os primeiros passos com Node.js",
-      totalDuration: "01:07:32",
-      videosCount: 10,
-      completedVideos: 2,
-      videos: [
-        {
-          id: "1",
-          title: "Introdução ao Node.js e seu ecossistema",
-          duration: "15:30",
-          watched: true,
-          locked: false,
-          youtubeId: "hHM-hr9q4mo",
-          description: "Nesta aula, exploramos a história do Node.js e seu impacto no desenvolvimento backend moderno."
-        },
-        {
-          id: "2",
-          title: "História do Node.js e JavaScript",
-          duration: "10:05:30",
-          watched: true,
-          locked: false,
-          youtubeId: "PkZNo7MFNFg",
-          description: "Conheça a evolução do JavaScript desde o browser até o servidor com Node.js."
-        },
-        {
-          id: "3",
-          title: "Instalação IDE: VSCode",
-          duration: "05:21:45",
-          watched: false,
-          locked: false,
-          youtubeId: "SqcY0GlETPk",
-          description: "Configure o VSCode com as melhores extensões para desenvolvimento Node.js."
-        },
-        {
-          id: "4",
-          title: "Hello World em Node.js",
-          duration: "08:15:01",
-          watched: false,
-          locked: false,
-          youtubeId: "rfscVS0vtbw",
-          description: "Crie seu primeiro programa em Node.js e entenda os conceitos básicos."
-        },
-        {
-          id: "5",
-          title: "Mutabilidade e Imutabilidade",
-          duration: "12:04:26",
-          watched: false,
-          locked: false,
-          youtubeId: "8jLOx1hD3_o",
-          description: "Aprenda sobre conceitos fundamentais de programação funcional em JavaScript."
-        },
-        {
-          id: "6",
-          title: "Tipos de Dados Básicos",
-          duration: "09:07:52",
-          watched: false,
-          locked: false,
-          youtubeId: "RBSGKlAvoiM",
-          description: "Explore os tipos de dados primitivos e objetos em JavaScript."
-        },
-        {
-          id: "7",
-          title: "Classes de Tipos de Dados Básicos",
-          duration: "08:09:10",
-          watched: false,
-          locked: false,
-          youtubeId: "lkIFF4maKMU",
-          description: "Aprofunde-se em classes e protótipos no JavaScript moderno."
-        },
-        {
-          id: "8",
-          title: "Operadores Lógicos",
-          duration: "07:12:47",
-          watched: false,
-          locked: false,
-          youtubeId: "cuHDQhDhvPE",
-          description: "Domine os operadores lógicos e sua aplicação prática."
-        },
-        {
-          id: "9",
-          title: "Operadores Matemáticos",
-          duration: "06:12:42",
-          watched: false,
-          locked: false,
-          youtubeId: "hHM-hr9q4mo",
-          description: "Trabalhe com operações matemáticas e precisão numérica em JavaScript."
-        },
-        {
-          id: "10",
-          title: "Complementando Hello World",
-          duration: "10:54:46",
-          watched: false,
-          locked: false,
-          youtubeId: "PkZNo7MFNFg",
-          description: "Evolua seu primeiro programa adicionando funcionalidades avançadas."
-        }
-      ]
-    },
-    {
-      id: "2",
-      title: "A base para a construção de lógicas",
-      totalDuration: "01:24:35",
-      videosCount: 8,
-      completedVideos: 0,
-      videos: [
-        {
-          id: "11",
-          title: "Estruturas de Controle: if/else",
-          duration: "12:00",
-          watched: false,
-          locked: false,
-          youtubeId: "SqcY0GlETPk",
-          description: "Aprenda a controlar o fluxo do seu programa com condicionais."
-        },
-        {
-          id: "12",
-          title: "Estruturas de Repetição: for",
-          duration: "15:20",
-          watched: false,
-          locked: false,
-          youtubeId: "rfscVS0vtbw",
-          description: "Domine loops for e suas variações em JavaScript."
-        },
-        {
-          id: "13",
-          title: "Estruturas de Repetição: while",
-          duration: "13:45",
-          watched: false,
-          locked: false,
-          youtubeId: "8jLOx1hD3_o",
-          description: "Entenda quando e como usar loops while e do-while."
-        }
-      ]
-    },
-    {
-      id: "3",
-      title: "Conhecendo as funções e tipos",
-      totalDuration: "03:21:11",
-      videosCount: 23,
-      completedVideos: 0,
-      videos: [
-        {
-          id: "14",
-          title: "Introdução às Funções",
-          duration: "18:30",
-          watched: false,
-          locked: true,
-          youtubeId: "RBSGKlAvoiM",
-          description: "Fundamentos de funções em JavaScript e Node.js."
-        },
-        {
-          id: "15",
-          title: "Arrow Functions",
-          duration: "22:15",
-          watched: false,
-          locked: true,
-          youtubeId: "lkIFF4maKMU",
-          description: "Sintaxe moderna e casos de uso de arrow functions."
-        },
-        {
-          id: "16",
-          title: "Callbacks e Promises",
-          duration: "25:45",
-          watched: false,
-          locked: true,
-          youtubeId: "cuHDQhDhvPE",
-          description: "Programação assíncrona com callbacks e promises."
-        }
-      ]
-    },
-    {
-      id: "4",
-      title: "Outras funcionalidades interessantes",
-      totalDuration: "02:08",
-      videosCount: 5,
-      completedVideos: 0,
-      videos: [
-        {
-          id: "17",
-          title: "Async/Await e Promises",
-          duration: "25:00",
-          watched: false,
-          locked: true,
-          youtubeId: "hHM-hr9q4mo",
-          description: "Sintaxe moderna para programação assíncrona."
-        },
-        {
-          id: "18",
-          title: "Event Emitters",
-          duration: "20:30",
-          watched: false,
-          locked: true,
-          youtubeId: "PkZNo7MFNFg",
-          description: "Padrão de eventos em Node.js."
-        }
-      ]
+      title: "Vídeos do Curso",
+      totalDuration: `${videos.length} vídeo${videos.length !== 1 ? 's' : ''}`,
+      videosCount: videos.length,
+      completedVideos: videos.filter(v => v.isCompleted).length,
+      videos: videos.sort((a, b) => (a.order || 0) - (b.order || 0))
     }
-  ];
+  ] : [];
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules(prev => {
@@ -298,6 +184,127 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
     }
   };
 
+  const handleMarkVideoComplete = async (video: Video) => {
+    if (!video.youtubeId || isMarkingComplete) return;
+
+    const isCompleted = !video.isCompleted;
+
+    // Optimistic update - update UI immediately
+    setVideos(prevVideos =>
+      prevVideos.map(v =>
+        v.id === video.id
+          ? {
+            ...v,
+            isCompleted: isCompleted,
+            watched: isCompleted,
+            completedAt: isCompleted ? new Date().toISOString() : null
+          }
+          : v
+      )
+    );
+
+    // Update selected video if it's the same
+    if (selectedVideo?.id === video.id) {
+      setSelectedVideo((prev: Video | null) => prev ? {
+        ...prev,
+        isCompleted: isCompleted,
+        watched: isCompleted,
+        completedAt: isCompleted ? new Date().toISOString() : null
+      } : null);
+    }
+
+    // Update course progress optimistically
+    setCourseProgress((prev: CourseProgress | null) => {
+      if (!prev) return null;
+
+      const newCompletedVideos = isCompleted
+        ? prev.completedVideos + 1
+        : prev.completedVideos - 1;
+
+      const newProgressPercentage = Math.round((newCompletedVideos / prev.totalVideos) * 100);
+
+      return {
+        ...prev,
+        completedVideos: newCompletedVideos,
+        progressPercentage: newProgressPercentage,
+        isCompleted: newCompletedVideos === prev.totalVideos
+      };
+    });
+
+    // Make API call in background
+    try {
+      setIsMarkingComplete(true);
+      const response = await markVideoCompleted({
+        videoId: video.youtubeId,
+        isCompleted: isCompleted
+      });
+
+      // Update with real data from server
+      if (response.success && response.data.courseProgress) {
+        setCourseProgress((prev: CourseProgress | null) => prev ? {
+          ...prev,
+          totalVideos: response.data.courseProgress.totalVideos,
+          completedVideos: response.data.courseProgress.completedVideos,
+          progressPercentage: response.data.courseProgress.progressPercentage,
+          isCompleted: response.data.courseProgress.completedVideos === response.data.courseProgress.totalVideos
+        } : null);
+      }
+    } catch (error) {
+      console.error('Erro ao marcar vídeo como concluído:', error);
+
+      // Revert optimistic update on error
+      setVideos(prevVideos =>
+        prevVideos.map(v =>
+          v.id === video.id
+            ? {
+              ...v,
+              isCompleted: !isCompleted,
+              watched: !isCompleted,
+              completedAt: !isCompleted ? new Date().toISOString() : null
+            }
+            : v
+        )
+      );
+
+      if (selectedVideo?.id === video.id) {
+        setSelectedVideo((prev: Video | null) => prev ? {
+          ...prev,
+          isCompleted: !isCompleted,
+          watched: !isCompleted,
+          completedAt: !isCompleted ? new Date().toISOString() : null
+        } : null);
+      }
+
+      // Revert course progress
+      setCourseProgress((prev: CourseProgress | null) => {
+        if (!prev) return null;
+
+        const revertedCompletedVideos = !isCompleted
+          ? prev.completedVideos + 1
+          : prev.completedVideos - 1;
+
+        const revertedProgressPercentage = Math.round((revertedCompletedVideos / prev.totalVideos) * 100);
+
+        return {
+          ...prev,
+          completedVideos: revertedCompletedVideos,
+          progressPercentage: revertedProgressPercentage,
+          isCompleted: revertedCompletedVideos === prev.totalVideos
+        };
+      });
+    } finally {
+      setIsMarkingComplete(false);
+    }
+  };
+
+  if (loading || !selectedVideo) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <Loading size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className={`relative flex flex-1 h-[calc(100vh-4rem)] bg-transparent overflow-hidden transition-all duration-300 ease-in-out ${isVideoPlaying ? 'ml-0 right-16' : 'ml-4 right-0'}`}>
       <div className="relative z-10 flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent">
@@ -316,20 +323,20 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
           </Button>
         </div>
         <div className="relative bg-black aspect-video shadow-2xl rounded-4xl">
-          {selectedVideo.youtubeId ? (
+          {selectedVideo?.youtubeId ? (
             <>
               <iframe
                 key={iframeKey}
                 data-video-iframe
                 width="100%"
                 height="100%"
-                src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=${localVideoPlaying ? 1 : 0}&mute=${false}&rel=0&modestbranding=1&controls=1&enablejsapi=1`}
-                title={selectedVideo.title}
+                src={`https://www.youtube.com/embed/${selectedVideo?.youtubeId}?autoplay=${localVideoPlaying ? 1 : 0}&mute=${false}&rel=0&modestbranding=1&controls=1&enablejsapi=1`}
+                title={selectedVideo?.title}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="absolute inset-0 w-full h-full rounded-3xl"
-                id={`youtube-player-${selectedVideo.id}`}
+                id={`youtube-player-${selectedVideo?.id}`}
               />
 
               {!localVideoPlaying && (
@@ -383,27 +390,27 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
 
         <div className={`transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-2 lg:p-4' : 'p-6 lg:p-8'}`}>
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white mb-4">{selectedVideo.title}</h1>
+            <h1 className="text-2xl font-bold text-white mb-4">{selectedVideo?.title || "Carregando..."}</h1>
 
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-white/60" />
-                  <span className="text-white/70">{selectedVideo.duration}</span>
+                  <span className="text-white/70">{selectedVideo?.duration || "0:00"}</span>
                 </div>
                 <Badge
-                  className={`${selectedVideo.watched
-                      ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                      : 'bg-white/10 text-white/60 border-white/20'
+                  className={`${selectedVideo?.isCompleted
+                    ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                    : 'bg-white/10 text-white/60 border-white/20'
                     } backdrop-blur-sm`}
                 >
-                  {selectedVideo.watched ? (
+                  {selectedVideo?.isCompleted ? (
                     <>
                       <CheckCircle className="w-4 h-4 mr-1" />
-                      Assistida
+                      Concluída
                     </>
                   ) : (
-                    'Não assistida'
+                    'Não concluída'
                   )}
                 </Badge>
               </div>
@@ -424,9 +431,15 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                   <Share2 className="w-5 h-5" />
                 </Button>
                 <Button
-                  className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer"
+                  onClick={() => selectedVideo && handleMarkVideoComplete(selectedVideo)}
+                  disabled={!selectedVideo?.youtubeId}
+                  className={`font-semibold shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${selectedVideo?.isCompleted
+                    ? 'bg-green-500 hover:bg-green-600 text-black hover:shadow-green-500/25'
+                    : 'bg-white/20 hover:bg-white/30 text-white/70 hover:text-white'
+                    }`}
                 >
-                  Finalizar Aula <CheckCircle className="w-4 h-4 ml-2" />
+                  {selectedVideo?.isCompleted ? 'Concluída' : 'Concluir'}
+                  <CheckCircle className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </div>
@@ -460,51 +473,32 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
               <div className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-white mb-3">Sobre esta aula</h2>
+
+                  {selectedVideo?.channelTitle && (
+                    <div className="flex items-center gap-3 mb-4 p-3 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10">
+                      {selectedVideo?.channelThumbnailUrl && (
+                        <Image
+                          src={selectedVideo.channelThumbnailUrl}
+                          alt={selectedVideo.channelTitle || "Canal"}
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      )}
+                      <div className="flex flex-col">
+                        <span className="text-white/80 font-medium text-sm">{selectedVideo.channelTitle}</span>
+                        {selectedVideo?.viewCount && (
+                          <span className="text-white/50 text-xs">{selectedVideo.viewCount.toLocaleString()} visualizações</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-white/70 leading-relaxed">
-                    {selectedVideo.description || "Descrição não disponível para esta aula."}
+                    {selectedVideo?.description || "Descrição não disponível para esta aula."}
                   </p>
                 </div>
 
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:bg-white/[0.07] transition-colors">
-                  <h3 className="text-white font-semibold mb-4">Instrutor</h3>
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={course.instructor.avatar}
-                      alt={course.instructor.name}
-                      className="w-14 h-14 rounded-full ring-2 ring-white/20"
-                    />
-                    <div>
-                      <p className="text-white font-medium">{course.instructor.name}</p>
-                      <p className="text-white/60 text-sm">{course.instructor.role}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:bg-white/[0.07] transition-colors">
-                  <h3 className="text-white font-semibold mb-4">Informações do Curso</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-white/60 text-sm mb-1">Duração Total</p>
-                      <p className="text-white font-medium">{course.duration}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/60 text-sm mb-1">Nível</p>
-                      <p className="text-white font-medium">{course.level}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/60 text-sm mb-1">Alunos</p>
-                      <p className="text-white font-medium">{course.students.toLocaleString('pt-BR')}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/60 text-sm mb-1">Avaliação</p>
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-white font-medium">{course.rating}</span>
-                        <span className="text-white/60 text-sm">({course.totalRatings})</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </TabsContent>
 
@@ -544,13 +538,22 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
           <h2 className="text-white font-semibold mb-2">Conteúdo</h2>
           <div className="flex items-center justify-between text-sm">
             <span className="text-white/60">Progresso do curso</span>
-            <span className="text-green-400 font-medium">{course.progress}%</span>
+            <span className="text-green-400 font-medium">
+              {courseProgress ? `${courseProgress.progressPercentage}%` : '0%'}
+            </span>
           </div>
           <div className="w-full bg-white/10 rounded-full h-2 mt-2 overflow-hidden">
             <div
               className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-500 shadow-lg shadow-green-500/30"
-              style={{ width: `${course.progress}%` }}
+              style={{ width: `${courseProgress?.progressPercentage || 0}%` }}
             />
+          </div>
+          <div className="text-xs text-white/50 mt-2">
+            {courseProgress ? (
+              `${courseProgress.completedVideos} de ${courseProgress.totalVideos} vídeos concluídos`
+            ) : (
+              '0 de 0 vídeos concluídos'
+            )}
           </div>
         </div>
 
@@ -597,7 +600,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                             <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
                               <Lock className="w-3.5 h-3.5 text-white/40" />
                             </div>
-                          ) : video.watched ? (
+                          ) : video.isCompleted ? (
                             <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center">
                               <CheckCircle className="w-4 h-4 text-green-400" />
                             </div>
@@ -609,8 +612,8 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false }: C
                         </div>
                         <div className="flex-1 text-left">
                           <p className={`text-sm ${selectedVideo?.id === video.id
-                              ? 'text-green-400 font-medium'
-                              : 'text-white/80'
+                            ? 'text-green-400 font-medium'
+                            : 'text-white/80'
                             } line-clamp-1`}>
                             {video.title}
                           </p>

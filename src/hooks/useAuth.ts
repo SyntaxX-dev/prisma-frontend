@@ -20,10 +20,15 @@ export function useAuth() {
         const state = getAuthState();
         
         if (state.isAuthenticated && state.token) {
-          try {
-            const userProfile = await getProfile();
-            setAuthState({ ...state, user: userProfile });
-          } catch {
+          // Only call getProfile if we don't have user data in localStorage
+          if (!state.user) {
+            try {
+              const userProfile = await getProfile();
+              setAuthState({ ...state, user: userProfile });
+            } catch {
+              setAuthState(state);
+            }
+          } else {
             setAuthState(state);
           }
         } else {
