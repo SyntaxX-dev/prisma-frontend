@@ -35,6 +35,7 @@ export default function CoursePage() {
   const [isDark, setIsDark] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
   const [subCourses, setSubCourses] = useState<SubCourse[]>([]);
   const [course, setCourse] = useState<Course | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,12 @@ export default function CoursePage() {
 
       try {
         setIsDataLoading(true);
+
+        // Show loading after 2 seconds
+        const loadingTimeout = setTimeout(() => {
+          setShowLoading(true);
+        }, 2000);
+
         const token = localStorage.getItem('auth_token');
 
         // Fetch all courses first to find the specific course
@@ -91,11 +98,15 @@ export default function CoursePage() {
         } else {
           setError('Erro ao carregar subcursos');
         }
+
+        // Clear loading timeout if data loads before 2 seconds
+        clearTimeout(loadingTimeout);
       } catch (err) {
         console.error('Erro ao carregar dados do curso:', err);
         setError('Erro ao conectar com o servidor');
       } finally {
         setIsDataLoading(false);
+        setShowLoading(false);
       }
     };
 
@@ -245,7 +256,11 @@ export default function CoursePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {isDataLoading ? (
                 <div className="col-span-full flex items-center justify-center py-12">
-                  <div className="text-white text-lg">Carregando subcursos...</div>
+                  {showLoading ? (
+                    <div className="text-white text-lg">Carregando subcursos...</div>
+                  ) : (
+                    <div className="text-white/60 text-sm">Preparando conteúdo...</div>
+                  )}
                 </div>
               ) : filteredSubCourses.length > 0 ? (
                 filteredSubCourses.map((subCourse) => (

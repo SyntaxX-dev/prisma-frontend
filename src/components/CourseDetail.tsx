@@ -71,7 +71,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [loading, setLoading] = useState(false);
   const [lastFetchedSubCourseId, setLastFetchedSubCourseId] = useState<string | null>(null);
   const [courseProgress, setCourseProgress] = useState<CourseProgress | null>(null);
-  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const fetchingRef = useRef(false);
 
   // Fetch videos from API when subCourseId is provided
@@ -185,7 +184,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   };
 
   const handleMarkVideoComplete = async (video: Video) => {
-    if (!video.youtubeId || isMarkingComplete) return;
+    if (!video.youtubeId) return;
 
     const isCompleted = !video.isCompleted;
 
@@ -233,7 +232,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
     // Make API call in background
     try {
-      setIsMarkingComplete(true);
       const response = await markVideoCompleted({
         videoId: video.youtubeId,
         isCompleted: isCompleted
@@ -292,8 +290,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
           isCompleted: revertedCompletedVideos === prev.totalVideos
         };
       });
-    } finally {
-      setIsMarkingComplete(false);
     }
   };
 
