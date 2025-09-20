@@ -29,7 +29,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '@/hooks/useNotifications';
-import { Loading } from './ui/loading';
 
 
 
@@ -360,10 +359,7 @@ export function AuthScreen() {
                               className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                               {isLoading ? (
-                                <>
-                                  <Loading type="login" size="sm" className="text-black" />
-                                  <span>Entrando...</span>
-                                </>
+                                <span>Entrando...</span>
                               ) : (
                                 <motion.span
                                   initial={false}
@@ -559,10 +555,7 @@ export function AuthScreen() {
                             className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {isLoading ? (
-                              <>
-                                <Loading type="login" size="sm" className="text-black" />
-                                <span>Criando conta...</span>
-                              </>
+                              <span>Criando conta...</span>
                             ) : (
                               <motion.span
                                 initial={false}
