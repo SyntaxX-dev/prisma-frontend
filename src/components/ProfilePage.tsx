@@ -240,7 +240,6 @@ export function ProfilePage() {
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Dados do formulário:', formData);
         handleModalClose();
     };
 
@@ -260,7 +259,6 @@ export function ProfilePage() {
 
     const handleBasicInfoSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Dados das informações básicas:', basicInfoData);
         setIsBasicInfoModalOpen(false);
     };
 
@@ -285,11 +283,7 @@ export function ProfilePage() {
     };
 
     const handleFocusSubmit = () => {
-        console.log('Foco selecionado:', {
-            focus: selectedFocus,
-            course: selectedCourse,
-            contest: selectedContest
-        });
+        // TODO: Implement focus data submission
         handleFocusModalClose();
     };
 
@@ -302,7 +296,6 @@ export function ProfilePage() {
 
     const handleLinksSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Dados dos links:', linksData);
         setIsLinksModalOpen(false);
     };
 
@@ -328,7 +321,6 @@ export function ProfilePage() {
     };
 
     const handleAboutSubmit = () => {
-        console.log('Sobre atualizado:', aboutText);
         handleAboutModalClose();
     };
 

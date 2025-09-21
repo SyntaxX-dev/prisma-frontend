@@ -53,7 +53,6 @@ export function VerifyCodeScreen() {
                 throw new Error('Código inválido');
             }
         } catch (error: unknown) {
-            console.error('Erro ao verificar código:', error);
 
         } finally {
             setIsLoading(false);

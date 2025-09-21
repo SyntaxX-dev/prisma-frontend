@@ -19,7 +19,6 @@ export function getAuthState(): AuthState {
     try {
       user = JSON.parse(userStr);
     } catch (error) {
-      console.error('Erro ao parsear perfil do usuário:', error);
       localStorage.removeItem('user_profile');
     }
   }

@@ -73,7 +73,6 @@ export function ProfileCompletionModal({
             setContestOptions(contests);
             setCollegeOptions(courses);
         } catch (error) {
-            console.error('Erro ao carregar opções:', error);
         }
     };
 
@@ -114,7 +113,6 @@ export function ProfileCompletionModal({
             toast.success(`Perfil completado! Badge ${badge} atribuído.`);
             onClose();
         } catch (error) {
-            console.error('Erro ao atualizar perfil:', error);
             toast.error('Erro ao atualizar perfil');
         } finally {
             setIsLoading(false);

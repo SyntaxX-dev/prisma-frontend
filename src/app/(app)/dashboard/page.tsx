@@ -43,7 +43,6 @@ function DashboardContent() {
 
 			window.history.replaceState({}, document.title, '/dashboard');
 
-			console.log('Usuário logado via Google:', { name, email });
 		}
 	}, [login]);
 

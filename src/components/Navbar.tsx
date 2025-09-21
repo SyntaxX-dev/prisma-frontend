@@ -79,11 +79,11 @@ export function Navbar({}: NavbarProps) {
   };
 
   return (
-    <div 
+    <div
       data-navbar
-      className={`fixed top-0 right-0 z-50 w-[calc(100vw-20%)] p-4 transition-all duration-300 bg-transparent`} 
-      style={{ 
-        transform: 'translateZ(0)', 
+      className={`fixed top-0 right-0 z-50 w-[calc(100vw-20%)] p-4 transition-all duration-300 bg-transparent`}
+      style={{
+        transform: 'translateZ(0)',
         backfaceVisibility: 'hidden',
         willChange: 'transform'
       }}
@@ -275,7 +275,6 @@ export function Navbar({}: NavbarProps) {
             <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors">
               <div className="flex items-center gap-3">
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src="/api/placeholder/32/32" />
                   <AvatarFallback className="bg-[#B3E240] text-black">
                     {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </AvatarFallback>

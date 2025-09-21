@@ -34,7 +34,6 @@ export default function GoogleCallbackPage() {
 
             router.push('/dashboard');
 
-            console.log('Usuário logado via Google:', { name, email });
         } else {
 
             router.push('/auth/login');

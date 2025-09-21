@@ -55,7 +55,6 @@ export function LearningDashboard({ userName }: { userName?: string }) {
           setError('Erro ao carregar cursos');
         }
       } catch (err) {
-        console.error('Erro ao carregar cursos:', err);
         setError('Erro ao conectar com o servidor');
       } finally {
         setCoursesLoading(false);
@@ -84,9 +83,9 @@ export function LearningDashboard({ userName }: { userName?: string }) {
         </div>
       ) : courses.length === 0 ? (
         <div className="flex flex-col items-center justify-center ">
-          <Image 
-            src="/defaultwithoutcourses.png" 
-            alt="Nenhum curso disponível" 
+          <Image
+            src="/defaultwithoutcourses.png"
+            alt="Nenhum curso disponível"
             width={1000}
             height={1000}
             className="mb-6 opacity-80"

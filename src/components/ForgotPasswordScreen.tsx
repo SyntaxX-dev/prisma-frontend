@@ -39,7 +39,6 @@ export function ForgotPasswordScreen() {
 
             setIsSubmitted(true);
         } catch (error: unknown) {
-            console.error('Erro ao solicitar reset de senha:', error);
 
         } finally {
             setIsLoading(false);

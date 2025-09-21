@@ -8,9 +8,9 @@ import { useRouter } from "next/navigation";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 import { Loading } from "./ui/loading";
 import { markVideoCompleted } from "@/api/progress/mark-video-completed";
-import { getVideosWithProgress } from "@/api/videos/get-videos-with-progress";
-import type { VideoWithProgress } from "@/api/videos/get-videos-with-progress";
+import { getModulesBySubCourse, getModuleVideos } from "@/api/modules/get-modules-by-subcourse";
 import type { CourseProgress } from "@/types/progress";
+import type { Video as ModuleVideo, ModuleProgress } from "@/api/modules/get-modules-by-subcourse";
 import Image from "next/image";
 
 interface Video {
@@ -29,9 +29,11 @@ interface Video {
   viewCount?: number;
   isCompleted?: boolean;
   completedAt?: string | null;
+  moduleId?: string;
+  videoId?: string;
 }
 
-interface Module {
+interface ModuleDisplay {
   id: string;
   title: string;
   totalDuration: string;
@@ -46,7 +48,6 @@ interface CourseDetailProps {
   subCourseId?: string;
 }
 
-// Helper function to format duration from seconds to h:mm:ss or mm:ss
 const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -60,6 +61,7 @@ const formatDuration = (seconds: number): string => {
 };
 
 export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, subCourseId }: CourseDetailProps) {
+
   const { navigateWithLoading } = useNavigationWithLoading();
   const router = useRouter();
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
@@ -73,70 +75,108 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [courseProgress, setCourseProgress] = useState<CourseProgress | null>(null);
   const fetchingRef = useRef(false);
 
-  // Fetch videos from API when subCourseId is provided
   useEffect(() => {
-    const fetchVideos = async () => {
-      if (!subCourseId) return;
+    const fetchModules = async () => {
+      if (!subCourseId) {
+        return;
+      }
 
-      // Prevent concurrent requests
-      if (fetchingRef.current) return;
+      if (fetchingRef.current) {
+        return;
+      }
 
-      // Avoid refetching if we already have data for this subCourseId
-      if (lastFetchedSubCourseId === subCourseId && videos.length > 0) return;
+      if (lastFetchedSubCourseId === subCourseId && videos.length > 0) {
+        return;
+      }
 
       try {
         fetchingRef.current = true;
         setLoading(true);
 
-        const data = await getVideosWithProgress(subCourseId);
+        const modulesData = await getModulesBySubCourse(subCourseId);
 
-        if (data.success && data.data) {
-          // Transform API data to match our Video interface
-          const transformedVideos = data.data.map((video: VideoWithProgress) => ({
-            id: video.id,
-            title: video.title,
-            duration: formatDuration(video.duration),
-            watched: video.isCompleted,
-            locked: false,
-            description: video.description || "Descrição não disponível para esta aula.",
-            youtubeId: video.videoId,
-            thumbnailUrl: video.thumbnailUrl,
-            url: video.url,
-            order: video.order,
-            channelTitle: video.channelTitle,
-            channelThumbnailUrl: video.channelThumbnailUrl,
-            viewCount: video.viewCount,
-            isCompleted: video.isCompleted,
-            completedAt: video.completedAt
-          }));
+        if (modulesData.success && modulesData.data) {
+          const allVideos: Video[] = [];
+          let totalVideos = 0;
+          let completedVideos = 0;
+          const moduleProgressMap = new Map<string, ModuleProgress>();
 
-          setVideos(transformedVideos);
+          for (const moduleData of modulesData.data) {
+            try {
+              const videosData = await getModuleVideos(moduleData.id);
+
+              if (videosData.success && videosData.data && videosData.data.videos) {
+                if (!Array.isArray(videosData.data.videos)) {
+                  continue;
+                }
+
+                if (videosData.data.videos.length === 0) {
+                  continue;
+                }
+
+                const moduleVideos = videosData.data.videos.map((video: ModuleVideo): Video => ({
+                  id: video.id,
+                  title: video.title,
+                  duration: formatDuration(video.duration || 0),
+                  watched: video.progress?.isCompleted || false,
+                  locked: false,
+                  description: video.description || "Descrição não disponível para esta aula.",
+                  youtubeId: video.videoId,
+                  thumbnailUrl: video.thumbnailUrl,
+                  url: video.url,
+                  order: video.order || 0,
+                  channelTitle: video.channelTitle,
+                  channelThumbnailUrl: video.channelThumbnailUrl,
+                  viewCount: video.viewCount,
+                  isCompleted: video.progress?.isCompleted || false,
+                  completedAt: video.progress?.completedAt || null,
+                  moduleId: video.moduleId,
+                  videoId: video.videoId
+                }));
+
+                allVideos.push(...moduleVideos);
+
+                if (videosData.data.moduleProgress) {
+                  totalVideos += videosData.data.moduleProgress.totalVideos;
+                  completedVideos += videosData.data.moduleProgress.completedVideos;
+                  moduleProgressMap.set(moduleData.id, videosData.data.moduleProgress);
+                } else {
+                  totalVideos += moduleVideos.length;
+                  completedVideos += moduleVideos.filter(v => v.isCompleted).length;
+                }
+              }
+            } catch (error) {
+            }
+          }
+
+          setVideos(allVideos);
           setLastFetchedSubCourseId(subCourseId);
-          if (transformedVideos.length > 0) {
-            setSelectedVideo(transformedVideos[0]);
+
+          if (allVideos.length > 0) {
+            setSelectedVideo(allVideos[0]);
+          } else {
+            setSelectedVideo(null);
           }
 
-          if (data.courseProgress) {
-            setCourseProgress({
-              subCourseId: subCourseId,
-              subCourseName: "Curso",
-              totalVideos: data.courseProgress.totalVideos,
-              completedVideos: data.courseProgress.completedVideos,
-              progressPercentage: data.courseProgress.progressPercentage,
-              isCompleted: data.courseProgress.completedVideos === data.courseProgress.totalVideos
-            });
-          }
+          const progressPercentage = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+
+          setCourseProgress({
+            subCourseId: subCourseId,
+            subCourseName: "Curso",
+            totalVideos,
+            completedVideos,
+            progressPercentage,
+            isCompleted: completedVideos === totalVideos
+          });
         }
       } catch (err) {
-        console.error('Erro ao carregar vídeos:', err);
       } finally {
         setLoading(false);
         fetchingRef.current = false;
       }
     };
 
-    fetchVideos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchModules();
   }, [subCourseId]);
 
   useEffect(() => {
@@ -152,17 +192,48 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   }, [localVideoPlaying]);
 
 
-  // Create module from API videos
-  const modules: Module[] = videos.length > 0 ? [
-    {
-      id: "1",
-      title: "Vídeos do Curso",
-      totalDuration: `${videos.length} vídeo${videos.length !== 1 ? 's' : ''}`,
-      videosCount: videos.length,
-      completedVideos: videos.filter(v => v.isCompleted).length,
-      videos: videos.sort((a, b) => (a.order || 0) - (b.order || 0))
+  const modules: ModuleDisplay[] = (() => {
+    if (videos.length === 0) return [];
+
+    const hasModuleIds = videos.some(v => v.moduleId && v.moduleId !== 'default-module');
+
+    if (hasModuleIds) {
+      const moduleMap = new Map<string, Video[]>();
+      videos.forEach(video => {
+        const moduleId = video.moduleId || 'default-module';
+        if (!moduleMap.has(moduleId)) {
+          moduleMap.set(moduleId, []);
+        }
+        moduleMap.get(moduleId)!.push(video);
+      });
+
+      return Array.from(moduleMap.entries()).map(([moduleId, moduleVideos], index) => {
+        const videosCount = moduleVideos.length;
+        const completedVideos = moduleVideos.filter(v => v.isCompleted).length;
+
+        return {
+          id: moduleId,
+          title: `Módulo ${index + 1}`,
+          totalDuration: `${videosCount} vídeo${videosCount !== 1 ? 's' : ''}`,
+          videosCount,
+          completedVideos,
+          videos: moduleVideos.sort((a, b) => (a.order || 0) - (b.order || 0))
+        };
+      });
+    } else {
+      const totalVideos = videos.length;
+      const completedVideos = videos.filter(v => v.isCompleted).length;
+
+      return [{
+        id: "1",
+        title: "Vídeos do Curso",
+        totalDuration: `${totalVideos} vídeo${totalVideos !== 1 ? 's' : ''}`,
+        videosCount: totalVideos,
+        completedVideos,
+        videos: videos.sort((a, b) => (a.order || 0) - (b.order || 0))
+      }];
     }
-  ] : [];
+  })();
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules(prev => {
@@ -184,11 +255,10 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   };
 
   const handleMarkVideoComplete = async (video: Video) => {
-    if (!video.youtubeId) return;
+    if (!video.videoId) return;
 
     const isCompleted = !video.isCompleted;
 
-    // Optimistic update - update UI immediately
     setVideos(prevVideos =>
       prevVideos.map(v =>
         v.id === video.id
@@ -202,7 +272,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       )
     );
 
-    // Update selected video if it's the same
     if (selectedVideo?.id === video.id) {
       setSelectedVideo((prev: Video | null) => prev ? {
         ...prev,
@@ -212,7 +281,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       } : null);
     }
 
-    // Update course progress optimistically
     setCourseProgress((prev: CourseProgress | null) => {
       if (!prev) return null;
 
@@ -230,14 +298,12 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       };
     });
 
-    // Make API call in background
     try {
       const response = await markVideoCompleted({
-        videoId: video.youtubeId,
+        videoId: video.videoId,
         isCompleted: isCompleted
       });
 
-      // Update with real data from server
       if (response.success && response.data.courseProgress) {
         setCourseProgress((prev: CourseProgress | null) => prev ? {
           ...prev,
@@ -248,9 +314,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         } : null);
       }
     } catch (error) {
-      console.error('Erro ao marcar vídeo como concluído:', error);
-
-      // Revert optimistic update on error
       setVideos(prevVideos =>
         prevVideos.map(v =>
           v.id === video.id
@@ -273,7 +336,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         } : null);
       }
 
-      // Revert course progress
       setCourseProgress((prev: CourseProgress | null) => {
         if (!prev) return null;
 
@@ -293,10 +355,21 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     }
   };
 
-  if (loading || !selectedVideo) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
         <Loading size="lg" />
+      </div>
+    );
+  }
+
+  if (!loading && videos.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center text-white">
+          <h2 className="text-xl font-semibold mb-2">Nenhum vídeo encontrado</h2>
+          <p className="text-white/60">Este subcurso não possui vídeos disponíveis.</p>
+        </div>
       </div>
     );
   }
@@ -428,7 +501,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 </Button>
                 <Button
                   onClick={() => selectedVideo && handleMarkVideoComplete(selectedVideo)}
-                  disabled={!selectedVideo?.youtubeId}
+                  disabled={!selectedVideo?.videoId}
                   className={`font-semibold shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${selectedVideo?.isCompleted
                     ? 'bg-green-500 hover:bg-green-600 text-black hover:shadow-green-500/25'
                     : 'bg-white/20 hover:bg-white/30 text-white/70 hover:text-white'

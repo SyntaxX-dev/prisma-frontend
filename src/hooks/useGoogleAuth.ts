@@ -22,9 +22,7 @@ export function useGoogleAuth() {
         
         try {
           localStorage.setItem('auth_token', token);
-          console.log('🔍 Google OAuth: Chamando auth/profile...');
           const userProfile = await getProfile();
-          console.log('✅ Google OAuth: Profile recebido:', userProfile);
           login(token, userProfile, true);
 
           window.history.replaceState({}, document.title, '/dashboard');
@@ -52,7 +50,7 @@ export function useGoogleAuth() {
   }, [login, router]);
 
   const handleGoogleLogin = () => {
-    hasProcessed.current = false; // Reset para permitir novo login
+    hasProcessed.current = false;
     window.location.href = 'https://prisma-backend-production-4c22.up.railway.app/auth/google';
   };
 

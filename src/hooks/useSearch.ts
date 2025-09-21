@@ -31,7 +31,6 @@ export function useSearch() {
     }
 
     setIsLoading(true);
-    console.log('Setting isLoading to true');
 
     debounceRef.current = setTimeout(() => {
       const params = new URLSearchParams();
@@ -40,7 +39,6 @@ export function useSearch() {
       const newUrl = `/courses/search?${params.toString()}`;
       router.push(newUrl);
       setIsLoading(false);
-      console.log('Setting isLoading to false');
     }, 500);
   }, [router, searchParams]);
 

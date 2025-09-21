@@ -20,7 +20,6 @@ export function useAuth() {
         const state = getAuthState();
         
         if (state.isAuthenticated && state.token) {
-          // Only call getProfile if we don't have user data in localStorage
           if (!state.user) {
             try {
               const userProfile = await getProfile();
@@ -52,9 +51,9 @@ export function useAuth() {
     localStorage.setItem('remember_me', rememberMe.toString());
     
     if (rememberMe) {
-      localStorage.setItem('auth_expires', (Date.now() + 30 * 24 * 60 * 60 * 1000).toString()); // 30 dias
+      localStorage.setItem('auth_expires', (Date.now() + 30 * 24 * 60 * 60 * 1000).toString());
     } else {
-      localStorage.setItem('auth_expires', (Date.now() + 24 * 60 * 60 * 1000).toString()); // 24 horas
+      localStorage.setItem('auth_expires', (Date.now() + 24 * 60 * 60 * 1000).toString());
     }
     
     showSuccess(`Bem-vindo, ${user.name || user.nome}!`);

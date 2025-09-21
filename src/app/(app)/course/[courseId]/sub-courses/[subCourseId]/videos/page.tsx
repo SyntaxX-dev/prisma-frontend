@@ -6,20 +6,30 @@ import { Sidebar } from "@/components/Sidebar";
 import { CourseDetail } from "@/components/CourseDetail";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useVideoPageLoad } from "@/hooks/useVideoPageLoad";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CourseDetailPage() {
   const [isDark, setIsDark] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const { setLoading } = useLoading();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const params = useParams();
   const subCourseId = params.subCourseId as string;
-  
+
   useEffect(() => {
     setIsDataLoading(false);
   }, []);
-  
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
   useVideoPageLoad({
     waitForVideo: true,
     videoLoading: isDataLoading,
@@ -30,6 +40,23 @@ export default function CourseDetailPage() {
     setIsDark(!isDark);
   };
 
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-white">Verificando autenticação...</div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-white">Redirecionando para login...</div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isDark ? 'dark' : ''}`}>

@@ -102,7 +102,6 @@ export default function CoursePage() {
         // Clear loading timeout if data loads before 2 seconds
         clearTimeout(loadingTimeout);
       } catch (err) {
-        console.error('Erro ao carregar dados do curso:', err);
         setError('Erro ao conectar com o servidor');
       } finally {
         setIsDataLoading(false);

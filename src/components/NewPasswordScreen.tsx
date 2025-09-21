@@ -57,7 +57,6 @@ export function NewPasswordScreen() {
 
             setIsSuccess(true);
         } catch (error: unknown) {
-            console.error('Erro ao resetar senha:', error);
         } finally {
             setIsLoading(false);
         }

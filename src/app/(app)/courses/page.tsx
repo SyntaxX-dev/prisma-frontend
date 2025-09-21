@@ -28,7 +28,7 @@ function CoursesContent() {
   const { setLoading } = useLoading();
   const { navigateWithLoading } = useNavigationWithLoading();
   const router = useRouter();
-  
+
 
   usePageDataLoad({
     waitForData: true,
@@ -56,14 +56,13 @@ function CoursesContent() {
           }
         });
         const data = await response.json();
-        
+
         if (data.success) {
           setCourses(data.data);
         } else {
           setError('Erro ao carregar cursos');
         }
       } catch (err) {
-        console.error('Erro ao carregar cursos:', err);
         setError('Erro ao conectar com o servidor');
       } finally {
         setCoursesLoading(false);
@@ -130,7 +129,7 @@ function CoursesContent() {
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-          
+
           <div className="p-6 ml-10 pt-6" style={{ marginTop: '80px' }}>
             <div className="mb-8">
               <h1 className="text-white text-3xl font-bold mb-2">Cursos</h1>
@@ -156,9 +155,9 @@ function CoursesContent() {
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-white/10">
                         {course.imageUrl ? (
-                          <Image 
-                            src={course.imageUrl} 
-                            alt={course.name} 
+                          <Image
+                            src={course.imageUrl}
+                            alt={course.name}
                             width={48}
                             height={48}
                             className="w-full h-full object-cover"

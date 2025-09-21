@@ -32,7 +32,6 @@ export function DashboardContent() {
         }
       } catch (err) {
         setError('Erro ao carregar cursos');
-        console.error('Error fetching courses:', err);
       } finally {
         setLoading(false);
       }
@@ -69,8 +68,8 @@ export function DashboardContent() {
           {courses.map((course) => (
             <Card key={course.id} className="bg-white/10 backdrop-blur-md border-white/20 p-6 text-white hover:bg-white/15 transition-colors cursor-pointer">
               <div className="mb-4">
-                <img 
-                  src={course.imageUrl} 
+                <img
+                  src={course.imageUrl}
                   alt={course.name}
                   className="w-full h-40 object-cover rounded-lg mb-4"
                   onError={(e) => {

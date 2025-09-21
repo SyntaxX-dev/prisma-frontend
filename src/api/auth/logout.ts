@@ -7,7 +7,6 @@ export async function logoutUser(): Promise<void> {
       localStorage.removeItem('reset_email');
     }
   } catch (error) {
-    console.error('Erro ao fazer logout:', error);
     throw error;
   }
 }

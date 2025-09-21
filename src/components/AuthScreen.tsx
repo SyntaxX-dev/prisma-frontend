@@ -113,12 +113,11 @@ export function AuthScreen() {
 
       const userProfile = await getProfile();
 
-      login(token, userProfile, false); // Registro sempre false para lembrar
+      login(token, userProfile, false);
 
       updateToast(loadingToast, 'Conta criada com sucesso!', 'success');
       router.push('/dashboard');
     } catch (error: unknown) {
-      console.error('Erro no registro:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro ao criar conta';
       updateToast(loadingToast, errorMessage, 'error');
     } finally {
