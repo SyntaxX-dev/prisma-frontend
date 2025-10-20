@@ -25,6 +25,8 @@ import { useNavigationWithLoading } from "../hooks/useNavigationWithLoading";
 import { StreakIcon } from "./StreakIcon";
 import { StreakCalendar } from "./StreakCalendar";
 import { ProfileCompletionModal } from "./ProfileCompletionModal";
+import { ClientOnly } from "./ClientOnly";
+import { getEmailValue } from "@/lib/utils";
 
 interface NavbarProps {
   isDark?: boolean;
@@ -79,15 +81,16 @@ export function Navbar({}: NavbarProps) {
   };
 
   return (
-    <div
-      data-navbar
-      className={`fixed top-0 right-0 z-50 w-[calc(100vw-20%)] p-4 transition-all duration-300 bg-transparent`}
-      style={{
-        transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden',
-        willChange: 'transform'
-      }}
-    >
+    <ClientOnly>
+      <div
+        data-navbar
+        className={`fixed top-0 right-0 z-50 w-[calc(100vw-20%)] p-4 transition-all duration-300 bg-transparent`}
+        style={{
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          willChange: 'transform'
+        }}
+      >
       <div className="flex items-center justify-between gap-4 relative w-full">
 
         <div className="bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
@@ -221,7 +224,7 @@ export function Navbar({}: NavbarProps) {
                       </div>
                       <div className="space-y-3">
                         <p className="text-white/80 text-sm">
-                          {notificationData?.message}
+                        Complete seu perfil adicionando suas informações
                         </p>
                         {notificationData?.missingFields && notificationData.missingFields.length > 0 && (
                           <div>
@@ -242,9 +245,9 @@ export function Navbar({}: NavbarProps) {
                           <Button
                             onClick={() => {
                               setNotificationOpen(false);
-                              setProfileModalOpen(true);
+                              navigateWithLoading('/profile');
                             }}
-                            className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black text-sm"
+                            className="w-full cursor-pointer bg-[#B3E240] hover:bg-[#B3E240]/90 text-black text-sm"
                           >
                             Completar Perfil
                           </Button>
@@ -284,7 +287,7 @@ export function Navbar({}: NavbarProps) {
                     {user?.name || 'Usuário'}
                   </div>
                   <div className="text-xs text-white/60">
-                    {user?.email || 'usuario@email.com'}
+                    {getEmailValue(user) || 'usuario@email.com'}
                   </div>
                 </div>
               </div>
@@ -338,9 +341,13 @@ export function Navbar({}: NavbarProps) {
         <ProfileCompletionModal
           isOpen={profileModalOpen}
           onClose={() => setProfileModalOpen(false)}
-          notificationData={notificationData}
+          notificationData={{
+            ...notificationData,
+            badge: notificationData.badge || null
+          }}
         />
       )}
-    </div>
+      </div>
+    </ClientOnly>
   );
 }

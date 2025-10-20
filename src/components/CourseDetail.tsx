@@ -378,18 +378,19 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     <div className={`relative flex flex-1 h-[calc(100vh-4rem)] bg-transparent overflow-hidden transition-all duration-300 ease-in-out ${isVideoPlaying ? 'ml-0 right-16' : 'ml-4 right-0'}`}>
       <div className="relative z-10 flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent">
         <div className={`pb-0 transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-1' : 'p-4'}`}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              navigateWithLoading('', 'Voltando...');
-              router.back();
-            }}
-            className="text-white/70 hover:text-white hover:bg-white/10 transition-all cursor-pointer mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
+          <div className="flex items-start">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                router.back();
+              }}
+              className="text-white/70 hover:text-white hover:bg-white/10 transition-all cursor-pointer mb-4 flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar
+            </Button>
+          </div>
         </div>
         <div className="relative bg-black aspect-video shadow-2xl rounded-4xl">
           {selectedVideo?.youtubeId ? (

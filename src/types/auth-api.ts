@@ -43,22 +43,37 @@ export interface AuthResponse {
 export interface UserProfile {
   id: string;
   name: string;
-  nome: string;
-  email: string;
-  age: number;
-  educationLevel: EducationLevel;
-  createdAt: string;
-  updatedAt: string;
+  email: string | {
+    value: string;
+    readonly: boolean;
+    tag: string;
+  };
   perfil?: string;
+  age?: number | null;
+  educationLevel?: EducationLevel;
+  profileImage?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  portfolio?: string | null;
+  aboutYou?: string | null;
+  habilities?: string | null;
+  momentCareer?: string | null;
+  location?: string | null;
+  userFocus?: string | null;
+  contestType?: string | null;
+  collegeCourse?: string | null;
+  badge?: string | null;
+  isProfileComplete?: boolean;
   notification?: {
     hasNotification: boolean;
     missingFields: string[];
     message: string;
-    badge: string | null;
+    badge?: string | null;
+    profileCompletionPercentage: number;
+    completedFields: string[];
   };
-  userFocus?: string;
-  contestType?: string;
-  collegeCourse?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type UserFocus = 'ENEM' | 'CONCURSO' | 'FACULDADE' | 'ENSINO_MEDIO';

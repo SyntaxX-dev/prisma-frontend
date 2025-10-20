@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useProfile } from '@/hooks/features/useProfile';
+import { getEmailValue } from '@/lib/utils';
 import {
     DndContext,
     KeyboardSensor,
@@ -25,6 +27,7 @@ import { UserProfile } from '@/types/auth-api';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { RichTextEditor } from './RichTextEditor';
+import { HabilitiesModal } from './features/profile/modals/HabilitiesModal';
 import {
     Dialog,
     DialogContent,
@@ -56,6 +59,7 @@ import {
 } from 'lucide-react';
 import { countries } from '@/lib/constants/countries';
 import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS } from '@/types/auth-api';
+import { LocationModal } from '@/components/LocationModal';
 
 function SortableLinkItem({
     id,
@@ -125,39 +129,179 @@ function SortableLinkItem({
 
 export function ProfilePage() {
     const router = useRouter();
-    const [avatarImage, setAvatarImage] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
-    const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
-    const [isLinksModalOpen, setIsLinksModalOpen] = useState(false);
-    const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
-    const [selectedTask, setSelectedTask] = useState<string | null>(null);
-    const [formData, setFormData] = useState<Record<string, string>>({});
-    const [basicInfoData, setBasicInfoData] = useState<Record<string, string>>({
-        nome: 'Aran Leite de Gusmão',
-        areaAtuacao: '',
-        empresa: '',
-        nacionalidade: '',
-        cidade: ''
+    
+    // Estado local para os valores dos inputs do modal
+    const [modalValues, setModalValues] = useState({
+        nome: '',
+        email: ''
     });
-    const [selectedFocus, setSelectedFocus] = useState<string>('');
-    const [selectedCourse, setSelectedCourse] = useState<string>('');
-    const [selectedContest, setSelectedContest] = useState<string>('');
-    const [linksData, setLinksData] = useState<Record<string, string>>({
-        sitePessoal: '',
-        linkedin: '',
-        instagram: '',
-        twitter: '',
-        github: ''
-    });
-    const [linkFieldsOrder, setLinkFieldsOrder] = useState([
-        { id: 'sitePessoal', field: 'sitePessoal', label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
-        { id: 'linkedin', field: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/seuusuario' },
-        { id: 'instagram', field: 'instagram', label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/seuusuario' },
-        { id: 'twitter', field: 'twitter', label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' },
-        { id: 'github', field: 'github', label: 'GitHub', icon: Github, placeholder: 'https://github.com/seuusuario' }
-    ]);
-    const [aboutText, setAboutText] = useState<string>('');
+
+    // Estado para o modal de localização
+    const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+
+    // Função para salvar localização
+    const handleLocationSave = async (location: string) => {
+        try {
+            // Usar o endpoint específico para atualizar localização
+            await updateUserLocation(location);
+            // Atualizar também o estado local para exibição
+            handleBasicInfoChange('cidade', location);
+        } catch (error) {
+            console.error('Erro ao salvar localização:', error);
+            // Ainda assim atualizar o estado local para exibição
+            handleBasicInfoChange('cidade', location);
+        }
+    };
+
+    // Função para mapear valores do foco para labels amigáveis
+    const getFocusLabel = (focus: string, course?: string) => {
+        const focusLabels: { [key: string]: string } = {
+            'ENEM': 'ENEM',
+            'CONCURSO': 'Concurso Público',
+            'FACULDADE': 'Faculdade',
+            'ENSINO_MEDIO': 'Ensino Médio'
+        };
+        
+        // Se for faculdade e tiver curso selecionado, mostrar apenas o curso
+        if (focus === 'FACULDADE' && course) {
+            const courseLabel = COLLEGE_COURSE_LABELS[course as keyof typeof COLLEGE_COURSE_LABELS];
+            if (courseLabel) {
+                return courseLabel;
+            }
+        }
+        
+        // Para outros casos, usar o label padrão
+        return focusLabels[focus] || focus;
+    };
+
+    // Função para formatar a data de criação do usuário
+    const formatUserJoinDate = (createdAt?: string) => {
+        if (!createdAt) return 'No Prisma desde 30/03/2020';
+        
+        try {
+            const date = new Date(createdAt);
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `No Prisma desde ${day}/${month}/${year}`;
+        } catch (error) {
+            console.error('Erro ao formatar data:', error);
+            return 'No Prisma desde 30/03/2020';
+        }
+    };
+
+    // Função para renderizar os links do usuário
+    const renderUserLinks = () => {
+        const links = [
+            { key: 'linkedin', url: userProfile?.linkedin, icon: Linkedin, label: 'LinkedIn' },
+            { key: 'github', url: userProfile?.github, icon: Github, label: 'GitHub' },
+            { key: 'portfolio', url: userProfile?.portfolio, icon: Globe, label: 'Portfolio' }
+        ];
+
+        const filledLinks = links.filter(link => link.url && link.url.trim() !== '');
+        const emptySlots = 5 - filledLinks.length;
+
+        return (
+            <div className="grid grid-cols-5 gap-3">
+                {/* Links preenchidos */}
+                {filledLinks.map((link, index) => {
+                    const IconComponent = link.icon;
+                    return (
+                        <div
+                            key={link.key}
+                            className="aspect-square bg-[#29292E] border-2 border-[#323238] rounded-lg flex items-center justify-center hover:border-[#B3E240] transition-colors cursor-pointer group"
+                            onClick={() => setIsLinksModalOpen(true)}
+                            title={link.label}
+                        >
+                            <IconComponent className="w-6 h-6 text-[#B3E240] group-hover:scale-110 transition-transform" />
+                        </div>
+                    );
+                })}
+                
+                {/* Slots vazios */}
+                {Array.from({ length: emptySlots }).map((_, index) => (
+                    <div
+                        key={`empty-${index}`}
+                        className="aspect-square bg-transparent border-2 border-dashed border-[#323238] rounded-lg flex items-center justify-center hover:border-gray-600 transition-colors cursor-pointer"
+                        onClick={() => setIsLinksModalOpen(true)}
+                    >
+                        <Plus className="w-5 h-5 text-gray-600" />
+                    </div>
+                ))}
+            </div>
+        );
+    };
+    
+    const {
+        userProfile,
+        isLoading,
+        error,
+        avatarImage,
+        isModalOpen,
+        isBasicInfoModalOpen,
+        isFocusModalOpen,
+        isLinksModalOpen,
+        isAboutModalOpen,
+        isHabilitiesModalOpen,
+        selectedTask,
+        formData,
+        basicInfoData,
+        selectedFocus,
+        selectedCourse,
+        selectedContest,
+        linksData,
+        linkFieldsOrder,
+        aboutText,
+        profileTasks,
+        completedTasks,
+        totalTasks,
+        completionPercentage,
+        loadUserProfile,
+        getInitials,
+        handleAvatarUpload,
+        handleTaskClick,
+        handleModalClose,
+        handleFormSubmit,
+        handleInputChange,
+        handleBasicInfoChange,
+        handleBasicInfoSubmit,
+        handleBasicInfoModalClose,
+        handleFocusModalClose,
+        handleFocusSelect,
+        handleFocusSubmit,
+        handleLinksChange,
+        handleLinksSubmit,
+        handleLinksModalClose,
+        handleAboutModalClose,
+        handleAboutSubmit,
+        handleHabilitiesModalClose,
+        handleHabilitiesSubmit,
+        getModalFields,
+        updateUserAbout,
+        updateUserLocation,
+        setIsModalOpen,
+        setSelectedTask,
+        setSelectedCourse,
+        setSelectedContest,
+        setIsBasicInfoModalOpen,
+        setIsFocusModalOpen,
+        setIsLinksModalOpen,
+        setIsAboutModalOpen,
+        setIsHabilitiesModalOpen,
+        setAboutText,
+        setLinkFieldsOrder
+    } = useProfile();
+
+    // Atualizar valores do modal quando os dados forem carregados
+    useEffect(() => {
+        if (userProfile && basicInfoData) {
+            setModalValues({
+                nome: basicInfoData.nome || userProfile.name || '',
+                email: getEmailValue(userProfile)
+            });
+        }
+    }, [userProfile, basicInfoData]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -170,138 +314,45 @@ export function ProfilePage() {
         })
     );
 
-    const user: UserProfile = {
-        id: 'd99f095c-32e1-496e-b20e-73a554bb9538',
-        nome: 'Aran Leite de Gusmão',
-        name: 'Aran Leite de Gusmão',
-        email: 'aran@gmail.com',
-        age: 25,
-        educationLevel: 'GRADUACAO' as const,
-        userFocus: 'ENEM' as const,
-        contestType: undefined,
-        collegeCourse: undefined,
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-01-15T10:30:00Z',
-        perfil: 'ALUNO',
-        notification: {
-            hasNotification: true,
-            missingFields: ['foco de estudo'],
-            message: 'Complete seu perfil adicionando sua foco de estudo.',
-            badge: null
-        }
-    };
+    // Mostrar loading se os dados estão sendo carregados
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B3E240] mx-auto mb-4"></div>
+                    <p className="text-white/60">Carregando perfil...</p>
+                </div>
+            </div>
+        );
+    }
 
-    const profileTasks = [
-        { label: 'Informações básicas', completed: false },
-        { label: 'Foto do perfil', completed: true },
-        { label: 'Imagem de capa', completed: false },
-        { label: 'Links', completed: false },
-        { label: 'Sobre você', completed: true },
-        { label: 'Destaques', completed: false },
-        { label: 'Habilidades', completed: false },
-        { label: 'Momento de carreira', completed: false }
-    ];
+    // Mostrar erro se houver problema ao carregar
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-400 mb-4">{error}</p>
+                    <Button onClick={loadUserProfile} className="bg-[#B3E240] text-black hover:bg-[#B3E240]/80">
+                        Tentar novamente
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
-    const completedTasks = profileTasks.filter(task => task.completed).length;
-    const totalTasks = profileTasks.length;
-    const completionPercentage = Math.round((completedTasks / totalTasks) * 100);
+    // Usar dados do hook useProfile - sem dados mockados
+    const user = userProfile;
 
-    const getInitials = (user: UserProfile) => {
-        const name = user.nome || user.name || user.email?.split('@')[0] || 'U';
-        return name
-            .split(' ')
-            .map((word: string) => word.charAt(0))
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
-    };
+    // Se não há dados do usuário, não renderizar nada (já foi tratado no loading/error)
+    if (!user) {
+        return null;
+    }
 
-    const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setAvatarImage(e.target?.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+    // profileTasks, completedTasks, totalTasks e completionPercentage já estão disponíveis no hook useProfile
 
-    const handleTaskClick = (taskLabel: string) => {
-        setSelectedTask(taskLabel);
-        setIsModalOpen(true);
-    };
+    // getInitials já está disponível no hook useProfile
 
-    const handleModalClose = () => {
-        setIsModalOpen(false);
-        setSelectedTask(null);
-        setFormData({});
-    };
-
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        handleModalClose();
-    };
-
-    const handleInputChange = (field: string, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleBasicInfoChange = (field: string, value: string) => {
-        setBasicInfoData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleBasicInfoSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsBasicInfoModalOpen(false);
-    };
-
-    const handleBasicInfoModalClose = () => {
-        setIsBasicInfoModalOpen(false);
-    };
-
-    const handleFocusModalClose = () => {
-        setIsFocusModalOpen(false);
-        setSelectedFocus('');
-        setSelectedCourse('');
-        setSelectedContest('');
-    };
-
-    const handleFocusSelect = (focus: string) => {
-        setSelectedFocus(focus);
-        if (focus === 'FACULDADE') {
-            setSelectedCourse('');
-        } else if (focus === 'CONCURSO') {
-            setSelectedContest('');
-        }
-    };
-
-    const handleFocusSubmit = () => {
-        // TODO: Implement focus data submission
-        handleFocusModalClose();
-    };
-
-    const handleLinksChange = (field: string, value: string) => {
-        setLinksData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleLinksSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLinksModalOpen(false);
-    };
-
-    const handleLinksModalClose = () => {
-        setIsLinksModalOpen(false);
-    };
+    // Todas as funções de manipulação já estão disponíveis no hook useProfile
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -316,62 +367,13 @@ export function ProfilePage() {
         }
     };
 
-    const handleAboutModalClose = () => {
-        setIsAboutModalOpen(false);
-    };
-
-    const handleAboutSubmit = () => {
-        handleAboutModalClose();
-    };
+    // handleAboutModalClose e handleAboutSubmit já estão disponíveis no hook useProfile
 
     const handleGoBack = () => {
         router.back();
     };
 
-    const getModalFields = (taskLabel: string) => {
-        switch (taskLabel) {
-            case 'Informações básicas':
-                return [
-                    { key: 'nome', label: 'Nome completo', type: 'text' },
-                    { key: 'email', label: 'E-mail', type: 'email' },
-                    { key: 'idade', label: 'Idade', type: 'number' }
-                ];
-            case 'Foto do perfil':
-                return [
-                    { key: 'foto', label: 'Upload da foto', type: 'file' }
-                ];
-            case 'Imagem de capa':
-                return [
-                    { key: 'capa', label: 'Upload da imagem de capa', type: 'file' }
-                ];
-            case 'Links':
-                return [
-                    { key: 'linkedin', label: 'LinkedIn', type: 'url' },
-                    { key: 'github', label: 'GitHub', type: 'url' },
-                    { key: 'portfolio', label: 'Portfolio', type: 'url' }
-                ];
-            case 'Sobre você':
-                return [
-                    { key: 'sobre', label: 'Conte um pouco sobre você', type: 'textarea' }
-                ];
-            case 'Destaques':
-                return [
-                    { key: 'projeto1', label: 'Projeto 1', type: 'url' },
-                    { key: 'projeto2', label: 'Projeto 2', type: 'url' },
-                    { key: 'projeto3', label: 'Projeto 3', type: 'url' }
-                ];
-            case 'Habilidades':
-                return [
-                    { key: 'habilidades', label: 'Suas principais habilidades', type: 'textarea' }
-                ];
-            case 'Momento de carreira':
-                return [
-                    { key: 'carreira', label: 'Descreva seu momento atual na carreira', type: 'textarea' }
-                ];
-            default:
-                return [];
-        }
-    };
+    // getModalFields já está disponível no hook useProfile
 
     return (
         <div className="min-h-screen bg-[#09090A] text-white">
@@ -436,7 +438,7 @@ export function ProfilePage() {
                                                 className="w-24 h-24 cursor-pointer"
                                                 onClick={() => document.getElementById('avatar-upload')?.click()}
                                             >
-                                                <AvatarImage src={avatarImage || "/api/placeholder/96/96"} className="object-cover" />
+                                                <AvatarImage src={avatarImage || user.profileImage || "/api/placeholder/96/96"} className="object-cover" />
                                                 <AvatarFallback className="text-xl font-bold bg-[#B3E240] text-black">
                                                     {getInitials(user)}
                                                 </AvatarFallback>
@@ -450,39 +452,70 @@ export function ProfilePage() {
                                             />
                                         </div>
                                         <h1 className="text-xl font-bold text-white mb-1">
-                                            {user.nome || user.name}
+                                            {user.name}
                                         </h1>
                                         <p className="text-gray-400 text-sm">
-                                            @aran-leite
+                                            {getEmailValue(user) || 'usuario@email.com'}
                                         </p>
                                     </div>
 
                                     <div className="space-y-3 mb-6">
-                                        <Button
-                                            className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                                            onClick={() => setIsBasicInfoModalOpen(true)}
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Título
-                                        </Button>
-                                        <Button
-                                            className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                                            onClick={() => setIsBasicInfoModalOpen(true)}
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Localização
-                                        </Button>
-                                        <Button
-                                            className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                                            onClick={() => setIsFocusModalOpen(true)}
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Escolha seu foco
-                                        </Button>
+                                        {basicInfoData.cidade ? (
+                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
+                                                <div className="flex items-center">
+                                                    <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                    <span className="text-white text-sm font-medium">
+                                                        {basicInfoData.cidade}
+                                                    </span>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => setIsLocationModalOpen(true)}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
+                                                >
+                                                    <Edit3 className="w-3 h-3 text-gray-400" />
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                className="w-full bg-transparent hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer transition-colors"
+                                                onClick={() => setIsLocationModalOpen(true)}
+                                            >
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Localização
+                                            </Button>
+                                        )}
+                                        {selectedFocus ? (
+                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
+                                                <div className="flex items-center">
+                                                    <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-3"></div>
+                                                    <span className="text-white text-sm font-medium">
+                                                        {getFocusLabel(selectedFocus, selectedCourse)}
+                                                    </span>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => setIsFocusModalOpen(true)}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
+                                                >
+                                                    <Edit3 className="w-3 h-3 text-gray-400" />
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
+                                                onClick={() => setIsFocusModalOpen(true)}
+                                            >
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Escolha seu foco
+                                            </Button>
+                                        )}
                                     </div>
 
                                     <p className="text-gray-500 text-sm text-center">
-                                        No Prisma desde 30/03/2020
+                                        {formatUserJoinDate(userProfile?.createdAt)}
                                     </p>
                                 </div>
 
@@ -497,17 +530,7 @@ export function ProfilePage() {
                                             <Edit3 className="w-4 h-4" />
                                         </Button>
                                     </div>
-                                    <div className="grid grid-cols-5 gap-3">
-                                        {[...Array(5)].map((_, i) => (
-                                            <div
-                                                key={i}
-                                                className="aspect-square bg-transparent border-2 border-dashed border-[#323238] rounded-lg flex items-center justify-center hover:border-gray-600 transition-colors cursor-pointer"
-                                                onClick={() => setIsLinksModalOpen(true)}
-                                            >
-                                                <Plus className="w-5 h-5 text-gray-600" />
-                                            </div>
-                                        ))}
-                                    </div>
+                                    {renderUserLinks()}
                                 </div>
 
                                 <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
@@ -672,7 +695,7 @@ export function ProfilePage() {
             </Dialog>
 
             {/* Modal para editar informações básicas */}
-            <Dialog open={isBasicInfoModalOpen} onOpenChange={setIsBasicInfoModalOpen}>
+            <Dialog open={isBasicInfoModalOpen} onOpenChange={setIsBasicInfoModalOpen} key={userProfile?.id}>
                 <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-white text-lg font-semibold">
@@ -688,9 +711,24 @@ export function ProfilePage() {
                             </label>
                             <Input
                                 type="text"
-                                value={basicInfoData.nome}
+                                value={modalValues.nome}
                                 className="bg-[#1a1a1a] border-[#323238] text-gray-400 cursor-not-allowed"
                                 placeholder="Nome não pode ser alterado"
+                                readOnly
+                                disabled
+                            />
+                        </div>
+
+                        {/* Email */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                E-mail
+                            </label>
+                            <Input
+                                type="email"
+                                value={modalValues.email}
+                                className="bg-[#1a1a1a] border-[#323238] text-gray-400 cursor-not-allowed"
+                                placeholder="E-mail não pode ser alterado"
                                 readOnly
                                 disabled
                             />
@@ -760,19 +798,6 @@ export function ProfilePage() {
                             </Select>
                         </div>
 
-                        {/* Cidade */}
-                        <div className="space-y-2">
-                            <label className="text-sm text-gray-300">
-                                Cidade
-                            </label>
-                            <Input
-                                type="text"
-                                value={basicInfoData.cidade}
-                                onChange={(e) => handleBasicInfoChange('cidade', e.target.value)}
-                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
-                                placeholder="Em qual cidade você mora atualmente?"
-                            />
-                        </div>
 
                         <div className="flex justify-end space-x-3 pt-4">
                             <Button
@@ -1033,6 +1058,22 @@ export function ProfilePage() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Modal para editar habilidades */}
+            <HabilitiesModal
+                isOpen={isHabilitiesModalOpen}
+                onClose={handleHabilitiesModalClose}
+                currentHabilities={userProfile?.habilities ? userProfile.habilities.split(',').map(h => h.trim()).filter(h => h) : []}
+                onSave={handleHabilitiesSubmit}
+            />
+
+            {/* Modal para editar localização */}
+            <LocationModal
+                isOpen={isLocationModalOpen}
+                onClose={() => setIsLocationModalOpen(false)}
+                onSave={handleLocationSave}
+                currentLocation={basicInfoData.cidade}
+            />
         </div>
     );
 }

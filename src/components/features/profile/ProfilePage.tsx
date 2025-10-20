@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useProfile } from '@/hooks/features/useProfile';
+import { getEmailValue } from '@/lib/utils';
 import {
     DndContext,
     KeyboardSensor,
@@ -25,6 +27,7 @@ import { UserProfile } from '@/types/api/auth-api';
 import { Button } from '../../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
 import { RichTextEditor } from '../../shared/RichTextEditor';
+import { HabilitiesModal } from './modals/HabilitiesModal';
 import {
     Dialog,
     DialogContent,
@@ -125,39 +128,64 @@ function SortableLinkItem({
 
 export function ProfilePage() {
     const router = useRouter();
-    const [avatarImage, setAvatarImage] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
-    const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
-    const [isLinksModalOpen, setIsLinksModalOpen] = useState(false);
-    const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
-    const [selectedTask, setSelectedTask] = useState<string | null>(null);
-    const [formData, setFormData] = useState<Record<string, string>>({});
-    const [basicInfoData, setBasicInfoData] = useState<Record<string, string>>({
-        nome: 'Aran Leite de Gusmão',
-        areaAtuacao: '',
-        empresa: '',
-        nacionalidade: '',
-        cidade: ''
-    });
-    const [selectedFocus, setSelectedFocus] = useState<string>('');
-    const [selectedCourse, setSelectedCourse] = useState<string>('');
-    const [selectedContest, setSelectedContest] = useState<string>('');
-    const [linksData, setLinksData] = useState<Record<string, string>>({
-        sitePessoal: '',
-        linkedin: '',
-        instagram: '',
-        twitter: '',
-        github: ''
-    });
-    const [linkFieldsOrder, setLinkFieldsOrder] = useState([
-        { id: 'sitePessoal', field: 'sitePessoal', label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
-        { id: 'linkedin', field: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/seuusuario' },
-        { id: 'instagram', field: 'instagram', label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/seuusuario' },
-        { id: 'twitter', field: 'twitter', label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' },
-        { id: 'github', field: 'github', label: 'GitHub', icon: Github, placeholder: 'https://github.com/seuusuario' }
-    ]);
-    const [aboutText, setAboutText] = useState<string>('');
+    const {
+        userProfile,
+        isLoading,
+        error,
+        avatarImage,
+        isModalOpen,
+        isBasicInfoModalOpen,
+        isFocusModalOpen,
+        isLinksModalOpen,
+        isAboutModalOpen,
+        isHabilitiesModalOpen,
+        selectedTask,
+        formData,
+        basicInfoData,
+        selectedFocus,
+        selectedCourse,
+        selectedContest,
+        linksData,
+        linkFieldsOrder,
+        aboutText,
+        profileTasks,
+        completedTasks,
+        totalTasks,
+        completionPercentage,
+        loadUserProfile,
+        getInitials,
+        handleAvatarUpload,
+        handleTaskClick,
+        handleModalClose,
+        handleFormSubmit,
+        handleInputChange,
+        handleBasicInfoChange,
+        handleBasicInfoSubmit,
+        handleBasicInfoModalClose,
+        handleFocusModalClose,
+        handleFocusSelect,
+        handleFocusSubmit,
+        handleLinksChange,
+        handleLinksSubmit,
+        handleLinksModalClose,
+        handleAboutModalClose,
+        handleAboutSubmit,
+        handleHabilitiesModalClose,
+        handleHabilitiesSubmit,
+        getModalFields,
+        setIsModalOpen,
+        setSelectedTask,
+        setSelectedCourse,
+        setSelectedContest,
+        setIsBasicInfoModalOpen,
+        setIsFocusModalOpen,
+        setIsLinksModalOpen,
+        setIsAboutModalOpen,
+        setIsHabilitiesModalOpen,
+        setAboutText,
+        setLinkFieldsOrder
+    } = useProfile();
+
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -170,138 +198,61 @@ export function ProfilePage() {
         })
     );
 
-    const user: UserProfile = {
-        id: 'd99f095c-32e1-496e-b20e-73a554bb9538',
-        nome: 'Aran Leite de Gusmão',
-        name: 'Aran Leite de Gusmão',
-        email: 'aran@gmail.com',
-        age: 25,
-        educationLevel: 'GRADUACAO' as const,
+    // Usar dados do hook useProfile
+    const user = userProfile || {
+        id: 'loading',
+        nome: 'Carregando...',
+        name: 'Carregando...',
+        email: 'carregando@exemplo.com',
+        age: 0,
+        educationLevel: 'ENSINO_MEDIO' as const,
         userFocus: 'ENEM' as const,
         contestType: undefined,
         collegeCourse: undefined,
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-01-15T10:30:00Z',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         perfil: 'ALUNO',
         notification: {
-            hasNotification: true,
-            missingFields: ['foco de estudo'],
-            message: 'Complete seu perfil adicionando sua foco de estudo.',
-            badge: null
+            hasNotification: false,
+            missingFields: [],
+            message: '',
+            badge: null,
+            profileCompletionPercentage: 0,
+            completedFields: []
         }
     };
 
-    const profileTasks = [
-        { label: 'Informações básicas', completed: false },
-        { label: 'Foto do perfil', completed: true },
-        { label: 'Imagem de capa', completed: false },
-        { label: 'Links', completed: false },
-        { label: 'Sobre você', completed: true },
-        { label: 'Destaques', completed: false },
-        { label: 'Habilidades', completed: false },
-        { label: 'Momento de carreira', completed: false }
-    ];
+    // getInitials já está disponível no hook useProfile
 
-    const completedTasks = profileTasks.filter(task => task.completed).length;
-    const totalTasks = profileTasks.length;
-    const completionPercentage = Math.round((completedTasks / totalTasks) * 100);
+    // handleAvatarUpload já está disponível no hook useProfile
 
-    const getInitials = (user: UserProfile) => {
-        const name = user.nome || user.name || user.email?.split('@')[0] || 'U';
-        return name
-            .split(' ')
-            .map((word: string) => word.charAt(0))
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
-    };
+    // Todas as funções de manipulação já estão disponíveis no hook useProfile
 
-    const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setAvatarImage(e.target?.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+    // Mostrar loading se os dados estão sendo carregados
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B3E240] mx-auto mb-4"></div>
+                    <p className="text-white/60">Carregando perfil...</p>
+                </div>
+            </div>
+        );
+    }
 
-    const handleTaskClick = (taskLabel: string) => {
-        setSelectedTask(taskLabel);
-        setIsModalOpen(true);
-    };
-
-    const handleModalClose = () => {
-        setIsModalOpen(false);
-        setSelectedTask(null);
-        setFormData({});
-    };
-
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        handleModalClose();
-    };
-
-    const handleInputChange = (field: string, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleBasicInfoChange = (field: string, value: string) => {
-        setBasicInfoData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleBasicInfoSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsBasicInfoModalOpen(false);
-    };
-
-    const handleBasicInfoModalClose = () => {
-        setIsBasicInfoModalOpen(false);
-    };
-
-    const handleFocusModalClose = () => {
-        setIsFocusModalOpen(false);
-        setSelectedFocus('');
-        setSelectedCourse('');
-        setSelectedContest('');
-    };
-
-    const handleFocusSelect = (focus: string) => {
-        setSelectedFocus(focus);
-        if (focus === 'FACULDADE') {
-            setSelectedCourse('');
-        } else if (focus === 'CONCURSO') {
-            setSelectedContest('');
-        }
-    };
-
-    const handleFocusSubmit = () => {
-        // TODO: Implement focus data submission
-        handleFocusModalClose();
-    };
-
-    const handleLinksChange = (field: string, value: string) => {
-        setLinksData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleLinksSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLinksModalOpen(false);
-    };
-
-    const handleLinksModalClose = () => {
-        setIsLinksModalOpen(false);
-    };
+    // Mostrar erro se houver problema ao carregar
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-400 mb-4">{error}</p>
+                    <Button onClick={loadUserProfile} className="bg-[#B3E240] text-black hover:bg-[#B3E240]/80">
+                        Tentar novamente
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -316,62 +267,13 @@ export function ProfilePage() {
         }
     };
 
-    const handleAboutModalClose = () => {
-        setIsAboutModalOpen(false);
-    };
-
-    const handleAboutSubmit = () => {
-        handleAboutModalClose();
-    };
+    // handleAboutModalClose e handleAboutSubmit já estão disponíveis no hook useProfile
 
     const handleGoBack = () => {
         router.back();
     };
 
-    const getModalFields = (taskLabel: string) => {
-        switch (taskLabel) {
-            case 'Informações básicas':
-                return [
-                    { key: 'nome', label: 'Nome completo', type: 'text' },
-                    { key: 'email', label: 'E-mail', type: 'email' },
-                    { key: 'idade', label: 'Idade', type: 'number' }
-                ];
-            case 'Foto do perfil':
-                return [
-                    { key: 'foto', label: 'Upload da foto', type: 'file' }
-                ];
-            case 'Imagem de capa':
-                return [
-                    { key: 'capa', label: 'Upload da imagem de capa', type: 'file' }
-                ];
-            case 'Links':
-                return [
-                    { key: 'linkedin', label: 'LinkedIn', type: 'url' },
-                    { key: 'github', label: 'GitHub', type: 'url' },
-                    { key: 'portfolio', label: 'Portfolio', type: 'url' }
-                ];
-            case 'Sobre você':
-                return [
-                    { key: 'sobre', label: 'Conte um pouco sobre você', type: 'textarea' }
-                ];
-            case 'Destaques':
-                return [
-                    { key: 'projeto1', label: 'Projeto 1', type: 'url' },
-                    { key: 'projeto2', label: 'Projeto 2', type: 'url' },
-                    { key: 'projeto3', label: 'Projeto 3', type: 'url' }
-                ];
-            case 'Habilidades':
-                return [
-                    { key: 'habilidades', label: 'Suas principais habilidades', type: 'textarea' }
-                ];
-            case 'Momento de carreira':
-                return [
-                    { key: 'carreira', label: 'Descreva seu momento atual na carreira', type: 'textarea' }
-                ];
-            default:
-                return [];
-        }
-    };
+    // getModalFields já está disponível no hook useProfile
 
     return (
         <div className="min-h-screen bg-[#09090A] text-white">
@@ -450,10 +352,10 @@ export function ProfilePage() {
                                             />
                                         </div>
                                         <h1 className="text-xl font-bold text-white mb-1">
-                                            {user.nome || user.name}
+                                            {user.name}
                                         </h1>
                                         <p className="text-gray-400 text-sm">
-                                            @aran-leite
+                                            {getEmailValue(user) || 'usuario@email.com'}
                                         </p>
                                     </div>
 
@@ -1033,6 +935,15 @@ export function ProfilePage() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Modal para editar habilidades */}
+            <HabilitiesModal
+                isOpen={isHabilitiesModalOpen}
+                onClose={handleHabilitiesModalClose}
+                currentHabilities={userProfile?.habilities ? userProfile.habilities.split(',').map(h => h.trim()).filter(h => h) : []}
+                onSave={handleHabilitiesSubmit}
+            />
+            
         </div>
     );
 }

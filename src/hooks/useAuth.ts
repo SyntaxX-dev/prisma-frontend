@@ -3,6 +3,7 @@ import { AuthState, getAuthState, clearAuthState } from '../lib/auth';
 import { UserProfile } from '../types/auth-api';
 import { getProfile } from '../api/auth/get-profile';
 import { useNotifications } from './useNotifications';
+import { useClientOnly } from './useClientOnly';
 
 
 export function useAuth() {
@@ -13,8 +14,11 @@ export function useAuth() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const { showSuccess, showError } = useNotifications();
+  const isClient = useClientOnly();
 
   useEffect(() => {
+    if (!isClient) return;
+
     const loadAuthState = async () => {
       try {
         const state = getAuthState();
@@ -41,7 +45,7 @@ export function useAuth() {
     };
 
     loadAuthState();
-  }, []);
+  }, [isClient]);
 
   const login = (token: string, user: UserProfile, rememberMe: boolean = false) => {
     setAuthState({ isAuthenticated: true, user, token });
@@ -70,6 +74,11 @@ export function useAuth() {
 
   const updateUser = (user: UserProfile) => {
     setAuthState(prev => ({ ...prev, user }));
+    
+    // Atualizar também no localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user_profile', JSON.stringify(user));
+    }
   };
 
   return {
