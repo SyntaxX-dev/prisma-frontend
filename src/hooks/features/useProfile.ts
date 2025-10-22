@@ -19,8 +19,13 @@ import { getProfile } from '@/api/auth/get-profile';
 import { 
   updateName, 
   updateAge, 
-  updateProfileImage, 
-  updateLinks, 
+  updateProfileImage,
+  uploadProfileImage,
+  deleteProfileImage, 
+  updateLinks,
+  updateInstagram,
+  updateTwitter,
+  updateSocialLinksOrder, 
   updateAbout, 
   updateAboutYou,
   updateHabilities,
@@ -36,6 +41,7 @@ export function useProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [avatarImage, setAvatarImage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
@@ -110,10 +116,21 @@ export function useProfile() {
         setLinksData({
           sitePessoal: profile.portfolio || '',
           linkedin: profile.linkedin || '',
-          instagram: '', // Campo não disponível na API
-          twitter: '', // Campo não disponível na API
+          instagram: profile.instagram || '',
+          twitter: profile.twitter || '',
           github: profile.github || ''
         });
+
+        // Atualizar ordem dos links se disponível
+        if (profile.socialLinksOrder && profile.socialLinksOrder.length > 0) {
+          const orderedFields = profile.socialLinksOrder.map(fieldName => {
+            // Mapear portfolio do backend para sitePessoal no frontend
+            const frontendFieldName = fieldName === 'portfolio' ? 'sitePessoal' : fieldName;
+            const field = linkFieldsOrder.find(f => f.field === frontendFieldName);
+            return field || { id: frontendFieldName, field: frontendFieldName, label: frontendFieldName, icon: Globe, placeholder: '' };
+          });
+          setLinkFieldsOrder(orderedFields);
+        }
 
         // Atualizar sobre você
         setAboutText(profile.aboutYou || '');
@@ -282,6 +299,20 @@ export function useProfile() {
     }
   }, [refreshProfile]);
 
+  const deleteUserProfileImage = useCallback(async () => {
+    try {
+      console.log('🗑️ Removendo foto do perfil...');
+      await deleteProfileImage();
+      setAvatarImage(null);
+      // Recarregar perfil do backend para obter dados atualizados
+      await refreshProfile();
+      console.log('✅ Foto do perfil removida com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao remover foto do perfil:', error);
+      setError('Erro ao remover foto do perfil');
+    }
+  }, [refreshProfile]);
+
   const updateUserLinks = useCallback(async (links: { linkedin?: string; github?: string; portfolio?: string }) => {
     try {
       await updateLinks(links);
@@ -433,16 +464,49 @@ export function useProfile() {
       .substring(0, 2);
   }, []);
 
-  const handleAvatarUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAvatarImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        setIsUploadingImage(true);
+        setError(null);
+
+        // Validar tipo de arquivo
+        if (!file.type.startsWith('image/')) {
+          setError('Por favor, selecione apenas arquivos de imagem');
+          return;
+        }
+
+        // Validar tamanho do arquivo (máximo 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          setError('A imagem deve ter no máximo 5MB');
+          return;
+        }
+
+        console.log('📤 Fazendo upload da imagem...');
+        
+        // Fazer upload da imagem
+        const response = await uploadProfileImage(file);
+        
+        if (response.data.profileImage) {
+          console.log('✅ Upload realizado com sucesso:', response.data.profileImage);
+          
+          // Atualizar a imagem local
+          setAvatarImage(response.data.profileImage);
+          
+          // Recarregar o perfil para obter dados atualizados
+          await refreshProfile();
+          
+          console.log('✅ Perfil atualizado com nova imagem');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao fazer upload da imagem:', error);
+        setError('Erro ao fazer upload da imagem. Tente novamente.');
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
-  }, []);
+  }, [refreshProfile]);
 
   const handleTaskClick = useCallback((taskLabel: string) => {
     // Se for Habilidades, abrir o modal específico
@@ -672,11 +736,51 @@ export function useProfile() {
         portfolio: linksData.sitePessoal
       });
       
-      await updateUserLinks({
-        linkedin: linksData.linkedin || undefined,
-        github: linksData.github || undefined,
-        portfolio: linksData.sitePessoal || undefined
+      // Verificar se houve mudanças nos links existentes
+      const hasLinkChanges = 
+        linksData.linkedin !== (userProfile?.linkedin || '') ||
+        linksData.github !== (userProfile?.github || '') ||
+        linksData.sitePessoal !== (userProfile?.portfolio || '');
+
+      // Verificar se houve mudanças no Instagram
+      const hasInstagramChange = linksData.instagram !== (userProfile?.instagram || '');
+
+      // Verificar se houve mudanças no Twitter
+      const hasTwitterChange = linksData.twitter !== (userProfile?.twitter || '');
+
+      // Verificar se houve mudanças na ordem
+      const currentOrder = linkFieldsOrder.map(field => {
+        return field.field === 'sitePessoal' ? 'portfolio' : field.field;
       });
+      const backendOrder = userProfile?.socialLinksOrder || ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
+      const hasOrderChange = JSON.stringify(currentOrder) !== JSON.stringify(backendOrder);
+
+      // Fazer chamadas apenas se houver mudanças
+      if (hasLinkChanges) {
+        await updateUserLinks({
+          linkedin: linksData.linkedin || undefined,
+          github: linksData.github || undefined,
+          portfolio: linksData.sitePessoal || undefined
+        });
+      }
+
+      if (hasInstagramChange) {
+        await updateInstagram(linksData.instagram);
+      }
+
+      if (hasTwitterChange) {
+        await updateTwitter(linksData.twitter);
+      }
+
+      if (hasOrderChange) {
+        // Garantir que todos os 5 campos estejam presentes
+        const allFields = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
+        const completeOrder = allFields.filter(field => currentOrder.includes(field));
+        const missingFields = allFields.filter(field => !currentOrder.includes(field));
+        const finalOrder = [...completeOrder, ...missingFields];
+        
+        await updateSocialLinksOrder(finalOrder);
+      }
       
       // Só atualizar notificações se todos os campos foram preenchidos
       if (allFieldsComplete) {
@@ -687,7 +791,7 @@ export function useProfile() {
     } finally {
       setIsLinksModalOpen(false);
     }
-  }, [userProfile, linksData, updateUserLinks, isLinksComplete, updateNotificationsAfterChange]);
+  }, [userProfile, linksData, linkFieldsOrder, updateUserLinks, updateInstagram, updateTwitter, updateSocialLinksOrder, isLinksComplete, updateNotificationsAfterChange]);
 
   const handleLinksModalClose = useCallback(() => {
     setIsLinksModalOpen(false);
@@ -731,7 +835,7 @@ export function useProfile() {
       await updateNotificationsAfterChange();
     } catch (error) {
       console.error('Erro ao atualizar habilidades:', error);
-      throw error; // Re-throw para que o modal possa tratar o erro
+      throw error;
     }
   }, [updateUserHabilities, updateNotificationsAfterChange]);
 
@@ -786,6 +890,7 @@ export function useProfile() {
     isLoading,
     error,
     avatarImage,
+    isUploadingImage,
     isModalOpen,
     isBasicInfoModalOpen,
     isFocusModalOpen,
@@ -810,6 +915,7 @@ export function useProfile() {
     loadUserProfile,
     getInitials,
     handleAvatarUpload,
+    deleteUserProfileImage,
     handleTaskClick,
     handleModalClose,
     handleFormSubmit,

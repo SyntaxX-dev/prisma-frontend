@@ -43,6 +43,30 @@ export const httpClient = {
 		});
 	},
 	
+	async postFormData<T>(path: string, formData: FormData): Promise<T> {
+		const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+		
+		const res = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
+			method: 'POST',
+			body: formData,
+			headers: { 
+				...(token && { 'Authorization': `Bearer ${token}` })
+			},
+		});
+		
+		if (!res.ok) {
+			const errorData = await res.json().catch(() => ({}));
+			const error: ApiError = {
+				message: errorData.message || `HTTP ${res.status}`,
+				status: res.status,
+				details: errorData
+			};
+			throw error;
+		}
+		
+		return res.json() as Promise<T>;
+	},
+	
 	async put<T>(path: string, data?: unknown): Promise<T> {
 		return fetchJson<T>(path, {
 			method: 'PUT',

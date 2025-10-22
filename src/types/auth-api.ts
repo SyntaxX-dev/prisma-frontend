@@ -55,6 +55,9 @@ export interface UserProfile {
   linkedin?: string | null;
   github?: string | null;
   portfolio?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  socialLinksOrder?: string[];
   aboutYou?: string | null;
   habilities?: string | null;
   momentCareer?: string | null;

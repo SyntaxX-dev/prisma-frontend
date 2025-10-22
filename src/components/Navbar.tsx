@@ -26,7 +26,7 @@ import { StreakIcon } from "./StreakIcon";
 import { StreakCalendar } from "./StreakCalendar";
 import { ProfileCompletionModal } from "./ProfileCompletionModal";
 import { ClientOnly } from "./ClientOnly";
-import { getEmailValue } from "@/lib/utils";
+import { getEmailValue } from "@/lib/utils/email";
 
 interface NavbarProps {
   isDark?: boolean;

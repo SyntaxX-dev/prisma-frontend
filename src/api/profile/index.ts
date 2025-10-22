@@ -1,7 +1,12 @@
 export { updateName, type UpdateNameRequest, type UpdateNameResponse } from './update-name';
 export { updateAge, type UpdateAgeRequest, type UpdateAgeResponse } from './update-age';
 export { updateProfileImage, type UpdateProfileImageRequest, type UpdateProfileImageResponse } from './update-profile-image';
+export { uploadProfileImage, type UploadProfileImageResponse } from './upload-profile-image';
+export { deleteProfileImage, type DeleteProfileImageResponse } from './delete-profile-image';
 export { updateLinks, type UpdateLinksRequest, type UpdateLinksResponse } from './update-links';
+export { updateInstagram, type UpdateInstagramRequest, type UpdateInstagramResponse } from './update-instagram';
+export { updateTwitter, type UpdateTwitterRequest, type UpdateTwitterResponse } from './update-twitter';
+export { updateSocialLinksOrder, type UpdateSocialLinksOrderRequest, type UpdateSocialLinksOrderResponse } from './update-social-links-order';
 export { updateAbout, type UpdateAboutRequest, type UpdateAboutResponse } from './update-about';
 export { updateAboutYou, type UpdateAboutYouRequest, type UpdateAboutYouResponse } from './update-about-you';
 export { updateHabilities, type UpdateHabilitiesRequest, type UpdateHabilitiesResponse } from './update-habilities';

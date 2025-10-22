@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfile } from '@/hooks/features/useProfile';
-import { getEmailValue } from '@/lib/utils';
+import { getEmailValue } from '@/lib/utils/email';
 import {
     DndContext,
     KeyboardSensor,

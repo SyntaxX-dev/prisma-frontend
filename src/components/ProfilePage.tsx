@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfile } from '@/hooks/features/useProfile';
-import { getEmailValue } from '@/lib/utils';
+import { getEmailValue } from '@/lib/utils/email';
 import {
     DndContext,
     KeyboardSensor,
@@ -55,11 +55,15 @@ import {
     Twitter,
     Github,
     GripVertical,
-    ArrowLeft
+    ArrowLeft,
+    Camera,
+    Trash2
 } from 'lucide-react';
 import { countries } from '@/lib/constants/countries';
 import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS } from '@/types/auth-api';
 import { LocationModal } from '@/components/LocationModal';
+import ShinyText from './ShinyText';
+import DotGrid from './DotGrid';
 
 function SortableLinkItem({
     id,
@@ -193,11 +197,39 @@ export function ProfilePage() {
 
     // Função para renderizar os links do usuário
     const renderUserLinks = () => {
-        const links = [
-            { key: 'linkedin', url: userProfile?.linkedin, icon: Linkedin, label: 'LinkedIn' },
-            { key: 'github', url: userProfile?.github, icon: Github, label: 'GitHub' },
-            { key: 'portfolio', url: userProfile?.portfolio, icon: Globe, label: 'Portfolio' }
-        ];
+        // Usar a ordem definida no linkFieldsOrder
+        const links = linkFieldsOrder.map(field => {
+            let url = '';
+            let icon = field.icon;
+            
+            // Mapear os campos para as URLs corretas
+            switch (field.field) {
+                case 'sitePessoal':
+                    url = userProfile?.portfolio || '';
+                    break;
+                case 'linkedin':
+                    url = userProfile?.linkedin || '';
+                    break;
+                case 'github':
+                    url = userProfile?.github || '';
+                    break;
+                case 'instagram':
+                    url = userProfile?.instagram || '';
+                    break;
+                case 'twitter':
+                    url = userProfile?.twitter || '';
+                    break;
+                default:
+                    url = '';
+            }
+            
+            return {
+                key: field.field,
+                url,
+                icon,
+                label: field.label
+            };
+        });
 
         const filledLinks = links.filter(link => link.url && link.url.trim() !== '');
         const emptySlots = 5 - filledLinks.length;
@@ -238,6 +270,7 @@ export function ProfilePage() {
         isLoading,
         error,
         avatarImage,
+        isUploadingImage,
         isModalOpen,
         isBasicInfoModalOpen,
         isFocusModalOpen,
@@ -260,6 +293,7 @@ export function ProfilePage() {
         loadUserProfile,
         getInitials,
         handleAvatarUpload,
+        deleteUserProfileImage,
         handleTaskClick,
         handleModalClose,
         handleFormSubmit,
@@ -376,41 +410,21 @@ export function ProfilePage() {
     // getModalFields já está disponível no hook useProfile
 
     return (
-        <div className="min-h-screen bg-[#09090A] text-white">
-            <div
-                className="fixed inset-0 transition-all duration-300 bg-gray-950"
-                style={{
-                    backgroundImage: `
-                        radial-gradient(circle at 25% 25%, rgba(179, 226, 64, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 75% 75%, rgba(179, 226, 64, 0.04) 0%, transparent 50%)
-                    `
-                }}
-            />
-
-            <div
-                className="fixed inset-0 pointer-events-none"
-                aria-hidden="true"
-                style={{
-                    backgroundImage: `
-                        radial-gradient(circle at 15% 10%, rgba(201, 254, 2, 0.06), transparent 20%),
-                        radial-gradient(circle at 85% 90%, rgba(201, 254, 2, 0.04), transparent 20%)
-                    `
-                }}
-            />
-
-            <div
-                className="fixed inset-0 backdrop-blur-sm transition-all duration-300 bg-black/30"
-            />
-
-            <div
-                className="fixed inset-0 pointer-events-none"
-                aria-hidden="true"
-                style={{
-                    backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)',
-                    backgroundSize: '24px 24px',
-                    backgroundPosition: '0 0'
-                }}
-            />
+        <div className="min-h-screen bg-[#09090A] text-white relative">
+            {/* DotGrid Background */}
+            <div className="fixed inset-0 z-0">
+                <DotGrid
+                    dotSize={1}
+                    gap={24}
+                    baseColor="rgba(255,255,255,0.25)"
+                    activeColor="#B3E240"
+                    proximity={120}
+                    shockRadius={250}
+                    shockStrength={5}
+                    resistance={750}
+                    returnDuration={1.5}
+                />
+            </div>
 
 
             <div className="fixed top-4 left-4 z-50 mt-4 ml-4">
@@ -425,7 +439,7 @@ export function ProfilePage() {
             </div>
 
             <div className="relative z-10 p-6 min-h-screen flex items-center">
-                <div className="max-w-7xl mx-auto w-full">
+                <div className="max-w-7xl mx-auto w-full relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-1">
                             <div className="space-y-6">
@@ -435,28 +449,87 @@ export function ProfilePage() {
                                     <div className="text-center mb-6">
                                         <div className="relative inline-block group mb-4">
                                             <Avatar
-                                                className="w-24 h-24 cursor-pointer"
-                                                onClick={() => document.getElementById('avatar-upload')?.click()}
+                                                className={`w-24 h-24 cursor-pointer transition-all duration-300 ${isUploadingImage ? 'opacity-50' : 'hover:scale-105'}`}
+                                                onClick={() => {
+                                                    if (!isUploadingImage) {
+                                                        console.log('🖱️ Clicando no avatar para abrir seletor de arquivos');
+                                                        document.getElementById('avatar-upload')?.click();
+                                                    }
+                                                }}
                                             >
-                                                <AvatarImage src={avatarImage || user.profileImage || "/api/placeholder/96/96"} className="object-cover" />
+                                                <AvatarImage 
+                                                    src={user.profileImage || avatarImage || "/api/placeholder/96/96"} 
+                                                    className="object-cover transition-all duration-300" 
+                                                    alt="Foto do perfil"
+                                                />
                                                 <AvatarFallback className="text-xl font-bold bg-[#B3E240] text-black">
                                                     {getInitials(user)}
                                                 </AvatarFallback>
                                             </Avatar>
+                                            
+                                            {/* Overlay com ícone de câmera no hover */}
+                                            {!isUploadingImage && (
+                                                <div 
+                                                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover:pointer-events-auto"
+                                                    onClick={() => {
+                                                        if (!isUploadingImage) {
+                                                            console.log('🖱️ Clicando no overlay da câmera para abrir seletor de arquivos');
+                                                            document.getElementById('avatar-upload')?.click();
+                                                        }
+                                                    }}
+                                                >
+                                                    <Camera className="w-6 h-6 text-white" />
+                                                </div>
+                                            )}
+                                            
+                                            {/* Indicador de loading durante upload */}
+                                            {isUploadingImage && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#B3E240]"></div>
+                                                </div>
+                                            )}
+                                            
                                             <input
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={handleAvatarUpload}
                                                 className="hidden"
                                                 id="avatar-upload"
+                                                disabled={isUploadingImage}
                                             />
+                                            
+                                            {/* Botão de remover foto - bolinha pequena no canto inferior direito */}
+                                            {(user.profileImage || avatarImage) && !isUploadingImage && (
+                                                <div 
+                                                    className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/80 border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/90 hover:border-red-500/50 hover:scale-110"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteUserProfileImage();
+                                                    }}
+                                                    title="Remover foto"
+                                                >
+                                                    <Trash2 className="w-3 h-3 text-red-400" />
+                                                </div>
+                                            )}
                                         </div>
                                         <h1 className="text-xl font-bold text-white mb-1">
                                             {user.name}
                                         </h1>
-                                        <p className="text-gray-400 text-sm">
+                                        <p className="text-gray-400 text-sm mb-4">
                                             {getEmailValue(user) || 'usuario@email.com'}
                                         </p>
+                                        
+                                        {/* Botão Conversar */}
+                                        <Button 
+                                            className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#B3E240] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+                                        >
+                                            <ShinyText 
+                                                text="Conversar" 
+                                                disabled={false} 
+                                                speed={3} 
+                                                className="font-medium"
+                                            />
+                                        </Button>
                                     </div>
 
                                     <div className="space-y-3 mb-6">
@@ -599,12 +672,19 @@ export function ProfilePage() {
                                         <Edit3 className="w-4 h-4" />
                                     </Button>
                                 </div>
-                                <div className="text-gray-500 text-sm">
-                                    <span>—</span>
+                                <div className="text-gray-300 text-sm leading-relaxed">
+                                    {user.aboutYou ? (
+                                        <div 
+                                            dangerouslySetInnerHTML={{ __html: user.aboutYou }}
+                                            className="prose prose-invert prose-sm max-w-none"
+                                        />
+                                    ) : (
+                                        <span className="text-gray-500">—</span>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                            {/* <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-lg font-semibold text-white">Destaques</h3>
                                     <Button
@@ -627,7 +707,7 @@ export function ProfilePage() {
                                         <span>Adicionar destaques</span>
                                     </Button>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </div>
@@ -642,17 +722,17 @@ export function ProfilePage() {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <form onSubmit={handleFormSubmit} className="space-y-4">
+                    <form onSubmit={handleFormSubmit} >
                         {selectedTask && getModalFields(selectedTask).map((field) => (
-                            <div key={field.key} className="space-y-2">
-                                <label className="text-sm text-gray-300">
+                            <div key={field.key} className='flex flex-col gap-2'>
+                                <label className="text-sm text-gray-300 ">
                                     {field.label}
                                 </label>
                                 {field.type === 'textarea' ? (
                                     <Textarea
                                         value={formData[field.key] || ''}
                                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
+                                        className="bg-[#29292E] cursor-pointer border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
                                         placeholder={`Digite ${field.label.toLowerCase()}...`}
                                         rows={3}
                                     />
@@ -660,7 +740,7 @@ export function ProfilePage() {
                                     <Input
                                         type="file"
                                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                        className="bg-[#29292E] border-[#323238] text-white file:bg-[#B3E240] file:text-black file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3"
+                                        className="bg-[#29292E] h-12 border-[#323238] p-2 text-white file:bg-[#B3E240] file:text-black file:border-0 file:px-2 cursor-pointer file:mr-4 file:min-w-[120px] file:rounded-md focus:!border-[#323238] focus:!ring-0 focus:!outline-none"
                                     />
                                 ) : (
                                     <Input
@@ -674,18 +754,18 @@ export function ProfilePage() {
                             </div>
                         ))}
 
-                        <div className="flex justify-end space-x-3 pt-4">
+                        <div className="flex justify-end mt-4 gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleModalClose}
-                                className="border-[#323238] text-gray-300 hover:bg-white/5"
+                                className="border-[#323238] text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 cursor-pointer transition-colors"
                             >
                                 Cancelar
                             </Button>
                             <Button
                                 type="submit"
-                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black"
+                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
                             >
                                 Salvar
                             </Button>
