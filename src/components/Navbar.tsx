@@ -278,6 +278,11 @@ export function Navbar({}: NavbarProps) {
             <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors">
               <div className="flex items-center gap-3">
                 <Avatar className="w-8 h-8">
+                  <AvatarImage 
+                    src={user?.profileImage || "/api/placeholder/32/32"} 
+                    className="object-cover" 
+                    alt="Foto do perfil"
+                  />
                   <AvatarFallback className="bg-[#B3E240] text-black">
                     {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </AvatarFallback>
