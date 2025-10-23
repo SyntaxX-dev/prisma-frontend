@@ -85,9 +85,9 @@ export function CourseCard({
   };
 
   return (
-    <button onClick={handleClick} className="block w-full">
-      <Card className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer">
-        <CardHeader className="p-0">
+    <button onClick={handleClick} className="block w-full h-full">
+      <Card className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer h-full flex flex-col">
+        <CardHeader className="p-0 flex-shrink-0">
           <div className="relative aspect-video overflow-hidden rounded-t-lg">
             {thumbnailUrl ? (
               <img
@@ -127,16 +127,18 @@ export function CourseCard({
           </div>
         </CardHeader>
 
-        <CardContent className="p-4">
-          <h3 className="text-white text-left font-medium text-sm mb-2 line-clamp-2 leading-tight group-hover:text-green-400 transition-colors">
-            {title}
-          </h3>
+        <CardContent className="p-4 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 className="text-white text-left font-medium text-sm mb-2 line-clamp-2 leading-tight group-hover:text-green-400 transition-colors min-h-[2rem]">
+              {title}
+            </h3>
 
-          {description && (
-            <p className="text-white/70 text-xs leading-relaxed line-clamp-3 text-left">
-              {description}
-            </p>
-          )}
+            {description && (
+              <p className="text-white/70 text-xs leading-relaxed line-clamp-2 text-left min-h-[2.4rem]">
+                {description}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
     </button>

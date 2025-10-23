@@ -20,6 +20,7 @@ interface SubCourse {
   order: number;
   createdAt: string;
   updatedAt: string;
+  channelThumbnailUrl?: string;
 }
 
 interface Course {
@@ -94,7 +95,33 @@ export default function CoursePage() {
         }
 
         if (subCoursesData.success) {
-          setSubCourses(subCoursesData.data);
+          // Fetch channel thumbnail for each subcourse
+          const subCoursesWithThumbnails = await Promise.all(
+            subCoursesData.data.map(async (subCourse: SubCourse) => {
+              try {
+                const videosResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/sub-courses/${subCourse.id}/videos`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+                const videosData = await videosResponse.json();
+                
+                if (videosData.success && videosData.data && videosData.data.length > 0) {
+                  return {
+                    ...subCourse,
+                    channelThumbnailUrl: videosData.data[0].channelThumbnailUrl
+                  };
+                }
+                return subCourse;
+              } catch (error) {
+                console.error(`Error fetching videos for subcourse ${subCourse.id}:`, error);
+                return subCourse;
+              }
+            })
+          );
+          
+          setSubCourses(subCoursesWithThumbnails);
         } else {
           setError('Erro ao carregar subcursos');
         }
@@ -269,10 +296,22 @@ export default function CoursePage() {
                     className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 cursor-pointer hover:bg-white/10 transition-all duration-300 group"
                   >
                     <div className="flex items-center gap-4 mb-4">
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-blue-500/20"
-                      >
-                        📚
+                      <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center bg-blue-500/20">
+                        {subCourse.channelThumbnailUrl ? (
+                          <img
+                            src={subCourse.channelThumbnailUrl}
+                            alt={`Canal de ${subCourse.name}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-full h-full flex items-center justify-center text-2xl ${subCourse.channelThumbnailUrl ? 'hidden' : ''}`}>
+                          📚
+                        </div>
                       </div>
                       <div className="flex-1">
                         <h3 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">
