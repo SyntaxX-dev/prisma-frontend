@@ -116,7 +116,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                     technology={course.name}
                     icon="📚"
                     isSubscriber={true}
-                    thumbnailUrl={course.imageUrl || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=200&fit=crop"}
+                    thumbnailUrl={course.imageUrl || ""}
                     iconColor="#06b6d4"
                     courseId={course.id}
                   />

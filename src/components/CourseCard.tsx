@@ -21,6 +21,7 @@ export function CourseCard({
   icon,
   isSubscriber,
   isFree = false,
+  thumbnailUrl,
   iconColor,
   courseId: propCourseId,
   isInCategoryPage = false,
@@ -88,8 +89,20 @@ export function CourseCard({
       <Card className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer">
         <CardHeader className="p-0">
           <div className="relative aspect-video overflow-hidden rounded-t-lg">
+            {thumbnailUrl ? (
+              <img
+                src={thumbnailUrl}
+                alt={title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+            ) : null}
             <div
-              className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center"
+              className={`w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center ${thumbnailUrl ? 'hidden' : ''}`}
             >
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
