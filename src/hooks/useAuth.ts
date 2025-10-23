@@ -60,11 +60,11 @@ export function useAuth() {
       localStorage.setItem('auth_expires', (Date.now() + 24 * 60 * 60 * 1000).toString());
     }
     
-    showSuccess(`Bem-vindo, ${user.name || user.nome}!`);
+    showSuccess(`Bem-vindo, ${user.name}!`);
   };
 
   const logout = () => {
-    const userName = authState.user?.name || authState.user?.nome || 'Usuário';
+    const userName = authState.user?.name || 'Usuário';
     clearAuthState();
     localStorage.removeItem('remember_me');
     localStorage.removeItem('auth_expires');

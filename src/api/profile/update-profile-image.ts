@@ -18,5 +18,5 @@ export async function updateProfileImage(profileImage: string): Promise<UpdatePr
     { profileImage }
   );
   
-  return response.data;
+  return response;
 }

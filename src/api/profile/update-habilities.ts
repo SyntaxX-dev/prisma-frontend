@@ -20,7 +20,7 @@ export async function updateHabilities(
     { habilities }
   );
   
-  return response.data;
+  return response;
 }
 
 

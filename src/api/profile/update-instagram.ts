@@ -17,5 +17,5 @@ export async function updateInstagram(instagram: string): Promise<UpdateInstagra
     { instagram }
   );
   
-  return response.data;
+  return response;
 }

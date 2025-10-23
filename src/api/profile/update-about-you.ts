@@ -18,7 +18,7 @@ export async function updateAboutYou(aboutYou: string): Promise<UpdateAboutYouRe
     { aboutYou }
   );
   
-  return response.data;
+  return response;
 }
 
 

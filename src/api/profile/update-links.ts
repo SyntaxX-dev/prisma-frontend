@@ -22,5 +22,5 @@ export async function updateLinks(links: UpdateLinksRequest): Promise<UpdateLink
     links
   );
   
-  return response.data;
+  return response;
 }

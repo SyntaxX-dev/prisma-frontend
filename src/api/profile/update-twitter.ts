@@ -17,5 +17,5 @@ export async function updateTwitter(twitter: string): Promise<UpdateTwitterRespo
     { twitter }
   );
   
-  return response.data;
+  return response;
 }

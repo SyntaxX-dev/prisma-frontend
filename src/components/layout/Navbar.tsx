@@ -25,6 +25,7 @@ import { useNavigationWithLoading } from "../../hooks/useNavigationWithLoading";
 import { StreakIcon } from "../shared/charts/StreakIcon";
 import { StreakCalendar } from "../shared/charts/StreakCalendar";
 import { ProfileCompletionModal } from "../features/profile/modals/ProfileCompletionModal";
+import { getEmailValue } from "@/lib/utils/email";
 
 interface NavbarProps {
   isDark?: boolean;
@@ -284,7 +285,7 @@ export function Navbar({}: NavbarProps) {
                     {user?.name || 'Usuário'}
                   </div>
                   <div className="text-xs text-white/60">
-                    {user?.email || 'usuario@email.com'}
+                    {getEmailValue(user) || 'usuario@email.com'}
                   </div>
                 </div>
               </div>
@@ -338,7 +339,10 @@ export function Navbar({}: NavbarProps) {
         <ProfileCompletionModal
           isOpen={profileModalOpen}
           onClose={() => setProfileModalOpen(false)}
-          notificationData={notificationData}
+          notificationData={{
+            ...notificationData,
+            badge: notificationData.badge || null
+          }}
         />
       )}
     </div>

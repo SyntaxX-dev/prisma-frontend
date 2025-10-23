@@ -18,5 +18,5 @@ export async function updateName(name: string): Promise<UpdateNameResponse> {
     { name }
   );
   
-  return response.data;
+  return response;
 }

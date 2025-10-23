@@ -18,5 +18,5 @@ export async function updateAge(age: number): Promise<UpdateAgeResponse> {
     { age }
   );
   
-  return response.data;
+  return response;
 }

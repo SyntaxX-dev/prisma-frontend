@@ -98,7 +98,7 @@ function DashboardContent() {
 				<div className="flex-1">
 					<Navbar isDark={isDark} toggleTheme={toggleTheme} />
 					<div style={{ marginTop: '80px' }}>
-						<LearningDashboard userName={user?.nome} />
+						<LearningDashboard userName={user?.name} />
 					</div>
 				</div>
 			</div>

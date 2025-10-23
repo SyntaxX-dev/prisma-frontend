@@ -18,5 +18,5 @@ export async function updateLocation(location: string): Promise<UpdateLocationRe
     { location }
   );
   
-  return response.data;
+  return response;
 }

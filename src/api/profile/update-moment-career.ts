@@ -18,7 +18,7 @@ export async function updateMomentCareer(momentCareer: string | null): Promise<U
     { momentCareer }
   );
   
-  return response.data;
+  return response;
 }
 
 

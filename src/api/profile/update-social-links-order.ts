@@ -17,5 +17,5 @@ export async function updateSocialLinksOrder(socialLinksOrder: string[]): Promis
     { socialLinksOrder }
   );
   
-  return response.data;
+  return response;
 }

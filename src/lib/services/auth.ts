@@ -1,4 +1,4 @@
-import { UserProfile } from '../../types/api/auth-api';
+import { UserProfile } from '../../types/auth-api';
 
 export interface AuthState {
   isAuthenticated: boolean;

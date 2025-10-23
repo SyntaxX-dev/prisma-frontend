@@ -106,7 +106,9 @@ export function ProfileCompletionModal({
             }
 
             const updatedProfile = await updateProfile(updateData);
-            updateUser(updatedProfile);
+            if (updatedProfile.data) {
+                updateUser(updatedProfile.data);
+            }
 
             const badge = BADGE_MAPPING[userFocus] || BADGE_MAPPING[contestType] || BADGE_MAPPING[collegeCourse];
 
