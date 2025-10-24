@@ -5,12 +5,45 @@ import { Navbar } from "../../../components/Navbar";
 import { StreakCalendar } from "../../../components/StreakCalendar";
 import { WeeklyProgress } from "../../../components/WeeklyProgress";
 import { CurrentGoal } from "../../../components/CurrentGoal";
+import { OffensiveInfo } from "../../../components/OffensiveInfo";
 import { useStreak } from "../../../hooks/useStreak";
+import { useOffensives } from "../../../hooks/useOffensives";
 import { Button } from "../../../components/ui/button";
 import { Flame, Target, Calendar, Clock } from "lucide-react";
 
+function CurrentGoalWithOffensives() {
+  const { offensivesData, isLoading } = useOffensives();
+  
+  if (isLoading) {
+    return (
+      <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+        <div className="animate-pulse">
+          <div className="h-6 bg-white/20 rounded mb-4"></div>
+          <div className="h-8 bg-white/10 rounded mb-2"></div>
+          <div className="h-4 bg-white/10 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentStreak = offensivesData?.stats.currentStreak || 0;
+  const currentType = offensivesData?.currentOffensive.type || 'NORMAL';
+  
+  // Definir próximo objetivo baseado no tipo atual
+  let nextTarget = 7; // SUPER
+  if (currentType === 'SUPER') nextTarget = 30; // ULTRA
+  if (currentType === 'ULTRA') nextTarget = 180; // KING
+  if (currentType === 'KING') nextTarget = 365; // INFINITY
+  if (currentType === 'INFINITY') nextTarget = 365; // Manter INFINITY
+
+  return (
+    <CurrentGoal current={currentStreak} target={nextTarget} />
+  );
+}
+
 function StreakContent() {
   const { streakData, isStreakActive, addStudyDay, breakStreak } = useStreak();
+  const { offensivesData, isLoading: offensivesLoading } = useOffensives();
   const [isDark] = useState(true);
 
   return (
@@ -76,7 +109,7 @@ function StreakContent() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div>
-                <StreakCalendar streakData={streakData} />
+                <StreakCalendar />
               </div>
 
               <div>
@@ -84,11 +117,14 @@ function StreakContent() {
               </div>
 
               <div>
-                <CurrentGoal current={streakData.currentStreak} target={5} />
+                <CurrentGoalWithOffensives />
               </div>
             </div>
 
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <OffensiveInfo />
+              </div>
               <div className="space-y-6">
                 <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
                   <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
@@ -106,12 +142,23 @@ function StreakContent() {
                     
                     <div className="flex items-center justify-between">
                       <span className="text-white/70">Dias Consecutivos:</span>
-                      <span className="text-white font-semibold">{streakData.currentStreak}</span>
+                      <span className="text-white font-semibold">
+                        {offensivesLoading ? '...' : (offensivesData?.stats.currentStreak || 0)}
+                      </span>
                     </div>
                     
                     <div className="flex items-center justify-between">
                       <span className="text-white/70">Melhor Ofensiva:</span>
-                      <span className="text-white font-semibold">{streakData.bestStreak}</span>
+                      <span className="text-white font-semibold">
+                        {offensivesLoading ? '...' : (offensivesData?.stats.longestStreak || 0)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/70">Tipo Atual:</span>
+                      <span className="text-white font-semibold">
+                        {offensivesLoading ? '...' : (offensivesData?.currentOffensive.type || 'NORMAL')}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -161,16 +208,16 @@ function StreakContent() {
                           stroke="#10B981"
                           strokeWidth="8"
                           fill="none"
-                          strokeDasharray={`${(streakData.currentStreak / 5) * 251.2} 251.2`}
+                          strokeDasharray={`${offensivesLoading ? 0 : ((offensivesData?.stats.currentStreak || 0) / 7) * 251.2} 251.2`}
                           strokeLinecap="round"
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-white">
-                            {streakData.currentStreak} / 5
+                            {offensivesLoading ? '...' : `${offensivesData?.stats.currentStreak || 0} / 7`}
                           </div>
-                          <div className="text-white/60 text-sm">Meta atual</div>
+                          <div className="text-white/60 text-sm">Para SUPER</div>
                         </div>
                       </div>
                     </div>

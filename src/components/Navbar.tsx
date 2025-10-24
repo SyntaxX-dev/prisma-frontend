@@ -188,8 +188,8 @@ export function Navbar({}: NavbarProps) {
                 align="end"
                 sideOffset={8}
               >
-                <div className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-300 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-top-1 mt-4">
-                  <StreakCalendar streakData={streakData} />
+                <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl mt-4">
+                  <StreakCalendar />
                 </div>
               </PopoverContent>
             </Popover>

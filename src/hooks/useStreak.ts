@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useOffensives } from './useOffensives';
 
 interface StreakData {
   currentStreak: number;
@@ -8,6 +9,7 @@ interface StreakData {
 }
 
 export function useStreak() {
+  const { offensivesData, isLoading } = useOffensives();
   const [streakData, setStreakData] = useState<StreakData>({
     currentStreak: 0,
     bestStreak: 0,
@@ -16,53 +18,33 @@ export function useStreak() {
   });
 
   useEffect(() => {
-    const mockData: StreakData = {
-      currentStreak: 0,
-      bestStreak: 13,
-      lastStudyDate: null,
-      isActive: false
-    };
+    if (offensivesData && !isLoading) {
+      const newStreakData: StreakData = {
+        currentStreak: offensivesData.stats.currentStreak,
+        bestStreak: offensivesData.stats.longestStreak,
+        lastStudyDate: offensivesData.currentOffensive?.lastVideoCompletedAt || null,
+        isActive: offensivesData.stats.currentStreak > 0
+      };
 
-    setStreakData(mockData);
-  }, []);
+      setStreakData(newStreakData);
+    }
+  }, [offensivesData, isLoading]);
 
   const checkStreakStatus = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
-    if (!streakData.lastStudyDate) {
+    if (!offensivesData) {
       return false;
     }
-
-    if (streakData.lastStudyDate === today) {
-      return true;
-    }
-
-    if (streakData.lastStudyDate === yesterday) {
-      return true;
-    }
-
-    return false;
+    return offensivesData.stats.currentStreak > 0;
   };
 
   const addStudyDay = () => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    setStreakData(prev => {
-      const isNewDay = prev.lastStudyDate !== today;
-      
-      if (isNewDay) {
-        return {
-          ...prev,
-          currentStreak: prev.currentStreak + 1,
-          bestStreak: Math.max(prev.bestStreak, prev.currentStreak + 1),
-          lastStudyDate: today,
-          isActive: true
-        };
-      }
-      
-      return prev;
-    });
+    setStreakData(prev => ({
+      ...prev,
+      currentStreak: prev.currentStreak + 1,
+      bestStreak: Math.max(prev.bestStreak, prev.currentStreak + 1),
+      lastStudyDate: new Date().toISOString(),
+      isActive: true
+    }));
   };
 
   const breakStreak = () => {
