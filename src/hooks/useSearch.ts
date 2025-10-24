@@ -2,46 +2,99 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { z } from 'zod';
+
+// Schema de validação para search params
+const searchParamsSchema = z.object({
+  q: z.string().optional(),
+  category: z.string().optional(),
+  level: z.enum(['Iniciante', 'Intermediário', 'Avançado']).optional(),
+  technology: z.string().optional(),
+  year: z.string().optional(),
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(50).default(12),
+  sort: z.enum(['title', 'year', 'level', 'createdAt']).default('title'),
+  order: z.enum(['asc', 'desc']).default('asc'),
+});
+
+type SearchParams = z.infer<typeof searchParamsSchema>;
+
+// Função para validar search params
+function validateSearchParams(params: Record<string, string | string[] | undefined>): SearchParams {
+  try {
+    return searchParamsSchema.parse(params);
+  } catch (error) {
+    console.warn('Erro na validação dos search params:', error);
+    return searchParamsSchema.parse({});
+  }
+}
+
+// Função para criar URL com search params
+function createSearchUrl(basePath: string, params: Partial<SearchParams>): string {
+  const searchParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      if (Array.isArray(value)) {
+        value.forEach(v => searchParams.append(key, String(v)));
+      } else {
+        searchParams.set(key, String(value));
+      }
+    }
+  });
+  
+  const queryString = searchParams.toString();
+  return queryString ? `${basePath}?${queryString}` : basePath;
+}
 
 export function useSearch() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const nextSearchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const query = searchParams.get('q') || '';
-    setSearchQuery(query);
-  }, [searchParams]);
+  // Parse e valida os search params atuais
+  const currentParams = validateSearchParams(
+    Object.fromEntries(nextSearchParams.entries())
+  );
 
-  const updateSearch = useCallback((query: string) => {
-    setSearchQuery(query);
+  const [searchQuery, setSearchQuery] = useState(currentParams.q || '');
+
+  useEffect(() => {
+    setSearchQuery(currentParams.q || '');
+  }, [currentParams.q]);
+
+  // Função para atualizar search params
+  const updateSearchParams = useCallback((
+    updates: Partial<SearchParams> | ((prev: SearchParams) => Partial<SearchParams>)
+  ) => {
+    const newParams = typeof updates === 'function' 
+      ? { ...currentParams, ...updates(currentParams) }
+      : { ...currentParams, ...updates };
+
+    // Cria a nova URL
+    const newUrl = createSearchUrl('/dashboard', newParams);
     
+    // Debounce para evitar muitas navegações
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
-    if (!query.trim()) {
-      setIsLoading(false);
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete('q');
-      router.replace('/dashboard', { scroll: false });
-      return;
-    }
-
     setIsLoading(true);
-
+    
     debounceRef.current = setTimeout(() => {
-      const params = new URLSearchParams();
-      params.set('q', query.trim());
-      
-      const newUrl = `/courses/search?${params.toString()}`;
       router.push(newUrl);
       setIsLoading(false);
     }, 500);
-  }, [router, searchParams]);
+  }, [currentParams, router]);
 
+  // Função para atualizar apenas a query de busca (compatibilidade com código existente)
+  const updateSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    updateSearchParams({ q: query || undefined });
+  }, [updateSearchParams]);
+
+  // Função para limpar todos os search params
   const clearSearch = useCallback(() => {
     setSearchQuery('');
     setIsLoading(false);
@@ -53,6 +106,14 @@ export function useSearch() {
     router.replace('/dashboard', { scroll: false });
   }, [router]);
 
+  // Função para resetar para valores padrão
+  const resetSearchParams = useCallback(() => {
+    const defaultParams = searchParamsSchema.parse({});
+    const newUrl = createSearchUrl('/dashboard', defaultParams);
+    router.push(newUrl);
+  }, [router]);
+
+  // Cleanup do debounce
   useEffect(() => {
     return () => {
       if (debounceRef.current) {
@@ -62,10 +123,16 @@ export function useSearch() {
   }, []);
 
   return {
+    // Compatibilidade com código existente
     searchQuery,
     updateSearch,
     clearSearch,
     isSearching: searchQuery.length > 0,
-    isLoading
+    isLoading,
+    
+    // Novas funcionalidades
+    searchParams: currentParams,
+    updateSearchParams,
+    resetSearchParams,
   };
 }

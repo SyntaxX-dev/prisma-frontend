@@ -4,21 +4,33 @@ import { CourseCard } from "./CourseCard";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "./ui/carousel";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useSearch } from "../hooks/useSearch";
+import { useCourseSearchWithParams } from "../hooks/useCourseSearch";
 
 interface Course {
-  id: string;
-  name: string;
-  description: string;
-  imageUrl: string;
-  createdAt: string;
-  updatedAt: string;
+  title: string;
+  instructor: string;
+  duration: string;
+  level: 'Iniciante' | 'Intermediário' | 'Avançado';
+  year: string;
+  technology: string;
+  icon: string;
+  iconColor: string;
+  isSubscriber: boolean;
+  isFree?: boolean;
+  thumbnailUrl: string;
+  courseId: string;
+  category: string;
 }
 
 export function LearningDashboard({ userName }: { userName?: string }) {
   const [greeting, setGreeting] = useState("");
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [coursesLoading, setCoursesLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  // Hook para search params
+  const { searchParams, isSearching } = useSearch();
+  
+  // Hook unificado que gerencia tanto busca quanto carregamento inicial
+  const { data: courses = [], isLoading: coursesLoading, error } = useCourseSearchWithParams(searchParams);
 
   useEffect(() => {
     const getGreeting = () => {
@@ -36,33 +48,6 @@ export function LearningDashboard({ userName }: { userName?: string }) {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setCoursesLoading(true);
-        const token = localStorage.getItem('auth_token');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        const data = await response.json();
-
-        if (data.success) {
-          setCourses(data.data);
-        } else {
-          setError('Erro ao carregar cursos');
-        }
-      } catch (err) {
-        setError('Erro ao conectar com o servidor');
-      } finally {
-        setCoursesLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, []);
 
 
   return (
@@ -79,7 +64,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-red-400 text-lg">{error}</div>
+          <div className="text-red-400 text-lg">Erro ao carregar cursos</div>
         </div>
       ) : courses.length === 0 ? (
         <div className="flex flex-col items-center justify-center ">
@@ -94,38 +79,77 @@ export function LearningDashboard({ userName }: { userName?: string }) {
       ) : (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-lg font-semibold">Cursos Disponíveis</h2>
+            <h2 className="text-white text-lg font-semibold">
+              {isSearching ? 'Resultados da Busca' : 'Cursos Disponíveis'}
+            </h2>
             <Button variant="ghost" className="text-white/60 hover:text-white text-sm">
               Ver todos
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
 
-          <Carousel
-            opts={{
-              align: "start",
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-3">
-              {courses.map((course) => (
-                <CarouselItem key={course.id} className="pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-                  <CourseCard
-                    title={course.name}
-                    description={course.description}
-                    technology={course.name}
-                    icon="📚"
-                    isSubscriber={true}
-                    thumbnailUrl={course.imageUrl || ""}
-                    iconColor="#06b6d4"
-                    courseId={course.id}
-                  />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
-            <CarouselNext className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
-          </Carousel>
+          {/* Mostra resultados da busca se houver busca ativa, senão mostra carousel */}
+          {isSearching ? (
+            <div className="space-y-4">
+              {courses.length === 0 ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="text-white/60 text-lg mb-2">Nenhum curso encontrado</div>
+                    <div className="text-white/40 text-sm">
+                      Tente ajustar os filtros de busca na barra superior
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {courses.map((course) => (
+                    <CourseCard
+                      key={course.courseId}
+                      title={course.title}
+                      description={course.description}
+                      technology={course.technology}
+                      icon={course.icon}
+                      iconColor={course.iconColor}
+                      isSubscriber={course.isSubscriber}
+                      isFree={course.isFree}
+                      thumbnailUrl={course.thumbnailUrl}
+                      courseId={course.courseId}
+                      category={course.category}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Mostra carousel normal quando não há busca */
+            <Carousel
+              opts={{
+                align: "start",
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-3">
+                {courses.map((course) => (
+                  <CarouselItem key={course.courseId} className="pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                    <CourseCard
+                      title={course.title}
+                      description={course.description}
+                      technology={course.technology}
+                      icon={course.icon}
+                      isSubscriber={course.isSubscriber}
+                      isFree={course.isFree}
+                      thumbnailUrl={course.thumbnailUrl}
+                      iconColor={course.iconColor}
+                      courseId={course.courseId}
+                      category={course.category}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
+              <CarouselNext className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
+            </Carousel>
+          )}
         </div>
       )}
     </div>
