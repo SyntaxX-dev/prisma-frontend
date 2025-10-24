@@ -57,13 +57,17 @@ import {
     GripVertical,
     ArrowLeft,
     Camera,
-    Trash2
+    Trash2,
+    Eye
 } from 'lucide-react';
 import { countries } from '@/lib/constants/countries';
 import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS } from '@/types/auth-api';
 import { LocationModal } from '@/components/LocationModal';
 import ShinyText from './ShinyText';
 import DotGrid from './DotGrid';
+import { OffensivesCard } from './OffensivesCard';
+import { HabilitiesCard } from './HabilitiesCard';
+import { CareerMomentCard } from './CareerMomentCard';
 
 function SortableLinkItem({
     id,
@@ -142,6 +146,9 @@ export function ProfilePage() {
 
     // Estado para o modal de localização
     const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+    
+    // Estado para visualização pública do perfil
+    const [isPublicView, setIsPublicView] = useState(false);
 
     // Função para salvar localização
     const handleLocationSave = async (location: string) => {
@@ -277,6 +284,7 @@ export function ProfilePage() {
         isLinksModalOpen,
         isAboutModalOpen,
         isHabilitiesModalOpen,
+        isCareerModalOpen,
         selectedTask,
         formData,
         basicInfoData,
@@ -313,6 +321,7 @@ export function ProfilePage() {
         handleHabilitiesSubmit,
         getModalFields,
         updateUserAbout,
+        updateUserMomentCareer,
         updateUserLocation,
         setIsModalOpen,
         setSelectedTask,
@@ -323,6 +332,7 @@ export function ProfilePage() {
         setIsLinksModalOpen,
         setIsAboutModalOpen,
         setIsHabilitiesModalOpen,
+        setIsCareerModalOpen,
         setAboutText,
         setLinkFieldsOrder
     } = useProfile();
@@ -438,7 +448,7 @@ export function ProfilePage() {
                 </Button>
             </div>
 
-            <div className="relative z-10 p-6 min-h-screen flex items-center">
+            <div className="relative z-10 p-6 pt-24 min-h-screen flex items-center">
                 <div className="max-w-7xl mx-auto w-full relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-1">
@@ -519,17 +529,32 @@ export function ProfilePage() {
                                             {getEmailValue(user) || 'usuario@email.com'}
                                         </p>
                                         
-                                        {/* Botão Conversar */}
-                                        <Button 
-                                            className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#B3E240] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-                                        >
-                                            <ShinyText 
-                                                text="Conversar" 
-                                                disabled={false} 
-                                                speed={3} 
-                                                className="font-medium"
-                                            />
-                                        </Button>
+                                        {/* Botões de Ação */}
+                                        <div className="space-y-2">
+                                            <Button 
+                                                className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#B3E240] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+                                            >
+                                                <ShinyText 
+                                                    text="Conversar" 
+                                                    disabled={false} 
+                                                    speed={3} 
+                                                    className="font-medium"
+                                                />
+                                            </Button>
+                                            
+                                            <Button 
+                                                variant="outline"
+                                                className={`w-full px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
+                                                    isPublicView 
+                                                        ? 'bg-[#B3E240]/10 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240]/20' 
+                                                        : 'bg-transparent hover:bg-white/5 border-[#323238] text-gray-300 hover:text-white'
+                                                }`}
+                                                onClick={() => setIsPublicView(!isPublicView)}
+                                            >
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                {isPublicView ? 'Ver perfil privado' : 'Ver como outros me veem'}
+                                            </Button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-3 mb-6">
@@ -541,23 +566,27 @@ export function ProfilePage() {
                                                         {basicInfoData.cidade}
                                                     </span>
                                                 </div>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => setIsLocationModalOpen(true)}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
-                                                >
-                                                    <Edit3 className="w-3 h-3 text-gray-400" />
-                                                </Button>
+                                                {!isPublicView && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => setIsLocationModalOpen(true)}
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
+                                                    >
+                                                        <Edit3 className="w-3 h-3 text-gray-400" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         ) : (
-                                            <Button
-                                                className="w-full bg-transparent hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer transition-colors"
-                                                onClick={() => setIsLocationModalOpen(true)}
-                                            >
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Localização
-                                            </Button>
+                                            !isPublicView && (
+                                                <Button
+                                                    className="w-full bg-transparent hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer transition-colors"
+                                                    onClick={() => setIsLocationModalOpen(true)}
+                                                >
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Localização
+                                                </Button>
+                                            )
                                         )}
                                         {selectedFocus ? (
                                             <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
@@ -567,23 +596,27 @@ export function ProfilePage() {
                                                         {getFocusLabel(selectedFocus, selectedCourse)}
                                                     </span>
                                                 </div>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => setIsFocusModalOpen(true)}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
-                                                >
-                                                    <Edit3 className="w-3 h-3 text-gray-400" />
-                                                </Button>
+                                                {!isPublicView && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => setIsFocusModalOpen(true)}
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
+                                                    >
+                                                        <Edit3 className="w-3 h-3 text-gray-400" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         ) : (
-                                            <Button
-                                                className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                                                onClick={() => setIsFocusModalOpen(true)}
-                                            >
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Escolha seu foco
-                                            </Button>
+                                            !isPublicView && (
+                                                <Button
+                                                    className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
+                                                    onClick={() => setIsFocusModalOpen(true)}
+                                                >
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Escolha seu foco
+                                                </Button>
+                                            )
                                         )}
                                     </div>
 
@@ -592,85 +625,140 @@ export function ProfilePage() {
                                     </p>
                                 </div>
 
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-white font-semibold">Links</h3>
-                                        <Button
-                                            className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
-                                            size="sm"
-                                            onClick={() => setIsLinksModalOpen(true)}
-                                        >
-                                            <Edit3 className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                    {renderUserLinks()}
-                                </div>
+                                {/* Card de Momento de Carreira - Sempre visível */}
+                                <CareerMomentCard 
+                                    userProfile={userProfile}
+                                    isPublicView={isPublicView}
+                                    onEditClick={() => setIsCareerModalOpen(true)}
+                                />
 
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                    <h3 className="text-white font-semibold mb-4">Insígnias • 3</h3>
-                                    <div className="flex space-x-3">
-                                        <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-black text-xs font-bold">R</span>
+                                {/* Card de Habilidades */}
+                                <HabilitiesCard 
+                                    userProfile={userProfile}
+                                    isPublicView={isPublicView}
+                                    onEditClick={() => setIsHabilitiesModalOpen(true)}
+                                />
+
+                                {/* Links - Apenas na visualização privada */}
+                                {!isPublicView && (
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-white font-semibold">Links</h3>
+                                            <Button
+                                                className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
+                                                size="sm"
+                                                onClick={() => setIsLinksModalOpen(true)}
+                                            >
+                                                <Edit3 className="w-4 h-4" />
+                                            </Button>
                                         </div>
-                                        <div className="w-12 h-12 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-white text-xs font-bold">G</span>
-                                        </div>
-                                        <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-black text-xs font-bold">N</span>
+                                        {renderUserLinks()}
+                                    </div>
+                                )}
+
+                                {/* Insígnias - Apenas na visualização privada */}
+                                {!isPublicView && (
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                        <h3 className="text-white font-semibold mb-4">Insígnias • 3</h3>
+                                        <div className="flex space-x-3">
+                                            <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-black text-xs font-bold">R</span>
+                                            </div>
+                                            <div className="w-12 h-12 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-white text-xs font-bold">G</span>
+                                            </div>
+                                            <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-black text-xs font-bold">N</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
                         <div className="lg:col-span-2 space-y-6">
-                            <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                <h2 className="text-xl font-bold text-white mb-2">Complete seu perfil</h2>
-                                <p className="text-gray-400 text-sm mb-6">Perfis completos atraem mais oportunidades!</p>
+                            {/* Seção "Complete seu perfil" - apenas na visualização privada */}
+                            {!isPublicView && (
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                    <h2 className="text-xl font-bold text-white mb-2">Complete seu perfil</h2>
+                                    <p className="text-gray-400 text-sm mb-6">Perfis completos atraem mais oportunidades!</p>
 
-                                <div className="mb-6">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-white/80 text-sm">{completionPercentage}% completo</span>
-                                        <span className="text-gray-400 text-sm">{completedTasks} de {totalTasks}</span>
-                                    </div>
-                                    <div className="w-full bg-[#323238] rounded-full h-2">
-                                        <div
-                                            className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${completionPercentage}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {profileTasks.map((task, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center space-x-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
-                                            onClick={() => handleTaskClick(task.label)}
-                                        >
-                                            {task.completed ? (
-                                                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                                            ) : (
-                                                <Circle className="w-5 h-5 text-gray-600" />
-                                            )}
-                                            <span className={`text-sm ${task.completed ? 'text-white' : 'text-gray-400'}`}>
-                                                {task.label}
-                                            </span>
+                                    <div className="mb-6">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-white/80 text-sm">{completionPercentage}% completo</span>
+                                            <span className="text-gray-400 text-sm">{completedTasks} de {totalTasks}</span>
                                         </div>
-                                    ))}
+                                        <div className="w-full bg-[#323238] rounded-full h-2">
+                                            <div
+                                                className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                                                style={{ width: `${completionPercentage}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {profileTasks.map((task, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center space-x-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+                                                onClick={() => handleTaskClick(task.label)}
+                                            >
+                                                {task.completed ? (
+                                                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                                ) : (
+                                                    <Circle className="w-5 h-5 text-gray-600" />
+                                                )}
+                                                <span className={`text-sm ${task.completed ? 'text-white' : 'text-gray-400'}`}>
+                                                    {task.label}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Card de Ofensivas - Agora acima do Sobre */}
+                            <OffensivesCard />
+
+                            {/* Links e Insígnias - Apenas na visualização pública, acima do Sobre */}
+                            {isPublicView && (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {/* Links */}
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                        <h3 className="text-white font-semibold mb-3 text-sm">Links</h3>
+                                        {renderUserLinks()}
+                                    </div>
+
+                                    {/* Insígnias */}
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                        <h3 className="text-white font-semibold mb-3 text-sm">Insígnias • 3</h3>
+                                        <div className="flex space-x-2">
+                                            <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-black text-xs font-bold">R</span>
+                                            </div>
+                                            <div className="w-10 h-10 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-white text-xs font-bold">G</span>
+                                            </div>
+                                            <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-black text-xs font-bold">N</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-semibold text-white">Sobre</h3>
-                                    <Button
-                                        className="bg-transparent hover:bg-white/5 text-gray-400 p-1 cursor-pointer"
-                                        size="sm"
-                                        onClick={() => setIsAboutModalOpen(true)}
-                                    >
-                                        <Edit3 className="w-4 h-4" />
-                                    </Button>
+                                    {!isPublicView && (
+                                        <Button
+                                            className="bg-transparent hover:bg-white/5 text-gray-400 p-1 cursor-pointer"
+                                            size="sm"
+                                            onClick={() => setIsAboutModalOpen(true)}
+                                        >
+                                            <Edit3 className="w-4 h-4" />
+                                        </Button>
+                                    )}
                                 </div>
                                 <div className="text-gray-300 text-sm leading-relaxed">
                                     {user.aboutYou ? (
@@ -1154,6 +1242,77 @@ export function ProfilePage() {
                 onSave={handleLocationSave}
                 currentLocation={basicInfoData.cidade}
             />
+
+            {/* Modal para editar momento de carreira */}
+            <Dialog open={isCareerModalOpen} onOpenChange={setIsCareerModalOpen}>
+                <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-white text-lg font-semibold">
+                            Editar momento de carreira
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const momentCareer = formData.get('momentCareer') as string;
+                        
+                        console.log('🔄 Atualizando momento de carreira:', momentCareer);
+                        
+                        try {
+                            // Usar a função do hook para atualizar
+                            await updateUserMomentCareer(momentCareer?.trim() || null);
+                            console.log('✅ Momento de carreira atualizado com sucesso');
+                            setIsCareerModalOpen(false);
+                        } catch (error: any) {
+                            console.error('❌ Erro ao atualizar momento de carreira:', error);
+                            
+                            // Mostrar erro específico para o usuário
+                            if (error?.message?.includes('500 caracteres')) {
+                                alert('❌ O momento de carreira deve ter no máximo 500 caracteres');
+                            } else if (error?.status === 400) {
+                                alert('❌ Erro ao atualizar momento de carreira. Verifique se o texto não é muito longo.');
+                            } else {
+                                alert('❌ Erro ao atualizar momento de carreira. Tente novamente.');
+                            }
+                        }
+                    }} className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                Momento de carreira
+                            </label>
+                            <Input
+                                name="momentCareer"
+                                type="text"
+                                maxLength={500}
+                                defaultValue={userProfile?.momentCareer || ''}
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
+                                placeholder="Ex: Desenvolvedor Júnior, Estudante, Empreendedor..."
+                            />
+                            <p className="text-xs text-gray-400">
+                                Máximo 500 caracteres
+                            </p>
+                        </div>
+
+                        <div className="flex justify-end space-x-3 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsCareerModalOpen(false)}
+                                className="border-[#323238] text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 cursor-pointer transition-colors"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                            >
+                                Salvar
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

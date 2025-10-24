@@ -62,7 +62,7 @@ const getOffensiveTypeInfo = (type: OffensiveType) => {
 };
 
 export function OffensiveInfo() {
-  const { offensivesData, isLoading } = useOffensives();
+  const { data: offensivesData, isLoading } = useOffensives();
 
   if (isLoading) {
     return (

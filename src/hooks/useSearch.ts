@@ -22,10 +22,15 @@ type SearchParams = z.infer<typeof searchParamsSchema>;
 // Função para validar search params
 function validateSearchParams(params: Record<string, string | string[] | undefined>): SearchParams {
   try {
-    return searchParamsSchema.parse(params);
+    console.log('🔍 Validando search params:', params);
+    const result = searchParamsSchema.parse(params);
+    console.log('✅ Search params validados:', result);
+    return result;
   } catch (error) {
-    console.warn('Erro na validação dos search params:', error);
-    return searchParamsSchema.parse({});
+    console.warn('❌ Erro na validação dos search params:', error);
+    const defaultResult = searchParamsSchema.parse({});
+    console.log('🔄 Usando search params padrão:', defaultResult);
+    return defaultResult;
   }
 }
 

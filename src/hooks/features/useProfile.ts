@@ -48,6 +48,7 @@ export function useProfile() {
   const [isLinksModalOpen, setIsLinksModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isHabilitiesModalOpen, setIsHabilitiesModalOpen] = useState(false);
+  const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const isClient = useClientOnly();
@@ -256,11 +257,13 @@ export function useProfile() {
   // Função para recarregar o perfil do backend após atualizações
   const refreshProfile = useCallback(async () => {
     try {
+      console.log('🔄 Hook: Recarregando perfil do backend...');
       const updatedProfile = await getProfile();
       setUserProfile(updatedProfile);
-      console.log('✅ Perfil atualizado do backend:', updatedProfile);
+      console.log('✅ Hook: Perfil atualizado do backend:', updatedProfile);
     } catch (error) {
-      console.error('Erro ao recarregar perfil:', error);
+      console.error('❌ Hook: Erro ao recarregar perfil:', error);
+      throw error; // Re-throw para que a função chamadora possa capturar
     }
   }, []);
 
@@ -348,15 +351,34 @@ export function useProfile() {
 
   const updateUserMomentCareer = useCallback(async (momentCareer: string | null) => {
     try {
+      console.log('🔄 Hook: Iniciando atualização do momento de carreira:', momentCareer);
+      
       // Enviar null se string vazia ou null, senão enviar a string
       const momentCareerToSend = (momentCareer && momentCareer.trim() !== '') ? momentCareer.trim() : null;
-      await updateMomentCareer(momentCareerToSend);
+      console.log('🔄 Hook: Valor a ser enviado:', momentCareerToSend);
+      console.log('🔄 Hook: Tamanho do texto:', momentCareerToSend?.length || 0);
+      
+      // Validar tamanho máximo
+      if (momentCareerToSend && momentCareerToSend.length > 500) {
+        throw new Error('O momento de carreira deve ter no máximo 500 caracteres');
+      }
+      
+      const response = await updateProfile({ momentCareer: momentCareerToSend || undefined });
+      console.log('✅ Hook: Resposta da API:', response);
       
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
-    } catch (error) {
-      console.error('Erro ao atualizar momento de carreira:', error);
+      console.log('✅ Hook: Perfil recarregado com sucesso');
+    } catch (error: any) {
+      console.error('❌ Hook: Erro ao atualizar momento de carreira:', error);
+      console.error('❌ Hook: Detalhes do erro:', {
+        status: error?.status,
+        message: error?.message,
+        details: error?.details,
+        response: error?.response
+      });
       setError('Erro ao atualizar momento de carreira');
+      throw error; // Re-throw para que o modal possa capturar
     }
   }, [refreshProfile]);
 
@@ -897,6 +919,7 @@ export function useProfile() {
     isLinksModalOpen,
     isAboutModalOpen,
     isHabilitiesModalOpen,
+    isCareerModalOpen,
     selectedTask,
     formData,
     basicInfoData,
@@ -958,6 +981,7 @@ export function useProfile() {
     setIsLinksModalOpen,
     setIsAboutModalOpen,
     setIsHabilitiesModalOpen,
+    setIsCareerModalOpen,
     setAboutText,
     setLinkFieldsOrder
   };

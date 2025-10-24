@@ -13,9 +13,116 @@ interface StreakCalendarProps {
   };
 }
 
-export function StreakCalendar({ streakData }: StreakCalendarProps) {
+export function StreakCalendar({ streakData }: StreakCalendarProps = {}) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const { offensivesData, hasOffensiveOnDay, getOffensiveTypeForDay, getOffensivesInMonth, getConsecutiveOffensiveDays, isLoading } = useOffensives();
+  const { data: offensivesData, isLoading, refetch } = useOffensives();
+
+  // Debug logs
+  console.log('📅 StreakCalendar - offensivesData:', offensivesData);
+  console.log('📅 StreakCalendar - isLoading:', isLoading);
+  console.log('📅 StreakCalendar - history:', offensivesData?.history?.length || 0, 'dias');
+  console.log('📅 StreakCalendar - currentOffensive:', offensivesData?.currentOffensive);
+
+  // Funções auxiliares para trabalhar com os dados das ofensivas
+  const hasOffensiveOnDay = (date: Date) => {
+    if (!offensivesData) {
+      console.log('❌ StreakCalendar: Sem dados de ofensivas');
+      return false;
+    }
+    
+    const dateStr = date.toISOString().split('T')[0];
+    console.log(`🔍 StreakCalendar: Verificando ${dateStr}`);
+    console.log(`📅 StreakCalendar: History completo:`, offensivesData.history);
+    console.log(`📅 StreakCalendar: CurrentOffensive:`, offensivesData.currentOffensive);
+    
+    // Verificar se há dados no history
+    if (offensivesData.history && offensivesData.history.length > 0) {
+      const hasOffensive = offensivesData.history.some(day => {
+        console.log(`🔍 Comparando ${dateStr} com ${day.date} - hasOffensive: ${day.hasOffensive}`);
+        return day.date === dateStr && day.hasOffensive;
+      });
+      
+      console.log(`✅ StreakCalendar: ${dateStr} - Tem ofensiva (history): ${hasOffensive}`);
+      return hasOffensive;
+    }
+    
+    // Se não há history, verificar se a data está dentro do período da ofensiva atual
+    if (offensivesData.currentOffensive) {
+      const currentOffensive = offensivesData.currentOffensive;
+      const streakStartDate = new Date(currentOffensive.streakStartDate);
+      const today = new Date();
+      
+      console.log(`🔍 StreakCalendar: Verificando ofensiva atual`);
+      console.log(`📅 StreakCalendar: Streak start: ${streakStartDate.toISOString().split('T')[0]}`);
+      console.log(`📅 StreakCalendar: Today: ${today.toISOString().split('T')[0]}`);
+      console.log(`📅 StreakCalendar: Consecutive days: ${currentOffensive.consecutiveDays}`);
+      
+      // Verificar se a data está dentro do período da ofensiva atual
+      const isWithinStreak = date >= streakStartDate && date <= today;
+      console.log(`✅ StreakCalendar: ${dateStr} - Dentro da ofensiva atual: ${isWithinStreak}`);
+      
+      return isWithinStreak;
+    }
+    
+    console.log(`❌ StreakCalendar: ${dateStr} - Sem dados para verificar`);
+    return false;
+  };
+
+  const getOffensiveTypeForDay = (date: Date) => {
+    if (!offensivesData?.history) return 'NORMAL';
+    const dateStr = date.toISOString().split('T')[0];
+    const dayData = offensivesData.history.find(day => day.date === dateStr);
+    return dayData?.type || 'NORMAL';
+  };
+
+  // Função para lidar com clique na ofensiva
+  const handleOffensiveClick = async (day: number) => {
+    if (!day || !hasStreakOnDay(day)) return;
+    
+    const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const dateStr = clickedDate.toISOString().split('T')[0];
+    
+    console.log('🔥 Clique na ofensiva do dia:', dateStr);
+    console.log('🔄 Refazendo requisição para /offensives...');
+    
+    try {
+      await refetch();
+      console.log('✅ Requisição de ofensivas refeita com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao refazer requisição de ofensivas:', error);
+    }
+  };
+
+  const getOffensivesInMonth = (date: Date) => {
+    if (!offensivesData?.history) return [];
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return offensivesData.history.filter(day => {
+      const dayDate = new Date(day.date);
+      return dayDate.getFullYear() === year && dayDate.getMonth() === month && day.hasOffensive;
+    });
+  };
+
+  const getConsecutiveOffensiveDays = (date: Date) => {
+    if (!offensivesData?.history) return 0;
+    const dateStr = date.toISOString().split('T')[0];
+    const sortedHistory = [...offensivesData.history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    let consecutiveDays = 0;
+    let currentDate = new Date(date);
+    
+    for (const day of sortedHistory) {
+      const dayDate = new Date(day.date);
+      if (dayDate.toDateString() === currentDate.toDateString() && day.hasOffensive) {
+        consecutiveDays++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    
+    return consecutiveDays;
+  };
 
   const months = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -50,13 +157,8 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
     
     const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     
-    // Verificar se é um dia da ofensiva atual (incluindo dias consecutivos)
-    const consecutiveDays = getConsecutiveOffensiveDays();
-    const isConsecutiveDay = consecutiveDays.some(consecutiveDay => {
-      const consecutiveDateStr = consecutiveDay.toISOString().split('T')[0];
-      const checkDateStr = checkDate.toISOString().split('T')[0];
-      return consecutiveDateStr === checkDateStr;
-    });
+    // Verificar se é um dia da ofensiva atual
+    const isConsecutiveDay = hasOffensiveOnDay(checkDate);
     
     if (isConsecutiveDay) {
       return true;
@@ -71,13 +173,8 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
     
     const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     
-    // Verificar se é um dia da ofensiva atual (incluindo dias consecutivos)
-    const consecutiveDays = getConsecutiveOffensiveDays();
-    const isConsecutiveDay = consecutiveDays.some(consecutiveDay => {
-      const consecutiveDateStr = consecutiveDay.toISOString().split('T')[0];
-      const checkDateStr = checkDate.toISOString().split('T')[0];
-      return consecutiveDateStr === checkDateStr;
-    });
+    // Verificar se é um dia da ofensiva atual
+    const isConsecutiveDay = hasOffensiveOnDay(checkDate);
     
     if (isConsecutiveDay && offensivesData?.currentOffensive) {
       return offensivesData.currentOffensive.type;
@@ -182,9 +279,12 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
         {days.map((day, index) => (
           <div key={index} className="aspect-square flex items-center justify-center relative">
             {day ? (
-              <div className={`w-full h-full flex flex-col items-center justify-center relative transition-all duration-200 hover:bg-white/10 rounded-lg cursor-pointer ${
-                hasStreakOnDay(day) ? 'bg-orange-500/20 border border-orange-500/30' : ''
-              }`}>
+              <div 
+                className={`w-full h-full flex flex-col items-center justify-center relative transition-all duration-200 hover:bg-white/10 rounded-lg cursor-pointer ${
+                  hasStreakOnDay(day) ? 'bg-orange-500/20 border border-orange-500/30' : ''
+                }`}
+                onClick={() => handleOffensiveClick(day)}
+              >
                 <span className={`text-sm font-medium ${
                   hasStreakOnDay(day) ? 'text-orange-200' : 'text-white/80'
                 }`}>{day}</span>
@@ -217,7 +317,7 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
           </div>
           <div>
             <div className="text-xl font-bold text-white">
-              {getOffensivesInMonth(currentDate.getFullYear(), currentDate.getMonth()).length}
+              {getOffensivesInMonth(currentDate).length}
             </div>
             <div className="text-white/60 text-sm">Ofensivas no mês</div>
           </div>

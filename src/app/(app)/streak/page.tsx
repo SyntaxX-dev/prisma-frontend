@@ -12,7 +12,7 @@ import { Button } from "../../../components/ui/button";
 import { Flame, Target, Calendar, Clock } from "lucide-react";
 
 function CurrentGoalWithOffensives() {
-  const { offensivesData, isLoading } = useOffensives();
+  const { data: offensivesData, isLoading } = useOffensives();
   
   if (isLoading) {
     return (
@@ -43,7 +43,7 @@ function CurrentGoalWithOffensives() {
 
 function StreakContent() {
   const { streakData, isStreakActive, addStudyDay, breakStreak } = useStreak();
-  const { offensivesData, isLoading: offensivesLoading } = useOffensives();
+  const { data: offensivesData, isLoading: offensivesLoading } = useOffensives();
   const [isDark] = useState(true);
 
   return (

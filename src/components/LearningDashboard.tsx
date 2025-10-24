@@ -5,23 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useSearch } from "../hooks/useSearch";
-import { useCourseSearchWithParams } from "../hooks/useCourseSearch";
-
-interface Course {
-  title: string;
-  instructor: string;
-  duration: string;
-  level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  year: string;
-  technology: string;
-  icon: string;
-  iconColor: string;
-  isSubscriber: boolean;
-  isFree?: boolean;
-  thumbnailUrl: string;
-  courseId: string;
-  category: string;
-}
+import { useCourseSearchWithParams, Course } from "../hooks/useCourseSearch";
 
 export function LearningDashboard({ userName }: { userName?: string }) {
   const [greeting, setGreeting] = useState("");
@@ -31,6 +15,13 @@ export function LearningDashboard({ userName }: { userName?: string }) {
   
   // Hook unificado que gerencia tanto busca quanto carregamento inicial
   const { data: courses = [], isLoading: coursesLoading, error } = useCourseSearchWithParams(searchParams);
+
+  // Debug logs
+  console.log('🔍 LearningDashboard - searchParams:', searchParams);
+  console.log('🔍 LearningDashboard - isSearching:', isSearching);
+  console.log('🔍 LearningDashboard - courses:', courses.length, 'cursos');
+  console.log('🔍 LearningDashboard - coursesLoading:', coursesLoading);
+  console.log('🔍 LearningDashboard - error:', error);
 
   useEffect(() => {
     const getGreeting = () => {

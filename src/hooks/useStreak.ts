@@ -9,7 +9,7 @@ interface StreakData {
 }
 
 export function useStreak() {
-  const { offensivesData, isLoading } = useOffensives();
+  const { data: offensivesData, isLoading } = useOffensives();
   const [streakData, setStreakData] = useState<StreakData>({
     currentStreak: 0,
     bestStreak: 0,

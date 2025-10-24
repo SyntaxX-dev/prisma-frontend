@@ -12,7 +12,7 @@ import { X, Search, Filter } from "lucide-react";
 import { useState } from "react";
 
 function SearchPageContent() {
-  const { searchParams, updateSearchParams, clearSearchParams, isSearching } = useSearch();
+  const { searchParams, updateSearchParams, resetSearchParams, isSearching } = useSearch();
   const { data: courses = [], isLoading, error } = useCourseSearchWithParams(searchParams);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -122,7 +122,7 @@ function SearchPageContent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={clearSearchParams}
+                      onClick={resetSearchParams}
                       className="bg-white/10 border-white/20 text-white hover:bg-white/20"
                     >
                       <X className="w-4 h-4 mr-2" />

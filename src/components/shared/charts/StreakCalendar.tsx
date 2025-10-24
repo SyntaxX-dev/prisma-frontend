@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
 import { Button } from "../../ui/button";
 
 interface StreakCalendarProps {
-  streakData: {
+  streakData?: {
     currentStreak: number;
     bestStreak: number;
     lastStudyDate: string | null;
@@ -11,7 +11,7 @@ interface StreakCalendarProps {
   };
 }
 
-export function StreakCalendar({ streakData }: StreakCalendarProps) {
+export function StreakCalendar({ streakData }: StreakCalendarProps = {}) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const months = [
@@ -118,11 +118,11 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
       <div className="mt-6 pt-4 border-t border-white/20 animate-in fade-in-0 slide-in-from-top-1 duration-300 delay-300">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-white">{streakData.currentStreak}</div>
+            <div className="text-2xl font-bold text-white">{streakData?.currentStreak || 0}</div>
             <div className="text-white/60 text-sm">Streak atual</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-white">{streakData.bestStreak}</div>
+            <div className="text-2xl font-bold text-white">{streakData?.bestStreak || 0}</div>
             <div className="text-white/60 text-sm">Melhor streak</div>
           </div>
           <div>
