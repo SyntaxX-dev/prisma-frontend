@@ -2,7 +2,7 @@ import { ChevronDown, Home, BookOpen, Users, MessageCircle, Eye, FileText, Folde
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useNavigationWithLoading } from "../hooks/useNavigationWithLoading";
+import { useNavigationWithLoading } from "../hooks/shared";
 
 interface SidebarProps {
   isDark: boolean;

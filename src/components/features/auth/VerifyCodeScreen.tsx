@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Logo from '/public/logo-prisma.png';
+import Logo from '../../public/logo-prisma.png';
 import { motion } from 'framer-motion';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -11,7 +11,7 @@ import { Mail, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import styles from './AuthScreen.module.css';
-import spotlightStyles from '../../external/nurui/spotlight.module.css';
+import spotlightStyles from './spotlight.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { verifyResetCodeSchema, VerifyResetCodeFormData } from '@/lib/validators/auth';

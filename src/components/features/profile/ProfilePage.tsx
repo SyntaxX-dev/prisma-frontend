@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useProfile } from '@/hooks/features/useProfile';
+import { useProfile } from '@/hooks/features/profile';
 import { getEmailValue } from '@/lib/utils/email';
 import {
     DndContext,
@@ -23,7 +23,7 @@ import {
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { UserProfile } from '@/types/api/auth-api';
+import { UserProfile } from '@/types/auth-api';
 import { Button } from '../../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
 import { RichTextEditor } from '../../shared/RichTextEditor';
@@ -55,10 +55,19 @@ import {
     Twitter,
     Github,
     GripVertical,
-    ArrowLeft
+    ArrowLeft,
+    Camera,
+    Trash2,
+    Eye
 } from 'lucide-react';
 import { countries } from '@/lib/constants/countries';
-import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS } from '@/types/api/auth-api';
+import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS } from '@/types/auth-api';
+import { LocationModal } from '@/components/shared/LocationModal';
+import ShinyText from '@/components/shared/ShinyText';
+import DotGrid from '@/components/shared/DotGrid';
+import { OffensivesCard } from '../offensives/OffensivesCard';
+import { HabilitiesCard } from './HabilitiesCard';
+import { CareerMomentCard } from './CareerMomentCard';
 
 function SortableLinkItem({
     id,
@@ -128,17 +137,154 @@ function SortableLinkItem({
 
 export function ProfilePage() {
     const router = useRouter();
+    
+    // Estado local para os valores dos inputs do modal
+    const [modalValues, setModalValues] = useState({
+        nome: '',
+        email: ''
+    });
+
+    // Estado para o modal de localização
+    const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+    
+    // Estado para visualização pública do perfil
+    const [isPublicView, setIsPublicView] = useState(false);
+
+    // Função para salvar localização
+    const handleLocationSave = async (location: string) => {
+        try {
+            // Usar o endpoint específico para atualizar localização
+            await updateUserLocation(location);
+            // Atualizar também o estado local para exibição
+            handleBasicInfoChange('cidade', location);
+        } catch (error) {
+            console.error('Erro ao salvar localização:', error);
+            // Ainda assim atualizar o estado local para exibição
+            handleBasicInfoChange('cidade', location);
+        }
+    };
+
+    // Função para mapear valores do foco para labels amigáveis
+    const getFocusLabel = (focus: string, course?: string) => {
+        const focusLabels: { [key: string]: string } = {
+            'ENEM': 'ENEM',
+            'CONCURSO': 'Concurso Público',
+            'FACULDADE': 'Faculdade',
+            'ENSINO_MEDIO': 'Ensino Médio'
+        };
+        
+        // Se for faculdade e tiver curso selecionado, mostrar apenas o curso
+        if (focus === 'FACULDADE' && course) {
+            const courseLabel = COLLEGE_COURSE_LABELS[course as keyof typeof COLLEGE_COURSE_LABELS];
+            if (courseLabel) {
+                return courseLabel;
+            }
+        }
+        
+        // Para outros casos, usar o label padrão
+        return focusLabels[focus] || focus;
+    };
+
+    // Função para formatar a data de criação do usuário
+    const formatUserJoinDate = (createdAt?: string) => {
+        if (!createdAt) return 'No Prisma desde 30/03/2020';
+        
+        try {
+            const date = new Date(createdAt);
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `No Prisma desde ${day}/${month}/${year}`;
+        } catch (error) {
+            console.error('Erro ao formatar data:', error);
+            return 'No Prisma desde 30/03/2020';
+        }
+    };
+
+    // Função para renderizar os links do usuário
+    const renderUserLinks = () => {
+        // Usar a ordem definida no linkFieldsOrder
+        const links = linkFieldsOrder.map(field => {
+            let url = '';
+            let icon = field.icon;
+            
+            // Mapear os campos para as URLs corretas
+            switch (field.field) {
+                case 'sitePessoal':
+                    url = userProfile?.portfolio || '';
+                    break;
+                case 'linkedin':
+                    url = userProfile?.linkedin || '';
+                    break;
+                case 'github':
+                    url = userProfile?.github || '';
+                    break;
+                case 'instagram':
+                    url = userProfile?.instagram || '';
+                    break;
+                case 'twitter':
+                    url = userProfile?.twitter || '';
+                    break;
+                default:
+                    url = '';
+            }
+            
+            return {
+                key: field.field,
+                url,
+                icon,
+                label: field.label
+            };
+        });
+
+        const filledLinks = links.filter(link => link.url && link.url.trim() !== '');
+        const emptySlots = 5 - filledLinks.length;
+
+        return (
+            <div className="grid grid-cols-5 gap-3">
+                {/* Links preenchidos */}
+                {filledLinks.map((link, index) => {
+                    const IconComponent = link.icon;
+                    return (
+                        <div
+                            key={link.key}
+                            className="aspect-square bg-[#29292E] border-2 border-[#323238] rounded-lg flex items-center justify-center hover:border-[#B3E240] transition-colors cursor-pointer group"
+                            onClick={() => setIsLinksModalOpen(true)}
+                            title={link.label}
+                        >
+                            <IconComponent className="w-6 h-6 text-[#B3E240] group-hover:scale-110 transition-transform" />
+                        </div>
+                    );
+                })}
+                
+                {/* Slots vazios */}
+                {Array.from({ length: emptySlots }).map((_, index) => (
+                    <div
+                        key={`empty-${index}`}
+                        className="aspect-square bg-transparent border-2 border-dashed border-[#323238] rounded-lg flex items-center justify-center hover:border-gray-600 transition-colors cursor-pointer"
+                        onClick={() => setIsLinksModalOpen(true)}
+                    >
+                        <Plus className="w-5 h-5 text-gray-600" />
+                    </div>
+                ))}
+            </div>
+        );
+    };
+    
     const {
         userProfile,
         isLoading,
         error,
         avatarImage,
+        isUploadingImage,
         isModalOpen,
         isBasicInfoModalOpen,
         isFocusModalOpen,
         isLinksModalOpen,
         isAboutModalOpen,
         isHabilitiesModalOpen,
+        isCareerModalOpen,
         selectedTask,
         formData,
         basicInfoData,
@@ -155,6 +301,7 @@ export function ProfilePage() {
         loadUserProfile,
         getInitials,
         handleAvatarUpload,
+        deleteUserProfileImage,
         handleTaskClick,
         handleModalClose,
         handleFormSubmit,
@@ -173,6 +320,9 @@ export function ProfilePage() {
         handleHabilitiesModalClose,
         handleHabilitiesSubmit,
         getModalFields,
+        updateUserAbout,
+        updateUserMomentCareer,
+        updateUserLocation,
         setIsModalOpen,
         setSelectedTask,
         setSelectedCourse,
@@ -182,10 +332,20 @@ export function ProfilePage() {
         setIsLinksModalOpen,
         setIsAboutModalOpen,
         setIsHabilitiesModalOpen,
+        setIsCareerModalOpen,
         setAboutText,
         setLinkFieldsOrder
     } = useProfile();
 
+    // Atualizar valores do modal quando os dados forem carregados
+    useEffect(() => {
+        if (userProfile && basicInfoData) {
+            setModalValues({
+                nome: basicInfoData.nome || userProfile.name || '',
+                email: getEmailValue(userProfile)
+            });
+        }
+    }, [userProfile, basicInfoData]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -197,36 +357,6 @@ export function ProfilePage() {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
-
-    // Usar dados do hook useProfile
-    const user = userProfile || {
-        id: 'loading',
-        nome: 'Carregando...',
-        name: 'Carregando...',
-        email: 'carregando@exemplo.com',
-        age: 0,
-        educationLevel: 'ENSINO_MEDIO' as const,
-        userFocus: 'ENEM' as const,
-        contestType: undefined,
-        collegeCourse: undefined,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        perfil: 'ALUNO',
-        notification: {
-            hasNotification: false,
-            missingFields: [],
-            message: '',
-            badge: null,
-            profileCompletionPercentage: 0,
-            completedFields: []
-        }
-    };
-
-    // getInitials já está disponível no hook useProfile
-
-    // handleAvatarUpload já está disponível no hook useProfile
-
-    // Todas as funções de manipulação já estão disponíveis no hook useProfile
 
     // Mostrar loading se os dados estão sendo carregados
     if (isLoading) {
@@ -254,6 +384,20 @@ export function ProfilePage() {
         );
     }
 
+    // Usar dados do hook useProfile - sem dados mockados
+    const user = userProfile;
+
+    // Se não há dados do usuário, não renderizar nada (já foi tratado no loading/error)
+    if (!user) {
+        return null;
+    }
+
+    // profileTasks, completedTasks, totalTasks e completionPercentage já estão disponíveis no hook useProfile
+
+    // getInitials já está disponível no hook useProfile
+
+    // Todas as funções de manipulação já estão disponíveis no hook useProfile
+
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
@@ -276,41 +420,21 @@ export function ProfilePage() {
     // getModalFields já está disponível no hook useProfile
 
     return (
-        <div className="min-h-screen bg-[#09090A] text-white">
-            <div
-                className="fixed inset-0 transition-all duration-300 bg-gray-950"
-                style={{
-                    backgroundImage: `
-                        radial-gradient(circle at 25% 25%, rgba(179, 226, 64, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 75% 75%, rgba(179, 226, 64, 0.04) 0%, transparent 50%)
-                    `
-                }}
-            />
-
-            <div
-                className="fixed inset-0 pointer-events-none"
-                aria-hidden="true"
-                style={{
-                    backgroundImage: `
-                        radial-gradient(circle at 15% 10%, rgba(201, 254, 2, 0.06), transparent 20%),
-                        radial-gradient(circle at 85% 90%, rgba(201, 254, 2, 0.04), transparent 20%)
-                    `
-                }}
-            />
-
-            <div
-                className="fixed inset-0 backdrop-blur-sm transition-all duration-300 bg-black/30"
-            />
-
-            <div
-                className="fixed inset-0 pointer-events-none"
-                aria-hidden="true"
-                style={{
-                    backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)',
-                    backgroundSize: '24px 24px',
-                    backgroundPosition: '0 0'
-                }}
-            />
+        <div className="min-h-screen bg-[#09090A] text-white relative">
+            {/* DotGrid Background */}
+            <div className="fixed inset-0 z-0">
+                <DotGrid
+                    dotSize={1}
+                    gap={24}
+                    baseColor="rgba(255,255,255,0.25)"
+                    activeColor="#B3E240"
+                    proximity={120}
+                    shockRadius={250}
+                    shockStrength={5}
+                    resistance={750}
+                    returnDuration={1.5}
+                />
+            </div>
 
 
             <div className="fixed top-4 left-4 z-50 mt-4 ml-4">
@@ -324,8 +448,8 @@ export function ProfilePage() {
                 </Button>
             </div>
 
-            <div className="relative z-10 p-6 min-h-screen flex items-center">
-                <div className="max-w-7xl mx-auto w-full">
+            <div className="relative z-10 p-6 pt-24 min-h-screen flex items-center">
+                <div className="max-w-7xl mx-auto w-full relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-1">
                             <div className="space-y-6">
@@ -335,155 +459,318 @@ export function ProfilePage() {
                                     <div className="text-center mb-6">
                                         <div className="relative inline-block group mb-4">
                                             <Avatar
-                                                className="w-24 h-24 cursor-pointer"
-                                                onClick={() => document.getElementById('avatar-upload')?.click()}
+                                                className={`w-24 h-24 cursor-pointer transition-all duration-300 ${isUploadingImage ? 'opacity-50' : 'hover:scale-105'}`}
+                                                onClick={() => {
+                                                    if (!isUploadingImage) {
+                                                        document.getElementById('avatar-upload')?.click();
+                                                    }
+                                                }}
                                             >
-                                                <AvatarImage src={avatarImage || "/api/placeholder/96/96"} className="object-cover" />
+                                                <AvatarImage 
+                                                    src={user.profileImage || avatarImage || "/api/placeholder/96/96"} 
+                                                    className="object-cover transition-all duration-300" 
+                                                    alt="Foto do perfil"
+                                                />
                                                 <AvatarFallback className="text-xl font-bold bg-[#B3E240] text-black">
                                                     {getInitials(user)}
                                                 </AvatarFallback>
                                             </Avatar>
+                                            
+                                            {/* Overlay com ícone de câmera no hover */}
+                                            {!isUploadingImage && (
+                                                <div 
+                                                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover:pointer-events-auto"
+                                                    onClick={() => {
+                                                        if (!isUploadingImage) {
+                                                            document.getElementById('avatar-upload')?.click();
+                                                        }
+                                                    }}
+                                                >
+                                                    <Camera className="w-6 h-6 text-white" />
+                                                </div>
+                                            )}
+                                            
+                                            {/* Indicador de loading durante upload */}
+                                            {isUploadingImage && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#B3E240]"></div>
+                                                </div>
+                                            )}
+                                            
                                             <input
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={handleAvatarUpload}
                                                 className="hidden"
                                                 id="avatar-upload"
+                                                disabled={isUploadingImage}
                                             />
+                                            
+                                            {/* Botão de remover foto - bolinha pequena no canto inferior direito */}
+                                            {(user.profileImage || avatarImage) && !isUploadingImage && (
+                                                <div 
+                                                    className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/80 border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/90 hover:border-red-500/50 hover:scale-110"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteUserProfileImage();
+                                                    }}
+                                                    title="Remover foto"
+                                                >
+                                                    <Trash2 className="w-3 h-3 text-red-400" />
+                                                </div>
+                                            )}
                                         </div>
                                         <h1 className="text-xl font-bold text-white mb-1">
                                             {user.name}
                                         </h1>
-                                        <p className="text-gray-400 text-sm">
+                                        <p className="text-gray-400 text-sm mb-4">
                                             {getEmailValue(user) || 'usuario@email.com'}
                                         </p>
+                                        
+                                        {/* Botões de Ação */}
+                                        <div className="space-y-2">
+                                            <Button 
+                                                className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#B3E240] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+                                            >
+                                                <ShinyText 
+                                                    text="Conversar" 
+                                                    disabled={false} 
+                                                    speed={3} 
+                                                    className="font-medium"
+                                                />
+                                            </Button>
+                                            
+                                            <Button 
+                                                variant="outline"
+                                                className={`w-full px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
+                                                    isPublicView 
+                                                        ? 'bg-[#B3E240]/10 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240]/20' 
+                                                        : 'bg-transparent hover:bg-white/5 border-[#323238] text-gray-300 hover:text-white'
+                                                }`}
+                                                onClick={() => setIsPublicView(!isPublicView)}
+                                            >
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                {isPublicView ? 'Ver perfil privado' : 'Ver como outros me veem'}
+                                            </Button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-3 mb-6">
-                                        <Button
-                                            className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                                            onClick={() => setIsBasicInfoModalOpen(true)}
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Título
-                                        </Button>
-                                        <Button
-                                            className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                                            onClick={() => setIsBasicInfoModalOpen(true)}
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Localização
-                                        </Button>
-                                        <Button
-                                            className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                                            onClick={() => setIsFocusModalOpen(true)}
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Escolha seu foco
-                                        </Button>
+                                        {basicInfoData.cidade ? (
+                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
+                                                <div className="flex items-center">
+                                                    <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                    <span className="text-white text-sm font-medium">
+                                                        {basicInfoData.cidade}
+                                                    </span>
+                                                </div>
+                                                {!isPublicView && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => setIsLocationModalOpen(true)}
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
+                                                    >
+                                                        <Edit3 className="w-3 h-3 text-gray-400" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            !isPublicView && (
+                                                <Button
+                                                    className="w-full bg-transparent hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer transition-colors"
+                                                    onClick={() => setIsLocationModalOpen(true)}
+                                                >
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Localização
+                                                </Button>
+                                            )
+                                        )}
+                                        {selectedFocus ? (
+                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
+                                                <div className="flex items-center">
+                                                    <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-3"></div>
+                                                    <span className="text-white text-sm font-medium">
+                                                        {getFocusLabel(selectedFocus, selectedCourse)}
+                                                    </span>
+                                                </div>
+                                                {!isPublicView && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => setIsFocusModalOpen(true)}
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
+                                                    >
+                                                        <Edit3 className="w-3 h-3 text-gray-400" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            !isPublicView && (
+                                                <Button
+                                                    className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
+                                                    onClick={() => setIsFocusModalOpen(true)}
+                                                >
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Escolha seu foco
+                                                </Button>
+                                            )
+                                        )}
                                     </div>
 
                                     <p className="text-gray-500 text-sm text-center">
-                                        No Prisma desde 30/03/2020
+                                        {formatUserJoinDate(userProfile?.createdAt)}
                                     </p>
                                 </div>
 
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-white font-semibold">Links</h3>
-                                        <Button
-                                            className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
-                                            size="sm"
-                                            onClick={() => setIsLinksModalOpen(true)}
-                                        >
-                                            <Edit3 className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                    <div className="grid grid-cols-5 gap-3">
-                                        {[...Array(5)].map((_, i) => (
-                                            <div
-                                                key={i}
-                                                className="aspect-square bg-transparent border-2 border-dashed border-[#323238] rounded-lg flex items-center justify-center hover:border-gray-600 transition-colors cursor-pointer"
+                                {/* Card de Momento de Carreira - Sempre visível */}
+                                <CareerMomentCard 
+                                    userProfile={userProfile}
+                                    isPublicView={isPublicView}
+                                    onEditClick={() => setIsCareerModalOpen(true)}
+                                />
+
+                                {/* Card de Habilidades */}
+                                <HabilitiesCard 
+                                    userProfile={userProfile}
+                                    isPublicView={isPublicView}
+                                    onEditClick={() => setIsHabilitiesModalOpen(true)}
+                                />
+
+                                {/* Links - Apenas na visualização privada */}
+                                {!isPublicView && (
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-white font-semibold">Links</h3>
+                                            <Button
+                                                className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
+                                                size="sm"
                                                 onClick={() => setIsLinksModalOpen(true)}
                                             >
-                                                <Plus className="w-5 h-5 text-gray-600" />
-                                            </div>
-                                        ))}
+                                                <Edit3 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                        {renderUserLinks()}
                                     </div>
-                                </div>
+                                )}
 
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                    <h3 className="text-white font-semibold mb-4">Insígnias • 3</h3>
-                                    <div className="flex space-x-3">
-                                        <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-black text-xs font-bold">R</span>
-                                        </div>
-                                        <div className="w-12 h-12 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-white text-xs font-bold">G</span>
-                                        </div>
-                                        <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-black text-xs font-bold">N</span>
+                                {/* Insígnias - Apenas na visualização privada */}
+                                {!isPublicView && (
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                        <h3 className="text-white font-semibold mb-4">Insígnias • 3</h3>
+                                        <div className="flex space-x-3">
+                                            <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-black text-xs font-bold">R</span>
+                                            </div>
+                                            <div className="w-12 h-12 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-white text-xs font-bold">G</span>
+                                            </div>
+                                            <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-black text-xs font-bold">N</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
                         <div className="lg:col-span-2 space-y-6">
-                            <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                <h2 className="text-xl font-bold text-white mb-2">Complete seu perfil</h2>
-                                <p className="text-gray-400 text-sm mb-6">Perfis completos atraem mais oportunidades!</p>
+                            {/* Seção "Complete seu perfil" - apenas na visualização privada */}
+                            {!isPublicView && (
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                    <h2 className="text-xl font-bold text-white mb-2">Complete seu perfil</h2>
+                                    <p className="text-gray-400 text-sm mb-6">Perfis completos atraem mais oportunidades!</p>
 
-                                <div className="mb-6">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-white/80 text-sm">{completionPercentage}% completo</span>
-                                        <span className="text-gray-400 text-sm">{completedTasks} de {totalTasks}</span>
-                                    </div>
-                                    <div className="w-full bg-[#323238] rounded-full h-2">
-                                        <div
-                                            className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${completionPercentage}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {profileTasks.map((task, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center space-x-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
-                                            onClick={() => handleTaskClick(task.label)}
-                                        >
-                                            {task.completed ? (
-                                                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                                            ) : (
-                                                <Circle className="w-5 h-5 text-gray-600" />
-                                            )}
-                                            <span className={`text-sm ${task.completed ? 'text-white' : 'text-gray-400'}`}>
-                                                {task.label}
-                                            </span>
+                                    <div className="mb-6">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-white/80 text-sm">{completionPercentage}% completo</span>
+                                            <span className="text-gray-400 text-sm">{completedTasks} de {totalTasks}</span>
                                         </div>
-                                    ))}
+                                        <div className="w-full bg-[#323238] rounded-full h-2">
+                                            <div
+                                                className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                                                style={{ width: `${completionPercentage}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {profileTasks.map((task, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center space-x-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+                                                onClick={() => handleTaskClick(task.label)}
+                                            >
+                                                {task.completed ? (
+                                                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                                ) : (
+                                                    <Circle className="w-5 h-5 text-gray-600" />
+                                                )}
+                                                <span className={`text-sm ${task.completed ? 'text-white' : 'text-gray-400'}`}>
+                                                    {task.label}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Card de Ofensivas - Agora acima do Sobre */}
+                            <OffensivesCard />
+
+                            {/* Links e Insígnias - Apenas na visualização pública, acima do Sobre */}
+                            {isPublicView && (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {/* Links */}
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                        <h3 className="text-white font-semibold mb-3 text-sm">Links</h3>
+                                        {renderUserLinks()}
+                                    </div>
+
+                                    {/* Insígnias */}
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                        <h3 className="text-white font-semibold mb-3 text-sm">Insígnias • 3</h3>
+                                        <div className="flex space-x-2">
+                                            <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-black text-xs font-bold">R</span>
+                                            </div>
+                                            <div className="w-10 h-10 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-white text-xs font-bold">G</span>
+                                            </div>
+                                            <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                                <span className="text-black text-xs font-bold">N</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-semibold text-white">Sobre</h3>
-                                    <Button
-                                        className="bg-transparent hover:bg-white/5 text-gray-400 p-1 cursor-pointer"
-                                        size="sm"
-                                        onClick={() => setIsAboutModalOpen(true)}
-                                    >
-                                        <Edit3 className="w-4 h-4" />
-                                    </Button>
+                                    {!isPublicView && (
+                                        <Button
+                                            className="bg-transparent hover:bg-white/5 text-gray-400 p-1 cursor-pointer"
+                                            size="sm"
+                                            onClick={() => setIsAboutModalOpen(true)}
+                                        >
+                                            <Edit3 className="w-4 h-4" />
+                                        </Button>
+                                    )}
                                 </div>
-                                <div className="text-gray-500 text-sm">
-                                    <span>—</span>
+                                <div className="text-gray-300 text-sm leading-relaxed">
+                                    {user.aboutYou ? (
+                                        <div 
+                                            dangerouslySetInnerHTML={{ __html: user.aboutYou }}
+                                            className="prose prose-invert prose-sm max-w-none"
+                                        />
+                                    ) : (
+                                        <span className="text-gray-500">—</span>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                            {/* <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-lg font-semibold text-white">Destaques</h3>
                                     <Button
@@ -506,7 +793,7 @@ export function ProfilePage() {
                                         <span>Adicionar destaques</span>
                                     </Button>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </div>
@@ -521,17 +808,17 @@ export function ProfilePage() {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <form onSubmit={handleFormSubmit} className="space-y-4">
+                    <form onSubmit={handleFormSubmit} >
                         {selectedTask && getModalFields(selectedTask).map((field) => (
-                            <div key={field.key} className="space-y-2">
-                                <label className="text-sm text-gray-300">
+                            <div key={field.key} className='flex flex-col gap-2'>
+                                <label className="text-sm text-gray-300 ">
                                     {field.label}
                                 </label>
                                 {field.type === 'textarea' ? (
                                     <Textarea
                                         value={formData[field.key] || ''}
                                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
+                                        className="bg-[#29292E] cursor-pointer border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
                                         placeholder={`Digite ${field.label.toLowerCase()}...`}
                                         rows={3}
                                     />
@@ -539,7 +826,7 @@ export function ProfilePage() {
                                     <Input
                                         type="file"
                                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                        className="bg-[#29292E] border-[#323238] text-white file:bg-[#B3E240] file:text-black file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3"
+                                        className="bg-[#29292E] h-12 border-[#323238] p-2 text-white file:bg-[#B3E240] file:text-black file:border-0 file:px-2 cursor-pointer file:mr-4 file:min-w-[120px] file:rounded-md focus:!border-[#323238] focus:!ring-0 focus:!outline-none"
                                     />
                                 ) : (
                                     <Input
@@ -553,18 +840,18 @@ export function ProfilePage() {
                             </div>
                         ))}
 
-                        <div className="flex justify-end space-x-3 pt-4">
+                        <div className="flex justify-end mt-4 gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleModalClose}
-                                className="border-[#323238] text-gray-300 hover:bg-white/5"
+                                className="border-[#323238] text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 cursor-pointer transition-colors"
                             >
                                 Cancelar
                             </Button>
                             <Button
                                 type="submit"
-                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black"
+                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
                             >
                                 Salvar
                             </Button>
@@ -574,7 +861,7 @@ export function ProfilePage() {
             </Dialog>
 
             {/* Modal para editar informações básicas */}
-            <Dialog open={isBasicInfoModalOpen} onOpenChange={setIsBasicInfoModalOpen}>
+            <Dialog open={isBasicInfoModalOpen} onOpenChange={setIsBasicInfoModalOpen} key={userProfile?.id}>
                 <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-white text-lg font-semibold">
@@ -590,9 +877,24 @@ export function ProfilePage() {
                             </label>
                             <Input
                                 type="text"
-                                value={basicInfoData.nome}
+                                value={modalValues.nome}
                                 className="bg-[#1a1a1a] border-[#323238] text-gray-400 cursor-not-allowed"
                                 placeholder="Nome não pode ser alterado"
+                                readOnly
+                                disabled
+                            />
+                        </div>
+
+                        {/* Email */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                E-mail
+                            </label>
+                            <Input
+                                type="email"
+                                value={modalValues.email}
+                                className="bg-[#1a1a1a] border-[#323238] text-gray-400 cursor-not-allowed"
+                                placeholder="E-mail não pode ser alterado"
                                 readOnly
                                 disabled
                             />
@@ -662,19 +964,6 @@ export function ProfilePage() {
                             </Select>
                         </div>
 
-                        {/* Cidade */}
-                        <div className="space-y-2">
-                            <label className="text-sm text-gray-300">
-                                Cidade
-                            </label>
-                            <Input
-                                type="text"
-                                value={basicInfoData.cidade}
-                                onChange={(e) => handleBasicInfoChange('cidade', e.target.value)}
-                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
-                                placeholder="Em qual cidade você mora atualmente?"
-                            />
-                        </div>
 
                         <div className="flex justify-end space-x-3 pt-4">
                             <Button
@@ -943,7 +1232,82 @@ export function ProfilePage() {
                 currentHabilities={userProfile?.habilities ? userProfile.habilities.split(',').map(h => h.trim()).filter(h => h) : []}
                 onSave={handleHabilitiesSubmit}
             />
-            
+
+            {/* Modal para editar localização */}
+            <LocationModal
+                isOpen={isLocationModalOpen}
+                onClose={() => setIsLocationModalOpen(false)}
+                onSave={handleLocationSave}
+                currentLocation={basicInfoData.cidade}
+            />
+
+            {/* Modal para editar momento de carreira */}
+            <Dialog open={isCareerModalOpen} onOpenChange={setIsCareerModalOpen}>
+                <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-white text-lg font-semibold">
+                            Editar momento de carreira
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const momentCareer = formData.get('momentCareer') as string;
+                        
+                        try {
+                            // Usar a função do hook para atualizar
+                            await updateUserMomentCareer(momentCareer?.trim() || null);
+                            setIsCareerModalOpen(false);
+                        } catch (error: any) {
+                            console.error('❌ Erro ao atualizar momento de carreira:', error);
+                            
+                            // Mostrar erro específico para o usuário
+                            if (error?.message?.includes('500 caracteres')) {
+                                alert('❌ O momento de carreira deve ter no máximo 500 caracteres');
+                            } else if (error?.status === 400) {
+                                alert('❌ Erro ao atualizar momento de carreira. Verifique se o texto não é muito longo.');
+                            } else {
+                                alert('❌ Erro ao atualizar momento de carreira. Tente novamente.');
+                            }
+                        }
+                    }} className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                Momento de carreira
+                            </label>
+                            <Input
+                                name="momentCareer"
+                                type="text"
+                                maxLength={500}
+                                defaultValue={userProfile?.momentCareer || ''}
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
+                                placeholder="Ex: Desenvolvedor Júnior, Estudante, Empreendedor..."
+                            />
+                            <p className="text-xs text-gray-400">
+                                Máximo 500 caracteres
+                            </p>
+                        </div>
+
+                        <div className="flex justify-end space-x-3 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsCareerModalOpen(false)}
+                                className="border-[#323238] text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 cursor-pointer transition-colors"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                            >
+                                Salvar
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

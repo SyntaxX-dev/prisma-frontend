@@ -16,14 +16,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../ui/popover";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "../../hooks/useAuth";
-import { useStreak } from "../../hooks/useStreak";
-import { useSearch } from "../../hooks/useSearch";
-import { useNavigationWithLoading } from "../../hooks/useNavigationWithLoading";
-import { StreakIcon } from "../shared/charts/StreakIcon";
-import { StreakCalendar } from "../shared/charts/StreakCalendar";
+import { useAuth } from "../../hooks/features/auth";
+import { useStreak, useOffensives } from "../../hooks/features/offensives";
+import { useSearch } from "../../hooks/shared";
+import { useNavigationWithLoading } from "../../hooks/shared";
+import { StreakIcon } from "../features/offensives/StreakIcon";
+import { StreakCalendar } from "../features/offensives/StreakCalendar";
 import { ProfileCompletionModal } from "../features/profile/modals/ProfileCompletionModal";
 import { getEmailValue } from "@/lib/utils/email";
 
@@ -38,15 +38,49 @@ export function Navbar({}: NavbarProps) {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string>('/dashboard');
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { streakData, isStreakActive } = useStreak();
+  
+  // Atualizar currentPath quando a URL mudar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentPath(window.location.pathname);
+    }
+  }, [pathname]);
+  
+  // Verificar se está em uma página de curso (não carregar offensives)
+  const isCoursePage = currentPath?.includes('/course/') && (
+    currentPath?.includes('/sub-courses') || 
+    currentPath?.includes('/videos')
+  );
+  
+  
+  
+  
+  const { streakData, isStreakActive } = useStreak(!isCoursePage);
+  
+  // Sempre tentar acessar dados de offensives para o calendário
+  const { data: offensivesData, refetch: refetchOffensives } = useOffensives(true);
   const { searchQuery, updateSearch, clearSearch, isSearching, isLoading } = useSearch();
   const { navigateWithLoading } = useNavigationWithLoading();
 
+  // Expor função de refetch globalmente para ser usada em outros componentes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).refetchOffensives = refetchOffensives;
+    }
+  }, [refetchOffensives]);
+
   const hasNotification = user?.notification?.hasNotification || false;
   const notificationData = user?.notification;
+
+  // Controlar hidratação para evitar problemas de SSR
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
 
   const handleLogout = () => {
@@ -187,7 +221,7 @@ export function Navbar({}: NavbarProps) {
                 sideOffset={8}
               >
                 <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl mt-4">
-                  <StreakCalendar />
+                  {isHydrated && (offensivesData || !isCoursePage) && <StreakCalendar />}
                 </div>
               </PopoverContent>
             </Popover>
@@ -276,6 +310,11 @@ export function Navbar({}: NavbarProps) {
             <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors">
               <div className="flex items-center gap-3">
                 <Avatar className="w-8 h-8">
+                  <AvatarImage
+                    src={user?.profileImage || "/api/placeholder/32/32"}
+                    className="object-cover"
+                    alt="Foto do perfil"
+                  />
                   <AvatarFallback className="bg-[#B3E240] text-black">
                     {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </AvatarFallback>

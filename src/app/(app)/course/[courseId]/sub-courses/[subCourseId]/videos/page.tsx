@@ -1,27 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Navbar } from "@/components/Navbar";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
-import { CourseDetail } from "@/components/CourseDetail";
+import { CourseDetail } from "@/components/features/course";
 import { useLoading } from "@/contexts/LoadingContext";
-import { useVideoPageLoad } from "@/hooks/useVideoPageLoad";
+import { useVideoPageLoad } from "@/hooks/features/courses";
 import { useParams, useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/features/auth";
 
 export default function CourseDetailPage() {
   const [isDark, setIsDark] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(false);
   const { setLoading } = useLoading();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const subCourseId = params.subCourseId as string;
-
-  useEffect(() => {
-    setIsDataLoading(false);
-  }, []);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -36,9 +32,21 @@ export default function CourseDetailPage() {
     customDelay: 0
   });
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setIsDark(!isDark);
-  };
+  }, [isDark]);
+
+  const handleVideoPlayingChange = useCallback((playing: boolean) => {
+    setIsVideoPlaying(playing);
+  }, []);
+
+  const courseDetailComponent = useMemo(() => (
+    <CourseDetail 
+      onVideoPlayingChange={handleVideoPlayingChange} 
+      isVideoPlaying={isVideoPlaying} 
+      subCourseId={subCourseId} 
+    />
+  ), [handleVideoPlayingChange, isVideoPlaying, subCourseId]);
 
   // Show loading while checking authentication
   if (authLoading) {
@@ -109,7 +117,7 @@ export default function CourseDetailPage() {
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
           <div style={{ marginTop: '80px' }}>
-            <CourseDetail onVideoPlayingChange={setIsVideoPlaying} isVideoPlaying={isVideoPlaying} subCourseId={subCourseId} />
+            {courseDetailComponent}
           </div>
         </div>
       </div>

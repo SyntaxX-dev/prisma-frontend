@@ -1,5 +1,5 @@
-import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { VerifyCodeScreen } from '@/components/VerifyCodeScreen';
+import { AnimatedBackground } from '@/components/shared/AnimatedBackground';
+import { VerifyCodeScreen } from '@/components/shared/modals/VerifyCodeScreen';
 
 export default function VerifyCodePage() {
     return (

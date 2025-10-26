@@ -16,16 +16,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "./ui/popover";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "../hooks/useAuth";
-import { useStreak } from "../hooks/useStreak";
-import { useSearch } from "../hooks/useSearch";
-import { useNavigationWithLoading } from "../hooks/useNavigationWithLoading";
-import { StreakIcon } from "./StreakIcon";
-import { StreakCalendar } from "./StreakCalendar";
-import { ProfileCompletionModal } from "./ProfileCompletionModal";
-import { ClientOnly } from "./ClientOnly";
+import { useAuth } from "../hooks/features/auth";
+import { useStreak, useOffensives } from "../hooks/features/offensives";
+import { useSearch } from "../hooks/shared";
+import { useNavigationWithLoading } from "../hooks/shared";
+import { StreakIcon, StreakCalendar } from "./features/offensives";
+import { ProfileCompletionModal } from "./features/profile";
+import { ClientOnly } from "./shared";
 import { getEmailValue } from "@/lib/utils/email";
 
 interface NavbarProps {
@@ -39,10 +38,28 @@ export function Navbar({}: NavbarProps) {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string>('/dashboard');
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { streakData, isStreakActive } = useStreak();
+  
+  // Atualizar currentPath quando a URL mudar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentPath(window.location.pathname);
+    }
+  }, [pathname]);
+  
+  // Verificar se está em uma página de curso (não carregar offensives)
+  const isCoursePage = currentPath?.includes('/course/') && (
+    currentPath?.includes('/sub-courses') || 
+    currentPath?.includes('/videos')
+  );
+  
+  const { streakData, isStreakActive } = useStreak(!isCoursePage);
+  
+  // Sempre tentar acessar dados de offensives para o calendário
+  const { data: offensivesData } = useOffensives(true);
   const { searchQuery, updateSearch, clearSearch, isSearching, isLoading } = useSearch();
   const { navigateWithLoading } = useNavigationWithLoading();
 
@@ -189,7 +206,7 @@ export function Navbar({}: NavbarProps) {
                 sideOffset={8}
               >
                 <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl mt-4">
-                  <StreakCalendar />
+                  {(offensivesData || !isCoursePage) && <StreakCalendar />}
                 </div>
               </PopoverContent>
             </Popover>

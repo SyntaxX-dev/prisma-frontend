@@ -1,8 +1,10 @@
 export * from './AnimatedBackground';
-export * from './HorizontalCarousel';
+export * from './ClientOnly';
+export * from './DotGrid';
+export * from './LocationField';
+export * from './LocationModal';
 export * from './NotificationProvider';
 export * from './RichTextEditor';
-export * from './cards';
-export * from './charts';
-export * from './loading';
-export * from './modals';
+export * from './ShinyText';
+export * from './StarBorder';
+// Charts and modals moved to features

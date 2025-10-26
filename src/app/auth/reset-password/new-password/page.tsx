@@ -1,5 +1,5 @@
-import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { NewPasswordScreen } from '@/components/NewPasswordScreen';
+import { AnimatedBackground } from '@/components/shared/AnimatedBackground';
+import { NewPasswordScreen } from '@/components/features/auth/NewPasswordScreen';
 
 export default function NewPasswordPage() {
 	return (

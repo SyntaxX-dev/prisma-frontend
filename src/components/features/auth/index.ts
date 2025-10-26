@@ -1,4 +1,4 @@
-export * from './AuthScreen';
-export * from './ForgotPasswordScreen';
-export * from './NewPasswordScreen';
-export * from './VerifyCodeScreen';
+export { AuthScreen } from './AuthScreen';
+export { ForgotPasswordScreen } from './ForgotPasswordScreen';
+export { NewPasswordScreen } from './NewPasswordScreen';
+export { VerifyCodeScreen } from './VerifyCodeScreen';

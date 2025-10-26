@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { Navbar } from "../../../components/Navbar";
-import { StreakCalendar } from "../../../components/StreakCalendar";
-import { WeeklyProgress } from "../../../components/WeeklyProgress";
-import { CurrentGoal } from "../../../components/CurrentGoal";
-import { OffensiveInfo } from "../../../components/OffensiveInfo";
-import { useStreak } from "../../../hooks/useStreak";
-import { useOffensives } from "../../../hooks/useOffensives";
+import { Navbar } from "@/components/layout";
+import { StreakCalendar, WeeklyProgress } from "@/components/features/offensives";
+import { CurrentGoal } from "@/components/features/dashboard";
+import { OffensiveInfo } from "@/components/features/offensives";
+import { useStreak } from "../../../hooks/features/offensives";
+import { useOffensives } from "../../../hooks/features/offensives";
 import { Button } from "../../../components/ui/button";
 import { Flame, Target, Calendar, Clock } from "lucide-react";
 

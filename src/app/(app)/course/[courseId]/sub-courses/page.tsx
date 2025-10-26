@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
-import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
+import { useNavigationWithLoading } from "@/hooks/shared";
 import { useLoading } from "@/contexts/LoadingContext";
-import { usePageDataLoad } from "@/hooks/usePageDataLoad";
-import { useAuth } from "@/hooks/useAuth";
+import { usePageDataLoad } from "@/hooks/shared";
+import { useAuth } from "@/hooks/features/auth";
 
 interface SubCourse {
   id: string;
@@ -23,14 +23,6 @@ interface SubCourse {
   channelThumbnailUrl?: string;
 }
 
-interface Course {
-  id: string;
-  name: string;
-  description: string;
-  imageUrl: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export default function CoursePage() {
   const [isDark, setIsDark] = useState(true);
@@ -38,7 +30,6 @@ export default function CoursePage() {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
   const [subCourses, setSubCourses] = useState<SubCourse[]>([]);
-  const [course, setCourse] = useState<Course | null>(null);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const params = useParams();
@@ -67,14 +58,6 @@ export default function CoursePage() {
 
         const token = localStorage.getItem('auth_token');
 
-        // Fetch all courses first to find the specific course
-        const allCoursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
         // Fetch sub-courses
         const subCoursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}/sub-courses`, {
           headers: {
@@ -83,45 +66,11 @@ export default function CoursePage() {
           }
         });
 
-        const allCoursesData = await allCoursesResponse.json();
         const subCoursesData = await subCoursesResponse.json();
 
-        // Find the specific course by ID
-        if (allCoursesData.success && allCoursesData.data) {
-          const foundCourse = allCoursesData.data.find((c: Course) => c.id === courseId);
-          if (foundCourse) {
-            setCourse(foundCourse);
-          }
-        }
-
         if (subCoursesData.success) {
-          // Fetch channel thumbnail for each subcourse
-          const subCoursesWithThumbnails = await Promise.all(
-            subCoursesData.data.map(async (subCourse: SubCourse) => {
-              try {
-                const videosResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/sub-courses/${subCourse.id}/videos`, {
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                  }
-                });
-                const videosData = await videosResponse.json();
-                
-                if (videosData.success && videosData.data && videosData.data.length > 0) {
-                  return {
-                    ...subCourse,
-                    channelThumbnailUrl: videosData.data[0].channelThumbnailUrl
-                  };
-                }
-                return subCourse;
-              } catch (error) {
-                console.error(`Error fetching videos for subcourse ${subCourse.id}:`, error);
-                return subCourse;
-              }
-            })
-          );
-          
-          setSubCourses(subCoursesWithThumbnails);
+          // Usar dados dos subcursos sem fazer requisições adicionais para vídeos
+          setSubCourses(subCoursesData.data);
         } else {
           setError('Erro ao carregar subcursos');
         }
@@ -244,17 +193,17 @@ export default function CoursePage() {
               </Button>
 
               <h1 className="text-white text-3xl font-bold mb-2">
-                {isDataLoading ? 'Carregando curso...' : course?.name || 'Curso de Programação'}
+                {isDataLoading ? 'Carregando curso...' : 'Subcursos'}
               </h1>
               <p className="text-white/60 text-lg mb-6">
-                {isDataLoading ? 'Aguarde enquanto carregamos as informações do curso.' : course?.description || 'Aprenda programação do zero com nossos cursos práticos e interativos. Desenvolva suas habilidades técnicas e construa projetos reais.'}
+                {isDataLoading ? 'Aguarde enquanto carregamos as informações do curso.' : 'Explore os subcursos disponíveis e comece sua jornada de aprendizado.'}
               </p>
 
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex-1 relative">
                   <input
                     type="text"
-                    placeholder={`Pesquisar em ${course?.name || 'curso'}...`}
+                    placeholder="Pesquisar subcursos..."
                     value={searchInput}
                     onChange={handleInputChange}
                     className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-4 py-3 text-sm outline-none border border-white/20 focus:border-green-400 transition-colors pr-10"
@@ -317,9 +266,6 @@ export default function CoursePage() {
                         <h3 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">
                           {subCourse.name}
                         </h3>
-                        <p className="text-white/60 text-sm">
-                          Ordem: {subCourse.order}
-                        </p>
                       </div>
                       <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-green-400 group-hover:translate-x-1 transition-all" />
                     </div>

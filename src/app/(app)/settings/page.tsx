@@ -3,9 +3,9 @@
 import { useState, useEffect, Suspense } from "react";
 import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
-import { useAuth } from "../../../hooks/useAuth";
-import { useNotifications } from "../../../hooks/useNotifications";
-import { usePageDataLoad } from "@/hooks/usePageDataLoad";
+import { useAuth } from "../../../hooks/features/auth";
+import { useNotifications } from "../../../hooks/shared";
+import { usePageDataLoad } from "@/hooks/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Switch } from "../../../components/ui/switch";

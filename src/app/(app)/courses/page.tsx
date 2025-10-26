@@ -3,10 +3,10 @@
 import { useState, useEffect, Suspense } from "react";
 import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
-import { useAuth } from "../../../hooks/useAuth";
-import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
+import { useAuth } from "../../../hooks/features/auth";
+import { useNavigationWithLoading } from "@/hooks/shared";
 import { useLoading } from "@/contexts/LoadingContext";
-import { usePageDataLoad } from "@/hooks/usePageDataLoad";
+import { usePageDataLoad } from "@/hooks/shared";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../components/ui/button";
 import { ArrowRight } from "lucide-react";

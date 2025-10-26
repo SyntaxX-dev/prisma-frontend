@@ -13,5 +13,4 @@ export * from './validators';
 // Services
 export * from './services';
 
-// Hooks
-export * from './hooks';
+// Hooks moved to src/hooks/

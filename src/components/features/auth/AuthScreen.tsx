@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Logo from '/public/logo-prisma.png';
+import Logo from '../../../../public/logo-prisma.png';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -11,7 +11,7 @@ import { Eye, EyeOff, User, Lock, ArrowLeftRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import styles from './AuthScreen.module.css';
-import spotlightStyles from '../../external/nurui/spotlight.module.css';
+import spotlightStyles from '../../shared/spotlight.module.css';
 import Link from 'next/link';
 import {
   loginSchema,
@@ -20,15 +20,15 @@ import {
   RegisterFormData
 } from '@/lib/validators/auth-forms';
 import { EDUCATION_OPTIONS } from '@/lib/constants';
-import { ApiEducationLevel } from '@/types/api/auth-api';
+import { EducationLevel as ApiEducationLevel } from '@/types/auth-api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { loginUser } from '@/api/auth/login';
 import { registerUser } from '@/api/auth/register';
 import { getProfile } from '@/api/auth/get-profile';
-import { useAuth } from '@/hooks/useAuth';
-import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { useAuth } from '@/hooks/features/auth';
+import { useGoogleAuth } from '@/hooks/features/auth';
 import { useRouter } from 'next/navigation';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotifications } from '@/hooks/shared';
 
 
 

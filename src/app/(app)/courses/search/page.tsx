@@ -1,11 +1,11 @@
 "use client";
 
 import { Suspense } from "react";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
-import { useSearch } from "@/hooks/useSearch";
-import { useCourseSearchWithParams } from "@/hooks/useCourseSearch";
-import { CourseCard } from "@/components/CourseCard";
+import { useSearch } from "@/hooks/shared";
+import { useCourseSearchWithParams } from "@/hooks/features/courses";
+import { CourseCard } from "@/components/features/course";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Search, Filter } from "lucide-react";

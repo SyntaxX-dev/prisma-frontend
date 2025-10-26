@@ -1,4 +1,7 @@
+export { CareerMomentCard } from './CareerMomentCard';
+export { HabilitiesCard } from './HabilitiesCard';
 export { ProfilePage } from './ProfilePage';
+export { ProfileCompletionModal } from './ProfileCompletionModal';
 export { ProfileHeader } from './ProfileHeader';
 export { ProfileCompletion } from './ProfileCompletion';
 export { ProfileLinks } from './ProfileLinks';
@@ -7,3 +10,4 @@ export { ProfileAbout } from './ProfileAbout';
 export { ProfileHighlights } from './ProfileHighlights';
 export { BasicInfoModal } from './modals/BasicInfoModal';
 export { FocusModal } from './modals/FocusModal';
+export { HabilitiesModal } from './modals/HabilitiesModal';

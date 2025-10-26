@@ -30,7 +30,7 @@ import {
 import { updateProfile } from '@/api/profile/update-profile';
 import { getContestOptions } from '@/api/options/get-contest-options';
 import { getCollegeCourseOptions } from '@/api/options/get-college-course-options';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/features/auth';
 import { toast } from 'sonner';
 import { CheckCircle, Award } from 'lucide-react';
 

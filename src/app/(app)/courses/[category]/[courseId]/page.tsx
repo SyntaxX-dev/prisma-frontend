@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Navbar } from "../../../../../components/Navbar";
-import { Sidebar } from "../../../../../components/Sidebar";
-import { CourseDetail } from "../../../../../components/CourseDetail";
+import { Navbar } from "@/components/layout";
+import { Sidebar } from "@/components/Sidebar";
+import { CourseDetail } from "@/components/features/course";
 import { useLoading } from "@/contexts/LoadingContext";
-import { useVideoPageLoad } from "@/hooks/useVideoPageLoad";
+import { useVideoPageLoad } from "@/hooks/features/courses";
 
 export default function CourseDetailPage() {
   const params = useParams();

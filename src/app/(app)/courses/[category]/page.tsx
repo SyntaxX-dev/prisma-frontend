@@ -7,9 +7,9 @@ import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
-import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
+import { useNavigationWithLoading } from "@/hooks/shared";
 import { useLoading } from "@/contexts/LoadingContext";
-import { usePageDataLoad } from "@/hooks/usePageDataLoad";
+import { usePageDataLoad } from "@/hooks/shared";
 
 export default function CourseCategoryPage() {
   const [isDark, setIsDark] = useState(true);

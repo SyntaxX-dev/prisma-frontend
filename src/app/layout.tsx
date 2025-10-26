@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { defaultMetadata } from "@/lib/seo";
 import { LoadingProvider } from "@/contexts/LoadingContext";
-import { LoadingWrapper } from "@/components/LoadingWrapper";
-import { NotificationProvider } from "@/components/NotificationProvider";
+import { LoadingWrapper } from "@/components/shared/LoadingWrapper";
+import { NotificationProvider } from "@/components/shared/NotificationProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 
 const geistSans = Geist({

@@ -1,2 +1,1 @@
-export * from './figma';
-export * from './nurui';
+// External components exports

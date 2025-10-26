@@ -1,5 +1,5 @@
-import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { ForgotPasswordScreen } from '@/components/ForgotPasswordScreen';
+import { AnimatedBackground } from '@/components/shared/AnimatedBackground';
+import { ForgotPasswordScreen } from '@/components/features/auth/ForgotPasswordScreen';
 
 export default function ForgotPasswordPage() {
     return (

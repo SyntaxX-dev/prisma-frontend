@@ -1,17 +1,42 @@
 import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, ChevronDown, ArrowLeft } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Badge } from "../../ui/badge";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { useRouter } from "next/navigation";
-import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
+import { useNavigationWithLoading } from "@/hooks/shared";
 import { Loading } from "../../ui/loading";
 import { markVideoCompleted } from "@/api/progress/mark-video-completed";
-import { getModulesBySubCourse, getModuleVideos } from "@/api/modules/get-modules-by-subcourse";
-import type { CourseProgress } from "@/types/domain/progress";
-import type { Video as ModuleVideo, ModuleProgress } from "@/api/modules/get-modules-by-subcourse";
+import { getModulesWithVideos } from "@/api/modules/get-modules-by-subcourse";
+import type { CourseProgress } from "@/types/progress";
+import type { Video as ModuleVideo, ModuleProgress, ModuleWithVideos } from "@/api/modules/get-modules-by-subcourse";
 import Image from "next/image";
+import { useCacheInvalidation } from "@/hooks/shared";
+
+const modulesWithVideosCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 10 * 60 * 1000;
+
+const getModulesWithVideosCached = async (subCourseId: string) => {
+  const now = Date.now();
+  const cached = modulesWithVideosCache.get(subCourseId);
+  
+  if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+    return cached.data;
+  }
+  
+  const data = await getModulesWithVideos(subCourseId);
+  modulesWithVideosCache.set(subCourseId, { data, timestamp: now });
+  return data;
+};
+
+export const clearModulesCache = (subCourseId?: string) => {
+  if (subCourseId) {
+    modulesWithVideosCache.delete(subCourseId);
+  } else {
+    modulesWithVideosCache.clear();
+  }
+};
 
 interface Video {
   id: string;
@@ -63,6 +88,7 @@ const formatDuration = (seconds: number): string => {
 export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, subCourseId }: CourseDetailProps) {
 
   const { navigateWithLoading } = useNavigationWithLoading();
+  const { invalidateTags } = useCacheInvalidation();
   const router = useRouter();
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
@@ -75,108 +101,110 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [courseProgress, setCourseProgress] = useState<CourseProgress | null>(null);
   const fetchingRef = useRef(false);
 
-  useEffect(() => {
-    const fetchModules = async () => {
-      if (!subCourseId) {
-        return;
-      }
+  const fetchModules = async () => {
+    if (!subCourseId) {
+      return;
+    }
 
-      if (fetchingRef.current) {
-        return;
-      }
+    if (fetchingRef.current) {
+      return;
+    }
 
-      if (lastFetchedSubCourseId === subCourseId && videos.length > 0) {
-        return;
-      }
+    if (lastFetchedSubCourseId === subCourseId) {
+      return;
+    }
 
-      try {
-        fetchingRef.current = true;
-        setLoading(true);
+    try {
+      fetchingRef.current = true;
+      setLoading(true);
 
-        const modulesData = await getModulesBySubCourse(subCourseId);
+      // Uma única requisição para buscar todos os módulos com vídeos (com cache)
+      const modulesData = await getModulesWithVideosCached(subCourseId);
 
-        if (modulesData.success && modulesData.data) {
-          const allVideos: Video[] = [];
-          let totalVideos = 0;
-          let completedVideos = 0;
-          const moduleProgressMap = new Map<string, ModuleProgress>();
+      if (modulesData.success && modulesData.data && modulesData.data.modules) {
+        
+        const allVideos: Video[] = [];
+        let totalVideos = 0;
+        let completedVideos = 0;
+        const moduleProgressMap = new Map<string, ModuleProgress>();
 
-          for (const moduleData of modulesData.data) {
-            try {
-              const videosData = await getModuleVideos(moduleData.id);
-
-              if (videosData.success && videosData.data && videosData.data.videos) {
-                if (!Array.isArray(videosData.data.videos)) {
-                  continue;
-                }
-
-                if (videosData.data.videos.length === 0) {
-                  continue;
-                }
-
-                const moduleVideos = videosData.data.videos.map((video: ModuleVideo): Video => ({
-                  id: video.id,
-                  title: video.title,
-                  duration: formatDuration(video.duration || 0),
-                  watched: video.progress?.isCompleted || false,
-                  locked: false,
-                  description: video.description || "Descrição não disponível para esta aula.",
-                  youtubeId: video.videoId,
-                  thumbnailUrl: video.thumbnailUrl,
-                  url: video.url,
-                  order: video.order || 0,
-                  channelTitle: video.channelTitle,
-                  channelThumbnailUrl: video.channelThumbnailUrl,
-                  viewCount: video.viewCount,
-                  isCompleted: video.progress?.isCompleted || false,
-                  completedAt: video.progress?.completedAt || null,
-                  moduleId: video.moduleId,
-                  videoId: video.videoId
-                }));
-
-                allVideos.push(...moduleVideos);
-
-                if (videosData.data.moduleProgress) {
-                  totalVideos += videosData.data.moduleProgress.totalVideos;
-                  completedVideos += videosData.data.moduleProgress.completedVideos;
-                  moduleProgressMap.set(moduleData.id, videosData.data.moduleProgress);
-                } else {
-                  totalVideos += moduleVideos.length;
-                  completedVideos += moduleVideos.filter(v => v.isCompleted).length;
-                }
-              }
-            } catch (error) {
-            }
+        // Processar cada módulo que já vem com vídeos
+        for (const moduleData of modulesData.data.modules) {
+          if (!moduleData.videos || !Array.isArray(moduleData.videos)) {
+            continue;
           }
 
-          setVideos(allVideos);
-          setLastFetchedSubCourseId(subCourseId);
+          if (moduleData.videos.length === 0) {
+            continue;
+          }
 
-          if (allVideos.length > 0) {
-            setSelectedVideo(allVideos[0]);
+          const moduleVideos = moduleData.videos.map((video: ModuleVideo): Video => ({
+            id: video.id,
+            title: video.title,
+            duration: formatDuration(video.duration || 0),
+            watched: video.progress?.isCompleted || false,
+            locked: false,
+            description: video.description || "Descrição não disponível para esta aula.",
+            youtubeId: video.videoId,
+            thumbnailUrl: video.thumbnailUrl,
+            url: video.url,
+            order: video.order || 0,
+            channelTitle: video.channelTitle,
+            channelThumbnailUrl: video.channelThumbnailUrl,
+            viewCount: video.viewCount,
+            isCompleted: video.progress?.isCompleted || false,
+            completedAt: video.progress?.completedAt || null,
+            moduleId: video.moduleId,
+            videoId: video.videoId
+          }));
+
+          allVideos.push(...moduleVideos);
+
+          // Usar dados de progresso do módulo que já vêm na resposta
+          if (moduleData.moduleProgress) {
+            totalVideos += moduleData.moduleProgress.totalVideos;
+            completedVideos += moduleData.moduleProgress.completedVideos;
+            moduleProgressMap.set(moduleData.id, moduleData.moduleProgress);
           } else {
-            setSelectedVideo(null);
+            totalVideos += moduleVideos.length;
+            completedVideos += moduleVideos.filter((v: Video) => v.isCompleted).length;
           }
-
-          const progressPercentage = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
-
-          setCourseProgress({
-            subCourseId: subCourseId,
-            subCourseName: "Curso",
-            totalVideos,
-            completedVideos,
-            progressPercentage,
-            isCompleted: completedVideos === totalVideos
-          });
         }
-      } catch (err) {
-      } finally {
-        setLoading(false);
-        fetchingRef.current = false;
-      }
-    };
 
-    fetchModules();
+        setVideos(allVideos);
+        setLastFetchedSubCourseId(subCourseId);
+
+        if (allVideos.length > 0) {
+          setSelectedVideo(allVideos[0]);
+        } else {
+          setSelectedVideo(null);
+        }
+
+        const progressPercentage = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+
+        setCourseProgress({
+          subCourseId: subCourseId,
+          subCourseName: "Curso",
+          totalVideos,
+          completedVideos,
+          progressPercentage,
+          isCompleted: completedVideos === totalVideos
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao buscar módulos com vídeos:', err);
+    } finally {
+      setLoading(false);
+      fetchingRef.current = false;
+    }
+  };
+
+  // Execute fetchModules only when subCourseId changes
+  useEffect(() => {
+    if (subCourseId && subCourseId !== lastFetchedSubCourseId) {
+      console.log('🚀 useEffect: Executando fetchModules para subCourseId:', subCourseId);
+      fetchModules();
+    }
   }, [subCourseId]);
 
   useEffect(() => {
@@ -303,7 +331,19 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         videoId: video.videoId,
         isCompleted: isCompleted
       });
-
+      
+      // Invalidar cache de offensives para atualizar o calendário
+      try {
+        await invalidateTags(['offensives', 'streak']);
+        
+        // Forçar refetch dos dados de offensives
+        if (typeof window !== 'undefined' && (window as any).refetchOffensives) {
+          await (window as any).refetchOffensives();
+        }
+      } catch (error) {
+        console.error('Erro ao invalidar cache de offensives:', error);
+      }
+      
       if (response.success && response.data.courseProgress) {
         setCourseProgress((prev: CourseProgress | null) => prev ? {
           ...prev,
@@ -378,18 +418,19 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     <div className={`relative flex flex-1 h-[calc(100vh-4rem)] bg-transparent overflow-hidden transition-all duration-300 ease-in-out ${isVideoPlaying ? 'ml-0 right-16' : 'ml-4 right-0'}`}>
       <div className="relative z-10 flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent">
         <div className={`pb-0 transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-1' : 'p-4'}`}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              navigateWithLoading('', 'Voltando...');
-              router.back();
-            }}
-            className="text-white/70 hover:text-white hover:bg-white/10 transition-all cursor-pointer mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
+          <div className="flex items-start">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                router.back();
+              }}
+              className="text-white/70 hover:text-white hover:bg-white/10 transition-all cursor-pointer mb-4 flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar
+            </Button>
+          </div>
         </div>
         <div className="relative bg-black aspect-video shadow-2xl rounded-4xl">
           {selectedVideo?.youtubeId ? (

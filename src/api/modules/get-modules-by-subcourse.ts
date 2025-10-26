@@ -1,4 +1,5 @@
 import { fetchJson } from '@/api/http/client';
+import type { ModuleProgress } from './get-modules-with-videos';
 
 export type Module = {
   id: string;
@@ -55,11 +56,6 @@ export type Video = {
   };
 };
 
-export type ModuleProgress = {
-  totalVideos: number;
-  completedVideos: number;
-  progressPercentage: number;
-};
 
 export type ModulesResponse = {
   success: boolean;
@@ -81,3 +77,7 @@ export type ModuleVideosResponse = {
 export async function getModuleVideos(moduleId: string): Promise<ModuleVideosResponse> {
   return fetchJson<ModuleVideosResponse>(`/modules/${moduleId}/videos`);
 }
+
+// Re-exportar tipos da nova API para compatibilidade
+export type { ModuleWithVideos, Video as ModuleVideo, ModuleProgress } from './get-modules-with-videos';
+export { getModulesWithVideos } from './get-modules-with-videos';
