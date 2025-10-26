@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Search, ListChecks, Rocket } from "lucide-react";
+import Aurora from "./Aurora";
 
 const steps = [
   {
@@ -30,11 +31,21 @@ const steps = [
 export function HowItWorks() {
   return (
     <section id="tutorial" className="py-20 md:py-32 bg-gradient-to-b from-[#0A0E27] to-[#050818] relative overflow-hidden">
+      {/* Aurora Background */}
+      <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
+        <Aurora
+          colorStops={["#3A29FF", "#FF94B4", "#FF3232"]}
+          blend={0.5}
+          amplitude={1.0}
+          speed={0.5}
+        />
+      </div>
+      
       {/* Decorative elements */}
-      <div className="absolute top-1/4 left-0 w-64 h-64 bg-[#B4FF39] opacity-5 blur-3xl rounded-full" />
-      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[#B4FF39] opacity-5 blur-3xl rounded-full" />
+      <div className="absolute top-1/4 left-0 w-64 h-64 bg-[#B4FF39] opacity-5 blur-3xl rounded-full z-10" />
+      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[#B4FF39] opacity-5 blur-3xl rounded-full z-10" />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 relative z-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
