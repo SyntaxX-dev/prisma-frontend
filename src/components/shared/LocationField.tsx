@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MapPin, Loader2 } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
+import { LoadingGrid } from '@/components/ui/loading-grid';
 
 interface LocationData {
   cep: string;
@@ -166,7 +167,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
               disabled={isLoading || cep.length < 8}
               className="bg-[#B3E240] hover:bg-[#A3D030] text-black disabled:opacity-50"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              {isLoading ? <LoadingGrid size="16" color="#B3E240" /> : <Search className="w-4 h-4" />}
             </Button>
           </div>
           {addressData && (
@@ -206,7 +207,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
             disabled={isLoading || !manualAddress.cidade || !manualAddress.estado}
             className="w-full bg-[#B3E240] hover:bg-[#A3D030] text-black disabled:opacity-50"
           >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
+            {isLoading ? <LoadingGrid size="16" color="#B3E240" className="mr-2" /> : <Search className="w-4 h-4 mr-2" />}
             Buscar Localização
           </Button>
         </div>

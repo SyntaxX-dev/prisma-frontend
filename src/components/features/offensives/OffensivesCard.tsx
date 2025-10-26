@@ -4,6 +4,7 @@ import { useOffensives } from '@/hooks/features/offensives';
 import { OffensiveType } from '@/types/offensives';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Badge } from '../../ui/badge';
+import { LoadingGrid } from '../../ui/loading-grid';
 import { Trophy, Flame, Target, Crown, Infinity, Zap } from 'lucide-react';
 
 // Função para obter o ícone baseado no tipo de ofensiva
@@ -74,7 +75,7 @@ export function OffensivesCard() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#B3E240]"></div>
+            <LoadingGrid size="32" color="#B3E240" />
           </div>
         </CardContent>
       </Card>

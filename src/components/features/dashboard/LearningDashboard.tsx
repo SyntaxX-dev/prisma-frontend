@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "../../ui/button";
 import { CourseCard } from "../course/CourseCard";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "../../ui/carousel";
+import { LoadingGrid } from "../../ui/loading-grid";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useSearch } from "@/hooks/shared";
@@ -44,8 +45,8 @@ export function LearningDashboard({ userName }: { userName?: string }) {
       </div>
 
       {coursesLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-white text-lg">Carregando cursos...</div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingGrid size="60" color="#B3E240" />
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-12">

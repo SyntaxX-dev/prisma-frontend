@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
 import { CourseDetail } from "@/components/features/course";
+import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useVideoPageLoad } from "@/hooks/features/courses";
 import { useParams, useRouter } from "next/navigation";
@@ -52,7 +53,7 @@ export default function CourseDetailPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-white">Verificando autenticação...</div>
+        <LoadingGrid size="60" color="#B3E240" />
       </div>
     );
   }
@@ -61,7 +62,7 @@ export default function CourseDetailPage() {
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-white">Redirecionando para login...</div>
+        <LoadingGrid size="60" color="#B3E240" />
       </div>
     );
   }

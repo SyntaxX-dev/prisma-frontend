@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
 import { LearningDashboard } from "@/components/features/dashboard";
 import DotGrid from "@/components/shared/DotGrid";
+import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useAuth } from "../../../hooks/features/auth";
 import { usePageDataLoad } from "@/hooks/shared";
 
@@ -81,7 +82,7 @@ export default function DashboardPage() {
 	return (
 		<Suspense fallback={
 			<div className="min-h-screen bg-[#09090A] flex items-center justify-center">
-				<div className="text-white text-lg">Carregando...</div>
+				<LoadingGrid size="60" color="#B3E240" />
 			</div>
 		}>
 			<DashboardContent />

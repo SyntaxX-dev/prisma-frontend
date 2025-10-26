@@ -22,6 +22,7 @@ import { useAuth } from "../../hooks/features/auth";
 import { useStreak, useOffensives } from "../../hooks/features/offensives";
 import { useSearch } from "../../hooks/shared";
 import { useNavigationWithLoading } from "../../hooks/shared";
+import { LoadingGrid } from "../ui/loading-grid";
 import { StreakIcon } from "../features/offensives/StreakIcon";
 import { StreakCalendar } from "../features/offensives/StreakCalendar";
 import { ProfileCompletionModal } from "../features/profile/modals/ProfileCompletionModal";
@@ -164,7 +165,7 @@ export function Navbar({}: NavbarProps) {
                     />
                     {isLoading && (
                       <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                        <Loader2 className="w-4 h-4 text-white/60 animate-spin" />
+                        <LoadingGrid size="16" color="#B3E240" />
                       </div>
                     )}
                   </div>

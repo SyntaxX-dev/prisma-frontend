@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
+import { LoadingGrid } from "@/components/ui/loading-grid";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -231,11 +232,7 @@ export default function CoursePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {isDataLoading ? (
                 <div className="col-span-full flex items-center justify-center py-12">
-                  {showLoading ? (
-                    <div className="text-white text-lg">Carregando subcursos...</div>
-                  ) : (
-                    <div className="text-white/60 text-sm">Preparando conteúdo...</div>
-                  )}
+                  <LoadingGrid size="60" color="#B3E240" />
                 </div>
               ) : filteredSubCourses.length > 0 ? (
                 filteredSubCourses.map((subCourse) => (

@@ -1,6 +1,6 @@
 'use client';
 
-import { Loading } from '../ui/loading';
+import { LoadingGrid } from '../ui/loading-grid';
 
 interface GlobalPageLoadingProps {
   isVisible: boolean;
@@ -12,7 +12,12 @@ export function GlobalPageLoading({ isVisible, message = "Carregando..." }: Glob
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-        <Loading type="page" size="lg" className="text-white" />
+        <div className="text-center">
+          <LoadingGrid size="80" color="#B3E240" />
+          {message && (
+            <p className="text-white mt-4 text-lg">{message}</p>
+          )}
+        </div>
     </div>
   );
 }

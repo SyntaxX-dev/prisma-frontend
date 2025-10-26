@@ -6,7 +6,7 @@ import { ScrollArea } from "../../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { useRouter } from "next/navigation";
 import { useNavigationWithLoading } from "@/hooks/shared";
-import { Loading } from "../../ui/loading";
+import { LoadingGrid } from "../../ui/loading-grid";
 import { markVideoCompleted } from "@/api/progress/mark-video-completed";
 import { getModulesWithVideos } from "@/api/modules/get-modules-by-subcourse";
 import type { CourseProgress } from "@/types/progress";
@@ -398,7 +398,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <Loading size="lg" />
+        <LoadingGrid size="80" color="#B3E240" />
       </div>
     );
   }

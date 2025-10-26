@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/features/auth';
+import { LoadingGrid } from '@/components/ui/loading-grid';
 
 export default function GoogleCallbackPage() {
     const router = useRouter();
@@ -43,8 +44,8 @@ export default function GoogleCallbackPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
             <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B3E240] mx-auto mb-4"></div>
-                <p className="text-white text-lg">Processando login com Google...</p>
+                <LoadingGrid size="60" color="#B3E240" />
+                <p className="text-white text-lg mt-4">Processando login com Google...</p>
             </div>
         </div>
     );

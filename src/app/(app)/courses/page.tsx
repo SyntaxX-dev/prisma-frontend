@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
 import { useAuth } from "../../../hooks/features/auth";
+import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useNavigationWithLoading } from "@/hooks/shared";
 import { useLoading } from "@/contexts/LoadingContext";
 import { usePageDataLoad } from "@/hooks/shared";
@@ -138,7 +139,7 @@ function CoursesContent() {
 
             {coursesLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="text-white text-lg">Carregando cursos...</div>
+                <LoadingGrid size="60" color="#B3E240" />
               </div>
             ) : error ? (
               <div className="flex items-center justify-center py-12">
@@ -194,7 +195,7 @@ export default function CoursesPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-lg">Carregando...</div>
+        <LoadingGrid size="60" color="#B3E240" />
       </div>
     }>
       <CoursesContent />

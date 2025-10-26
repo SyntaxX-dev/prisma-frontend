@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Navbar } from "../../../../components/Navbar";
 import { Sidebar } from "../../../../components/Sidebar";
+import { LoadingGrid } from "@/components/ui/loading-grid";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { useRouter } from "next/navigation";

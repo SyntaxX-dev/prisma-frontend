@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
+import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useAuth } from "../../../hooks/features/auth";
 import { useNotifications } from "../../../hooks/shared";
 import { usePageDataLoad } from "@/hooks/shared";
@@ -415,7 +416,7 @@ export default function SettingsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-lg">Carregando...</div>
+        <LoadingGrid size="60" color="#B3E240" />
       </div>
     }>
       <SettingsContent />

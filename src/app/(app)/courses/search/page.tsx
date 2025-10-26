@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
+import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useSearch } from "@/hooks/shared";
 import { useCourseSearchWithParams } from "@/hooks/features/courses";
 import { CourseCard } from "@/components/features/course";
@@ -195,7 +196,7 @@ export default function SearchPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-lg">Carregando...</div>
+        <LoadingGrid size="60" color="#B3E240" />
       </div>
     }>
       <SearchPageContent />

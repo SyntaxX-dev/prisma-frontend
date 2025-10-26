@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfile } from '@/hooks/features/profile';
 import { getEmailValue } from '@/lib/utils/email';
+import { LoadingGrid } from '@/components/ui/loading-grid';
 import {
     DndContext,
     KeyboardSensor,
@@ -362,10 +363,7 @@ export function ProfilePage() {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B3E240] mx-auto mb-4"></div>
-                    <p className="text-white/60">Carregando perfil...</p>
-                </div>
+                <LoadingGrid size="60" color="#B3E240" />
             </div>
         );
     }
@@ -493,7 +491,7 @@ export function ProfilePage() {
                                             {/* Indicador de loading durante upload */}
                                             {isUploadingImage && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#B3E240]"></div>
+                                                    <LoadingGrid size="24" color="#B3E240" />
                                                 </div>
                                             )}
                                             

@@ -57,6 +57,7 @@
     "emoji-picker-react": "^4.13.3",
     "gsap": "^3.13.0",
     "input-otp": "^1.4.2",
+    "ldrs": "^1.1.9",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.12",

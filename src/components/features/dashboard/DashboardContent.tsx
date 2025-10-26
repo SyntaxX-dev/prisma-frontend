@@ -1,5 +1,6 @@
 import { Card } from "../../ui/card";
 import { Button } from "../../ui/button";
+import { LoadingGrid } from "../../ui/loading-grid";
 import { useState, useEffect } from "react";
 
 interface Course {
@@ -43,8 +44,8 @@ export function DashboardContent() {
   return (
     <div className="flex-1 p-8 ml-20">
       {loading && (
-        <div className="text-white text-center py-8">
-          Carregando cursos...
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingGrid size="60" color="#B3E240" />
         </div>
       )}
 
