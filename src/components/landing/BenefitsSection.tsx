@@ -5,8 +5,7 @@ import { Users, BookOpen, Brain, Zap, Target, Database } from "lucide-react";
 import TextType from "@/components/ui/TextType";
 import FuzzyText from "@/components/ui/FuzzyText";
 import SpotlightCard from "@/components/ui/SpotlightCard";
-import Aurora from "./Aurora";
-import Orb from "./Orb";
+import { Aurora, Orb } from "@/components/backgrounds";
 
 const benefits = [
   {

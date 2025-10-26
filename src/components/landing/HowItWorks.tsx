@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { Search, ListChecks, Rocket } from "lucide-react";
-import Aurora from "./Aurora";
+import { Aurora } from "@/components/backgrounds";
 
 const steps = [
   {

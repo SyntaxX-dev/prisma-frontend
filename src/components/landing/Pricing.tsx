@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import DarkVeil from "./DarkVeil";
+import { DarkVeil } from "@/components/backgrounds";
 
 const plans = [
   {
