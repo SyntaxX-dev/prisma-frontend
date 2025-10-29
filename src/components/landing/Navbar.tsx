@@ -30,19 +30,19 @@ export function Navbar() {
       animate={{ y: 0 }}
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
     >
-      <div className="container mx-auto px-4 mt-4">
+      <div className="container mx-auto px-4 mt-8">
         <div className={`transition-all duration-300 ${
           isScrolled
             ? "bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mx-4"
             : "bg-transparent"
         }`}>
-        <div className="flex items-center justify-between h-20 px-6">
+        <div className="flex items-center justify-between h-20 px-8">
           {/* Logo */}
           <div className="flex items-center">
             <img 
-              src="/logo-prisma.png" 
+              src="/logo-prisma.svg" 
               alt="PRISMA Logo" 
-              className="h-36 w-auto"
+              className="h-18 w-auto"
             />
           </div>
 

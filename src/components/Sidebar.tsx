@@ -148,7 +148,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
           <div className="flex items-center justify-center">
             <div className="flex items-center justify-center">
               <img
-                src="/logo-prisma.png"
+                src="/logo.png"
                 alt="RichPath Logo"
                 width={isExpanded ? 100 : 40}
                 height={isExpanded ? 100 : 40}

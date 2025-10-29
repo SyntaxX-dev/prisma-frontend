@@ -1,104 +1,175 @@
 "use client";
 
-import { motion } from "motion/react";
-import { Search, ListChecks, Rocket } from "lucide-react";
-import { Aurora } from "@/components/backgrounds";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Star, PlayCircle } from "lucide-react";
 
-const steps = [
+const reviews = [
   {
-    icon: Search,
-    number: "01",
-    title: "Escolha seu tópico",
-    description:
-      "Navegue por centenas de categorias organizadas ou busque exatamente o que você precisa aprender.",
+    id: 1,
+    rating: 5,
+    text: "Egestas nullam nulla pellentesque tempor est cursus. Auctor ante senean varius dictum quam. Tincidunt sit eget neque viverra. Vitae et in in justo odio eget fermentum ut facilisi.",
+    highlight: "Eo in aliquam placerat lorem, viverra elementum",
+    author: "James Cooper",
+    role: "Chief Marketing Officer",
+    avatar: "https://i.pravatar.cc/150?img=12",
   },
   {
-    icon: ListChecks,
-    number: "02",
-    title: "Siga o roteiro",
-    description:
-      "Cada tópico possui uma sequência cuidadosamente planejada de videoaulas, do básico ao avançado.",
+    id: 2,
+    rating: 5,
+    text: "Essa plataforma transformou completamente minha carreira! Em apenas 3 meses consegui minha primeira vaga como desenvolvedora. O conteúdo é extremamente bem estruturado.",
+    highlight: "Mudou minha vida profissional completamente",
+    author: "Ana Carolina Silva",
+    role: "Desenvolvedora Front-end",
+    avatar: "https://i.pravatar.cc/150?img=1",
   },
   {
-    icon: Rocket,
-    number: "03",
-    title: "Evolua rapidamente",
-    description:
-      "Aprenda de forma estruturada e acompanhe seu progresso enquanto domina novos conhecimentos.",
+    id: 3,
+    rating: 5,
+    text: "Melhor investimento que já fiz na minha carreira! Os roteiros estruturados me pouparam centenas de horas de pesquisa. Aprendi mais em 2 meses do que em 1 ano.",
+    highlight: "ROI incrível, vale cada centavo",
+    author: "Pedro Henrique Costa",
+    role: "Engenheiro de Software",
+    avatar: "https://i.pravatar.cc/150?img=13",
   },
 ];
 
-export function HowItWorks() {
+export function HeroSection() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % reviews.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentReview = reviews[currentIndex];
+
   return (
-    <section id="tutorial" className="py-20 md:py-32 bg-gradient-to-b from-[#0A0E27] to-[#050818] relative overflow-hidden">
-      {/* Aurora Background */}
-      <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
-        <Aurora
-          colorStops={["#3A29FF", "#FF94B4", "#FF3232"]}
-          blend={0.5}
-          amplitude={1.0}
-          speed={0.5}
-        />
+    <section className="relative min-h-[600px] bg-black overflow-hidden">
+      {/* Background gradient glow - exatamente como na imagem */}
+      <div className="absolute inset-0">
+        <div className="absolute bottom-0 left-0 right-0 h-[400px] bg-gradient-to-t from-purple-900/40 via-fuchsia-900/30 to-transparent" />
       </div>
-      
-      {/* Decorative elements */}
-      <div className="absolute top-1/4 left-0 w-64 h-64 bg-[#B4FF39] opacity-5 blur-3xl rounded-full z-10" />
-      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[#B4FF39] opacity-5 blur-3xl rounded-full z-10" />
 
-      <div className="container mx-auto px-4 relative z-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl md:text-6xl mb-6 text-white">
-            Como <span className="text-[#B4FF39]">funciona</span>?
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Três passos simples para transformar sua jornada de aprendizado.
-          </p>
-        </motion.div>
+      {/* Container */}
+      <div className="relative z-10 container mx-auto px-6 py-20 md:py-28">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left Side - Text Content */}
+            <div className="space-y-8">
+              {/* Main Heading */}
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight">
+                Shape Your Digital
+                <br />
+                Fortune Today
+              </h1>
 
-        <div className="max-w-5xl mx-auto">
-          {steps.map((step, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
-              className="relative mb-12 last:mb-0"
-            >
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                {/* Number and icon */}
-                <div className="relative flex-shrink-0">
-                  <div className="w-24 h-24 bg-gradient-to-br from-[#B4FF39]/20 to-[#B4FF39]/5 border border-[#B4FF39] rounded-full flex items-center justify-center relative">
-                    <step.icon className="w-10 h-10 text-[#B4FF39]" />
-                  </div>
-                  <div className="absolute -top-4 -right-4 w-16 h-16 bg-[#B4FF39] rounded-lg flex items-center justify-center text-black text-2xl">
-                    {step.number}
-                  </div>
-                </div>
+              {/* Subtitle */}
+              <p className="text-lg md:text-xl text-gray-400 max-w-xl">
+                Hundreds of merchants have already made the move, what are you waiting on?
+              </p>
 
-                {/* Content */}
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl md:text-3xl mb-3 text-white">
-                    {step.title}
-                  </h3>
-                  <p className="text-lg text-gray-400 max-w-xl">
-                    {step.description}
-                  </p>
-                </div>
+              {/* Buttons */}
+              <div className="flex flex-wrap gap-4">
+                {/* Demo Button - Outline */}
+                <button className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-sm text-white font-medium hover:bg-white/10 hover:border-white/30 transition-all duration-300">
+                  <PlayCircle className="w-5 h-5" />
+                  <span>Demo</span>
+                </button>
 
-                {/* Connecting line */}
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute left-12 top-24 w-px h-24 bg-gradient-to-b from-[#B4FF39] to-transparent" />
-                )}
+                {/* Sign up Button - White filled */}
+                <button className="inline-flex items-center px-6 py-3.5 rounded-full bg-white text-black font-medium hover:bg-gray-100 transition-all duration-300">
+                  Sign up
+                </button>
               </div>
-            </motion.div>
-          ))}
+            </div>
+
+            {/* Right Side - Review Card */}
+            <div className="relative">
+              {/* Animated glow behind card */}
+              <motion.div
+                animate={{
+                  opacity: [0.4, 0.6, 0.4],
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="absolute -inset-8 bg-gradient-to-br from-purple-600/30 via-fuchsia-600/30 to-purple-600/30 blur-3xl rounded-3xl"
+              />
+
+              {/* Review Card */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentReview.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                  className="relative bg-gradient-to-br from-gray-900/80 to-gray-950/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-10"
+                >
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-6">
+                    {[...Array(currentReview.rating)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="w-5 h-5 fill-orange-400 text-orange-400"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Review Text */}
+                  <div className="space-y-4 mb-8">
+                    <p className="text-gray-300 text-base leading-relaxed">
+                      "{currentReview.text}"
+                    </p>
+                    <p className="text-gray-500 text-base italic">
+                      {currentReview.highlight}
+                    </p>
+                  </div>
+
+                  {/* Author */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/10">
+                      <img
+                        src={currentReview.avatar}
+                        alt={currentReview.author}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold text-base">
+                        {currentReview.author}
+                      </h3>
+                      <p className="text-gray-500 text-sm">
+                        {currentReview.role}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Pagination dots */}
+              <div className="flex justify-center gap-2 mt-6">
+                {reviews.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      index === currentIndex
+                        ? "w-8 bg-white"
+                        : "w-1.5 bg-white/30 hover:bg-white/50"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

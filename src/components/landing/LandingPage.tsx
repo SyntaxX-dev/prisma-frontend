@@ -2,11 +2,11 @@ import { Navbar } from "./Navbar";
 import { VideoHero } from "./VideoHero";
 import { BenefitsSection } from "./BenefitsSection";
 import { Features } from "./Features";
-import { HowItWorks } from "./HowItWorks";
 import { IntegrationsSection } from "./IntegrationsSection";
 import { Pricing } from "./Pricing";
 import { FAQ } from "./FAQ";
 import { Footer } from "./Footer";
+import { HeroSection } from "./HowItWorks";
 
 export function LandingPage() {
   return (
@@ -15,7 +15,7 @@ export function LandingPage() {
       <VideoHero />
       <BenefitsSection />
       <Features />
-      <HowItWorks />
+      <HeroSection />
       <IntegrationsSection />
       <Pricing />
       <FAQ />
