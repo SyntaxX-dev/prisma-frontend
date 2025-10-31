@@ -54,10 +54,16 @@ export function FAQ() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-6xl text-white mb-6">
+          <h2 
+            className="text-4xl md:text-6xl text-white mb-6"
+            style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 700 }}
+          >
             Perguntas <span className="text-[#B4FF39]">Frequentes</span>
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+          <p 
+            className="text-xl text-gray-400 max-w-3xl mx-auto"
+            style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+          >
             Tudo o que você precisa saber sobre o PRISMA
           </p>
         </motion.div>
@@ -77,7 +83,10 @@ export function FAQ() {
                 className="w-full bg-gradient-to-br from-gray-900/80 to-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 hover:border-[#B4FF39] transition-all duration-300 text-left"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <h3 className="text-lg md:text-xl text-white pr-8">
+                  <h3 
+                    className="text-lg md:text-xl text-white pr-8"
+                    style={{ fontFamily: 'Metropolis, sans-serif' }}
+                  >
                     {faq.question}
                   </h3>
                   <div className="flex-shrink-0 w-8 h-8 bg-[#B4FF39]/10 rounded-lg flex items-center justify-center">
@@ -98,7 +107,10 @@ export function FAQ() {
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <p className="text-gray-400 mt-4 leading-relaxed">
+                  <p 
+                    className="text-gray-400 mt-4 leading-relaxed"
+                    style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                  >
                     {faq.answer}
                   </p>
                 </motion.div>
@@ -115,8 +127,16 @@ export function FAQ() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-center mt-12"
         >
-          <p className="text-gray-400 mb-4">Ainda tem dúvidas?</p>
-          <button className="text-[#B4FF39] hover:underline text-lg">
+          <p 
+            className="text-gray-400 mb-4"
+            style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+          >
+            Ainda tem dúvidas?
+          </p>
+          <button 
+            className="text-[#B4FF39] hover:underline text-lg"
+            style={{ fontFamily: 'Metropolis, sans-serif' }}
+          >
             Entre em contato com nosso suporte →
           </button>
         </motion.div>

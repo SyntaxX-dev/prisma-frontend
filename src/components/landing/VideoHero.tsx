@@ -46,7 +46,7 @@ export function VideoHero() {
                 from={{ opacity: 0, y: 40 }}
                 to={{ opacity: 1, y: 0 }}
                 textAlign="left"
-                style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}
+                style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
               />
               <span className="text-[#B4FF39] relative inline-block">
                 <SplitText
@@ -60,7 +60,7 @@ export function VideoHero() {
                   from={{ opacity: 0, y: 40, scale: 0.8 }}
                   to={{ opacity: 1, y: 0, scale: 1 }}
                   textAlign="left"
-                  style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 600 }}
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 600 }}
                 />
                 <motion.div
                   className="absolute -bottom-2 left-0 right-0 h-1 bg-[#B4FF39]"
@@ -80,7 +80,7 @@ export function VideoHero() {
                 from={{ opacity: 0, y: 30 }}
                 to={{ opacity: 1, y: 0 }}
                 textAlign="left"
-                style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}
+                style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
               />
             </div>
 
@@ -95,7 +95,7 @@ export function VideoHero() {
               from={{ opacity: 0, y: 30, scale: 0.9 }}
               to={{ opacity: 1, y: 0, scale: 1 }}
               textAlign="left"
-              style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 300 }}
+              style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
             />
 
             {/* CTA Button */}
@@ -114,7 +114,7 @@ export function VideoHero() {
                     planosSection.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
-                style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}
+                style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
               >
                 Ver Planos
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -154,7 +154,7 @@ export function VideoHero() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
                 className="text-6xl md:text-8xl font-bold text-white"
-                style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 800 }}
+                style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 800 }}
               >
                 20k+
               </motion.div>

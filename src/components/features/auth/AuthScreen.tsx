@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Logo from '../../../../public/logo-prisma.png';
+// Logo import removed - using Next.js Image with public path instead
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -179,7 +179,7 @@ export function AuthScreen() {
                 >
                   <div className="inline-flex items-center justify-center w-40 h-40 mb-6">
                     <Image
-                      src={Logo}
+                      src="/prisma-white.svg"
                       alt="Logo"
                       width={200}
                       height={200}
@@ -212,7 +212,7 @@ export function AuthScreen() {
                 >
                   <div className="inline-flex items-center justify-center w-40 h-40 mb-6">
                     <Image
-                      src={Logo}
+                      src="/prisma-white.svg"
                       alt="Logo"
                       width={100}
                       height={100}

@@ -36,24 +36,15 @@ export function Navbar() {
             ? "bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mx-4"
             : "bg-transparent"
         }`}>
-        <div className="flex items-center justify-between h-20 px-8">
-          {/* Logo */}
-          <div className="flex items-center">
-            <img 
-              src="/logo-prisma.svg" 
-              alt="PRISMA Logo" 
-              className="h-18 w-auto"
-            />
-          </div>
-
+        <div className="flex items-center justify-center md:justify-between h-20 px-8">
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link, index) => (
               <a
                 key={index}
                 href={link.href}
-                className="text-gray-300 hover:text-[#B4FF39] transition-colors"
-                style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}
+                className="text-white hover:text-[#B4FF39] transition-colors"
+                style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
               >
                 {link.name}
               </a>
@@ -64,16 +55,16 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             <Button
               variant="ghost"
-              className="text-gray-300 hover:text-[#B4FF39] transition-colors"
+              className="text-white hover:text-[#B4FF39] transition-colors"
               onClick={() => window.location.href = '/auth/login'}
-              style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}
+              style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
             >
               Login
             </Button>
             <Button 
               className="bg-[#B4FF39] text-black hover:bg-[#a3e830] transition-colors"
               onClick={() => window.location.href = '/auth/register'}
-              style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}
+              style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
             >
               Cadastre se
             </Button>
@@ -81,7 +72,7 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-gray-300 hover:text-[#B4FF39] transition-colors"
+            className="md:hidden text-white hover:text-[#B4FF39] transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -101,7 +92,7 @@ export function Navbar() {
                 <a
                   key={index}
                   href={link.href}
-                  className="text-gray-300 hover:text-[#B4FF39] transition-colors"
+                  className="text-white hover:text-[#B4FF39] transition-colors"
                 >
                   {link.name}
                 </a>
@@ -109,16 +100,16 @@ export function Navbar() {
               <div className="flex flex-col space-y-2 pt-4">
                 <Button
                   variant="ghost"
-                  className="text-gray-300 hover:text-[#B4FF39] justify-start transition-colors"
+                  className="text-white hover:text-[#B4FF39] justify-start transition-colors"
                   onClick={() => window.location.href = '/auth/login'}
-                  style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
                 >
                   Login
                 </Button>
                 <Button 
                   className="bg-[#B4FF39] text-black hover:bg-[#a3e830] justify-start transition-colors"
                   onClick={() => window.location.href = '/auth/register'}
-                  style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
                 >
                   Cadastre-se
                 </Button>

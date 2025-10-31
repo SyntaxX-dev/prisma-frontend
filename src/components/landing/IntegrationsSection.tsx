@@ -1,7 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import { motion } from "motion/react";
 import { Youtube, BookOpen, GraduationCap, Video, Play, Library } from "lucide-react";
+import VariableProximity from "@/components/ui/VariableProximity";
+import { GlowCard } from "@/components/external/nurui";
 
 const integrations = [
   {
@@ -49,103 +52,126 @@ const integrations = [
 ];
 
 export function IntegrationsSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   return (
     <section className="py-20 md:py-32 bg-[#050818] relative overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(180,255,57,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(180,255,57,0.02)_1px,transparent_1px)] bg-[size:80px_80px]" />
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(180,255,57,0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(180,255,57,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '80px 80px'
+        }} />
+      </div>
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
+          ref={containerRef}
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
+          style={{ position: 'relative' }}
         >
-          <h2 className="text-4xl md:text-6xl text-white mb-6">
-            Integrações <span className="text-[#B4FF39]">Disponíveis</span>
+          <h2 className="text-4xl md:text-6xl text-white mb-6" style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 700 }}>
+            <VariableProximity
+              label="Integrações Disponíveis"
+              fromFontVariationSettings="'wght' 300"
+              toFontVariationSettings="'wght' 900"
+              containerRef={containerRef}
+              radius={150}
+              falloff="exponential"
+            />
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Conecte-se com as maiores plataformas de conteúdo educacional do
-            mundo. Atualmente integrado com YouTube, com muito mais por vir.
+          <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto" style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}>
+            <VariableProximity
+              label="Conecte-se com as maiores plataformas de conteúdo educacional do mundo. Atualmente integrado com YouTube, com muito mais por vir."
+              fromFontVariationSettings="'wght' 300"
+              toFontVariationSettings="'wght' 700"
+              containerRef={containerRef}
+              radius={120}
+              falloff="linear"
+            />
           </p>
         </motion.div>
 
-        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
           {integrations.map((integration, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              transition={{ duration: 0.5, delay: index * 0.08 }}
+              className="relative"
             >
-              <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 hover:border-opacity-50 transition-all duration-300 text-center h-full flex flex-col items-center justify-center"
-                style={{
-                  borderColor:
-                    integration.badge === "Integrado"
-                      ? integration.color + "80"
-                      : undefined,
-                }}
-              >
-                {/* Badge */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <div
-                    className={`px-3 py-1 rounded-full text-xs ${
-                      integration.badge === "Integrado"
-                        ? "bg-[#B4FF39] text-black"
-                        : "bg-gray-700 text-gray-300"
-                    }`}
-                  >
-                    {integration.badge}
-                  </div>
-                </div>
-
-                {/* Icon */}
+              {/* Badge */}
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-20">
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 relative"
-                  style={{
-                    backgroundColor:
-                      integration.badge === "Integrado"
-                        ? `${integration.color}20`
-                        : "#1F293710",
-                  }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    integration.badge === "Integrado"
+                      ? "bg-[#B4FF39] text-black"
+                      : "bg-gray-800/90 text-gray-400 border border-gray-700/50"
+                  }`}
+                  style={{ fontFamily: 'Metropolis, sans-serif' }}
                 >
-                  <integration.icon
-                    className="w-8 h-8"
-                    style={{
-                      color:
-                        integration.badge === "Integrado"
-                          ? integration.color
-                          : "#9CA3AF",
-                    }}
-                  />
-                  {integration.badge === "Integrado" && (
-                    <div
-                      className="absolute inset-0 opacity-20 blur-xl rounded-2xl"
-                      style={{ backgroundColor: integration.color }}
-                    />
-                  )}
+                  {integration.badge}
                 </div>
-
-                {/* Name */}
-                <h3
-                  className="text-lg mb-1"
-                  style={{
-                    color:
-                      integration.badge === "Integrado" ? "white" : "#9CA3AF",
-                  }}
-                >
-                  {integration.name}
-                </h3>
-
-                {/* Description */}
-                <p className="text-xs text-gray-500">
-                  {integration.description}
-                </p>
               </div>
+
+              <GlowCard
+                glowColor={integration.badge === "Integrado" ? "green" : "blue"}
+                customSize
+                className="h-full w-full p-6 pt-8"
+              >
+                <div className="flex flex-col items-center justify-center text-center h-full space-y-3">
+                  {/* Icon */}
+                  <div
+                    className="w-14 h-14 rounded-xl flex items-center justify-center relative transition-all duration-300"
+                    style={{
+                      backgroundColor: integration.badge === "Integrado"
+                        ? `${integration.color}15`
+                        : "rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <integration.icon
+                      className="w-7 h-7 transition-all duration-300"
+                      style={{
+                        color: integration.badge === "Integrado"
+                          ? integration.color
+                          : "#6B7280",
+                      }}
+                    />
+                  </div>
+
+                  {/* Name */}
+                  <h3
+                    className="text-base font-semibold"
+                    style={{
+                      fontFamily: 'Metropolis, sans-serif',
+                      color: integration.badge === "Integrado" ? "white" : "#9CA3AF",
+                    }}
+                  >
+                    {integration.name}
+                  </h3>
+
+                  {/* Description */}
+                  <p 
+                    className="text-xs"
+                    style={{
+                      fontFamily: 'Metropolis, sans-serif',
+                      fontWeight: 300,
+                      color: integration.badge === "Integrado" ? "#D1D5DB" : "#6B7280",
+                    }}
+                  >
+                    {integration.description}
+                  </p>
+                </div>
+              </GlowCard>
             </motion.div>
           ))}
         </div>
@@ -156,12 +182,18 @@ export function IntegrationsSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center mt-12"
+          className="text-center mt-16"
         >
-          <p className="text-gray-400 mb-4">
+          <p 
+            className="text-gray-400 mb-4 text-lg"
+            style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+          >
             Tem alguma sugestão de integração?
           </p>
-          <button className="text-[#B4FF39] hover:underline">
+          <button 
+            className="text-[#B4FF39] hover:text-[#a3e830] transition-colors font-medium"
+            style={{ fontFamily: 'Metropolis, sans-serif' }}
+          >
             Fale conosco →
           </button>
         </motion.div>

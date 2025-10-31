@@ -4,64 +4,74 @@ import { motion } from "motion/react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DarkVeil } from "@/components/backgrounds";
+import GradientText from "@/components/ui/GradientText";
 
 const plans = [
   {
     name: "Start",
     price: "12.90",
-    period: "per month",
-    description: "Ideal for individuals managing personal crypto finances.",
+    period: "Mensal",
+    description: "Ideal para quem quer começar a estudar e acelerar seus estudos de forma rápida e simples.",
     popular: false,
     features: [
-      "Up to 5 wallets",
-      "Basic portfolio tracking",
-      "Transaction history overview",
-      "Support 24/7",
+      "Conteúdo segmentado",
+      "Acesso a comunidades",
+      "Direito a ofensivas",
+      "Suporte 24/7",
     ],
-    billing: "billed yearly",
-    cta: "UPGRADE TO START",
-    trial: "7 days free",
+    cta: "Assinar Start",
+    trial: "7 dias grátis",
   },
   {
-    name: "Growth",
+    name: "Pro",
     price: "39.90",
-    period: "per month",
-    description: "Built for traders and small businesses scaling their web3 operations.",
+    period: "Mensal",
+    description: "O plano perfeito para quem quer acelerar seus estudos e alcançar resultados reais.",
     popular: true,
     features: [
-      "Everything in Start",
-      "Unlimited wallets",
-      "Advanced portfolio insights",
-      "Multi-chain support",
-      "Priority customer support 24/7",
+      "Conteúdo segmentado",
+      "Acesso a comunidades",
+      "Direito a ofensivas",
+      "Suporte 24/7",
+      "Prioridade no suporte 24/7",
+      "Acesso a todos os cursos premiums",
+      "Acesso as trilhas de aprendizado e PDF's",
     ],
-    billing: "billed yearly",
-    cta: "UPGRADE TO GROWTH",
-    trial: "7 days free",
+    cta: "Assinar PRO",
+    trial: "Plano gratuito não disponível",
   },
   {
-    name: "Enterprise",
+    name: "Ultra",
     price: "59.90",
-    period: "",
-    description: "Perfect for web3 builders, companies and financial teams.",
+    period: "Mensal",
+    description: "Ideal para quem quer ser aprovado em qualquer prova.",
     popular: false,
     features: [
-      "Everything in Growth",
-      "Dedicated account manager",
-      "API access for custom integrations",
-      "Multi-user permissions",
-      "SLA-backed 24/7 support",
-      "Compliance and audit reports",
+      "Conteúdo segmentado",
+      "Acesso a comunidades",
+      "Direito a ofensivas",
+      "Suporte 24/7",
+      "Prioridade no suporte 24/7",
+      "Acesso a todos os cursos premiums",
+      "Acesso as trilhas de aprendizado e PDF's",
+      "Acesso a IA de resumos para cada curso"
     ],
-    billing: "",
-    cta: "CONTACT US",
-    trial: "Individual",
+    cta: "Assinar Ultra",
+    trial: "Plano gratuito não disponível",
   },
 ];
 
 export function Pricing() {
   return (
     <section id="planos" className="py-20 md:py-32 bg-[#050818] relative overflow-hidden backdrop-blur-sm">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .pricing-button,
+        .pricing-button *,
+        .pricing-button button,
+        .pricing-button [data-slot="button"] {
+          cursor: pointer !important;
+        }
+      `}} />
       {/* DarkVeil Background */}
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
         <DarkVeil />
@@ -78,11 +88,17 @@ export function Pricing() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-6xl mb-6 text-white font-bold">
-            Choose your <span className="text-[#B4FF39]">Plan</span>
+          <h2 
+            className="text-4xl md:text-6xl mb-6 text-white font-bold"
+            style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 700 }}
+          >
+            Escolha seu <span className="text-[#B4FF39]">Plano</span>
           </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Simple investment for unlimited learning. Cancel anytime.
+          <p 
+            className="text-xl text-gray-400 max-w-2xl mx-auto"
+            style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+          >
+            Escolha o plano que melhor atende às suas necessidades e comece a acelerar seus estudos.
           </p>
         </motion.div>
 
@@ -141,17 +157,26 @@ export function Pricing() {
 
                 {/* Badge */}
                 {plan.popular && (
-                  <div className="absolute -top-3 right-6 bg-[#B4FF39] text-black px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg shadow-[#B4FF39]/50 backdrop-blur-sm">
-                    best choice
+                  <div 
+                    className="absolute -top-3 right-6 bg-[#B4FF39] text-black px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg shadow-[#B4FF39]/50 backdrop-blur-sm"
+                    style={{ fontFamily: 'Metropolis, sans-serif' }}
+                  >
+                    Mais Popular
                   </div>
                 )}
 
                 {/* Plan name and description */}
                 <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-3">
+                  <h3 
+                    className="text-2xl font-bold text-white mb-3"
+                    style={{ fontFamily: 'Metropolis, sans-serif' }}
+                  >
                     {plan.name}
                   </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
+                  <p 
+                    className="text-gray-400 text-sm leading-relaxed"
+                    style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                  >
                     {plan.description}
                   </p>
                 </div>
@@ -170,8 +195,21 @@ export function Pricing() {
                       <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Check className="w-4 h-4 text-[#B4FF39]" strokeWidth={3} />
                       </div>
-                      <span className="text-gray-300 text-sm leading-relaxed">
-                        {feature}
+                      <span 
+                        className="text-gray-300 text-sm leading-relaxed"
+                        style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                      >
+                        {feature === "Acesso a IA de resumos para cada curso" ? (
+                          <GradientText
+                            colors={["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ef4444"]}
+                            animationSpeed={3}
+                            showBorder={false}
+                          >
+                            {feature}
+                          </GradientText>
+                        ) : (
+                          feature
+                        )}
                       </span>
                     </motion.li>
                   ))}
@@ -181,20 +219,21 @@ export function Pricing() {
                 <div className="mt-auto">
                   <div className="flex items-end justify-between mb-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-bold text-white">
-                        ${plan.price}
+                      <span 
+                        className="text-5xl font-bold text-white"
+                        style={{ fontFamily: 'Metropolis, sans-serif' }}
+                      >
+                        R${plan.price}
                       </span>
                       {plan.period && (
-                        <span className="text-gray-500 text-sm ml-1">
+                        <span 
+                          className="text-gray-500 text-sm ml-1"
+                          style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                        >
                           / {plan.period}
                         </span>
                       )}
                     </div>
-                    {plan.billing && (
-                      <span className="text-[#B4FF39] text-sm font-medium">
-                        {plan.billing}
-                      </span>
-                    )}
                   </div>
 
                   {/* CTA Button */}
@@ -202,7 +241,7 @@ export function Pricing() {
                     <Button
                       size="lg"
                       className={`
-                        w-full py-6 rounded-xl font-bold text-sm tracking-wider uppercase
+                        pricing-button w-full py-6 rounded-xl font-bold text-sm tracking-wider uppercase
                         transition-all duration-300
                         ${plan.popular
                           ? "bg-white text-black hover:bg-gray-100 hover:scale-[1.02]"
@@ -213,7 +252,10 @@ export function Pricing() {
                     >
                       {plan.cta}
                     </Button>
-                    <p className="text-gray-500 text-xs text-center pt-1">
+                    <p 
+                      className="text-gray-500 text-xs text-center pt-1 cursor-pointer"
+                      style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                    >
                       {plan.trial}
                     </p>
                   </div>

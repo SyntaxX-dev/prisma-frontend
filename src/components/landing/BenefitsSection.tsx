@@ -5,7 +5,7 @@ import { Users, BookOpen, Brain, Zap, Target, Database } from "lucide-react";
 import TextType from "@/components/ui/TextType";
 import FuzzyText from "@/components/ui/FuzzyText";
 import SpotlightCard from "@/components/ui/SpotlightCard";
-import { Aurora, Orb } from "@/components/backgrounds";
+import { Aurora } from "@/components/backgrounds";
 
 const benefits = [
   {
@@ -34,13 +34,12 @@ const benefits = [
 export function BenefitsSection() {
   return (
     <section className="py-20 md:py-32 bg-gradient-to-b from-[#0A0E27] to-[#050818] relative overflow-hidden">
-      {/* Orb Background */}
-      <div style={{ width: '100%', height: '600px', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 0 }}>
-        <Orb
-          hoverIntensity={0.5}
-          rotateOnHover={true}
-          hue={0}
-          forceHoverState={false}
+      {/* Aurora Background */}
+      <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
+        <Aurora 
+          colorStops={['#ef4444', '#fb923c', '#a855f7']}
+          amplitude={1.0}
+          blend={0.5}
         />
       </div>
       
@@ -58,7 +57,7 @@ export function BenefitsSection() {
             className="text-center md:text-left mb-12"
           >
             <h2 className="text-4xl md:text-6xl text-white mb-6">
-              <div style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 400 }}>
+              <div style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}>
                 <TextType 
                   text={["Pare de perder tempo"]}
                   typingSpeed={75}
@@ -98,7 +97,7 @@ export function BenefitsSection() {
             </h2>
             <p 
               className="text-xl text-gray-400 max-w-3xl"
-              style={{ fontFamily: 'Cubron Grotesk, sans-serif', fontWeight: 300 }}
+              style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
             >
               Estudantes perdem tempo navegando entre conteúdos descentralizados
               em diferentes plataformas, criando uma experiência fragmentada e

@@ -1,158 +1,233 @@
 "use client";
 
-import { motion } from "motion/react";
-import { Youtube, Instagram, Twitter, Mail } from "lucide-react";
+import React from "react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Instagram,
+  Twitter,
+  Dribbble,
+  Globe,
+} from "lucide-react";
+import FooterBackgroundGradient from "./footer-background-gradient";
+import { TextHoverEffect } from "./text-hover-effect";
 
-export function Footer() {
-  const currentYear = new Date().getFullYear();
-
-  const links = {
-    product: [
-      { name: "Recursos", href: "#funcionalidades" },
-      { name: "Preços", href: "#planos" },
-      { name: "Demonstração", href: "#" },
-    ],
-    company: [
-      { name: "Sobre", href: "#" },
-      { name: "Blog", href: "#" },
-      { name: "Carreiras", href: "#" },
-    ],
-    support: [
-      { name: "Ajuda", href: "#suporte" },
-      { name: "Contato", href: "#" },
-      { name: "Termos", href: "#" },
-    ],
-  };
-
-  const socials = [
-    { icon: Youtube, href: "#", label: "YouTube" },
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Twitter, href: "#", label: "Twitter" },
-    { icon: Mail, href: "#", label: "Email" },
-  ];
-
+function Footer() {
   return (
-    <footer className="bg-[#0A0E27] border-t border-gray-800 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-[#B4FF39] to-transparent opacity-30" />
-
-      <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mb-4"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 border-2 border-[#B4FF39] flex items-center justify-center relative">
-                  <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-[#B4FF39]" />
-                </div>
-                <span className="text-2xl tracking-wider text-[#B4FF39]">
-                  PRISMA
-                </span>
-              </div>
-              <p className="text-gray-400 max-w-sm">
-                A melhor plataforma para organizar e acessar videoaulas do
-                YouTube de forma inteligente e estruturada.
-              </p>
-            </motion.div>
-
-            {/* Social links */}
-            <div className="flex gap-4">
-              {socials.map((social, index) => (
-                <motion.a
-                  key={index}
-                  href={social.href}
-                  initial={{ opacity: 0, scale: 0 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  className="w-10 h-10 bg-gray-800 hover:bg-[#B4FF39] hover:text-black rounded-lg flex items-center justify-center transition-all"
-                  aria-label={social.label}
-                >
-                  <social.icon className="w-5 h-5" />
-                </motion.a>
-              ))}
+    <footer className="bg-[#0F0F11]/10 relative h-fit rounded-3xl overflow-hidden m-8">
+      <div className="max-w-7xl mx-auto p-14 z-40 relative">
+        {/* Main grid for the footer content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 lg:gap-16 pb-12">
+          {/* Section 1: PRISMA brand and description */}
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-[#B4FF39] text-3xl font-extrabold">
+                PRISMA
+              </span>
             </div>
+            <p 
+              className="text-sm leading-relaxed text-gray-400"
+              style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+            >
+              Transformamos o caos do YouTube em uma experiência de aprendizado organizada e eficiente.
+            </p>
           </div>
 
-          {/* Links */}
+          {/* Section 2: Sobre Nós links */}
           <div>
-            <h3 className="text-white mb-4">Produto</h3>
+            <h4 
+              className="text-white text-lg font-semibold mb-6"
+              style={{ fontFamily: 'Metropolis, sans-serif' }}
+            >
+              Sobre Nós
+            </h4>
             <ul className="space-y-3">
-              {links.product.map((link, index) => (
-                <li key={index}>
-                  <a
-                    href={link.href}
-                    className="text-gray-400 hover:text-[#B4FF39] transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
+              <li>
+                <a 
+                  href="#" 
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  História da Empresa
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  Conheça a Equipe
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  Manual do Colaborador
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  Carreiras
+                </a>
+              </li>
             </ul>
           </div>
 
+          {/* Section 3: Links Úteis */}
           <div>
-            <h3 className="text-white mb-4">Empresa</h3>
+            <h4 
+              className="text-white text-lg font-semibold mb-6"
+              style={{ fontFamily: 'Metropolis, sans-serif' }}
+            >
+              Links Úteis
+            </h4>
             <ul className="space-y-3">
-              {links.company.map((link, index) => (
-                <li key={index}>
-                  <a
-                    href={link.href}
-                    className="text-gray-400 hover:text-[#B4FF39] transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
+              <li>
+                <a 
+                  href="#" 
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  Perguntas Frequentes
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  Suporte
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="hover:text-[#B4FF39] transition-colors relative text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  Chat Ao Vivo
+                  <span className="absolute top-0 right-[-10px] w-2 h-2 rounded-full bg-[#B4FF39] animate-pulse"></span>
+                </a>
+              </li>
             </ul>
           </div>
 
+          {/* Section 4: Entre em Contato */}
           <div>
-            <h3 className="text-white mb-4">Suporte</h3>
-            <ul className="space-y-3">
-              {links.support.map((link, index) => (
-                <li key={index}>
-                  <a
-                    href={link.href}
-                    className="text-gray-400 hover:text-[#B4FF39] transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
+            <h4 
+              className="text-white text-lg font-semibold mb-6"
+              style={{ fontFamily: 'Metropolis, sans-serif' }}
+            >
+              Entre em Contato
+            </h4>
+            <ul className="space-y-4">
+              <li className="flex items-center space-x-3">
+                <Mail size={18} className="text-[#B4FF39]" />
+                <a
+                  href="mailto:contato@prisma.com"
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  contato@prisma.com
+                </a>
+              </li>
+              <li className="flex items-center space-x-3">
+                <Phone size={18} className="text-[#B4FF39]" />
+                <a
+                  href="tel:+5511999999999"
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  +55 11 99999-9999
+                </a>
+              </li>
+              <li className="flex items-center space-x-3">
+                <MapPin size={18} className="text-[#B4FF39]" />
+                <span 
+                  className="hover:text-[#B4FF39] transition-colors text-gray-400"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  São Paulo, Brasil
+                </span>
+              </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="pt-8 border-t border-gray-800">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 text-sm">
-              © {currentYear} PRISMA. Todos os direitos reservados.
+        {/* Separator line */}
+        <hr className="border-t border-gray-700 my-8" />
+
+        {/* Bottom section: social media and copyright */}
+        <div className="flex flex-col md:flex-row justify-between items-center text-sm space-y-4 md:space-y-0">
+          {/* Social Media Icons */}
+          <div className="flex space-x-6 text-gray-400">
+            <a
+              href="#"
+              aria-label="Facebook"
+              className="hover:text-[#B4FF39] transition-colors relative"
+            >
+              <Facebook size={20} />
+            </a>
+            <a
+              href="#"
+              aria-label="Instagram"
+              className="hover:text-[#B4FF39] transition-colors"
+            >
+              <Instagram size={20} />
+            </a>
+            <a
+              href="#"
+              aria-label="Twitter"
+              className="hover:text-[#B4FF39] transition-colors"
+            >
+              <Twitter size={20} />
+            </a>
+            <a
+              href="#"
+              aria-label="Dribbble"
+              className="hover:text-[#B4FF39] transition-colors"
+            >
+              <Dribbble size={20} />
+            </a>
+            <a
+              href="#"
+              aria-label="Globe"
+              className="hover:text-[#B4FF39] transition-colors"
+            >
+              <Globe size={20} />
+            </a>
+          </div>
+
+          {/* Copyright text */}
+          <div className="text-center md:text-left">
+            <p 
+              className="text-gray-400"
+              style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+            >
+              &copy; {new Date().getFullYear()} PRISMA. Todos os direitos reservados.
             </p>
-            <div className="flex gap-6 text-sm">
-              <a
-                href="#"
-                className="text-gray-400 hover:text-[#B4FF39] transition-colors"
-              >
-                Política de Privacidade
-              </a>
-              <a
-                href="#"
-                className="text-gray-400 hover:text-[#B4FF39] transition-colors"
-              >
-                Termos de Uso
-              </a>
-            </div>
           </div>
         </div>
       </div>
+
+      <div className="lg:flex hidden h-[30rem] -mt-52 -mb-36">
+        <TextHoverEffect text="PRISMA" className="z-50" />
+      </div>
+
+      <FooterBackgroundGradient />
     </footer>
   );
 }
+
+export { Footer };

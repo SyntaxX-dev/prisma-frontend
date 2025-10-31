@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Star, PlayCircle } from "lucide-react";
+import Threads from "@/components/backgrounds/Threads";
+import GradientText from "@/components/ui/GradientText";
 
 const reviews = [
   {
@@ -48,10 +50,14 @@ export function HeroSection() {
   const currentReview = reviews[currentIndex];
 
   return (
-    <section className="relative min-h-[600px] bg-black overflow-hidden">
-      {/* Background gradient glow - exatamente como na imagem */}
-      <div className="absolute inset-0">
-        <div className="absolute bottom-0 left-0 right-0 h-[400px] bg-gradient-to-t from-purple-900/40 via-fuchsia-900/30 to-transparent" />
+    <section className="relative min-h-[600px] bg-[#050818] overflow-hidden">
+      {/* Threads Background */}
+      <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
+        <Threads
+          amplitude={1}
+          distance={0}
+          enableMouseInteraction={false}
+        />
       </div>
 
       {/* Container */}
@@ -61,28 +67,47 @@ export function HeroSection() {
             {/* Left Side - Text Content */}
             <div className="space-y-8">
               {/* Main Heading */}
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight">
-                Shape Your Digital
+              <h1 
+                className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight"
+                style={{ fontFamily: 'Metropolis, sans-serif' }}
+              >
+                <span className="text-white">Veja o que outras pessoas</span>
                 <br />
-                Fortune Today
+                <span className="text-white">Estão falando </span>
+                <GradientText
+                  colors={["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ef4444"]}
+                  animationSpeed={5}
+                  showBorder={false}
+                >
+                  sobre nós
+                </GradientText>
               </h1>
 
               {/* Subtitle */}
-              <p className="text-lg md:text-xl text-gray-400 max-w-xl">
-                Hundreds of merchants have already made the move, what are you waiting on?
+              <p 
+                className="text-lg md:text-xl text-gray-400 max-w-xl"
+                style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+              >
+                Veja como nossos alunos estão alcançando resultados reais e acelerando seus estudos.
               </p>
 
               {/* Buttons */}
               <div className="flex flex-wrap gap-4">
                 {/* Demo Button - Outline */}
-                <button className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-sm text-white font-medium hover:bg-white/10 hover:border-white/30 transition-all duration-300">
+                <button 
+                  className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm text-white font-medium hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+                  style={{ fontFamily: 'Metropolis, sans-serif' }}
+                >
                   <PlayCircle className="w-5 h-5" />
-                  <span>Demo</span>
+                  <span>Assinar</span>
                 </button>
 
                 {/* Sign up Button - White filled */}
-                <button className="inline-flex items-center px-6 py-3.5 rounded-full bg-white text-black font-medium hover:bg-gray-100 transition-all duration-300">
-                  Sign up
+                <button 
+                  className="inline-flex items-center px-6 py-3.5 rounded-full bg-white text-black font-medium hover:bg-gray-100 transition-all duration-300"
+                  style={{ fontFamily: 'Metropolis, sans-serif' }}
+                >
+                  Entrar
                 </button>
               </div>
             </div>
@@ -111,7 +136,7 @@ export function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.5 }}
-                  className="relative bg-gradient-to-br from-gray-900/80 to-gray-950/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-10"
+                  className="relative bg-gradient-to-br from-gray-900/60 to-gray-950/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-10"
                 >
                   {/* Stars */}
                   <div className="flex gap-1 mb-6">
@@ -125,17 +150,23 @@ export function HeroSection() {
 
                   {/* Review Text */}
                   <div className="space-y-4 mb-8">
-                    <p className="text-gray-300 text-base leading-relaxed">
+                    <p 
+                      className="text-gray-300 text-base leading-relaxed"
+                      style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                    >
                       "{currentReview.text}"
                     </p>
-                    <p className="text-gray-500 text-base italic">
+                    <p 
+                      className="text-gray-500 text-base italic"
+                      style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                    >
                       {currentReview.highlight}
                     </p>
                   </div>
 
                   {/* Author */}
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/10">
+                    <div className="w-12 h-12 rounded-full overflow-hidden ring-1 ring-white/10">
                       <img
                         src={currentReview.avatar}
                         alt={currentReview.author}
@@ -143,10 +174,16 @@ export function HeroSection() {
                       />
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold text-base">
+                      <h3 
+                        className="text-white font-semibold text-base"
+                        style={{ fontFamily: 'Metropolis, sans-serif' }}
+                      >
                         {currentReview.author}
                       </h3>
-                      <p className="text-gray-500 text-sm">
+                      <p 
+                        className="text-gray-500 text-sm"
+                        style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                      >
                         {currentReview.role}
                       </p>
                     </div>
