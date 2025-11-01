@@ -101,28 +101,19 @@ graph TD
 
 ### **2. Verificação de Dias com Ofensivas**
 
-O sistema usa uma **lógica dupla** para determinar quais dias marcar:
+O sistema verifica apenas o histórico real de ofensivas:
 
-#### **Prioridade 1: History**
+#### **Verificação por History**
 ```typescript
 if (offensivesData.history && offensivesData.history.length > 0) {
-  // Usa dados do histórico
-  const hasOffensive = offensivesData.history.some(day => 
+  // Usa apenas dados do histórico
+  const hasOffensive = offensivesData.history.some(day =>
     day.date === dateStr && day.hasOffensive
   );
 }
 ```
 
-#### **Prioridade 2: CurrentOffensive (Fallback)**
-```typescript
-if (offensivesData.currentOffensive) {
-  const streakStartDate = new Date(currentOffensive.streakStartDate);
-  const today = new Date();
-  
-  // Marca todos os dias entre streakStartDate e hoje
-  const isWithinStreak = date >= streakStartDate && date <= today;
-}
-```
+**Importante**: O calendário marca **apenas os dias em que o usuário realmente completou vídeos**, conforme registrado no histórico. Não há fallback automático - se um dia não está no histórico, ele não será marcado como tendo ofensiva.
 
 ### **3. Clique em Ofensiva**
 
@@ -308,7 +299,7 @@ Authorization: Bearer <token>
 ## 📝 Notas de Desenvolvimento
 
 ### **Decisões Técnicas**
-1. **Lógica Dupla**: Usa `history` primeiro, `currentOffensive` como fallback
+1. **Verificação por Histórico**: Usa apenas o `history` retornado pela API - marcando apenas dias com atividade real do usuário
 2. **TanStack Query**: Para cache e gerenciamento de estado
 3. **Logs Detalhados**: Para facilitar debug
 4. **TypeScript**: Tipagem completa para segurança

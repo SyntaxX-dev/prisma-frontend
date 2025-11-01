@@ -24,30 +24,19 @@ export function StreakCalendar({ streakData }: StreakCalendarProps = {}) {
     if (!offensivesData) {
       return false;
     }
-    
+
     const dateStr = date.toISOString().split('T')[0];
-    
-    // Verificar se há dados no history
+
+
     if (offensivesData.history && offensivesData.history.length > 0) {
       const hasOffensive = offensivesData.history.some(day => {
         return day.date === dateStr && day.hasOffensive;
       });
-      
+
       return hasOffensive;
     }
-    
-    // Se não há history, verificar se a data está dentro do período da ofensiva atual
-    if (offensivesData.currentOffensive) {
-      const currentOffensive = offensivesData.currentOffensive;
-      const streakStartDate = new Date(currentOffensive.streakStartDate);
-      const today = new Date();
-      
-      // Verificar se a data está dentro do período da ofensiva atual
-      const isWithinStreak = date >= streakStartDate && date <= today;
-      
-      return isWithinStreak;
-    }
-    
+
+    // Se não há histórico, não há ofensiva
     return false;
   };
 
