@@ -17,6 +17,14 @@ export function LearningDashboard({ userName }: { userName?: string }) {
   // Hook unificado que gerencia tanto busca quanto carregamento inicial
   const { data: courses = [], isLoading: coursesLoading, error } = useCourseSearchWithParams(searchParams);
 
+  // Calcula quantos cursos cabem por linha baseado no tamanho da tela
+  const COURSES_PER_ROW = 5; // xl:basis-1/5 = 5 cursos por linha
+
+  // Divide os cursos em grupos (linhas de carrossel)
+  const courseRows = [];
+  for (let i = 0; i < courses.length; i += COURSES_PER_ROW) {
+    courseRows.push(courses.slice(i, i + COURSES_PER_ROW));
+  }
 
   useEffect(() => {
     const getGreeting = () => {
@@ -107,34 +115,47 @@ export function LearningDashboard({ userName }: { userName?: string }) {
               )}
             </div>
           ) : (
-            /* Mostra carousel normal quando não há busca */
-            <Carousel
-              opts={{
-                align: "start",
-              }}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-3">
-                {courses.map((course) => (
-                  <CarouselItem key={course.courseId} className="pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-                    <CourseCard
-                      title={course.title}
-                      description={course.description}
-                      technology={course.technology}
-                      icon={course.icon}
-                      isSubscriber={course.isSubscriber}
-                      isFree={course.isFree}
-                      thumbnailUrl={course.thumbnailUrl}
-                      iconColor={course.iconColor}
-                      courseId={course.courseId}
-                      category={course.category}
-                    />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
-              <CarouselNext className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
-            </Carousel>
+            /* Mostra múltiplos carrosséis quando não há busca */
+            <div className="space-y-8">
+              {courseRows.map((rowCourses, rowIndex) => (
+                <div key={`row-${rowIndex}`}>
+                  {rowIndex > 0 && (
+                    <div className="flex items-center justify-between mb-4 mt-8">
+                      <h2 className="text-white text-lg font-semibold">
+                        Mais Cursos
+                      </h2>
+                    </div>
+                  )}
+                  <Carousel
+                    opts={{
+                      align: "start",
+                    }}
+                    className="w-full"
+                  >
+                    <CarouselContent className="-ml-3">
+                      {rowCourses.map((course) => (
+                        <CarouselItem key={course.courseId} className="pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                          <CourseCard
+                            title={course.title}
+                            description={course.description}
+                            technology={course.technology}
+                            icon={course.icon}
+                            isSubscriber={course.isSubscriber}
+                            isFree={course.isFree}
+                            thumbnailUrl={course.thumbnailUrl}
+                            iconColor={course.iconColor}
+                            courseId={course.courseId}
+                            category={course.category}
+                          />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
+                    <CarouselNext className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
+                  </Carousel>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

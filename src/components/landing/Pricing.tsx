@@ -124,7 +124,7 @@ export function Pricing() {
               {/* Card with glass effect */}
               <div 
                 className={`
-                  relative rounded-3xl p-8 h-full flex flex-col
+                  relative rounded-3xl p-8 h-full flex flex-col cursor-pointer
                   backdrop-blur-2xl
                   ${plan.popular 
                     ? 'bg-gradient-to-br from-white/[0.08] via-[#B4FF39]/[0.05] to-white/[0.03] border-2 border-[#B4FF39]/60 shadow-[0_0_40px_rgba(180,255,57,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]' 

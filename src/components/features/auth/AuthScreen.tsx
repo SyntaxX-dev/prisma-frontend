@@ -177,13 +177,13 @@ export function AuthScreen() {
                   transition={{ duration: 0.5 }}
                   className="flex-1 p-8 flex flex-col justify-center items-center text-center relative z-10"
                 >
-                  <div className="inline-flex items-center justify-center w-40 h-40 mb-6">
+                  <div className="inline-flex items-center justify-center mb-6 overflow-visible">
                     <Image
                       src="/prisma-white.svg"
                       alt="Logo"
-                      width={200}
-                      height={200}
-                      className="w-56 h-56 object-contain rounded-full"
+                      width={96}
+                      height={96}
+                      className="w-24 h-24 object-contain"
                       priority
                     />
                   </div>
@@ -210,13 +210,13 @@ export function AuthScreen() {
                   transition={{ duration: 0.5 }}
                   className="flex-1 p-8 flex flex-col justify-center items-center text-center relative z-10"
                 >
-                  <div className="inline-flex items-center justify-center w-40 h-40 mb-6">
+                  <div className="inline-flex items-center justify-center mb-6 overflow-visible">
                     <Image
                       src="/prisma-white.svg"
                       alt="Logo"
-                      width={100}
-                      height={100}
-                      className="w-56 h-56 object-contain rounded-full"
+                      width={96}
+                      height={96}
+                      className="w-24 h-24 object-contain"
                       priority
                     />
                   </div>

@@ -11,13 +11,23 @@ import {
   Dribbble,
   Globe,
 } from "lucide-react";
-import FooterBackgroundGradient from "./footer-background-gradient";
-import { TextHoverEffect } from "./text-hover-effect";
+// Footer simple gradient background only
 
 function Footer() {
   return (
-    <footer className="bg-[#0F0F11]/10 relative h-fit rounded-3xl overflow-hidden m-8">
-      <div className="max-w-7xl mx-auto p-14 z-40 relative">
+    <footer className="bg-[#0F0F11]/10 relative h-fit rounded-t-3xl overflow-hidden mt-8 w-full">
+      {/* Subtle rainbow gradient from bottom-right reaching mid */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-0 right-0 w-[60vw] h-[60vw] z-0"
+        style={{
+          background:
+            "radial-gradient(closest-corner at 100% 100%, rgba(255,0,0,0.9) 0%, rgba(255,127,0,0.75) 8%, rgba(255,255,0,0.6) 16%, rgba(0,255,0,0.5) 28%, rgba(0,255,255,0.4) 40%, rgba(0,0,255,0.3) 52%, rgba(139,0,255,0.2) 64%, rgba(0,0,0,0) 100%)",
+          filter: "blur(25px)",
+          transform: "translateZ(0)",
+        }}
+      />
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-14 py-14 z-10 relative">
         {/* Main grid for the footer content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 lg:gap-16 pb-12">
           {/* Section 1: PRISMA brand and description */}
@@ -220,12 +230,6 @@ function Footer() {
           </div>
         </div>
       </div>
-
-      <div className="lg:flex hidden h-[30rem] -mt-52 -mb-36">
-        <TextHoverEffect text="PRISMA" className="z-50" />
-      </div>
-
-      <FooterBackgroundGradient />
     </footer>
   );
 }

@@ -93,7 +93,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     } else if (item === "Cursos") {
       navigateWithLoading('/courses', 'Carregando Cursos...');
     } else if (item === "Comunidades") {
-      navigateWithLoading('/courses', 'Carregando Comunidades...');
+      navigateWithLoading('/communities', 'Carregando Comunidades...');
     } else if (item === "Chats") {
       navigateWithLoading('/courses', 'Carregando Chats...');
     } else if (item === "Vistos atualmente") {
@@ -146,13 +146,13 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
 
         <div className="flex items-center justify-center border-b border-white/20 flex-shrink-0">
           <div className="flex items-center justify-center">
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center p-4">
               <img
-                src="/logo.png"
+                src="/logo-prisma.svg"
                 alt="RichPath Logo"
-                width={isExpanded ? 100 : 40}
+                width={isExpanded ? 70 : 40}
                 height={isExpanded ? 100 : 40}
-                className="rounded-full transition-all duration-300 ease-in-out"
+                className=" transition-all duration-300 ease-in-out"
               />
             </div>
           </div>

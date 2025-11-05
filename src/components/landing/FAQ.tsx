@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
+import LightRays from "./LightRays";
 
 const faqs = [
   {
@@ -42,11 +43,27 @@ export function FAQ() {
 
   return (
     <section id="suporte" className="py-20 md:py-32 bg-gradient-to-b from-[#0A0E27] to-[#050818] relative overflow-hidden">
+      {/* LightRays Background */}
+      <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0, transform: 'translateZ(0)' }}>
+        <LightRays 
+          raysOrigin="top-center"
+          raysColor="#B4FF39"
+          raysSpeed={1.5}
+          lightSpread={0.8}
+          rayLength={1.2}
+          followMouse={true}
+          mouseInfluence={0.1}
+          noiseAmount={0.1}
+          distortion={0.05}
+          className="custom-rays"
+        />
+      </div>
+      
       {/* Background elements */}
-      <div className="absolute top-1/4 left-0 w-96 h-96 bg-[#B4FF39] opacity-5 blur-3xl rounded-full" />
-      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-purple-500 opacity-5 blur-3xl rounded-full" />
+      <div className="absolute top-1/4 left-0 w-96 h-96 bg-[#B4FF39] opacity-5 blur-3xl rounded-full z-10" />
+      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-purple-500 opacity-5 blur-3xl rounded-full z-10" />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 relative z-20">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -80,7 +97,7 @@ export function FAQ() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full bg-gradient-to-br from-gray-900/80 to-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 hover:border-[#B4FF39] transition-all duration-300 text-left"
+                className="w-full bg-gradient-to-br from-gray-900/80 to-gray-800/40 border border-gray-700 rounded-2xl p-6 hover:border-[#B4FF39] transition-all duration-300 text-left"
               >
                 <div className="flex items-center justify-between gap-4">
                   <h3 
@@ -98,22 +115,18 @@ export function FAQ() {
                   </div>
                 </div>
 
-                <motion.div
-                  initial={false}
-                  animate={{
-                    height: openIndex === index ? "auto" : 0,
-                    opacity: openIndex === index ? 1 : 0,
-                  }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
+                <div
+                  className={`grid transition-all duration-300 ${openIndex === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
                 >
-                  <p 
-                    className="text-gray-400 mt-4 leading-relaxed"
-                    style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
-                  >
-                    {faq.answer}
-                  </p>
-                </motion.div>
+                  <div className="overflow-hidden">
+                    <p 
+                      className="text-gray-400 mt-4 leading-relaxed"
+                      style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                    >
+                      {faq.answer}
+                    </p>
+                  </div>
+                </div>
               </button>
             </motion.div>
           ))}

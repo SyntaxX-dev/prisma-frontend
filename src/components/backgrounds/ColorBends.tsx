@@ -177,7 +177,10 @@ export default function ColorBends({
     const renderer = new THREE.WebGLRenderer({
       antialias: false,
       powerPreference: 'high-performance',
-      alpha: true
+      alpha: true,
+      depth: false,
+      stencil: false,
+      preserveDrawingBuffer: true
     });
 
     rendererRef.current = renderer;
@@ -296,6 +299,11 @@ export default function ColorBends({
     const container = containerRef.current;
     if (!material || !container) return;
 
+    // Não registra listeners quando a interação está desativada
+    if ((mouseInfluence ?? 0) <= 0 && (parallax ?? 0) <= 0) {
+      return;
+    }
+
     const handlePointerMove = (e: PointerEvent) => {
       const rect = container.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / (rect.width || 1)) * 2 - 1;
@@ -307,8 +315,21 @@ export default function ColorBends({
     return () => {
       container.removeEventListener('pointermove', handlePointerMove);
     };
-  }, []);
+  }, [mouseInfluence, parallax]);
 
-  return <div ref={containerRef} className={`w-full h-full relative overflow-hidden ${className}`} style={style} />;
+  return (
+    <div
+      ref={containerRef}
+      className={`w-full h-full relative overflow-hidden ${className || ''}`}
+      style={{
+        pointerEvents: 'none',
+        willChange: 'transform, opacity',
+        contain: 'layout paint',
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        ...(style || {})
+      }}
+    />
+  );
 }
 

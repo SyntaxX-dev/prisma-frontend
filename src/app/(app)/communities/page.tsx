@@ -1,0 +1,435 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Search, Settings, Bell } from "lucide-react";
+import { CommunityList } from "@/components/features/communities/CommunityList";
+import { CommunityChat } from "@/components/features/communities/CommunityChat";
+import { CommunityInfo } from "@/components/features/communities/CommunityInfo";
+import { CreateCommunityModal } from "@/components/features/communities/CreateCommunityModal";
+import { VoiceCallScreen } from "@/components/features/communities/VoiceCallScreen";
+import type { Community, CommunityMessage } from "@/types/community";
+import { LoadingGrid } from "@/components/ui/loading-grid";
+import { useNotifications } from "@/hooks/shared/useNotifications";
+import { VideoCallScreen } from "@/components/features/communities/VideoCallScreens";
+
+// Mock data
+const MOCK_COMMUNITIES: Community[] = [
+  {
+    id: "1",
+    name: "Office chat",
+    description: "I want to ask you to pick...",
+    avatarUrl: "https://cdn.eadplataforma.app/client/gui/upload/product/photo/20052022_1653071584reactJS.png",
+    memberCount: 45,
+    isOwner: true,
+    isMember: true,
+    lastMessage: {
+      content: "I want to ask you to pick...",
+      sender: "Harry Fettel",
+      timestamp: new Date(Date.now() - 4 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "2",
+    name: "Harry Fettel",
+    description: "Our company needs to prepare",
+    avatarUrl: "https://i.pravatar.cc/150?img=12",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Our company needs to prepare",
+      sender: "Harry Fettel",
+      timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "3",
+    name: "Frank Garcia",
+    description: "Our company needs to prepare",
+    avatarUrl: "https://i.pravatar.cc/150?img=33",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Our company needs to prepare",
+      sender: "Frank Garcia",
+      timestamp: new Date(Date.now() - 24 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "4",
+    name: "Maria Gonzalez",
+    description: "Our company needs to prepare",
+    avatarUrl: "https://i.pravatar.cc/150?img=47",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Our company needs to prepare",
+      sender: "Maria Gonzalez",
+      timestamp: new Date(Date.now() - 60 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60000).toISOString(),
+  },
+];
+
+const MOCK_MESSAGES: Record<string, CommunityMessage[]> = {
+  "1": [
+    {
+      id: "1",
+      communityId: "1",
+      senderId: "user1",
+      senderName: "Harry Fettel",
+      senderAvatar: "https://i.pravatar.cc/150?img=12",
+      content: "Hey guys! Don't forget about our meeting next week! I'll be waiting for you at the 'Cozy Corner' cafe at 6:00 PM. Don't be late!",
+      timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
+      isOwn: false,
+    },
+    {
+      id: "2",
+      communityId: "1",
+      senderId: "user2",
+      senderName: "Conner Garcia",
+      senderAvatar: "https://i.pravatar.cc/150?img=15",
+      content: "Absolutely, I'll be there! Looking forward to catching up and discussing everything.",
+      timestamp: new Date(Date.now() - 110 * 60000).toISOString(),
+      isOwn: false,
+    },
+    {
+      id: "3",
+      communityId: "1",
+      senderId: "user1",
+      senderName: "Harry Fettel",
+      senderAvatar: "https://i.pravatar.cc/150?img=12",
+      content: "Great! See you there.",
+      timestamp: new Date(Date.now() - 100 * 60000).toISOString(),
+      isOwn: false,
+    },
+    {
+      id: "4",
+      communityId: "1",
+      senderId: "user3",
+      senderName: "Jenny Li",
+      senderAvatar: "https://i.pravatar.cc/150?img=45",
+      content: "I have a new game plan",
+      timestamp: new Date(Date.now() - 90 * 60000).toISOString(),
+      isOwn: false,
+    },
+    {
+      id: "5",
+      communityId: "1",
+      senderId: "user4",
+      senderName: "Jaden Parker",
+      senderAvatar: "https://i.pravatar.cc/150?img=25",
+      content: "Let's discuss this tomorrow",
+      timestamp: new Date(Date.now() - 80 * 60000).toISOString(),
+      isOwn: false,
+    },
+    {
+      id: "6",
+      communityId: "1",
+      senderId: "user5",
+      senderName: "Frank Garcia",
+      senderAvatar: "https://i.pravatar.cc/150?img=33",
+      content: "We will start celebrating Oleg's birthday soon",
+      timestamp: new Date(Date.now() - 70 * 60000).toISOString(),
+      isOwn: false,
+    },
+    {
+      id: "7",
+      communityId: "1",
+      senderId: "user5",
+      senderName: "Frank Garcia",
+      senderAvatar: "https://i.pravatar.cc/150?img=33",
+      content: "We're already starting, hurry up if it's late",
+      timestamp: new Date(Date.now() - 60 * 60000).toISOString(),
+      isOwn: false,
+    },
+    {
+      id: "8",
+      communityId: "1",
+      senderId: "current",
+      senderName: "You",
+      senderAvatar: "https://i.pravatar.cc/150?img=68",
+      content: "I'm stuck in traffic, I'll be there a little later",
+      timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
+      isOwn: true,
+    },
+  ],
+};
+
+const MOCK_CALL_PARTICIPANTS = [
+  { id: "1", name: "João Silva", avatarUrl: "https://i.pravatar.cc/150?img=13", isMuted: false, isVideoOff: false, isSpeaking: true },
+  { id: "2", name: "Maria Santos", avatarUrl: "https://i.pravatar.cc/150?img=47", isMuted: false, isVideoOff: true, isSpeaking: false },
+  { id: "3", name: "Pedro Costa", avatarUrl: "https://i.pravatar.cc/150?img=33", isMuted: true, isVideoOff: false, isSpeaking: false },
+  { id: "4", name: "Ana Oliveira", avatarUrl: "https://i.pravatar.cc/150?img=45", isMuted: false, isVideoOff: false, isSpeaking: false },
+];
+
+export default function CommunitiesPage() {
+  const { showSuccess, showError } = useNotifications();
+  
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string>();
+  const [messages, setMessages] = useState<CommunityMessage[]>([]);
+  const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreatingCommunity, setIsCreatingCommunity] = useState(false);
+  
+  // Call states
+  const [isInVideoCall, setIsInVideoCall] = useState(false);
+  const [isInVoiceCall, setIsInVoiceCall] = useState(false);
+
+  // Load communities
+  useEffect(() => {
+    loadCommunities();
+  }, []);
+
+  // Load messages when community is selected
+  useEffect(() => {
+    if (selectedCommunityId) {
+      loadMessages(selectedCommunityId);
+    } else {
+      setMessages([]);
+    }
+  }, [selectedCommunityId]);
+
+  const loadCommunities = async () => {
+    try {
+      setIsLoadingCommunities(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setCommunities(MOCK_COMMUNITIES);
+      
+      if (MOCK_COMMUNITIES.length > 0) {
+        setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
+      }
+    } catch (error) {
+      showError("Failed to load communities");
+    } finally {
+      setIsLoadingCommunities(false);
+    }
+  };
+
+  const loadMessages = async (communityId: string) => {
+    try {
+      setIsLoadingMessages(true);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const communityMessages = MOCK_MESSAGES[communityId] || [];
+      setMessages(communityMessages);
+    } catch (error) {
+      showError("Failed to load messages");
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  const handleSendMessage = async (content: string) => {
+    if (!selectedCommunityId) return;
+
+    try {
+      setIsSendingMessage(true);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const newMessage: CommunityMessage = {
+        id: `msg-${Date.now()}`,
+        communityId: selectedCommunityId,
+        senderId: "current",
+        senderName: "You",
+        senderAvatar: "https://i.pravatar.cc/150?img=68",
+        content,
+        timestamp: new Date().toISOString(),
+        isOwn: true,
+      };
+      
+      setMessages((prev) => [...prev, newMessage]);
+    } catch (error) {
+      showError("Failed to send message");
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  const handleCreateCommunity = async (data: {
+    name: string;
+    description: string;
+    avatarUrl?: string;
+  }) => {
+    try {
+      setIsCreatingCommunity(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const newCommunity: Community = {
+        id: `community-${Date.now()}`,
+        name: data.name,
+        description: data.description,
+        avatarUrl: data.avatarUrl,
+        memberCount: 1,
+        isOwner: true,
+        isMember: true,
+        lastMessage: undefined,
+        createdAt: new Date().toISOString(),
+      };
+      
+      setCommunities((prev) => [newCommunity, ...prev]);
+      setSelectedCommunityId(newCommunity.id);
+      setIsCreateModalOpen(false);
+      showSuccess("Community created successfully!");
+    } catch (error) {
+      showError("Failed to create community");
+    } finally {
+      setIsCreatingCommunity(false);
+    }
+  };
+
+  const selectedCommunity = communities.find(
+    (c) => c.id === selectedCommunityId
+  );
+
+  // Call handlers
+  const handleStartVideoCall = () => {
+    setIsInVideoCall(true);
+  };
+
+  const handleStartVoiceCall = () => {
+    setIsInVoiceCall(true);
+  };
+
+  const handleEndCall = () => {
+    setIsInVideoCall(false);
+    setIsInVoiceCall(false);
+  };
+
+  if (isLoadingCommunities) {
+    return (
+      <div 
+        className="flex items-center justify-center h-screen w-screen"
+        style={{
+          background: '#040404',
+        }}
+      >
+        <LoadingGrid size="60" color="#C9FE02" />
+      </div>
+    );
+  }
+
+  // Show call screens
+  if (isInVideoCall && selectedCommunity) {
+    return (
+      <VideoCallScreen
+        communityName={selectedCommunity.name}
+        participants={MOCK_CALL_PARTICIPANTS}
+        onEndCall={handleEndCall}
+      />
+    );
+  }
+
+  if (isInVoiceCall && selectedCommunity) {
+    return (
+      <VoiceCallScreen
+        communityName={selectedCommunity.name}
+        participants={MOCK_CALL_PARTICIPANTS}
+        onEndCall={handleEndCall}
+      />
+    );
+  }
+
+  return (
+    <div 
+      className="flex h-screen w-screen overflow-hidden p-4 pt-6 gap-3"
+      style={{
+        background: '#040404',
+      }}
+    >
+      {/* Communities List - Ilha Esquerda */}
+      <CommunityList
+        communities={communities}
+        selectedCommunityId={selectedCommunityId}
+        onSelectCommunity={setSelectedCommunityId}
+        onCreateCommunity={() => setIsCreateModalOpen(true)}
+      />
+
+      {/* Chat Area - Coluna Central + Direita */}
+      {selectedCommunity ? (
+        <div className="flex-1 flex flex-col gap-3">
+          {/* Header Global - Fora da Ilha */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Nome da Comunidade */}
+            <h1 className="text-white font-semibold text-2xl">{selectedCommunity.name}</h1>
+            
+            {/* Search Bar + Actions */}
+            <div className="flex items-center gap-4">
+              {/* Search Bar */}
+              <div className="relative" style={{ width: '280px' }}>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
+                  style={{
+                    background: 'rgb(30, 30, 30)',
+                  }}
+                />
+              </div>
+
+              {/* Right Actions */}
+              <div className="flex items-center gap-3">
+                <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
+                  <Settings className="w-5 h-5 text-gray-400" />
+                </button>
+                <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
+                  <Bell className="w-5 h-5 text-gray-400" />
+                </button>
+                <div className="w-12 h-12 rounded-full relative">
+                  <img 
+                    src="https://i.pravatar.cc/150?img=68" 
+                    alt="User Avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9FE02] rounded-full border-2 border-[#040404]" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Conteúdo Principal - Chat + Sidebar */}
+          <div className="flex-1 flex gap-3 overflow-hidden pt-2">
+            {/* Área do Chat - Ilha */}
+            <CommunityChat
+              community={selectedCommunity}
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              onStartVideoCall={handleStartVideoCall}
+              onStartVoiceCall={handleStartVoiceCall}
+              isLoading={isSendingMessage}
+            />
+            
+            {/* Community Info Sidebar - Ilhas Direita */}
+            <CommunityInfo 
+              community={selectedCommunity}
+              onStartVideoCall={handleStartVideoCall}
+              onStartVoiceCall={handleStartVoiceCall}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center rounded-2xl" style={{ background: '#303030' }}>
+          <p className="text-gray-500">Select a community to start chatting</p>
+        </div>
+      )}
+
+      {/* Create Community Modal */}
+      <CreateCommunityModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateCommunity}
+        isLoading={isCreatingCommunity}
+      />
+    </div>
+  );
+}

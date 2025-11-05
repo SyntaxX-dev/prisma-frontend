@@ -10,28 +10,28 @@ const reviews = [
   {
     id: 1,
     rating: 5,
-    text: "Egestas nullam nulla pellentesque tempor est cursus. Auctor ante senean varius dictum quam. Tincidunt sit eget neque viverra. Vitae et in in justo odio eget fermentum ut facilisi.",
-    highlight: "Eo in aliquam placerat lorem, viverra elementum",
-    author: "James Cooper",
-    role: "Chief Marketing Officer",
+    text: "O PRISMA mudou completamente minha forma de estudar! Antes eu perdia horas procurando videoaulas no YouTube. Agora tudo está organizado em trilhas e consigo focar no que realmente importa. As ofensivas me motivam a estudar todo dia!",
+    highlight: "Economia de tempo e motivação diária garantida",
+    author: "Lucas Almeida Santos",
+    role: "Estudante de Engenharia Civil",
     avatar: "https://i.pravatar.cc/150?img=12",
   },
   {
     id: 2,
     rating: 5,
-    text: "Essa plataforma transformou completamente minha carreira! Em apenas 3 meses consegui minha primeira vaga como desenvolvedora. O conteúdo é extremamente bem estruturado.",
-    highlight: "Mudou minha vida profissional completamente",
-    author: "Ana Carolina Silva",
-    role: "Desenvolvedora Front-end",
+    text: "Estava estudando para o ENEM sem rumo nenhum. Com o PRISMA consegui seguir uma trilha estruturada, completar módulos e acompanhar meu progresso. Em 4 meses minha nota nos simulados aumentou absurdamente!",
+    highlight: "Estrutura e progresso visível nos estudos",
+    author: "Mariana Costa Oliveira",
+    role: "Estudante de Medicina",
     avatar: "https://i.pravatar.cc/150?img=1",
   },
   {
     id: 3,
     rating: 5,
-    text: "Melhor investimento que já fiz na minha carreira! Os roteiros estruturados me pouparam centenas de horas de pesquisa. Aprendi mais em 2 meses do que em 1 ano.",
-    highlight: "ROI incrível, vale cada centavo",
-    author: "Pedro Henrique Costa",
-    role: "Engenheiro de Software",
+    text: "Melhor plataforma para quem quer passar em concurso! O conteúdo curado poupa centenas de horas de pesquisa. As comunidades me ajudaram muito a tirar dúvidas e as ofensivas deixam tudo mais divertido. Recomendo demais!",
+    highlight: "Curadoria de qualidade e gamificação perfeita",
+    author: "Rafael Souza Pereira",
+    role: "Estudante de Direito",
     avatar: "https://i.pravatar.cc/150?img=13",
   },
 ];
@@ -95,7 +95,7 @@ export function HeroSection() {
               <div className="flex flex-wrap gap-4">
                 {/* Demo Button - Outline */}
                 <button 
-                  className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm text-white font-medium hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+                  className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm text-white font-medium hover:bg-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer"
                   style={{ fontFamily: 'Metropolis, sans-serif' }}
                 >
                   <PlayCircle className="w-5 h-5" />
@@ -104,7 +104,7 @@ export function HeroSection() {
 
                 {/* Sign up Button - White filled */}
                 <button 
-                  className="inline-flex items-center px-6 py-3.5 rounded-full bg-white text-black font-medium hover:bg-gray-100 transition-all duration-300"
+                  className="inline-flex items-center px-6 py-3.5 rounded-full bg-white text-black font-medium hover:bg-gray-100 transition-all duration-300 cursor-pointer"
                   style={{ fontFamily: 'Metropolis, sans-serif' }}
                 >
                   Entrar
