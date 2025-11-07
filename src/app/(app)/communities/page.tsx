@@ -11,6 +11,7 @@ import type { Community, CommunityMessage } from "@/types/community";
 import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useNotifications } from "@/hooks/shared/useNotifications";
 import { VideoCallScreen } from "@/components/features/communities/VideoCallScreens";
+import DotGrid from "@/components/shared/DotGrid";
 
 // Mock data
 const MOCK_COMMUNITIES: Community[] = [
@@ -73,6 +74,291 @@ const MOCK_COMMUNITIES: Community[] = [
       timestamp: new Date(Date.now() - 60 * 60000).toISOString(),
     },
     createdAt: new Date(Date.now() - 10 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "5",
+    name: "Sarah Johnson",
+    description: "Can we schedule a meeting?",
+    avatarUrl: "https://i.pravatar.cc/150?img=5",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Can we schedule a meeting?",
+      sender: "Sarah Johnson",
+      timestamp: new Date(Date.now() - 90 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "6",
+    name: "Design Team",
+    description: "New design mockups are ready",
+    avatarUrl: "https://picsum.photos/seed/design1/200",
+    memberCount: 12,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "New design mockups are ready",
+      sender: "Alex Chen",
+      timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "7",
+    name: "Michael Brown",
+    description: "Thanks for the update!",
+    avatarUrl: "https://i.pravatar.cc/150?img=8",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Thanks for the update!",
+      sender: "Michael Brown",
+      timestamp: new Date(Date.now() - 180 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 8 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "8",
+    name: "Marketing Group",
+    description: "Campaign launch next week",
+    avatarUrl: "https://picsum.photos/seed/marketing1/200",
+    memberCount: 8,
+    isOwner: true,
+    isMember: true,
+    lastMessage: {
+      content: "Campaign launch next week",
+      sender: "Emma Wilson",
+      timestamp: new Date(Date.now() - 240 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "9",
+    name: "David Lee",
+    description: "I'll send the files tomorrow",
+    avatarUrl: "https://i.pravatar.cc/150?img=20",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "I'll send the files tomorrow",
+      sender: "David Lee",
+      timestamp: new Date(Date.now() - 300 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 12 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "10",
+    name: "Development Team",
+    description: "Bug fix deployed successfully",
+    avatarUrl: "https://picsum.photos/seed/dev1/200",
+    memberCount: 15,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Bug fix deployed successfully",
+      sender: "Tom Anderson",
+      timestamp: new Date(Date.now() - 360 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 18 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "11",
+    name: "Lisa Martinez",
+    description: "See you at the conference",
+    avatarUrl: "https://i.pravatar.cc/150?img=52",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "See you at the conference",
+      sender: "Lisa Martinez",
+      timestamp: new Date(Date.now() - 420 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "12",
+    name: "Project Alpha",
+    description: "Meeting notes from yesterday",
+    avatarUrl: "https://picsum.photos/seed/alpha1/200",
+    memberCount: 6,
+    isOwner: true,
+    isMember: true,
+    lastMessage: {
+      content: "Meeting notes from yesterday",
+      sender: "Robert Kim",
+      timestamp: new Date(Date.now() - 480 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 22 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "13",
+    name: "James Wilson",
+    description: "The report is ready for review",
+    avatarUrl: "https://i.pravatar.cc/150?img=16",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "The report is ready for review",
+      sender: "James Wilson",
+      timestamp: new Date(Date.now() - 540 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 9 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "14",
+    name: "Sales Team",
+    description: "Q4 targets achieved!",
+    avatarUrl: "https://picsum.photos/seed/sales1/200",
+    memberCount: 10,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Q4 targets achieved!",
+      sender: "Patricia Davis",
+      timestamp: new Date(Date.now() - 600 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 28 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "15",
+    name: "Emily Taylor",
+    description: "Great work on the presentation",
+    avatarUrl: "https://i.pravatar.cc/150?img=60",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Great work on the presentation",
+      sender: "Emily Taylor",
+      timestamp: new Date(Date.now() - 720 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 6 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "16",
+    name: "Product Team",
+    description: "New feature released",
+    avatarUrl: "https://picsum.photos/seed/product1/200",
+    memberCount: 9,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "New feature released",
+      sender: "Chris Moore",
+      timestamp: new Date(Date.now() - 840 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "17",
+    name: "Daniel Rodriguez",
+    description: "Let's catch up this weekend",
+    avatarUrl: "https://i.pravatar.cc/150?img=28",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Let's catch up this weekend",
+      sender: "Daniel Rodriguez",
+      timestamp: new Date(Date.now() - 960 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 11 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "18",
+    name: "Support Team",
+    description: "Ticket #1234 resolved",
+    avatarUrl: "https://picsum.photos/seed/support1/200",
+    memberCount: 7,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Ticket #1234 resolved",
+      sender: "Jennifer White",
+      timestamp: new Date(Date.now() - 1080 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 16 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "19",
+    name: "Amanda Thompson",
+    description: "Thanks for your help!",
+    avatarUrl: "https://i.pravatar.cc/150?img=35",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Thanks for your help!",
+      sender: "Amanda Thompson",
+      timestamp: new Date(Date.now() - 1200 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "20",
+    name: "Operations",
+    description: "System maintenance scheduled",
+    avatarUrl: "https://picsum.photos/seed/ops1/200",
+    memberCount: 5,
+    isOwner: true,
+    isMember: true,
+    lastMessage: {
+      content: "System maintenance scheduled",
+      sender: "Kevin Martinez",
+      timestamp: new Date(Date.now() - 1320 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "21",
+    name: "Ryan Clark",
+    description: "The documents are in the shared folder",
+    avatarUrl: "https://i.pravatar.cc/150?img=42",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "The documents are in the shared folder",
+      sender: "Ryan Clark",
+      timestamp: new Date(Date.now() - 1440 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "22",
+    name: "Research Group",
+    description: "Initial findings published",
+    avatarUrl: "https://picsum.photos/seed/research1/200",
+    memberCount: 11,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Initial findings published",
+      sender: "Sophie Green",
+      timestamp: new Date(Date.now() - 1560 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 19 * 24 * 60 * 60000).toISOString(),
+  },
+  {
+    id: "23",
+    name: "Jessica Adams",
+    description: "Looking forward to our collaboration",
+    avatarUrl: "https://i.pravatar.cc/150?img=55",
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: {
+      content: "Looking forward to our collaboration",
+      sender: "Jessica Adams",
+      timestamp: new Date(Date.now() - 1680 * 60000).toISOString(),
+    },
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60000).toISOString(),
   },
 ];
 
@@ -340,12 +626,23 @@ export default function CommunitiesPage() {
   }
 
   return (
-    <div 
-      className="flex h-screen w-screen overflow-hidden p-4 pt-6 gap-3"
-      style={{
-        background: '#040404',
-      }}
-    >
+    <div className="min-h-screen bg-[#09090A] text-white relative">
+      {/* DotGrid Background */}
+      <div className="fixed inset-0 z-0">
+        <DotGrid
+          dotSize={1}
+          gap={24}
+          baseColor="rgba(255,255,255,0.25)"
+          activeColor="#B3E240"
+          proximity={120}
+          shockRadius={250}
+          shockStrength={5}
+          resistance={750}
+          returnDuration={1.5}
+        />
+      </div>
+
+      <div className="relative z-10 flex h-screen w-screen overflow-hidden p-4 pt-6 gap-3">
       {/* Communities List - Ilha Esquerda */}
       <CommunityList
         communities={communities}
@@ -430,6 +727,7 @@ export default function CommunitiesPage() {
         onSubmit={handleCreateCommunity}
         isLoading={isCreatingCommunity}
       />
+      </div>
     </div>
   );
 }

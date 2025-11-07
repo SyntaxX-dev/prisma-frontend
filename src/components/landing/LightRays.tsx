@@ -300,7 +300,7 @@ void main() {
 
       cleanupFunctionRef.current = () => {
         if (animationIdRef.current) {
-          cancelAnimationFrame(animationFrameId as any);
+          cancelAnimationFrame(animationIdRef.current);
         }
       };
 

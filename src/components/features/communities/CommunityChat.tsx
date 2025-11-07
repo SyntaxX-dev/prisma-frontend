@@ -82,9 +82,9 @@ export function CommunityChat({
 
   return (
     <div 
-      className="flex-1 flex flex-col h-full rounded-2xl overflow-hidden"
+      className="flex-1 flex flex-col h-full rounded-2xl overflow-hidden border border-white/10"
       style={{
-        background: 'rgb(30, 30, 30)',
+        background: 'rgb(14, 14, 14)',
       }}
     >
       {/* Messages */}

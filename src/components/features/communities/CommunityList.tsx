@@ -1,8 +1,95 @@
 "use client";
 
+import React, { useRef } from 'react';
 import { Plus, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Community } from "@/types/community";
+import AnimatedList from "@/components/shared/AnimatedList";
+import { motion, useInView } from 'motion/react';
+
+interface CommunityItemProps {
+  community: Community;
+  index: number;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+  getInitials: (name: string) => string;
+  formatTime: (timestamp: string) => string;
+}
+
+const CommunityItem: React.FC<CommunityItemProps> = ({
+  community,
+  index,
+  isSelected,
+  onSelect,
+  getInitials,
+  formatTime,
+}) => {
+  const itemRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(itemRef, { 
+    amount: 0.1, 
+    once: false,
+    margin: "0px 0px 200px 0px"
+  });
+
+  return (
+    <motion.div
+      ref={itemRef}
+      data-index={index}
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
+      transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.15) }}
+      className="mb-2"
+    >
+      <button
+        onClick={() => onSelect(community.id)}
+        className="w-full p-3 rounded-2xl transition-all hover:scale-[1.01] cursor-pointer border border-white/10"
+        style={{
+          background: isSelected ? 'rgb(30, 30, 30)' : 'rgb(14, 14, 14)',
+        }}
+      >
+        <div className="flex items-start gap-3">
+          <div className="relative flex-shrink-0">
+            <Avatar className="w-12 h-12 rounded-xl">
+              <AvatarImage src={community.avatarUrl || undefined} className="rounded-xl" />
+              <AvatarFallback 
+                className="font-semibold text-sm rounded-xl"
+                style={{
+                  background: '#C9FE02',
+                  color: '#000',
+                }}
+              >
+                {getInitials(community.name)}
+              </AvatarFallback>
+            </Avatar>
+            {/* Online indicator */}
+            <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a]" style={{ background: '#C9FE02' }} />
+          </div>
+
+          <div className="flex-1 min-w-0 text-left">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold text-white text-sm">
+                {community.name}
+              </h3>
+            </div>
+            
+            <p className="text-xs text-gray-400 truncate">
+              {community.lastMessage?.sender ? `${community.lastMessage.sender}: ` : ''}
+              {community.lastMessage
+                ? community.lastMessage.content
+                : community.description}
+            </p>
+          </div>
+
+          {community.lastMessage && (
+            <span className="text-[10px] text-gray-500 flex-shrink-0">
+              {formatTime(community.lastMessage.timestamp)}
+            </span>
+          )}
+        </div>
+      </button>
+    </motion.div>
+  );
+};
 
 interface CommunityListProps {
   communities: Community[];
@@ -53,9 +140,9 @@ export function CommunityList({
     <div className="flex gap-3 h-full">
       {/* Sidebar Cilíndrica - Navegação */}
       <div 
-        className="w-[76px] flex flex-col items-center py-4 gap-3 rounded-xl"
+        className="w-[76px] flex flex-col items-center py-4 gap-3 rounded-xl border border-white/10"
         style={{
-          background: 'rgb(30, 30, 30)',
+          background: 'rgb(14, 14, 14)',
         }}
       >
         {/* Logo */}
@@ -113,58 +200,33 @@ export function CommunityList({
 
       </div>
 
-      {/* Lista de Chats - Ilhas */}
-      <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-2">
-        {communities.map((community) => (
-          <button
-            key={community.id}
-            onClick={() => onSelectCommunity(community.id)}
-            className="w-full p-3 rounded-2xl transition-all hover:scale-[1.01] cursor-pointer"
-            style={{
-              background: selectedCommunityId === community.id ? 'rgb(48, 48, 48)' : 'rgb(30, 30, 30)',
-            }}
-          >
-            <div className="flex items-start gap-3">
-              <div className="relative flex-shrink-0">
-                <Avatar className="w-12 h-12 rounded-xl">
-                  <AvatarImage src={community.avatarUrl || undefined} className="rounded-xl" />
-                  <AvatarFallback 
-                    className="font-semibold text-sm rounded-xl"
-                    style={{
-                      background: '#C9FE02',
-                      color: '#000',
-                    }}
-                  >
-                    {getInitials(community.name)}
-                  </AvatarFallback>
-                </Avatar>
-                {/* Online indicator */}
-                <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a]" style={{ background: '#C9FE02' }} />
-              </div>
-
-              <div className="flex-1 min-w-0 text-left">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold text-white text-sm">
-                    {community.name}
-                  </h3>
-                </div>
-                
-                <p className="text-xs text-gray-400 truncate">
-                  {community.lastMessage?.sender ? `${community.lastMessage.sender}: ` : ''}
-                  {community.lastMessage
-                    ? community.lastMessage.content
-                    : community.description}
-                </p>
-              </div>
-
-              {community.lastMessage && (
-                <span className="text-[10px] text-gray-500 flex-shrink-0">
-                  {formatTime(community.lastMessage.timestamp)}
-                </span>
-              )}
-            </div>
-          </button>
-        ))}
+      {/* Lista de Chats - Ilhas com AnimatedList */}
+      <div className="flex-1 flex flex-col pr-2 overflow-hidden min-h-0">
+        <AnimatedList
+          showGradients={true}
+          enableArrowNavigation={true}
+          displayScrollbar={true}
+          maxHeight="100%"
+          className="h-full"
+          onItemSelect={(item, index) => {
+            const community = communities[index];
+            if (community) {
+              onSelectCommunity(community.id);
+            }
+          }}
+        >
+          {communities.map((community, index) => (
+            <CommunityItem
+              key={community.id}
+              community={community}
+              index={index}
+              isSelected={selectedCommunityId === community.id}
+              onSelect={onSelectCommunity}
+              getInitials={getInitials}
+              formatTime={formatTime}
+            />
+          ))}
+        </AnimatedList>
       </div>
     </div>
   );

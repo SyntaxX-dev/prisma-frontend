@@ -60,9 +60,9 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall }:
     <div className="w-[300px] flex flex-col h-full gap-3">
       {/* Quick Actions - Ilha 1 */}
       <div 
-        className="p-4 rounded-2xl"
+        className="p-4 rounded-2xl border border-white/10"
         style={{
-          background: 'rgb(30, 30, 30)',
+          background: 'rgb(14, 14, 14)',
         }}
       >
         <div className="grid grid-cols-4 gap-2">
@@ -102,9 +102,9 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall }:
 
       {/* Members - Ilha 2 */}
       <div 
-        className="rounded-2xl overflow-hidden"
+        className="rounded-2xl overflow-hidden border border-white/10"
         style={{
-          background: 'rgb(30, 30, 30)',
+          background: 'rgb(14, 14, 14)',
         }}
       >
         <div className="p-4">
@@ -154,9 +154,9 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall }:
 
       {/* Files - Ilha 3 */}
       <div 
-        className="rounded-2xl overflow-hidden flex-1"
+        className="rounded-2xl overflow-hidden flex-1 border border-white/10"
         style={{
-          background: 'rgb(30, 30, 30)',
+          background: 'rgb(14, 14, 14)',
         }}
       >
         <div className="p-4 h-full flex flex-col">
