@@ -12,6 +12,7 @@ import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useNotifications } from "@/hooks/shared/useNotifications";
 import { VideoCallScreen } from "@/components/features/communities/VideoCallScreens";
 import DotGrid from "@/components/shared/DotGrid";
+import { getCommunities } from "@/api/communities/get-communities";
 
 // Mock data
 const MOCK_COMMUNITIES: Community[] = [
@@ -464,7 +465,9 @@ export default function CommunitiesPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isCreatingCommunity, setIsCreatingCommunity] = useState(false);
+  
+  // Combinar comunidades da API com mocks para busca
+  const allCommunities = [...communities, ...MOCK_COMMUNITIES];
   
   // Call states
   const [isInVideoCall, setIsInVideoCall] = useState(false);
@@ -487,15 +490,56 @@ export default function CommunitiesPage() {
   const loadCommunities = async () => {
     try {
       setIsLoadingCommunities(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await getCommunities();
       
+      // Verificar diferentes formatos de resposta
+      let communitiesData: any[] = [];
+      
+      if (response.success) {
+        if (Array.isArray(response.data)) {
+          // Se data é um array direto
+          communitiesData = response.data;
+        } else if (response.data && Array.isArray(response.data.communities)) {
+          // Se data tem uma propriedade communities
+          communitiesData = response.data.communities;
+        } else if (response.data && typeof response.data === 'object') {
+          // Se data é um objeto, tentar extrair comunidades
+          communitiesData = [];
+        }
+      } else if (Array.isArray(response)) {
+        // Se a resposta é um array direto
+        communitiesData = response;
+      } else if (response.data && Array.isArray(response.data)) {
+        // Se data é um array
+        communitiesData = response.data;
+      }
+      
+      // Mapear dados da API para o formato esperado
+      const mappedCommunities: Community[] = communitiesData.map((community: any) => ({
+        id: community.id,
+        name: community.name,
+        description: community.description || '',
+        avatarUrl: community.image || community.avatarUrl,
+        memberCount: community.memberCount || 0,
+        isOwner: community.ownerId ? true : false,
+        isMember: community.isMember ?? true,
+        lastMessage: undefined,
+        createdAt: community.createdAt,
+      }));
+      
+      setCommunities(mappedCommunities);
+      
+      if (mappedCommunities.length > 0 && !selectedCommunityId) {
+        setSelectedCommunityId(mappedCommunities[0].id);
+      }
+    } catch (error: any) {
+      console.error('Erro ao carregar comunidades:', error);
+      showError("Erro ao carregar comunidades");
+      // Em caso de erro, usar mocks como fallback
       setCommunities(MOCK_COMMUNITIES);
-      
-      if (MOCK_COMMUNITIES.length > 0) {
+      if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId) {
         setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
       }
-    } catch (error) {
-      showError("Failed to load communities");
     } finally {
       setIsLoadingCommunities(false);
     }
@@ -506,7 +550,19 @@ export default function CommunitiesPage() {
       setIsLoadingMessages(true);
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      const communityMessages = MOCK_MESSAGES[communityId] || [];
+      // Usar mocks das conversas - se não houver mock específico, usar o mock padrão
+      let communityMessages = MOCK_MESSAGES[communityId];
+      
+      // Se não houver mensagens mockadas para esta comunidade, usar as mensagens padrão
+      if (!communityMessages || communityMessages.length === 0) {
+        communityMessages = MOCK_MESSAGES["1"] || [];
+        // Atualizar o communityId das mensagens para corresponder à comunidade selecionada
+        communityMessages = communityMessages.map(msg => ({
+          ...msg,
+          communityId: communityId,
+        }));
+      }
+      
       setMessages(communityMessages);
     } catch (error) {
       showError("Failed to load messages");
@@ -541,39 +597,14 @@ export default function CommunitiesPage() {
     }
   };
 
-  const handleCreateCommunity = async (data: {
-    name: string;
-    description: string;
-    avatarUrl?: string;
-  }) => {
-    try {
-      setIsCreatingCommunity(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const newCommunity: Community = {
-        id: `community-${Date.now()}`,
-        name: data.name,
-        description: data.description,
-        avatarUrl: data.avatarUrl,
-        memberCount: 1,
-        isOwner: true,
-        isMember: true,
-        lastMessage: undefined,
-        createdAt: new Date().toISOString(),
-      };
-      
-      setCommunities((prev) => [newCommunity, ...prev]);
-      setSelectedCommunityId(newCommunity.id);
-      setIsCreateModalOpen(false);
-      showSuccess("Community created successfully!");
-    } catch (error) {
-      showError("Failed to create community");
-    } finally {
-      setIsCreatingCommunity(false);
-    }
+  // Função para recarregar comunidades da API
+  const refreshCommunities = async () => {
+    await loadCommunities();
+    showSuccess("Comunidade criada com sucesso!");
   };
 
-  const selectedCommunity = communities.find(
+  // Buscar comunidade selecionada tanto nas comunidades da API quanto nos mocks
+  const selectedCommunity = allCommunities.find(
     (c) => c.id === selectedCommunityId
   );
 
@@ -644,12 +675,13 @@ export default function CommunitiesPage() {
 
       <div className="relative z-10 flex h-screen w-screen overflow-hidden p-4 pt-6 gap-3">
       {/* Communities List - Ilha Esquerda */}
-      <CommunityList
-        communities={communities}
-        selectedCommunityId={selectedCommunityId}
-        onSelectCommunity={setSelectedCommunityId}
-        onCreateCommunity={() => setIsCreateModalOpen(true)}
-      />
+        <CommunityList
+          communities={communities}
+          mockCommunities={MOCK_COMMUNITIES}
+          selectedCommunityId={selectedCommunityId}
+          onSelectCommunity={setSelectedCommunityId}
+          onCreateCommunity={() => setIsCreateModalOpen(true)}
+        />
 
       {/* Chat Area - Coluna Central + Direita */}
       {selectedCommunity ? (
@@ -704,6 +736,7 @@ export default function CommunitiesPage() {
               onStartVideoCall={handleStartVideoCall}
               onStartVoiceCall={handleStartVoiceCall}
               isLoading={isSendingMessage}
+              isLoadingMessages={isLoadingMessages}
             />
             
             {/* Community Info Sidebar - Ilhas Direita */}
@@ -711,6 +744,7 @@ export default function CommunitiesPage() {
               community={selectedCommunity}
               onStartVideoCall={handleStartVideoCall}
               onStartVoiceCall={handleStartVoiceCall}
+              isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
             />
           </div>
         </div>
@@ -724,8 +758,10 @@ export default function CommunitiesPage() {
       <CreateCommunityModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateCommunity}
-        isLoading={isCreatingCommunity}
+        onSuccess={() => {
+          setIsCreateModalOpen(false);
+          refreshCommunities();
+        }}
       />
       </div>
     </div>

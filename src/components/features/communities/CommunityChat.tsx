@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Community, CommunityMessage } from "@/types/community";
 
 interface CommunityChatProps {
@@ -23,6 +24,7 @@ interface CommunityChatProps {
   onStartVideoCall?: () => void;
   onStartVoiceCall?: () => void;
   isLoading?: boolean;
+  isLoadingMessages?: boolean;
 }
 
 export function CommunityChat({
@@ -32,6 +34,7 @@ export function CommunityChat({
   onStartVideoCall,
   onStartVoiceCall,
   isLoading,
+  isLoadingMessages = false,
 }: CommunityChatProps) {
   const [messageInput, setMessageInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -89,7 +92,30 @@ export function CommunityChat({
     >
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-5 space-y-6">
-        {messages.length === 0 ? (
+        {isLoadingMessages ? (
+          <div className="space-y-6">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <div>
+                  <Skeleton 
+                    className="flex rounded-full w-8 h-8" 
+                    style={{ background: 'rgb(26, 26, 26)' }}
+                  />
+                </div>
+                <div className="w-full flex flex-col gap-2">
+                  <Skeleton 
+                    className="h-3 w-3/5 rounded-lg" 
+                    style={{ background: 'rgb(26, 26, 26)' }}
+                  />
+                  <Skeleton 
+                    className="h-3 w-4/5 rounded-lg" 
+                    style={{ background: 'rgb(26, 26, 26)' }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgb(26, 26, 26)' }}>

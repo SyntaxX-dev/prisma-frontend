@@ -1,8 +1,12 @@
 export interface Community {
   id: string;
   name: string;
-  description: string;
-  avatarUrl?: string;
+  focus?: string;
+  description: string | null;
+  image?: string | null;
+  avatarUrl?: string; // Para compatibilidade com código existente
+  visibility?: 'PUBLIC' | 'PRIVATE';
+  ownerId?: string;
   memberCount: number;
   lastMessage?: {
     content: string;
@@ -10,7 +14,7 @@ export interface Community {
     timestamp: string;
   };
   isOwner: boolean;
-  isMember: boolean;
+  isMember?: boolean;
   createdAt: string;
 }
 
@@ -27,7 +31,9 @@ export interface CommunityMessage {
 
 export interface CreateCommunityRequest {
   name: string;
-  description: string;
-  avatarUrl?: string;
+  focus: string;
+  description?: string;
+  image?: string;
+  visibility: 'PUBLIC' | 'PRIVATE';
 }
 

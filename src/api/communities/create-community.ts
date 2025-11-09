@@ -1,14 +1,37 @@
 import { httpClient } from '@/api/http/client';
-import type { Community, CreateCommunityRequest } from '@/types/community';
+import type { CreateCommunityRequest } from '@/types/community';
 import type { ApiError } from '@/api/http/client';
 
-interface CreateCommunityResponse {
+export interface CreateCommunityResponse {
   success: boolean;
   data: {
-    community: Community;
+    id: string;
+    name: string;
+    focus: string;
+    description: string | null;
+    image: string | null;
+    visibility: 'PUBLIC' | 'PRIVATE';
+    ownerId: string;
+    createdAt: string;
   };
 }
 
+// Criar comunidade com FormData (inclui imagem)
+export async function createCommunityWithImage(
+  formData: FormData
+): Promise<CreateCommunityResponse> {
+  try {
+    const response = await httpClient.postFormData<CreateCommunityResponse>(
+      '/communities',
+      formData
+    );
+    return response;
+  } catch (error) {
+    throw error as ApiError;
+  }
+}
+
+// Criar comunidade sem imagem (JSON)
 export async function createCommunity(
   data: CreateCommunityRequest
 ): Promise<CreateCommunityResponse> {

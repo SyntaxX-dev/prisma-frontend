@@ -569,3 +569,44 @@ html {
   scrollbar-width: thin;
   scrollbar-color: #2a2a2a transparent;
 }
+
+/* Sidebar scrollbar - hide by default, show on hover */
+.sidebar-scrollbar {
+  scrollbar-width: none; /* Firefox - hide scrollbar space */
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 0px; /* Chrome/Safari - hide scrollbar space */
+  background: transparent;
+}
+
+.sidebar-items-container {
+  transition: transform 0.2s ease;
+  transform: translateX(0);
+}
+
+.sidebar-container:hover .sidebar-scrollbar {
+  scrollbar-width: thin; /* Firefox - show scrollbar */
+}
+
+.sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px; /* Chrome/Safari - show scrollbar */
+}
+
+.sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-container:hover .sidebar-items-container {
+  transform: translateX(-3px);
+}

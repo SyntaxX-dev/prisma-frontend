@@ -18,9 +18,10 @@ interface CommunityInfoProps {
   community: Community;
   onStartVideoCall?: () => void;
   onStartVoiceCall?: () => void;
+  isFromSidebar?: boolean; // Indica se a comunidade vem da sidebar (API) ou é uma conversa mockada
 }
 
-export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall }: CommunityInfoProps) {
+export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall, isFromSidebar = false }: CommunityInfoProps) {
   const [expandedSection, setExpandedSection] = useState<string>("photos");
   
   const getInitials = (name: string) => {
@@ -100,7 +101,7 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall }:
         </div>
       </div>
 
-      {/* Members - Ilha 2 */}
+      {/* Members ou Mensagens Fixadas - Ilha 2 */}
       <div 
         className="rounded-2xl overflow-hidden border border-white/10"
         style={{
@@ -108,47 +109,111 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall }:
         }}
       >
         <div className="p-4">
-          <h3 className="text-white font-medium text-sm mb-3">Members</h3>
-          <div className="space-y-2"
-            style={{
-              maxHeight: '250px',
-              overflowY: 'auto',
-            }}
-          >
-            {[
-              { name: "Richard Wilson", role: "Admin", online: true, avatar: "https://i.pravatar.cc/150?img=13" },
-              { name: "You", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=68" },
-              { name: "Jaden Parker", role: "", online: false, avatar: "https://i.pravatar.cc/150?img=25" },
-              { name: "Conner Garcia", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=15" },
-              { name: "Lawrence Patterson", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=52" },
-            ].map((member, i) => (
-              <div key={i} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer">
-                <div className="relative">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={member.avatar} alt={member.name} />
-                    <AvatarFallback 
-                      className="text-xs font-medium"
-                      style={{
-                        background: '#C9FE02',
-                        color: '#000',
-                      }}
-                    >
-                      {getInitials(member.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  {member.online && (
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#C9FE02] rounded-full border-2" style={{ borderColor: 'rgb(30, 30, 30)' }} />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{member.name}</p>
-                </div>
-                {member.role && (
-                  <span className="text-xs text-gray-500">{member.role}</span>
-                )}
+          {isFromSidebar ? (
+            <>
+              <h3 className="text-white font-medium text-sm mb-3">Members</h3>
+              <div className="space-y-2"
+                style={{
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                }}
+              >
+                {[
+                  { name: "Richard Wilson", role: "Admin", online: true, avatar: "https://i.pravatar.cc/150?img=13" },
+                  { name: "You", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=68" },
+                  { name: "Jaden Parker", role: "", online: false, avatar: "https://i.pravatar.cc/150?img=25" },
+                  { name: "Conner Garcia", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=15" },
+                  { name: "Lawrence Patterson", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=52" },
+                ].map((member, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer">
+                    <div className="relative">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={member.avatar} alt={member.name} />
+                        <AvatarFallback 
+                          className="text-xs font-medium"
+                          style={{
+                            background: '#C9FE02',
+                            color: '#000',
+                          }}
+                        >
+                          {getInitials(member.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {member.online && (
+                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#C9FE02] rounded-full border-2" style={{ borderColor: 'rgb(30, 30, 30)' }} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white truncate">{member.name}</p>
+                    </div>
+                    {member.role && (
+                      <span className="text-xs text-gray-500">{member.role}</span>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-white font-medium text-sm mb-3">Mensagens Fixadas</h3>
+              <div className="space-y-2"
+                style={{
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                }}
+              >
+                {[
+                  { 
+                    id: "1",
+                    sender: "Harry Fettel", 
+                    content: "Hey guys! Don't forget about our meeting next week!", 
+                    avatar: "https://i.pravatar.cc/150?img=12",
+                    timestamp: "2h"
+                  },
+                  { 
+                    id: "2",
+                    sender: "Conner Garcia", 
+                    content: "Absolutely, I'll be there! Looking forward to catching up.", 
+                    avatar: "https://i.pravatar.cc/150?img=15",
+                    timestamp: "1h"
+                  },
+                  { 
+                    id: "3",
+                    sender: "Frank Garcia", 
+                    content: "We will start celebrating Oleg's birthday soon", 
+                    avatar: "https://i.pravatar.cc/150?img=33",
+                    timestamp: "30m"
+                  },
+                ].map((message) => (
+                  <div 
+                    key={message.id} 
+                    className="flex items-start gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer"
+                  >
+                    <Avatar className="w-8 h-8 shrink-0">
+                      <AvatarImage src={message.avatar} alt={message.sender} />
+                      <AvatarFallback 
+                        className="text-xs font-medium"
+                        style={{
+                          background: '#C9FE02',
+                          color: '#000',
+                        }}
+                      >
+                        {getInitials(message.sender)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm text-white font-medium truncate">{message.sender}</p>
+                        <span className="text-xs text-gray-500 shrink-0">{message.timestamp}</span>
+                      </div>
+                      <p className="text-xs text-gray-400 line-clamp-2">{message.content}</p>
+                    </div>
+                    <Pin className="w-3 h-3 text-gray-500 shrink-0 mt-1" />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

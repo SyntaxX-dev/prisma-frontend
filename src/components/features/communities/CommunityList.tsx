@@ -4,8 +4,50 @@ import React, { useRef } from 'react';
 import { Plus, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Community } from "@/types/community";
-import AnimatedList from "@/components/shared/AnimatedList";
 import { motion, useInView } from 'motion/react';
+import AnimatedList from "@/components/shared/AnimatedList";
+
+interface NavItemProps {
+  item: { id: string; label: string; avatarUrl?: string; active?: boolean };
+  index: number;
+  onSelect: (id: string) => void;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
+  const itemRef = useRef<HTMLButtonElement>(null);
+  const inView = useInView(itemRef, { 
+    amount: 0.1, 
+    once: false,
+    margin: "0px 0px 200px 0px"
+  });
+
+  return (
+    <motion.button
+      ref={itemRef}
+      onClick={() => onSelect(item.id)}
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
+      transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.15) }}
+      className="w-14 h-14 rounded-xl overflow-hidden transition-all hover:scale-105 cursor-pointer shrink-0"
+      style={{
+        border: item.active ? '2px solid #C9FE02' : 'none',
+      }}
+    >
+      <Avatar className="w-full h-full rounded-xl">
+        <AvatarImage src={item.avatarUrl} alt={item.label} className="rounded-xl" />
+        <AvatarFallback 
+          className="text-xs font-medium rounded-xl"
+          style={{
+            background: '#C9FE02',
+            color: '#000',
+          }}
+        >
+          {item.label}
+        </AvatarFallback>
+      </Avatar>
+    </motion.button>
+  );
+};
 
 interface CommunityItemProps {
   community: Community;
@@ -48,7 +90,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
         }}
       >
         <div className="flex items-start gap-3">
-          <div className="relative flex-shrink-0">
+          <div className="relative shrink-0">
             <Avatar className="w-12 h-12 rounded-xl">
               <AvatarImage src={community.avatarUrl || undefined} className="rounded-xl" />
               <AvatarFallback 
@@ -81,7 +123,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
           </div>
 
           {community.lastMessage && (
-            <span className="text-[10px] text-gray-500 flex-shrink-0">
+            <span className="text-[10px] text-gray-500 shrink-0">
               {formatTime(community.lastMessage.timestamp)}
             </span>
           )}
@@ -93,6 +135,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
 
 interface CommunityListProps {
   communities: Community[];
+  mockCommunities?: Community[]; // Comunidades mockadas para a lista de chats
   selectedCommunityId?: string;
   onSelectCommunity: (communityId: string) => void;
   onCreateCommunity: () => void;
@@ -100,6 +143,7 @@ interface CommunityListProps {
 
 export function CommunityList({
   communities,
+  mockCommunities = [],
   selectedCommunityId,
   onSelectCommunity,
   onCreateCommunity,
@@ -127,26 +171,28 @@ export function CommunityList({
     }
   };
 
-  const navItems = [
-    { id: 'work', label: 'Work', active: false, avatarUrl: 'https://picsum.photos/seed/work1/200' },
-    { id: 'icg', label: 'ICG', active: false, avatarUrl: 'https://picsum.photos/seed/icg2/200' },
-    { id: 'sp', label: 'SP', active: false, avatarUrl: 'https://picsum.photos/seed/sp3/200' },
-    { id: 'bff', label: 'BFF', active: false, avatarUrl: 'https://picsum.photos/seed/bff4/200' },
-    { id: 'mj', label: 'MJ', active: false, avatarUrl: 'https://picsum.photos/seed/mj5/200' },
-    { id: 'gi', label: 'GI', active: false, avatarUrl: 'https://picsum.photos/seed/gi6/200' },
-  ];
+  // Usar as comunidades da API como navItems
+  const navItems = communities.map((community) => ({
+    id: community.id,
+    label: getInitials(community.name),
+    active: selectedCommunityId === community.id,
+    avatarUrl: community.avatarUrl || undefined,
+  }));
+
+  // Usar comunidades mockadas para a lista de chats, ou as da API se não houver mocks
+  const chatCommunities = mockCommunities.length > 0 ? mockCommunities : communities;
 
   return (
     <div className="flex gap-3 h-full">
       {/* Sidebar Cilíndrica - Navegação */}
       <div 
-        className="w-[76px] flex flex-col items-center py-4 gap-3 rounded-xl border border-white/10"
+        className="w-[76px] flex flex-col items-center py-4 gap-3 rounded-xl border border-white/10 sidebar-container"
         style={{
           background: 'rgb(14, 14, 14)',
         }}
       >
         {/* Logo */}
-        <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+        <div className="w-12 h-12 flex items-center justify-center shrink-0">
           <img 
             src="/logo-prisma.svg" 
             alt="Prisma Logo" 
@@ -154,33 +200,30 @@ export function CommunityList({
           />
         </div>
 
-        {/* Navigation Items */}
-        <div className="flex-1 flex flex-col items-center gap-3 py-2">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className="w-14 h-14 rounded-xl overflow-hidden transition-all hover:scale-105 cursor-pointer"
-            >
-              <Avatar className="w-full h-full rounded-xl">
-                <AvatarImage src={item.avatarUrl} alt={item.label} className="rounded-xl" />
-                <AvatarFallback 
-                  className="text-xs font-medium rounded-xl"
-                  style={{
-                    background: '#C9FE02',
-                    color: '#000',
-                  }}
-                >
-                  {item.label}
-                </AvatarFallback>
-              </Avatar>
-            </button>
-          ))}
+        {/* Navigation Items - Comunidades da API */}
+        <div 
+          className="flex-1 flex flex-col items-center gap-3 py-2 overflow-y-auto overflow-x-hidden min-h-0 w-full sidebar-scrollbar"
+        >
+          <div className="flex flex-col items-center gap-3 w-full sidebar-items-container">
+            {communities.length === 0 ? (
+              <div className="text-gray-500 text-xs py-2">Nenhuma comunidade</div>
+            ) : (
+              navItems.map((item, index) => (
+                <NavItem 
+                  key={item.id} 
+                  item={item} 
+                  index={index} 
+                  onSelect={onSelectCommunity}
+                />
+              ))
+            )}
+          </div>
         </div>
 
           {/* Add Button */}
           <button 
             onClick={onCreateCommunity}
-            className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-105 cursor-pointer"
+            className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 cursor-pointer"
             style={{
               background: '#C9FE02',
               color: '#000',
@@ -190,7 +233,7 @@ export function CommunityList({
           </button>
         {/* Settings */}
         <button 
-          className="w-14 h-14 rounded-xl flex items-center justify-center text-gray-400 transition-all hover:scale-105 flex-shrink-0 cursor-pointer"
+          className="w-14 h-14 rounded-xl flex items-center justify-center text-gray-400 transition-all hover:scale-105 shrink-0 cursor-pointer"
           style={{
             background: 'rgb(30, 30, 30)',
           }}
@@ -209,13 +252,13 @@ export function CommunityList({
           maxHeight="100%"
           className="h-full"
           onItemSelect={(item, index) => {
-            const community = communities[index];
+            const community = chatCommunities[index];
             if (community) {
               onSelectCommunity(community.id);
             }
           }}
         >
-          {communities.map((community, index) => (
+          {chatCommunities.map((community, index) => (
             <CommunityItem
               key={community.id}
               community={community}

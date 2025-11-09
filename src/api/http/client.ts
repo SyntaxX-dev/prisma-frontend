@@ -46,12 +46,17 @@ export const httpClient = {
 	async postFormData<T>(path: string, formData: FormData): Promise<T> {
 		const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 		
+		// NÃO definir Content-Type manualmente - o browser faz isso automaticamente com o boundary correto
+		const headers: HeadersInit = {};
+		
+		if (token) {
+			headers['Authorization'] = `Bearer ${token}`;
+		}
+		
 		const res = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
 			method: 'POST',
 			body: formData,
-			headers: { 
-				...(token && { 'Authorization': `Bearer ${token}` })
-			},
+			headers,
 		});
 		
 		if (!res.ok) {
