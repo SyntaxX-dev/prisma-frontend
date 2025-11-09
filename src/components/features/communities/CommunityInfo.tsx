@@ -8,11 +8,14 @@ import {
   ChevronRight,
   ChevronDown,
   Image as ImageIcon,
-  File
+  File,
+  Loader2
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Community } from "@/types/community";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { getCommunityMembers } from "@/api/communities/get-community-members";
+import type { CommunityMember } from "@/api/communities/get-community-members";
 
 interface CommunityInfoProps {
   community: Community;
@@ -23,6 +26,12 @@ interface CommunityInfoProps {
 
 export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall, isFromSidebar = false }: CommunityInfoProps) {
   const [expandedSection, setExpandedSection] = useState<string>("photos");
+  const [members, setMembers] = useState<CommunityMember[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
+  
+  // Ref para evitar chamadas duplicadas
+  const hasLoadedMembers = useRef<string | null>(null);
   
   const getInitials = (name: string) => {
     return name
@@ -31,6 +40,47 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall, i
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Carregar membros apenas quando o usuário for membro da comunidade
+  useEffect(() => {
+    const shouldLoad = isFromSidebar && community.id && (community.isMember || community.isOwner);
+    
+    if (shouldLoad) {
+      // Verificar se já carregou para esta comunidade específica
+      if (hasLoadedMembers.current !== community.id) {
+        hasLoadedMembers.current = community.id;
+        loadMembers();
+      }
+    } else {
+      // Limpar membros se não for membro ou não for da sidebar
+      setMembers([]);
+      hasLoadedMembers.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [community.id, isFromSidebar, community.isMember, community.isOwner]);
+
+  const loadMembers = async () => {
+    try {
+      setIsLoadingMembers(true);
+      setMembersError(null);
+      const response = await getCommunityMembers({
+        communityId: community.id,
+        limit: 50, // Carregar até 50 membros
+        offset: 0,
+      });
+      
+      if (response.success && response.data) {
+        setMembers(response.data.members || []);
+      }
+    } catch (error: any) {
+      console.error('Erro ao carregar membros:', error);
+      setMembersError(error.message || "Erro ao carregar membros");
+      // Em caso de erro, manter array vazio
+      setMembers([]);
+    } finally {
+      setIsLoadingMembers(false);
+    }
   };
 
   const toggleSection = (section: string) => {
@@ -118,39 +168,48 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall, i
                   overflowY: 'auto',
                 }}
               >
-                {[
-                  { name: "Richard Wilson", role: "Admin", online: true, avatar: "https://i.pravatar.cc/150?img=13" },
-                  { name: "You", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=68" },
-                  { name: "Jaden Parker", role: "", online: false, avatar: "https://i.pravatar.cc/150?img=25" },
-                  { name: "Conner Garcia", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=15" },
-                  { name: "Lawrence Patterson", role: "", online: true, avatar: "https://i.pravatar.cc/150?img=52" },
-                ].map((member, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer">
-                    <div className="relative">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={member.avatar} alt={member.name} />
-                        <AvatarFallback 
-                          className="text-xs font-medium"
-                          style={{
-                            background: '#C9FE02',
-                            color: '#000',
-                          }}
-                        >
-                          {getInitials(member.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {member.online && (
-                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#C9FE02] rounded-full border-2" style={{ borderColor: 'rgb(30, 30, 30)' }} />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">{member.name}</p>
-                    </div>
-                    {member.role && (
-                      <span className="text-xs text-gray-500">{member.role}</span>
-                    )}
+                {isLoadingMembers ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                   </div>
-                ))}
+                ) : membersError ? (
+                  <div className="text-xs text-red-400 py-2 px-2">
+                    {membersError}
+                  </div>
+                ) : members.length === 0 ? (
+                  <div className="text-xs text-gray-500 py-2 px-2">
+                    Nenhum membro encontrado
+                  </div>
+                ) : (
+                  members.map((member) => (
+                    <div key={member.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer">
+                      <div className="relative">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={member.profileImage || undefined} alt={member.name} />
+                          <AvatarFallback 
+                            className="text-xs font-medium"
+                            style={{
+                              background: '#C9FE02',
+                              color: '#000',
+                            }}
+                          >
+                            {getInitials(member.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {/* Indicador de online - por enquanto sempre verde, pode ser ajustado depois */}
+                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#C9FE02] rounded-full border-2" style={{ borderColor: 'rgb(30, 30, 30)' }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-white truncate">{member.name}</p>
+                          {member.isOwner && (
+                            <span className="text-xs text-[#C9FE02] font-medium">👑</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </>
           ) : (

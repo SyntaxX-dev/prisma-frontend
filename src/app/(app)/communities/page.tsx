@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, Settings, Bell } from "lucide-react";
 import { CommunityList } from "@/components/features/communities/CommunityList";
 import { CommunityChat } from "@/components/features/communities/CommunityChat";
@@ -13,6 +13,7 @@ import { useNotifications } from "@/hooks/shared/useNotifications";
 import { VideoCallScreen } from "@/components/features/communities/VideoCallScreens";
 import DotGrid from "@/components/shared/DotGrid";
 import { getCommunities } from "@/api/communities/get-communities";
+import { CommunityJoinTooltip } from "@/components/features/communities/CommunityJoinTooltip";
 
 // Mock data
 const MOCK_COMMUNITIES: Community[] = [
@@ -465,6 +466,8 @@ export default function CommunitiesPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [tooltipCommunity, setTooltipCommunity] = useState<Community | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | undefined>();
   
   // Combinar comunidades da API com mocks para busca
   const allCommunities = [...communities, ...MOCK_COMMUNITIES];
@@ -473,9 +476,15 @@ export default function CommunitiesPage() {
   const [isInVideoCall, setIsInVideoCall] = useState(false);
   const [isInVoiceCall, setIsInVoiceCall] = useState(false);
 
-  // Load communities
+  // Ref para evitar chamadas duplicadas
+  const hasLoadedCommunities = useRef(false);
+
+  // Load communities - apenas uma vez
   useEffect(() => {
-    loadCommunities();
+    if (!hasLoadedCommunities.current) {
+      hasLoadedCommunities.current = true;
+      loadCommunities();
+    }
   }, []);
 
   // Load messages when community is selected
@@ -490,7 +499,37 @@ export default function CommunitiesPage() {
   const loadCommunities = async () => {
     try {
       setIsLoadingCommunities(true);
+      
+      // Verificar token antes de fazer a requisição
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      
+      // Decodificar o token JWT para verificar o userId
+      let userIdFromToken: string | null = null;
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          userIdFromToken = payload.sub || payload.userId || payload.id || null;
+          console.log('[loadCommunities] Token decodificado:', {
+            payload,
+            userIdFromToken,
+            exp: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'não encontrado',
+            isExpired: payload.exp ? Date.now() > payload.exp * 1000 : 'desconhecido'
+          });
+        } catch (e) {
+          console.error('[loadCommunities] Erro ao decodificar token:', e);
+        }
+      }
+      
+      console.log('[loadCommunities] Token no localStorage:', {
+        tokenExists: !!token,
+        tokenLength: token?.length || 0,
+        tokenPreview: token ? `${token.substring(0, 30)}...` : 'null',
+        userIdFromToken
+      });
+      
       const response = await getCommunities();
+      
+      console.log('[loadCommunities] Resposta recebida:', response);
       
       // Verificar diferentes formatos de resposta
       let communitiesData: any[] = [];
@@ -515,22 +554,44 @@ export default function CommunitiesPage() {
       }
       
       // Mapear dados da API para o formato esperado
-      const mappedCommunities: Community[] = communitiesData.map((community: any) => ({
-        id: community.id,
-        name: community.name,
-        description: community.description || '',
-        avatarUrl: community.image || community.avatarUrl,
-        memberCount: community.memberCount || 0,
-        isOwner: community.ownerId ? true : false,
-        isMember: community.isMember ?? true,
-        lastMessage: undefined,
-        createdAt: community.createdAt,
-      }));
+      // IMPORTANTE: isOwner e isMember já vêm corretos da API quando o token JWT é enviado
+      // O token é enviado automaticamente pelo httpClient se estiver em localStorage.getItem('auth_token')
+      console.log('[loadCommunities] Dados extraídos antes do mapeamento:', communitiesData);
+      
+      const mappedCommunities: Community[] = communitiesData.map((community: any) => {
+        return {
+          id: community.id,
+          name: community.name,
+          description: community.description || '',
+          avatarUrl: community.image || community.avatarUrl,
+          memberCount: community.memberCount || 0,
+          isOwner: community.isOwner ?? false, // Usar o valor da API diretamente
+          isMember: community.isMember ?? false, // Usar o valor da API diretamente
+          lastMessage: undefined,
+          createdAt: community.createdAt,
+          focus: community.focus,
+          visibility: community.visibility,
+          ownerId: community.ownerId,
+        };
+      });
+      
+      console.log('[loadCommunities] Comunidades mapeadas:', mappedCommunities);
       
       setCommunities(mappedCommunities);
       
-      if (mappedCommunities.length > 0 && !selectedCommunityId) {
-        setSelectedCommunityId(mappedCommunities[0].id);
+      // Selecionar primeira comunidade que o usuário é membro ou dono
+      if (!selectedCommunityId) {
+        const userCommunity = mappedCommunities.find(
+          (c) => c.isMember || c.isOwner
+        );
+        
+        if (userCommunity) {
+          // Se encontrou uma comunidade que o usuário faz parte, abrir ela
+          setSelectedCommunityId(userCommunity.id);
+        } else if (MOCK_COMMUNITIES.length > 0) {
+          // Se não faz parte de nenhuma, abrir um chat pessoal (mock)
+          setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
+        }
       }
     } catch (error: any) {
       console.error('Erro ao carregar comunidades:', error);
@@ -538,6 +599,7 @@ export default function CommunitiesPage() {
       // Em caso de erro, usar mocks como fallback
       setCommunities(MOCK_COMMUNITIES);
       if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId) {
+        // Abrir um chat pessoal (mock) em caso de erro
         setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
       }
     } finally {
@@ -601,6 +663,34 @@ export default function CommunitiesPage() {
   const refreshCommunities = async () => {
     await loadCommunities();
     showSuccess("Comunidade criada com sucesso!");
+  };
+
+  // Handler para clique em comunidade
+  const handleCommunityClick = (community: Community, event: React.MouseEvent) => {
+    // Se for membro ou dono, abrir normalmente
+    if (community.isMember || community.isOwner) {
+      setSelectedCommunityId(community.id);
+      return;
+    }
+
+    // Se não for membro, mostrar tooltip
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const tooltipWidth = 320;
+    setTooltipPosition({
+      x: rect.left + rect.width / 2 - tooltipWidth / 2, // Centralizar tooltip em relação ao item
+      y: rect.bottom + 10, // Abaixo do item com espaçamento
+    });
+    setTooltipCommunity(community);
+  };
+
+  // Handler para sucesso ao entrar na comunidade
+  const handleJoinSuccess = async () => {
+    // Recarregar comunidades para atualizar isMember
+    await loadCommunities();
+    // Se havia uma comunidade selecionada no tooltip, abrir ela
+    if (tooltipCommunity) {
+      setSelectedCommunityId(tooltipCommunity.id);
+    }
   };
 
   // Buscar comunidade selecionada tanto nas comunidades da API quanto nos mocks
@@ -681,6 +771,7 @@ export default function CommunitiesPage() {
           selectedCommunityId={selectedCommunityId}
           onSelectCommunity={setSelectedCommunityId}
           onCreateCommunity={() => setIsCreateModalOpen(true)}
+          onCommunityClick={handleCommunityClick}
         />
 
       {/* Chat Area - Coluna Central + Direita */}
@@ -752,6 +843,17 @@ export default function CommunitiesPage() {
         <div className="flex-1 flex items-center justify-center rounded-2xl" style={{ background: '#303030' }}>
           <p className="text-gray-500">Select a community to start chatting</p>
         </div>
+      )}
+
+      {/* Community Join Tooltip */}
+      {tooltipCommunity && (
+        <CommunityJoinTooltip
+          community={tooltipCommunity}
+          isOpen={!!tooltipCommunity}
+          onClose={() => setTooltipCommunity(null)}
+          onJoinSuccess={handleJoinSuccess}
+          position={tooltipPosition}
+        />
       )}
 
       {/* Create Community Modal */}

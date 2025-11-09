@@ -13,7 +13,7 @@ interface NavItemProps {
   onSelect: (id: string) => void;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
+const NavItem: React.FC<NavItemProps & { onCommunityClick?: (id: string, event: React.MouseEvent) => void }> = ({ item, index, onSelect, onCommunityClick }) => {
   const itemRef = useRef<HTMLButtonElement>(null);
   const inView = useInView(itemRef, { 
     amount: 0.1, 
@@ -21,10 +21,18 @@ const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
     margin: "0px 0px 200px 0px"
   });
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (onCommunityClick) {
+      onCommunityClick(item.id, e);
+    } else {
+      onSelect(item.id);
+    }
+  };
+
   return (
     <motion.button
       ref={itemRef}
-      onClick={() => onSelect(item.id)}
+      onClick={handleClick}
       initial={{ scale: 0.7, opacity: 0 }}
       animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
       transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.15) }}
@@ -56,6 +64,7 @@ interface CommunityItemProps {
   onSelect: (id: string) => void;
   getInitials: (name: string) => string;
   formatTime: (timestamp: string) => string;
+  onCommunityClick?: (community: Community, event: React.MouseEvent) => void;
 }
 
 const CommunityItem: React.FC<CommunityItemProps> = ({
@@ -65,6 +74,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
   onSelect,
   getInitials,
   formatTime,
+  onCommunityClick,
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
   const inView = useInView(itemRef, { 
@@ -72,6 +82,14 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
     once: false,
     margin: "0px 0px 200px 0px"
   });
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (onCommunityClick) {
+      onCommunityClick(community, e);
+    } else {
+      onSelect(community.id);
+    }
+  };
 
   return (
     <motion.div
@@ -83,7 +101,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
       className="mb-2"
     >
       <button
-        onClick={() => onSelect(community.id)}
+        onClick={handleClick}
         className="w-full p-3 rounded-2xl transition-all hover:scale-[1.01] cursor-pointer border border-white/10"
         style={{
           background: isSelected ? 'rgb(30, 30, 30)' : 'rgb(14, 14, 14)',
@@ -139,6 +157,7 @@ interface CommunityListProps {
   selectedCommunityId?: string;
   onSelectCommunity: (communityId: string) => void;
   onCreateCommunity: () => void;
+  onCommunityClick?: (community: Community, event: React.MouseEvent) => void;
 }
 
 export function CommunityList({
@@ -147,6 +166,7 @@ export function CommunityList({
   selectedCommunityId,
   onSelectCommunity,
   onCreateCommunity,
+  onCommunityClick,
 }: CommunityListProps) {
   const getInitials = (name: string) => {
     return name
@@ -208,14 +228,24 @@ export function CommunityList({
             {communities.length === 0 ? (
               <div className="text-gray-500 text-xs py-2">Nenhuma comunidade</div>
             ) : (
-              navItems.map((item, index) => (
-                <NavItem 
-                  key={item.id} 
-                  item={item} 
-                  index={index} 
-                  onSelect={onSelectCommunity}
-                />
-              ))
+              navItems.map((item, index) => {
+                const community = communities.find(c => c.id === item.id);
+                const handleClick = community && onCommunityClick 
+                  ? (e: React.MouseEvent) => {
+                      onCommunityClick(community, e);
+                    }
+                  : undefined;
+                
+                return (
+                  <NavItem 
+                    key={item.id} 
+                    item={item} 
+                    index={index} 
+                    onSelect={onSelectCommunity}
+                    onCommunityClick={handleClick ? (id, e) => handleClick(e) : undefined}
+                  />
+                );
+              })
             )}
           </div>
         </div>
@@ -244,7 +274,7 @@ export function CommunityList({
       </div>
 
       {/* Lista de Chats - Ilhas com AnimatedList */}
-      <div className="flex-1 flex flex-col pr-2 overflow-hidden min-h-0">
+      <div className="w-[320px] flex flex-col pr-2 overflow-hidden min-h-0 shrink-0">
         <AnimatedList
           showGradients={true}
           enableArrowNavigation={true}
@@ -267,6 +297,7 @@ export function CommunityList({
               onSelect={onSelectCommunity}
               getInitials={getInitials}
               formatTime={formatTime}
+              onCommunityClick={onCommunityClick}
             />
           ))}
         </AnimatedList>

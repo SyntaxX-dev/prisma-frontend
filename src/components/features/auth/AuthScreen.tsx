@@ -21,6 +21,7 @@ import {
 } from '@/lib/validators/auth-forms';
 import { EDUCATION_OPTIONS } from '@/lib/constants';
 import { EducationLevel as ApiEducationLevel } from '@/types/auth-api';
+import { EducationLevel, educationLevelEnToPt, educationLevelPtToEn } from '@/types/education';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { loginUser } from '@/api/auth/login';
 import { registerUser } from '@/api/auth/register';
@@ -97,6 +98,7 @@ export function AuthScreen() {
     try {
       setIsLoading(true);
 
+      // O educationLevel já está no formato correto (DOUTORADO) porque foi convertido no onValueChange do select
       const apiData = {
         ...data,
         educationLevel: data.educationLevel as ApiEducationLevel
@@ -456,8 +458,17 @@ export function AuthScreen() {
                         >
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
                           <Select
-                            value={registerForm.watch('educationLevel')}
-                            onValueChange={(value) => registerForm.setValue('educationLevel', value as ApiEducationLevel)}
+                            value={
+                              registerForm.watch('educationLevel') 
+                                ? educationLevelPtToEn[registerForm.watch('educationLevel') as ApiEducationLevel] || registerForm.watch('educationLevel')
+                                : undefined
+                            }
+                            onValueChange={(value) => {
+                              // Converter EducationLevel enum (DOCTORATE) para formato da API (DOUTORADO)
+                              const educationLevelEnum = value as EducationLevel;
+                              const educationLevelForApi = educationLevelEnToPt[educationLevelEnum] as ApiEducationLevel;
+                              registerForm.setValue('educationLevel', educationLevelForApi);
+                            }}
                           >
                             <SelectTrigger className="pl-10 bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-300 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg">
                               <SelectValue placeholder="Nível de educação" />
