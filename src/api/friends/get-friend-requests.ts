@@ -29,7 +29,7 @@ export interface GetFriendRequestsResponse {
 
 export async function getFriendRequests(): Promise<GetFriendRequestsResponse> {
   try {
-    const response = await httpClient.get<GetFriendRequestsResponse>('/friends/requests');
+    const response = await httpClient.get<GetFriendRequestsResponse>('/friendships/requests');
     return response;
   } catch (error) {
     throw error as ApiError;

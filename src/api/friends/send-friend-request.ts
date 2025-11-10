@@ -22,7 +22,7 @@ export async function sendFriendRequest(
 ): Promise<SendFriendRequestResponse> {
   try {
     const response = await httpClient.post<SendFriendRequestResponse>(
-      '/friends/request',
+      '/friendships/requests',
       { receiverId }
     );
     return response;

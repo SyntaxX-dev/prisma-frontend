@@ -30,8 +30,8 @@ export async function acceptFriendRequest(
 ): Promise<AcceptFriendRequestResponse> {
   try {
     const response = await httpClient.post<AcceptFriendRequestResponse>(
-      '/friends/accept',
-      { friendRequestId }
+      `/friendships/requests/${friendRequestId}/accept`,
+      {}
     );
     return response;
   } catch (error) {

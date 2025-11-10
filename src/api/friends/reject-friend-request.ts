@@ -15,8 +15,8 @@ export async function rejectFriendRequest(
 ): Promise<RejectFriendRequestResponse> {
   try {
     const response = await httpClient.post<RejectFriendRequestResponse>(
-      '/friends/reject',
-      { friendRequestId }
+      `/friendships/requests/${friendRequestId}/reject`,
+      {}
     );
     return response;
   } catch (error) {
