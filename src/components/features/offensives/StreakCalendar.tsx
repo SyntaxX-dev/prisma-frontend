@@ -19,18 +19,38 @@ export function StreakCalendar({ streakData }: StreakCalendarProps = {}) {
   const { data: offensivesData, isLoading, refetch } = useOffensives(true);
 
 
+  // Função para formatar data como YYYY-MM-DD usando data local (não UTC)
+  const formatDateLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Função para normalizar data da API (pode vir como ISO completo ou apenas YYYY-MM-DD)
+  const normalizeApiDate = (apiDate: string): string => {
+    // Se já está no formato YYYY-MM-DD, retorna direto
+    if (/^\d{4}-\d{2}-\d{2}$/.test(apiDate)) {
+      return apiDate;
+    }
+    // Se está no formato ISO, extrai apenas a parte da data
+    return apiDate.split('T')[0];
+  };
+
   // Funções auxiliares para trabalhar com os dados das ofensivas
   const hasOffensiveOnDay = (date: Date) => {
     if (!offensivesData) {
       return false;
     }
 
-    const dateStr = date.toISOString().split('T')[0];
-
+    // Formatar data local (não UTC) para evitar diferença de um dia
+    const dateStr = formatDateLocal(date);
 
     if (offensivesData.history && offensivesData.history.length > 0) {
       const hasOffensive = offensivesData.history.some(day => {
-        return day.date === dateStr && day.hasOffensive;
+        // Normalizar data da API para comparar corretamente
+        const normalizedApiDate = normalizeApiDate(day.date);
+        return normalizedApiDate === dateStr && day.hasOffensive;
       });
 
       return hasOffensive;
@@ -42,8 +62,11 @@ export function StreakCalendar({ streakData }: StreakCalendarProps = {}) {
 
   const getOffensiveTypeForDay = (date: Date) => {
     if (!offensivesData?.history) return 'NORMAL';
-    const dateStr = date.toISOString().split('T')[0];
-    const dayData = offensivesData.history.find(day => day.date === dateStr);
+    const dateStr = formatDateLocal(date);
+    const dayData = offensivesData.history.find(day => {
+      const normalizedApiDate = normalizeApiDate(day.date);
+      return normalizedApiDate === dateStr;
+    });
     return dayData?.type || 'NORMAL';
   };
 
@@ -52,7 +75,6 @@ export function StreakCalendar({ streakData }: StreakCalendarProps = {}) {
     if (!day || !hasStreakOnDay(day)) return;
     
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    const dateStr = clickedDate.toISOString().split('T')[0];
     
     try {
       await refetch();
@@ -66,24 +88,35 @@ export function StreakCalendar({ streakData }: StreakCalendarProps = {}) {
     const year = date.getFullYear();
     const month = date.getMonth();
     return offensivesData.history.filter(day => {
-      const dayDate = new Date(day.date);
+      // Normalizar data da API e criar objeto Date
+      const normalizedDate = normalizeApiDate(day.date);
+      const dayDate = new Date(normalizedDate + 'T00:00:00');
       return dayDate.getFullYear() === year && dayDate.getMonth() === month && day.hasOffensive;
     });
   };
 
   const getConsecutiveOffensiveDays = (date: Date) => {
     if (!offensivesData?.history) return 0;
-    const dateStr = date.toISOString().split('T')[0];
-    const sortedHistory = [...offensivesData.history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const dateStr = formatDateLocal(date);
+    const sortedHistory = [...offensivesData.history]
+      .filter(day => day.hasOffensive)
+      .sort((a, b) => {
+        const dateA = normalizeApiDate(a.date);
+        const dateB = normalizeApiDate(b.date);
+        return dateB.localeCompare(dateA);
+      });
     
     let consecutiveDays = 0;
-    let currentDate = new Date(date);
+    let currentDateStr = dateStr;
     
     for (const day of sortedHistory) {
-      const dayDate = new Date(day.date);
-      if (dayDate.toDateString() === currentDate.toDateString() && day.hasOffensive) {
+      const normalizedApiDate = normalizeApiDate(day.date);
+      if (normalizedApiDate === currentDateStr) {
         consecutiveDays++;
-        currentDate.setDate(currentDate.getDate() - 1);
+        // Calcular data anterior
+        const prevDate = new Date(currentDateStr + 'T00:00:00');
+        prevDate.setDate(prevDate.getDate() - 1);
+        currentDateStr = formatDateLocal(prevDate);
       } else {
         break;
       }

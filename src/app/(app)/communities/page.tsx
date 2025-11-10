@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Settings, Bell } from "lucide-react";
+import { Search, Settings } from "lucide-react";
 import { CommunityList } from "@/components/features/communities/CommunityList";
 import { CommunityChat } from "@/components/features/communities/CommunityChat";
 import { CommunityInfo } from "@/components/features/communities/CommunityInfo";
@@ -9,11 +9,12 @@ import { CreateCommunityModal } from "@/components/features/communities/CreateCo
 import { VoiceCallScreen } from "@/components/features/communities/VoiceCallScreen";
 import type { Community, CommunityMessage } from "@/types/community";
 import { LoadingGrid } from "@/components/ui/loading-grid";
-import { useNotifications } from "@/hooks/shared/useNotifications";
 import { VideoCallScreen } from "@/components/features/communities/VideoCallScreens";
 import DotGrid from "@/components/shared/DotGrid";
 import { getCommunities } from "@/api/communities/get-communities";
 import { CommunityJoinTooltip } from "@/components/features/communities/CommunityJoinTooltip";
+import { NotificationsDropdown } from "@/components/features/notifications/NotificationsDropdown";
+import toast from "react-hot-toast";
 
 // Mock data
 const MOCK_COMMUNITIES: Community[] = [
@@ -457,8 +458,6 @@ const MOCK_CALL_PARTICIPANTS = [
 ];
 
 export default function CommunitiesPage() {
-  const { showSuccess, showError } = useNotifications();
-  
   const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string>();
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
@@ -595,7 +594,7 @@ export default function CommunitiesPage() {
       }
     } catch (error: any) {
       console.error('Erro ao carregar comunidades:', error);
-      showError("Erro ao carregar comunidades");
+      toast.error("Erro ao carregar comunidades");
       // Em caso de erro, usar mocks como fallback
       setCommunities(MOCK_COMMUNITIES);
       if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId) {
@@ -627,7 +626,7 @@ export default function CommunitiesPage() {
       
       setMessages(communityMessages);
     } catch (error) {
-      showError("Failed to load messages");
+      toast.error("Failed to load messages");
     } finally {
       setIsLoadingMessages(false);
     }
@@ -653,7 +652,7 @@ export default function CommunitiesPage() {
       
       setMessages((prev) => [...prev, newMessage]);
     } catch (error) {
-      showError("Failed to send message");
+      toast.error("Failed to send message");
     } finally {
       setIsSendingMessage(false);
     }
@@ -662,7 +661,7 @@ export default function CommunitiesPage() {
   // Função para recarregar comunidades da API
   const refreshCommunities = async () => {
     await loadCommunities();
-    showSuccess("Comunidade criada com sucesso!");
+    toast.success("Comunidade criada com sucesso!");
   };
 
   // Handler para clique em comunidade
@@ -747,7 +746,7 @@ export default function CommunitiesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090A] text-white relative">
+    <div className="min-h-screen  text-white relative">
       {/* DotGrid Background */}
       <div className="fixed inset-0 z-0">
         <DotGrid
@@ -802,9 +801,7 @@ export default function CommunitiesPage() {
                 <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
                   <Settings className="w-5 h-5 text-gray-400" />
                 </button>
-                <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
-                  <Bell className="w-5 h-5 text-gray-400" />
-                </button>
+                <NotificationsDropdown />
                 <div className="w-12 h-12 rounded-full relative">
                   <img 
                     src="https://i.pravatar.cc/150?img=68" 

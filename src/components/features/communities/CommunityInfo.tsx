@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Community } from "@/types/community";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { getCommunityMembers } from "@/api/communities/get-community-members";
 import type { CommunityMember } from "@/api/communities/get-community-members";
 
@@ -25,6 +26,7 @@ interface CommunityInfoProps {
 }
 
 export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall, isFromSidebar = false }: CommunityInfoProps) {
+  const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<string>("photos");
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
@@ -182,7 +184,11 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall, i
                   </div>
                 ) : (
                   members.map((member) => (
-                    <div key={member.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer">
+                    <div 
+                      key={member.id} 
+                      onClick={() => router.push(`/profile?userId=${member.id}`)}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer"
+                    >
                       <div className="relative">
                         <Avatar className="w-8 h-8">
                           <AvatarImage src={member.profileImage || undefined} alt={member.name} />

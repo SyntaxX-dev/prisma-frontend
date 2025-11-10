@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useProfile } from '@/hooks/features/profile';
+import { getUserProfile } from '@/api/auth/get-user-profile';
 import { getEmailValue } from '@/lib/utils/email';
 import { LoadingGrid } from '@/components/ui/loading-grid';
 import {
@@ -29,6 +30,7 @@ import { Button } from '../../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
 import { RichTextEditor } from '../../shared/RichTextEditor';
 import { HabilitiesModal } from './modals/HabilitiesModal';
+import { FriendRequestButton } from './FriendRequestButton';
 import {
     Dialog,
     DialogContent,
@@ -62,7 +64,7 @@ import {
     Eye
 } from 'lucide-react';
 import { countries } from '@/lib/constants/countries';
-import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS } from '@/types/auth-api';
+import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS, EDUCATION_LEVEL_LABELS } from '@/types/auth-api';
 import { LocationModal } from '@/components/shared/LocationModal';
 import ShinyText from '@/components/shared/ShinyText';
 import DotGrid from '@/components/shared/DotGrid';
@@ -138,6 +140,8 @@ function SortableLinkItem({
 
 export function ProfilePage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const userId = searchParams.get('userId');
     
     // Estado local para os valores dos inputs do modal
     const [modalValues, setModalValues] = useState({
@@ -149,7 +153,17 @@ export function ProfilePage() {
     const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
     
     // Estado para visualização pública do perfil
+    // Inicializar como false para evitar diferenças de hidratação
     const [isPublicView, setIsPublicView] = useState(false);
+    
+    // Estado para perfil de outro usuário
+    const [otherUserProfile, setOtherUserProfile] = useState<UserProfile | null>(null);
+    const [isLoadingOtherProfile, setIsLoadingOtherProfile] = useState(false);
+    
+    // Atualizar isPublicView quando userId mudar (após hidratação)
+    useEffect(() => {
+        setIsPublicView(!!userId);
+    }, [userId]);
 
     // Função para salvar localização
     const handleLocationSave = async (location: string) => {
@@ -205,37 +219,60 @@ export function ProfilePage() {
 
     // Função para renderizar os links do usuário
     const renderUserLinks = () => {
-        // Usar a ordem definida no linkFieldsOrder
-        const links = linkFieldsOrder.map(field => {
+        // Usar a ordem definida no linkFieldsOrder ou socialLinksOrder do usuário
+        const order = user?.socialLinksOrder || linkFieldsOrder.map(f => {
+            // Mapear campos do linkFieldsOrder para socialLinksOrder
+            const mapping: Record<string, string> = {
+                'sitePessoal': 'portfolio',
+                'linkedin': 'linkedin',
+                'github': 'github',
+                'instagram': 'instagram',
+                'twitter': 'twitter'
+            };
+            return mapping[f.field] || f.field;
+        });
+        
+        const links = order.map((fieldName: string) => {
             let url = '';
-            let icon = field.icon;
+            let icon = Globe;
+            let label = '';
             
             // Mapear os campos para as URLs corretas
-            switch (field.field) {
-                case 'sitePessoal':
-                    url = userProfile?.portfolio || '';
+            switch (fieldName) {
+                case 'portfolio':
+                    url = user?.portfolio || '';
+                    icon = Globe;
+                    label = 'Portfolio';
                     break;
                 case 'linkedin':
-                    url = userProfile?.linkedin || '';
+                    url = user?.linkedin || '';
+                    icon = Linkedin;
+                    label = 'LinkedIn';
                     break;
                 case 'github':
-                    url = userProfile?.github || '';
+                    url = user?.github || '';
+                    icon = Github;
+                    label = 'GitHub';
                     break;
                 case 'instagram':
-                    url = userProfile?.instagram || '';
+                    url = user?.instagram || '';
+                    icon = Instagram;
+                    label = 'Instagram';
                     break;
                 case 'twitter':
-                    url = userProfile?.twitter || '';
+                    url = user?.twitter || '';
+                    icon = Twitter;
+                    label = 'Twitter';
                     break;
                 default:
                     url = '';
             }
             
             return {
-                key: field.field,
+                key: fieldName,
                 url,
                 icon,
-                label: field.label
+                label
             };
         });
 
@@ -248,19 +285,21 @@ export function ProfilePage() {
                 {filledLinks.map((link, index) => {
                     const IconComponent = link.icon;
                     return (
-                        <div
+                        <a
                             key={link.key}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="aspect-square bg-[#29292E] border-2 border-[#323238] rounded-lg flex items-center justify-center hover:border-[#B3E240] transition-colors cursor-pointer group"
-                            onClick={() => setIsLinksModalOpen(true)}
                             title={link.label}
                         >
                             <IconComponent className="w-6 h-6 text-[#B3E240] group-hover:scale-110 transition-transform" />
-                        </div>
+                        </a>
                     );
                 })}
                 
-                {/* Slots vazios */}
-                {Array.from({ length: emptySlots }).map((_, index) => (
+                {/* Slots vazios - apenas para o próprio perfil */}
+                {isOwnProfile && !isPublicView && Array.from({ length: emptySlots }).map((_, index) => (
                     <div
                         key={`empty-${index}`}
                         className="aspect-square bg-transparent border-2 border-dashed border-[#323238] rounded-lg flex items-center justify-center hover:border-gray-600 transition-colors cursor-pointer"
@@ -338,6 +377,34 @@ export function ProfilePage() {
         setLinkFieldsOrder
     } = useProfile();
 
+    // Verificar se está vendo o próprio perfil
+    // Se não há userId na URL, é o próprio perfil
+    // Se há userId, compara com o ID do usuário logado
+    const isOwnProfile = !userId || (userProfile?.id && userId === userProfile.id);
+
+    // Carregar perfil de outro usuário se userId estiver presente
+    useEffect(() => {
+        if (userId) {
+            const loadOtherUserProfile = async () => {
+                try {
+                    setIsLoadingOtherProfile(true);
+                    const response = await getUserProfile(userId);
+                    if (response.success && response.data) {
+                        setOtherUserProfile(response.data);
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar perfil do usuário:', error);
+                    setOtherUserProfile(null);
+                } finally {
+                    setIsLoadingOtherProfile(false);
+                }
+            };
+            loadOtherUserProfile();
+        } else {
+            setOtherUserProfile(null);
+        }
+    }, [userId]);
+
     // Atualizar valores do modal quando os dados forem carregados
     useEffect(() => {
         if (userProfile && basicInfoData) {
@@ -360,7 +427,7 @@ export function ProfilePage() {
     );
 
     // Mostrar loading se os dados estão sendo carregados
-    if (isLoading) {
+    if (isLoading || (userId && isLoadingOtherProfile)) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
                 <LoadingGrid size="60" color="#B3E240" />
@@ -368,8 +435,8 @@ export function ProfilePage() {
         );
     }
 
-    // Mostrar erro se houver problema ao carregar
-    if (error) {
+    // Mostrar erro se houver problema ao carregar (apenas para próprio perfil)
+    if (error && !userId) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
                 <div className="text-center">
@@ -383,7 +450,8 @@ export function ProfilePage() {
     }
 
     // Usar dados do hook useProfile - sem dados mockados
-    const user = userProfile;
+    // Se estiver visualizando perfil de outro usuário, usar otherUserProfile
+    const user = userId && otherUserProfile ? otherUserProfile : userProfile;
 
     // Se não há dados do usuário, não renderizar nada (já foi tratado no loading/error)
     if (!user) {
@@ -418,7 +486,7 @@ export function ProfilePage() {
     // getModalFields já está disponível no hook useProfile
 
     return (
-        <div className="min-h-screen bg-[#09090A] text-white relative">
+        <div className="min-h-screen text-white relative">
             {/* DotGrid Background */}
             <div className="fixed inset-0 z-0">
                 <DotGrid
@@ -457,9 +525,9 @@ export function ProfilePage() {
                                     <div className="text-center mb-6">
                                         <div className="relative inline-block group mb-4">
                                             <Avatar
-                                                className={`w-24 h-24 cursor-pointer transition-all duration-300 ${isUploadingImage ? 'opacity-50' : 'hover:scale-105'}`}
+                                                className={`w-24 h-24 transition-all duration-300 ${isUploadingImage ? 'opacity-50' : isOwnProfile ? 'cursor-pointer hover:scale-105' : ''}`}
                                                 onClick={() => {
-                                                    if (!isUploadingImage) {
+                                                    if (isOwnProfile && !isUploadingImage) {
                                                         document.getElementById('avatar-upload')?.click();
                                                     }
                                                 }}
@@ -474,8 +542,8 @@ export function ProfilePage() {
                                                 </AvatarFallback>
                                             </Avatar>
                                             
-                                            {/* Overlay com ícone de câmera no hover */}
-                                            {!isUploadingImage && (
+                                            {/* Overlay com ícone de câmera no hover - apenas para o próprio perfil */}
+                                            {isOwnProfile && !isUploadingImage && (
                                                 <div 
                                                     className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover:pointer-events-auto"
                                                     onClick={() => {
@@ -495,17 +563,20 @@ export function ProfilePage() {
                                                 </div>
                                             )}
                                             
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleAvatarUpload}
-                                                className="hidden"
-                                                id="avatar-upload"
-                                                disabled={isUploadingImage}
-                                            />
+                                            {/* Input de upload - apenas para o próprio perfil */}
+                                            {isOwnProfile && (
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleAvatarUpload}
+                                                    className="hidden"
+                                                    id="avatar-upload"
+                                                    disabled={isUploadingImage}
+                                                />
+                                            )}
                                             
-                                            {/* Botão de remover foto - bolinha pequena no canto inferior direito */}
-                                            {(user.profileImage || avatarImage) && !isUploadingImage && (
+                                            {/* Botão de remover foto - apenas para o próprio perfil */}
+                                            {isOwnProfile && (user.profileImage || avatarImage) && !isUploadingImage && (
                                                 <div 
                                                     className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/80 border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/90 hover:border-red-500/50 hover:scale-110"
                                                     onClick={(e) => {
@@ -527,29 +598,25 @@ export function ProfilePage() {
                                         
                                         {/* Botões de Ação */}
                                         <div className="space-y-2">
-                                            <Button 
-                                                className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#B3E240] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-                                            >
-                                                <ShinyText 
-                                                    text="Conversar" 
-                                                    disabled={false} 
-                                                    speed={3} 
-                                                    className="font-medium"
-                                                />
-                                            </Button>
+                                            {!isOwnProfile && (
+                                                <FriendRequestButton userId={userId || ''} />
+                                            )}
                                             
-                                            <Button 
-                                                variant="outline"
-                                                className={`w-full px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
-                                                    isPublicView 
-                                                        ? 'bg-[#B3E240]/10 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240]/20' 
-                                                        : 'bg-transparent hover:bg-white/5 border-[#323238] text-gray-300 hover:text-white'
-                                                }`}
-                                                onClick={() => setIsPublicView(!isPublicView)}
-                                            >
-                                                <Eye className="w-4 h-4 mr-2" />
-                                                {isPublicView ? 'Ver perfil privado' : 'Ver como outros me veem'}
-                                            </Button>
+                                            {/* Botão "Ver perfil privado" - apenas para o próprio perfil */}
+                                            {isOwnProfile && (
+                                                <Button 
+                                                    variant="outline"
+                                                    className={`w-full px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
+                                                        isPublicView 
+                                                            ? 'bg-[#B3E240]/10 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240]/20' 
+                                                            : 'bg-transparent hover:bg-white/5 border-[#323238] text-gray-300 hover:text-white'
+                                                    }`}
+                                                    onClick={() => setIsPublicView(!isPublicView)}
+                                                >
+                                                    <Eye className="w-4 h-4 mr-2" />
+                                                    {isPublicView ? 'Ver perfil privado' : 'Ver como outros me veem'}
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
 
@@ -614,43 +681,71 @@ export function ProfilePage() {
                                                 </Button>
                                             )
                                         )}
+                                        
+                                        {/* Idade */}
+                                        {user?.age && (
+                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
+                                                <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                <span className="text-white text-sm font-medium">
+                                                    {user.age} anos
+                                                </span>
+                                            </div>
+                                        )}
+                                        
+                                        {/* Nível de Educação */}
+                                        {user?.educationLevel && (() => {
+                                            // Mapear valores da API (inglês) para valores do frontend (português)
+                                            const educationLevelMap: Record<string, keyof typeof EDUCATION_LEVEL_LABELS> = {
+                                                'POSTGRADUATE': 'POS_GRADUACAO',
+                                                'HIGH_SCHOOL': 'ENSINO_MEDIO',
+                                                'GRADUATION': 'GRADUACAO',
+                                                'ELEMENTARY': 'FUNDAMENTAL',
+                                                'MASTER': 'MESTRADO',
+                                                'DOCTORATE': 'DOUTORADO',
+                                            };
+                                            
+                                            const mappedLevel = educationLevelMap[user.educationLevel] || user.educationLevel as keyof typeof EDUCATION_LEVEL_LABELS;
+                                            const label = EDUCATION_LEVEL_LABELS[mappedLevel] || user.educationLevel;
+                                            
+                                            return (
+                                                <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
+                                                    <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                    <span className="text-white text-sm font-medium">
+                                                        {label}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
+                                        
+                                        {/* Curso */}
+                                        {user?.collegeCourse && (
+                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
+                                                <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                <span className="text-white text-sm font-medium">
+                                                    {COLLEGE_COURSE_LABELS[user.collegeCourse as keyof typeof COLLEGE_COURSE_LABELS] || user.collegeCourse}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <p className="text-gray-500 text-sm text-center">
-                                        {formatUserJoinDate(userProfile?.createdAt)}
+                                        {formatUserJoinDate(user?.createdAt)}
                                     </p>
                                 </div>
 
                                 {/* Card de Momento de Carreira - Sempre visível */}
                                 <CareerMomentCard 
-                                    userProfile={userProfile}
-                                    isPublicView={isPublicView}
+                                    userProfile={user}
+                                    isPublicView={isPublicView || !isOwnProfile}
                                     onEditClick={() => setIsCareerModalOpen(true)}
                                 />
 
                                 {/* Card de Habilidades */}
                                 <HabilitiesCard 
-                                    userProfile={userProfile}
-                                    isPublicView={isPublicView}
+                                    userProfile={user}
+                                    isPublicView={isPublicView || !isOwnProfile}
                                     onEditClick={() => setIsHabilitiesModalOpen(true)}
                                 />
-
-                                {/* Links - Apenas na visualização privada */}
-                                {!isPublicView && (
-                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-white font-semibold">Links</h3>
-                                            <Button
-                                                className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
-                                                size="sm"
-                                                onClick={() => setIsLinksModalOpen(true)}
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                        {renderUserLinks()}
-                                    </div>
-                                )}
 
                                 {/* Insígnias - Apenas na visualização privada */}
                                 {!isPublicView && (
@@ -716,32 +811,41 @@ export function ProfilePage() {
                             {/* Card de Ofensivas - Agora acima do Sobre */}
                             <OffensivesCard />
 
-                            {/* Links e Insígnias - Apenas na visualização pública, acima do Sobre */}
-                            {isPublicView && (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    {/* Links */}
-                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                        <h3 className="text-white font-semibold mb-3 text-sm">Links</h3>
-                                        {renderUserLinks()}
+                            {/* Links e Insígnias - Sempre visível acima do Sobre */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {/* Links */}
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-white font-semibold text-sm">Links</h3>
+                                        {isOwnProfile && !isPublicView && (
+                                            <Button
+                                                className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
+                                                size="sm"
+                                                onClick={() => setIsLinksModalOpen(true)}
+                                            >
+                                                <Edit3 className="w-4 h-4" />
+                                            </Button>
+                                        )}
                                     </div>
+                                    {renderUserLinks()}
+                                </div>
 
-                                    {/* Insígnias */}
-                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
-                                        <h3 className="text-white font-semibold mb-3 text-sm">Insígnias • 3</h3>
-                                        <div className="flex space-x-2">
-                                            <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
-                                                <span className="text-black text-xs font-bold">R</span>
-                                            </div>
-                                            <div className="w-10 h-10 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
-                                                <span className="text-white text-xs font-bold">G</span>
-                                            </div>
-                                            <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
-                                                <span className="text-black text-xs font-bold">N</span>
-                                            </div>
+                                {/* Insígnias */}
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                    <h3 className="text-white font-semibold mb-3 text-sm">Insígnias • 3</h3>
+                                    <div className="flex space-x-2">
+                                        <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                            <span className="text-black text-xs font-bold">R</span>
+                                        </div>
+                                        <div className="w-10 h-10 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
+                                            <span className="text-white text-xs font-bold">G</span>
+                                        </div>
+                                        <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                            <span className="text-black text-xs font-bold">N</span>
                                         </div>
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
                             <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
                                 <div className="flex justify-between items-center mb-4">

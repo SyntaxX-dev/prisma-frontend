@@ -25,6 +25,7 @@ export function CreateCommunityModal({
   onSuccess,
 }: CreateCommunityModalProps) {
   const [name, setName] = useState("");
+  const [focus, setFocus] = useState("");
   const [description, setDescription] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [access, setAccess] = useState<'private' | 'shared'>('private');
@@ -71,7 +72,7 @@ export function CreateCommunityModal({
           // Criar FormData com todos os dados e a imagem
           const formData = new FormData();
           const communityName = name.trim();
-          const communityFocus = 'GENERAL'; // Valor padrão - pode ser ajustado depois
+          const communityFocus = focus.trim();
           const communityVisibility = access === 'private' ? 'PRIVATE' : 'PUBLIC';
           
           // Garantir que os valores não estão vazios
@@ -162,11 +163,17 @@ export function CreateCommunityModal({
       } else {
         // Sem imagem, usar JSON normal
         const communityName = name.trim();
-        const communityFocus = 'GENERAL'; // Valor padrão - pode ser ajustado depois
+        const communityFocus = focus.trim();
         const communityVisibility = access === 'private' ? 'PRIVATE' : 'PUBLIC';
         
         if (!communityName) {
           setError('O nome da comunidade é obrigatório');
+          setIsLoading(false);
+          return;
+        }
+        
+        if (!communityFocus) {
+          setError('O foco da comunidade é obrigatório');
           setIsLoading(false);
           return;
         }
@@ -211,6 +218,7 @@ export function CreateCommunityModal({
 
   const handleClose = () => {
     setName("");
+    setFocus("");
     setDescription("");
     setAvatarUrl("");
     setAccess('private');
@@ -464,6 +472,42 @@ export function CreateCommunityModal({
                 }}
               />
             </div>
+          </div>
+
+          {/* Focus */}
+          <div>
+            <label className="font-medium block" style={{ fontSize: '0.875rem', color: 'rgb(209, 213, 219)', marginBottom: '0.75rem' }}>
+              Foco
+            </label>
+            <Input
+              placeholder="Ex: PRF, ENEM, ESA..."
+              value={focus}
+              onChange={(e) => setFocus(e.target.value)}
+              required
+              maxLength={50}
+              tabIndex={-1}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                (e.target as HTMLInputElement).focus();
+              }}
+              onFocus={(e) => {
+                e.target.style.outline = 'none';
+                e.target.style.boxShadow = 'none';
+              }}
+              className="border border-white/10 text-white placeholder:text-gray-500 cursor-text"
+              style={{ 
+                background: 'rgb(14, 14, 14)',
+                paddingLeft: '0.75rem',
+                paddingRight: '0.75rem',
+                height: '2.75rem',
+                borderRadius: '1rem',
+                outline: 'none',
+                boxShadow: 'none',
+              }}
+            />
+            <p style={{ fontSize: '0.75rem', color: 'rgb(107, 114, 128)', marginTop: '0.5rem', marginBottom: '1rem' }}>
+              O foco é o tema da comunidade
+            </p>
           </div>
 
           {/* Access */}

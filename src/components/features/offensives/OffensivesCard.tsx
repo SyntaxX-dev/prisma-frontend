@@ -106,6 +106,25 @@ export function OffensivesCard() {
 
   const { currentOffensive, stats } = offensivesData;
 
+  // Verificar se currentOffensive existe
+  if (!currentOffensive) {
+    return (
+      <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+        <CardHeader>
+          <CardTitle className="text-white font-semibold flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-[#B3E240]" />
+            Ofensivas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center text-gray-400 py-8">
+            Nenhuma ofensiva encontrada
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
       <CardHeader>
