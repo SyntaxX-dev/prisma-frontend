@@ -77,6 +77,7 @@ export interface UserProfile {
   };
   createdAt?: string;
   updatedAt?: string;
+  isFriend?: boolean;
 }
 
 export type UserFocus = 'ENEM' | 'CONCURSO' | 'FACULDADE' | 'ENSINO_MEDIO';

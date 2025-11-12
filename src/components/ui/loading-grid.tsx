@@ -17,7 +17,7 @@ export function LoadingGrid({
   className = ""
 }: LoadingGridProps) {
   return (
-    <div className={`flex items-center justify-center ${className}`}>
+    <div className={`flex items-center justify-center ${className}`} suppressHydrationWarning>
       <Grid
         size={size}
         speed={speed}

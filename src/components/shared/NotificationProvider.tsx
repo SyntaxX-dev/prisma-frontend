@@ -10,6 +10,8 @@ export function NotificationProvider() {
       gutter={8}
       containerClassName=""
       containerStyle={{}}
+      // Suprimir warnings de hydration causados por extensões do navegador
+      suppressHydrationWarning
       toastOptions={{
         duration: 4000,
         style: {
