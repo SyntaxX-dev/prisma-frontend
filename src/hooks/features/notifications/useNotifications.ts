@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 export interface Notification {
   id: string;
-  type: 'FRIEND_REQUEST' | 'FRIEND_ACCEPTED' | 'FRIEND_REQUEST_REJECTED';
+  type: 'FRIEND_REQUEST' | 'FRIEND_ACCEPTED' | 'FRIEND_REQUEST_REJECTED' | 'FRIEND_REMOVED';
   title: string;
   message: string;
   relatedUserId?: string;
@@ -67,13 +67,30 @@ export function useNotifications() {
     }
 
     console.log('[useNotifications] Conectando ao WebSocket...');
+    console.log('[useNotifications] API URL:', env.NEXT_PUBLIC_API_URL);
     
     // Conectar ao WebSocket
-    const apiUrl = env.NEXT_PUBLIC_API_URL.replace('https://', '').replace('http://', '');
+    let apiUrl = env.NEXT_PUBLIC_API_URL;
+    if (apiUrl.startsWith('https://')) {
+      apiUrl = apiUrl.replace('https://', '');
+    } else if (apiUrl.startsWith('http://')) {
+      apiUrl = apiUrl.replace('http://', '');
+    }
     const wsProtocol = env.NEXT_PUBLIC_API_URL.startsWith('https') ? 'wss' : 'ws';
     const socketUrl = `${wsProtocol}://${apiUrl}/notifications`;
+    console.log('[useNotifications] Socket URL:', socketUrl);
+    console.log('[useNotifications] Token sendo enviado:', {
+      tokenExists: !!token,
+      tokenLength: token?.length,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'null',
+    });
 
+    // Opção 1: Header Authorization (recomendado)
     const newSocket = io(socketUrl, {
+      extraHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+      // Opção 3: Auth object (fallback caso o backend não suporte extraHeaders)
       auth: {
         token: token,
       },
@@ -86,6 +103,13 @@ export function useNotifications() {
     // Evento de conexão
     newSocket.on('connect', () => {
       console.log('[useNotifications] ✅ Conectado ao WebSocket');
+      console.log('[useNotifications] 🔍 Handshake info:', {
+        auth: newSocket.auth,
+        handshake: newSocket.handshake ? {
+          auth: newSocket.handshake.auth,
+          headers: newSocket.handshake.headers,
+        } : 'handshake não disponível',
+      });
       setIsConnected(true);
     });
 
@@ -93,17 +117,38 @@ export function useNotifications() {
     newSocket.on('disconnect', (reason) => {
       console.log('[useNotifications] ❌ Desconectado do WebSocket:', reason);
       setIsConnected(false);
+      
+      // Se foi desconectado pelo servidor, pode ser problema de autenticação
+      if (reason === 'io server disconnect') {
+        console.warn('[useNotifications] ⚠️ Servidor desconectou o cliente. Possíveis causas:');
+        console.warn('[useNotifications] - Token inválido ou expirado');
+        console.warn('[useNotifications] - Problema de autenticação no WebSocket');
+        console.warn('[useNotifications] - Namespace incorreto');
+        console.warn('[useNotifications] - Backend pode não estar lendo o token do header Authorization');
+      }
     });
 
     // Erro de conexão
     newSocket.on('connect_error', (error) => {
       console.error('[useNotifications] ❌ Erro ao conectar:', error);
+      console.error('[useNotifications] Erro detalhado:', {
+        message: error.message,
+        type: error.type,
+        description: error.description,
+      });
       setIsConnected(false);
     });
 
     // Evento quando conectado com sucesso (autenticado)
     newSocket.on('connected', (data: { userId: string }) => {
       console.log('[useNotifications] ✅ Autenticado:', data);
+      console.log('[useNotifications] Socket ID:', newSocket.id);
+      console.log('[useNotifications] Socket conectado:', newSocket.connected);
+    });
+    
+    // Log de todos os eventos recebidos para debug
+    newSocket.onAny((eventName, ...args) => {
+      console.log('[useNotifications] 📨 Evento recebido:', eventName, args);
     });
 
     // Receber pedido de amizade
@@ -165,6 +210,15 @@ export function useNotifications() {
         duration: 5000,
         icon: '😔',
       });
+    });
+
+    // Receber confirmação de remoção de amizade
+    // NOTA: Não mostra notificação global aqui - apenas o ProfilePage mostra se o usuário estiver visualizando o perfil
+    newSocket.on('friend_removed', (data: { userId: string; friendId: string; friendName: string; removedAt: string }) => {
+      console.log('[useNotifications] 🗑️ Evento friend_removed recebido via Socket.IO:', data);
+      console.log('[useNotifications] Dados completos do evento friend_removed:', JSON.stringify(data, null, 2));
+      console.log('[useNotifications] ⚠️ Notificação global NÃO será mostrada - apenas atualização no perfil se estiver visualizando');
+      // Não criar notificação global - apenas o ProfilePage/FriendRequestButton tratarão isso
     });
 
     // Ping/Pong para manter conexão viva

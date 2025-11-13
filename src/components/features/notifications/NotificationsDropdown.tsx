@@ -1,16 +1,20 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Bell, X, UserPlus, Check, XCircle, Clock } from 'lucide-react';
 import { useNotificationsContext } from '@/contexts/NotificationsContext';
 import { acceptFriendRequest } from '@/api/friends/accept-friend-request';
 import { rejectFriendRequest } from '@/api/friends/reject-friend-request';
+import { getFriendRequests, FriendRequestItem } from '@/api/friends/get-friend-requests';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import toast from 'react-hot-toast';
+import { Notification } from '@/hooks/features/notifications/useNotifications';
 
 export function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [friendRequests, setFriendRequests] = useState<FriendRequestItem[]>([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const {
     notifications,
@@ -18,8 +22,106 @@ export function NotificationsDropdown() {
     markAsRead,
     markAllAsRead,
     removeNotification,
+    socket,
+    isConnected,
   } = useNotificationsContext();
   const router = useRouter();
+
+  const loadFriendRequests = useCallback(async () => {
+    setIsLoadingRequests(true);
+    try {
+      const response = await getFriendRequests('received');
+      console.log('[NotificationsDropdown] Pedidos recebidos:', response);
+      console.log('[NotificationsDropdown] Requests array:', response.data.requests);
+      
+      // Filtrar apenas pedidos pendentes
+      const pendingRequests = (response.data.requests || []).filter(
+        (req) => req.status === 'PENDING'
+      );
+      
+      console.log('[NotificationsDropdown] Pedidos pendentes:', pendingRequests);
+      setFriendRequests(pendingRequests);
+      
+      // Atualizar contador de não lidas se houver pedidos pendentes
+      if (pendingRequests.length > 0) {
+        console.log('[NotificationsDropdown] ✅ Encontrados', pendingRequests.length, 'pedidos pendentes');
+      }
+    } catch (error) {
+      console.error('[NotificationsDropdown] Erro ao carregar pedidos:', error);
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  }, []);
+
+  // Carregar pedidos de amizade ao montar o componente
+  useEffect(() => {
+    loadFriendRequests();
+  }, [loadFriendRequests]);
+
+  // Recarregar pedidos quando abrir o dropdown
+  useEffect(() => {
+    if (isOpen) {
+      loadFriendRequests();
+    }
+  }, [isOpen, loadFriendRequests]);
+
+  // Escutar eventos do WebSocket para atualizar pedidos em tempo real
+  useEffect(() => {
+    if (!socket) {
+      console.log('[NotificationsDropdown] ⚠️ Socket não disponível');
+      return;
+    }
+
+    console.log('[NotificationsDropdown] 🔌 Socket disponível:', {
+      connected: socket.connected,
+      id: socket.id,
+      isConnected,
+    });
+
+    const handleFriendRequest = () => {
+      console.log('[NotificationsDropdown] 📩 Evento friend_request recebido, recarregando pedidos...');
+      loadFriendRequests();
+    };
+
+    const handleFriendRemoved = () => {
+      console.log('[NotificationsDropdown] 🗑️ Evento friend_removed recebido, recarregando pedidos...');
+      loadFriendRequests();
+    };
+
+    const handleFriendAccepted = () => {
+      console.log('[NotificationsDropdown] ✅ Evento friend_accepted recebido, recarregando pedidos...');
+      loadFriendRequests();
+    };
+
+    // Escutar eventos de amizade
+    socket.on('friend_request', handleFriendRequest);
+    socket.on('friend_removed', handleFriendRemoved);
+    socket.on('friend_accepted', handleFriendAccepted);
+
+    // Log quando socket conectar
+    socket.on('connect', () => {
+      console.log('[NotificationsDropdown] ✅ Socket conectado no componente');
+    });
+
+    // Log quando socket desconectar
+    socket.on('disconnect', (reason) => {
+      console.log('[NotificationsDropdown] ❌ Socket desconectado:', reason);
+    });
+
+    // Log quando autenticado
+    socket.on('connected', (data: { userId: string }) => {
+      console.log('[NotificationsDropdown] ✅ Autenticado no componente:', data);
+    });
+
+    return () => {
+      socket.off('friend_request', handleFriendRequest);
+      socket.off('friend_removed', handleFriendRemoved);
+      socket.off('friend_accepted', handleFriendAccepted);
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connected');
+    };
+  }, [socket, loadFriendRequests, isConnected]);
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -38,7 +140,31 @@ export function NotificationsDropdown() {
     };
   }, [isOpen]);
 
-  const handleAcceptFriendRequest = async (notification: typeof notifications[0]) => {
+  const handleAcceptFriendRequest = async (requestId: string) => {
+    try {
+      await acceptFriendRequest(requestId);
+      toast.success('Pedido de amizade aceito!');
+      // Remover da lista e recarregar
+      setFriendRequests((prev) => prev.filter((req) => req.id !== requestId));
+      await loadFriendRequests();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao aceitar pedido de amizade');
+    }
+  };
+
+  const handleRejectFriendRequest = async (requestId: string) => {
+    try {
+      await rejectFriendRequest(requestId);
+      toast.success('Pedido de amizade rejeitado');
+      // Remover da lista e recarregar
+      setFriendRequests((prev) => prev.filter((req) => req.id !== requestId));
+      await loadFriendRequests();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao rejeitar pedido de amizade');
+    }
+  };
+
+  const handleAcceptFromNotification = async (notification: Notification) => {
     if (!notification.relatedEntityId) return;
 
     try {
@@ -46,12 +172,14 @@ export function NotificationsDropdown() {
       markAsRead(notification.id);
       toast.success('Pedido de amizade aceito!');
       removeNotification(notification.id);
+      // Recarregar pedidos
+      await loadFriendRequests();
     } catch (error: any) {
       toast.error(error.message || 'Erro ao aceitar pedido de amizade');
     }
   };
 
-  const handleRejectFriendRequest = async (notification: typeof notifications[0]) => {
+  const handleRejectFromNotification = async (notification: Notification) => {
     if (!notification.relatedEntityId) return;
 
     try {
@@ -59,6 +187,8 @@ export function NotificationsDropdown() {
       markAsRead(notification.id);
       toast.success('Pedido de amizade rejeitado');
       removeNotification(notification.id);
+      // Recarregar pedidos
+      await loadFriendRequests();
     } catch (error: any) {
       toast.error(error.message || 'Erro ao rejeitar pedido de amizade');
     }
@@ -101,10 +231,12 @@ export function NotificationsDropdown() {
         style={{ background: 'rgb(30, 30, 30)' }}
       >
         <Bell className="w-5 h-5 text-gray-400" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
+        {/* Bolinha verde animada quando há pedidos de amizade */}
+        {friendRequests.length > 0 && (
+          <>
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full animate-ping"></span>
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full"></span>
+          </>
         )}
       </button>
 
@@ -112,7 +244,21 @@ export function NotificationsDropdown() {
         <div className="absolute right-0 top-14 w-96 bg-[rgb(30,30,30)] border border-white/10 rounded-xl shadow-2xl z-50 max-h-[600px] overflow-hidden flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
-            <h3 className="text-white font-semibold text-lg">Notificações</h3>
+            <div className="flex items-center gap-3">
+              <h3 className="text-white font-semibold text-lg">Notificações</h3>
+              {/* Indicador de status do WebSocket */}
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    isConnected ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                  title={isConnected ? 'WebSocket conectado' : 'WebSocket desconectado'}
+                />
+                <span className="text-xs text-gray-400">
+                  {isConnected ? 'Online' : 'Offline'}
+                </span>
+              </div>
+            </div>
             {notifications.length > 0 && (
               <button
                 onClick={() => {
@@ -128,12 +274,69 @@ export function NotificationsDropdown() {
 
           {/* Notifications List */}
           <div className="overflow-y-auto flex-1">
-            {notifications.length === 0 ? (
+            {/* Loading state */}
+            {isLoadingRequests && (
               <div className="p-8 text-center">
-                <Bell className="w-12 h-12 text-gray-500 mx-auto mb-3 opacity-50" />
-                <p className="text-gray-400 text-sm">Nenhuma notificação</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C9FE02] mx-auto"></div>
+                <p className="text-gray-400 text-sm mt-2">Carregando pedidos...</p>
               </div>
-            ) : (
+            )}
+
+            {/* Pedidos de Amizade Recebidos */}
+            {!isLoadingRequests && friendRequests.length > 0 && (
+              <div className="p-3 border-b border-white/10">
+                <h4 className="text-white/60 text-xs font-semibold mb-2 uppercase tracking-wider">
+                  Pedidos de Amizade ({friendRequests.length})
+                </h4>
+                <div className="space-y-2">
+                  {friendRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex gap-3">
+                        <Avatar className="w-10 h-10 shrink-0">
+                          <AvatarImage
+                            src={request.requesterProfileImage || undefined}
+                            alt={request.requesterName}
+                          />
+                          <AvatarFallback className="bg-[#C9FE02] text-black text-xs">
+                            {request.requesterName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium text-sm mb-1">
+                            {request.requesterName}
+                          </p>
+                          <p className="text-gray-400 text-xs mb-2">
+                            Enviou um pedido de amizade
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleAcceptFriendRequest(request.id)}
+                              className="flex-1 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                            >
+                              <Check className="w-3 h-3" />
+                              Aceitar
+                            </button>
+                            <button
+                              onClick={() => handleRejectFriendRequest(request.id)}
+                              className="flex-1 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                            >
+                              <X className="w-3 h-3" />
+                              Rejeitar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Notificações em Tempo Real */}
+            {notifications.length > 0 && (
               <div className="divide-y divide-white/5">
                 {notifications.map((notification) => (
                   <div
@@ -145,7 +348,7 @@ export function NotificationsDropdown() {
                     <div className="flex gap-3">
                       {/* Avatar */}
                       {notification.requester?.profileImage || notification.receiver?.profileImage ? (
-                        <Avatar className="w-10 h-10 flex-shrink-0">
+                        <Avatar className="w-10 h-10 shrink-0">
                           <AvatarImage
                             src={
                               notification.requester?.profileImage ||
@@ -161,7 +364,7 @@ export function NotificationsDropdown() {
                           </AvatarFallback>
                         </Avatar>
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-[#C9FE02] flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-[#C9FE02] flex items-center justify-center shrink-0">
                           {getNotificationIcon(notification.type)}
                         </div>
                       )}
@@ -184,7 +387,7 @@ export function NotificationsDropdown() {
                             </p>
                           </div>
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1" />
+                            <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1" />
                           )}
                         </div>
 
@@ -192,14 +395,14 @@ export function NotificationsDropdown() {
                         {notification.type === 'FRIEND_REQUEST' && notification.requester && (
                           <div className="flex gap-2 mt-3">
                             <button
-                              onClick={() => handleAcceptFriendRequest(notification)}
+                              onClick={() => handleAcceptFromNotification(notification)}
                               className="flex-1 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
                             >
                               <Check className="w-3 h-3" />
                               Aceitar
                             </button>
                             <button
-                              onClick={() => handleRejectFriendRequest(notification)}
+                              onClick={() => handleRejectFromNotification(notification)}
                               className="flex-1 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
                             >
                               <X className="w-3 h-3" />
@@ -222,13 +425,21 @@ export function NotificationsDropdown() {
                       {/* Close button */}
                       <button
                         onClick={() => removeNotification(notification.id)}
-                        className="text-gray-500 hover:text-white transition-colors flex-shrink-0"
+                        className="text-gray-500 hover:text-white transition-colors shrink-0"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Estado vazio */}
+            {!isLoadingRequests && notifications.length === 0 && friendRequests.length === 0 && (
+              <div className="p-8 text-center">
+                <Bell className="w-12 h-12 text-gray-500 mx-auto mb-3 opacity-50" />
+                <p className="text-gray-400 text-sm">Nenhuma notificação</p>
               </div>
             )}
           </div>
