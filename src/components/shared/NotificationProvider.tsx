@@ -4,15 +4,14 @@ import { Toaster } from 'react-hot-toast';
 
 export function NotificationProvider() {
   return (
-    <Toaster
-      position="top-center"
-      reverseOrder={false}
-      gutter={8}
-      containerClassName=""
-      containerStyle={{}}
-      // Suprimir warnings de hydration causados por extensões do navegador
-      suppressHydrationWarning
-      toastOptions={{
+    <div suppressHydrationWarning>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        gutter={8}
+        containerClassName=""
+        containerStyle={{}}
+        toastOptions={{
         duration: 4000,
         style: {
           background: 'rgba(0, 0, 0, 0.8)',
@@ -65,6 +64,7 @@ export function NotificationProvider() {
           },
         },
       }}
-    />
+      />
+    </div>
   );
 }

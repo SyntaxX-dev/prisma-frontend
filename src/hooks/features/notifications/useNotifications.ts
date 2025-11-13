@@ -103,12 +103,8 @@ export function useNotifications() {
     // Evento de conexão
     newSocket.on('connect', () => {
       console.log('[useNotifications] ✅ Conectado ao WebSocket');
-      console.log('[useNotifications] 🔍 Handshake info:', {
+      console.log('[useNotifications] Auth info:', {
         auth: newSocket.auth,
-        handshake: newSocket.handshake ? {
-          auth: newSocket.handshake.auth,
-          headers: newSocket.handshake.headers,
-        } : 'handshake não disponível',
       });
       setIsConnected(true);
     });
@@ -133,8 +129,8 @@ export function useNotifications() {
       console.error('[useNotifications] ❌ Erro ao conectar:', error);
       console.error('[useNotifications] Erro detalhado:', {
         message: error.message,
-        type: error.type,
-        description: error.description,
+        ...(error as any).type && { type: (error as any).type },
+        ...(error as any).description && { description: (error as any).description },
       });
       setIsConnected(false);
     });
