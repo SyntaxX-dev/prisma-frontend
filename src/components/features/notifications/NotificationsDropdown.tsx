@@ -246,18 +246,6 @@ export function NotificationsDropdown() {
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h3 className="text-white font-semibold text-lg">Notificações</h3>
-              {/* Indicador de status do WebSocket */}
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    isConnected ? 'bg-green-500' : 'bg-red-500'
-                  }`}
-                  title={isConnected ? 'WebSocket conectado' : 'WebSocket desconectado'}
-                />
-                <span className="text-xs text-gray-400">
-                  {isConnected ? 'Online' : 'Offline'}
-                </span>
-              </div>
             </div>
             {notifications.length > 0 && (
               <button
@@ -336,9 +324,20 @@ export function NotificationsDropdown() {
             )}
 
             {/* Notificações em Tempo Real */}
-            {notifications.length > 0 && (
+            {notifications
+              .filter((notification) => {
+                // NÃO mostrar notificações de pedido de amizade aqui - elas já aparecem na seção "Pedidos de Amizade"
+                if (notification.type === 'FRIEND_REQUEST') {
+                  console.log('[NotificationsDropdown] ⚠️ Filtrando notificação de pedido de amizade - já aparece na seção de pedidos:', notification.id);
+                  return false;
+                }
+                return true;
+              })
+              .length > 0 && (
               <div className="divide-y divide-white/5">
-                {notifications.map((notification) => (
+                {notifications
+                  .filter((notification) => notification.type !== 'FRIEND_REQUEST')
+                  .map((notification) => (
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-white/5 transition-colors ${
@@ -436,7 +435,9 @@ export function NotificationsDropdown() {
             )}
 
             {/* Estado vazio */}
-            {!isLoadingRequests && notifications.length === 0 && friendRequests.length === 0 && (
+            {!isLoadingRequests && 
+             notifications.filter(n => n.type !== 'FRIEND_REQUEST').length === 0 && 
+             friendRequests.length === 0 && (
               <div className="p-8 text-center">
                 <Bell className="w-12 h-12 text-gray-500 mx-auto mb-3 opacity-50" />
                 <p className="text-gray-400 text-sm">Nenhuma notificação</p>

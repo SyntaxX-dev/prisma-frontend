@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Search, Settings } from "lucide-react";
 import { CommunityList } from "@/components/features/communities/CommunityList";
 import { CommunityChat } from "@/components/features/communities/CommunityChat";
@@ -14,6 +15,18 @@ import DotGrid from "@/components/shared/DotGrid";
 import { getCommunities } from "@/api/communities/get-communities";
 import { CommunityJoinTooltip } from "@/components/features/communities/CommunityJoinTooltip";
 import { NotificationsDropdown } from "@/components/features/notifications/NotificationsDropdown";
+import { getConversations, Conversation } from "@/api/messages/get-conversations";
+import { DirectChatView } from "@/components/features/chat/DirectChatView";
+import { getUserProfile } from "@/api/auth/get-user-profile";
+import { useProfile } from "@/hooks/features/profile";
+import { useChat } from "@/hooks/features/chat/useChat";
+import { Message } from "@/api/messages/send-message";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 
 // Mock data
@@ -458,8 +471,13 @@ const MOCK_CALL_PARTICIPANTS = [
 ];
 
 export default function CommunitiesPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const chatUserId = searchParams.get('chat');
+  const communityIdFromUrl = searchParams.get('community');
+  
   const [communities, setCommunities] = useState<Community[]>([]);
-  const [selectedCommunityId, setSelectedCommunityId] = useState<string>();
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>(communityIdFromUrl || undefined);
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -467,6 +485,12 @@ export default function CommunitiesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [tooltipCommunity, setTooltipCommunity] = useState<Community | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | undefined>();
+  
+  // Estados para chat direto
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(chatUserId || null);
+  const [chatUser, setChatUser] = useState<{ id: string; name: string; profileImage?: string | null } | null>(null);
+  const [isLoadingChatUser, setIsLoadingChatUser] = useState(false);
   
   // Combinar comunidades da API com mocks para busca
   const allCommunities = [...communities, ...MOCK_COMMUNITIES];
@@ -477,6 +501,20 @@ export default function CommunitiesPage() {
 
   // Ref para evitar chamadas duplicadas
   const hasLoadedCommunities = useRef(false);
+  
+  // Hook para obter dados do usuário logado
+  const { userProfile } = useProfile();
+  
+  // Hook para chat direto
+  const {
+    messages: directMessages,
+    isConnected,
+    isTyping,
+    typingUserId,
+    loadConversation,
+    sendMessage,
+    sendTypingIndicator,
+  } = useChat();
 
   // Load communities - apenas uma vez
   useEffect(() => {
@@ -485,6 +523,95 @@ export default function CommunitiesPage() {
       loadCommunities();
     }
   }, []);
+
+  // Carregar conversas
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  // Sincronizar communityId com URL
+  useEffect(() => {
+    const communityParam = searchParams.get('community');
+    if (communityParam && communityParam !== selectedCommunityId) {
+      setSelectedCommunityId(communityParam);
+    } else if (!communityParam && selectedCommunityId) {
+      // Se não há param na URL mas há estado, manter estado (pode ser seleção inicial)
+      // Não limpar aqui para evitar loops
+    }
+  }, [searchParams, selectedCommunityId]);
+
+  // Atualizar chatUserId quando mudar na URL
+  useEffect(() => {
+    const chatParam = searchParams.get('chat');
+    if (chatParam) {
+      setSelectedChatUserId(chatParam);
+      loadChatUser(chatParam);
+    } else {
+      setSelectedChatUserId(null);
+      setChatUser(null);
+    }
+  }, [searchParams]);
+
+  // Carregar conversa quando chatUserId mudar
+  useEffect(() => {
+    if (selectedChatUserId) {
+      loadConversation(selectedChatUserId);
+    }
+  }, [selectedChatUserId, loadConversation]);
+
+  const loadConversations = async () => {
+    try {
+      const response = await getConversations();
+      console.log('[CommunitiesPage] Conversas recebidas da API:', response);
+      if (response.success) {
+        setConversations(response.data.conversations || []);
+      } else {
+        console.warn('[CommunitiesPage] ⚠️ Resposta não foi bem-sucedida:', response);
+        setConversations([]);
+      }
+    } catch (error) {
+      console.error('[CommunitiesPage] Erro ao carregar conversas:', error);
+      setConversations([]);
+    }
+  };
+
+  const loadChatUser = async (userId: string) => {
+    if (!userId) return;
+    try {
+      setIsLoadingChatUser(true);
+      const response = await getUserProfile(userId);
+      if (response.success && response.data) {
+        const userData = {
+          id: response.data.id,
+          name: response.data.name,
+          profileImage: response.data.profileImage,
+        };
+        setChatUser(userData);
+        
+        // Adicionar à lista de conversas se não existir
+        setConversations(prev => {
+          const exists = prev.some(c => c.otherUser.id === userId);
+          if (!exists) {
+            return [{
+              otherUser: {
+                id: userData.id,
+                name: userData.name,
+                email: '',
+                profileImage: userData.profileImage,
+              },
+              unreadCount: 0,
+              isFromMe: false,
+            }, ...prev];
+          }
+          return prev;
+        });
+      }
+    } catch (error) {
+      console.error('[CommunitiesPage] Erro ao carregar usuário do chat:', error);
+    } finally {
+      setIsLoadingChatUser(false);
+    }
+  };
 
   // Load messages when community is selected
   useEffect(() => {
@@ -578,30 +705,38 @@ export default function CommunitiesPage() {
       
       setCommunities(mappedCommunities);
       
-      // Selecionar primeira comunidade que o usuário é membro ou dono
-      if (!selectedCommunityId) {
-        const userCommunity = mappedCommunities.find(
-          (c) => c.isMember || c.isOwner
-        );
-        
-        if (userCommunity) {
-          // Se encontrou uma comunidade que o usuário faz parte, abrir ela
-          setSelectedCommunityId(userCommunity.id);
-        } else if (MOCK_COMMUNITIES.length > 0) {
-          // Se não faz parte de nenhuma, abrir um chat pessoal (mock)
-          setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
-        }
-      }
-    } catch (error: any) {
-      console.error('Erro ao carregar comunidades:', error);
-      toast.error("Erro ao carregar comunidades");
-      // Em caso de erro, usar mocks como fallback
-      setCommunities(MOCK_COMMUNITIES);
-      if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId) {
-        // Abrir um chat pessoal (mock) em caso de erro
-        setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
-      }
-    } finally {
+       // Selecionar primeira comunidade que o usuário é membro ou dono
+       // Só se não houver communityId na URL
+       const currentCommunityIdFromUrl = searchParams.get('community');
+       if (!selectedCommunityId && !currentCommunityIdFromUrl) {
+         const userCommunity = mappedCommunities.find(
+           (c) => c.isMember || c.isOwner
+         );
+         
+         if (userCommunity) {
+           // Se encontrou uma comunidade que o usuário faz parte, abrir ela
+           setSelectedCommunityId(userCommunity.id);
+           // Atualizar URL
+           const params = new URLSearchParams();
+           params.set('community', userCommunity.id);
+           router.push(`/communities?${params.toString()}`);
+         }
+       }
+     } catch (error: any) {
+       console.error('Erro ao carregar comunidades:', error);
+       toast.error("Erro ao carregar comunidades");
+       // Em caso de erro, usar mocks como fallback
+       setCommunities(MOCK_COMMUNITIES);
+       const currentCommunityIdFromUrl = searchParams.get('community');
+       if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId && !currentCommunityIdFromUrl) {
+         // Abrir um chat pessoal (mock) em caso de erro
+         setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
+         // Atualizar URL
+         const params = new URLSearchParams();
+         params.set('community', MOCK_COMMUNITIES[0].id);
+         router.push(`/communities?${params.toString()}`);
+       }
+     } finally {
       setIsLoadingCommunities(false);
     }
   };
@@ -669,6 +804,11 @@ export default function CommunitiesPage() {
     // Se for membro ou dono, abrir normalmente
     if (community.isMember || community.isOwner) {
       setSelectedCommunityId(community.id);
+      // Atualizar URL
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('community', community.id);
+      params.delete('chat');
+      router.push(`/communities?${params.toString()}`);
       return;
     }
 
@@ -689,11 +829,16 @@ export default function CommunitiesPage() {
     // Se havia uma comunidade selecionada no tooltip, abrir ela
     if (tooltipCommunity) {
       setSelectedCommunityId(tooltipCommunity.id);
+      // Atualizar URL
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('community', tooltipCommunity.id);
+      params.delete('chat');
+      router.push(`/communities?${params.toString()}`);
     }
   };
 
-  // Buscar comunidade selecionada tanto nas comunidades da API quanto nos mocks
-  const selectedCommunity = allCommunities.find(
+  // Buscar comunidade selecionada nas comunidades da API
+  const selectedCommunity = communities.find(
     (c) => c.id === selectedCommunityId
   );
 
@@ -766,15 +911,119 @@ export default function CommunitiesPage() {
       {/* Communities List - Ilha Esquerda */}
         <CommunityList
           communities={communities}
-          mockCommunities={MOCK_COMMUNITIES}
           selectedCommunityId={selectedCommunityId}
-          onSelectCommunity={setSelectedCommunityId}
+          onSelectCommunity={(id) => {
+            setSelectedCommunityId(id);
+            setSelectedChatUserId(null);
+            // Atualizar URL com community param
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('community', id);
+            params.delete('chat'); // Remover chat param se existir
+            router.push(`/communities?${params.toString()}`);
+          }}
           onCreateCommunity={() => setIsCreateModalOpen(true)}
           onCommunityClick={handleCommunityClick}
+          conversations={conversations}
+          selectedChatUserId={selectedChatUserId}
+          onSelectConversation={(userId) => {
+            setSelectedChatUserId(userId);
+            setSelectedCommunityId(undefined);
+            // Atualizar URL com chat param
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('chat', userId);
+            params.delete('community'); // Remover community param se existir
+            router.push(`/communities?${params.toString()}`);
+            loadChatUser(userId);
+          }}
         />
 
       {/* Chat Area - Coluna Central + Direita */}
-      {selectedCommunity ? (
+      {selectedChatUserId && userProfile ? (
+        <div className="flex-1 flex flex-col gap-3">
+          {/* Header Global - Fora da Ilha */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Nome do Usuário */}
+            <h1 className="text-white font-semibold text-2xl">
+              {chatUser ? chatUser.name : 'Carregando...'}
+            </h1>
+            
+            {/* Search Bar + Actions */}
+            <div className="flex items-center gap-4">
+              {/* Search Bar */}
+              <div className="relative" style={{ width: '280px' }}>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
+                  style={{
+                    background: 'rgb(30, 30, 30)',
+                  }}
+                />
+              </div>
+
+              {/* Right Actions */}
+              <div className="flex items-center gap-3">
+                <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
+                  <Settings className="w-5 h-5 text-gray-400" />
+                </button>
+                <NotificationsDropdown />
+                <div className="w-12 h-12 rounded-full relative">
+                  <img 
+                    src="https://i.pravatar.cc/150?img=68" 
+                    alt="User Avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9FE02] rounded-full border-2 border-[#040404]" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Conteúdo Principal - Chat + Sidebar */}
+          <div className="flex-1 flex gap-3 overflow-hidden pt-2">
+            {/* Área do Chat Direto - Ilha */}
+            <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
+              {isLoadingChatUser || !chatUser ? (
+                <div className="flex items-center justify-center h-full">
+                  <LoadingGrid size="40" color="#B3E240" />
+                </div>
+              ) : (
+                <DirectChatView
+                  friendId={chatUser.id}
+                  friendName={chatUser.name}
+                  friendAvatar={chatUser.profileImage}
+                  currentUserId={userProfile.id}
+                  currentUserName={userProfile.name}
+                  messages={directMessages}
+                  isConnected={isConnected}
+                  isTyping={isTyping && typingUserId === chatUser.id}
+                  onSend={sendMessage}
+                  onTyping={sendTypingIndicator}
+                />
+              )}
+            </div>
+            
+            {/* Community Info Sidebar - Ilhas Direita */}
+            {chatUser && (
+              <CommunityInfo 
+                community={{
+                  id: `chat-${chatUser.id}`,
+                  name: chatUser.name,
+                  description: '',
+                  avatarUrl: chatUser.profileImage || undefined,
+                  memberCount: 2,
+                  isOwner: false,
+                  isMember: true,
+                }}
+                onStartVideoCall={() => {}}
+                onStartVoiceCall={() => {}}
+                isFromSidebar={false}
+              />
+            )}
+          </div>
+        </div>
+      ) : selectedCommunity ? (
         <div className="flex-1 flex flex-col gap-3">
           {/* Header Global - Fora da Ilha */}
           <div className="flex items-center justify-between gap-4">

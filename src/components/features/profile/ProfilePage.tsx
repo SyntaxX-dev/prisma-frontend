@@ -31,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
 import { RichTextEditor } from '../../shared/RichTextEditor';
 import { HabilitiesModal } from './modals/HabilitiesModal';
 import { FriendRequestButton } from './FriendRequestButton';
+import { MessageCircle } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -689,10 +690,23 @@ export function ProfilePage() {
                                         {/* Botões de Ação */}
                                         <div className="space-y-2">
                                             {!isOwnProfile && (
-                                                <FriendRequestButton 
-                                                    userId={userId || ''} 
-                                                    isFriend={user.isFriend}
-                                                />
+                                                <>
+                                                    <FriendRequestButton 
+                                                        userId={userId || ''} 
+                                                        isFriend={user.isFriend}
+                                                    />
+                                                    {user.isFriend && (
+                                                        <Button
+                                                            onClick={() => {
+                                                                router.push(`/communities?chat=${userId}`);
+                                                            }}
+                                                            className="w-full bg-[#B3E240] hover:bg-[#B3E240]/80 text-black px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
+                                                        >
+                                                            <MessageCircle className="w-4 h-4" />
+                                                            Conversar
+                                                        </Button>
+                                                    )}
+                                                </>
                                             )}
                                             
                                             {/* Botão "Ver perfil privado" - apenas para o próprio perfil */}

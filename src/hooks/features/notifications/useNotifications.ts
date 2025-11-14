@@ -153,15 +153,31 @@ export function useNotifications() {
 
     // Receber pedido de amizade
     newSocket.on('friend_request', (data: Notification) => {
-      console.log('[useNotifications] 📩 Novo pedido de amizade:', data);
+      console.log('[useNotifications] 📩 Novo pedido de amizade recebido via Socket.IO:', data);
       
       const notification: Notification = {
         ...data,
         read: false,
       };
       
-      setNotifications((prev) => [notification, ...prev]);
-      setUnreadCount((prev) => prev + 1);
+      // Verificar se já existe uma notificação com o mesmo relatedEntityId para evitar duplicatas
+      setNotifications((prev) => {
+        const alreadyExists = prev.some(
+          (notif) => 
+            notif.type === 'FRIEND_REQUEST' && 
+            notif.relatedEntityId === notification.relatedEntityId
+        );
+        
+        if (alreadyExists) {
+          console.log('[useNotifications] ⚠️ Notificação de pedido de amizade já existe, não adicionando duplicata:', notification.relatedEntityId);
+          return prev;
+        }
+        
+        console.log('[useNotifications] ✅ Adicionando nova notificação de pedido de amizade');
+        // Incrementar contador apenas se for uma nova notificação
+        setUnreadCount((prev) => prev + 1);
+        return [notification, ...prev];
+      });
       
       toast.success(data.message, {
         duration: 5000,

@@ -13,7 +13,7 @@ interface NavItemProps {
   onSelect: (id: string) => void;
 }
 
-const NavItem: React.FC<NavItemProps & { onCommunityClick?: (id: string, event: React.MouseEvent) => void }> = ({ item, index, onSelect, onCommunityClick }) => {
+const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
   const itemRef = useRef<HTMLButtonElement>(null);
   const inView = useInView(itemRef, { 
     amount: 0.1, 
@@ -21,12 +21,8 @@ const NavItem: React.FC<NavItemProps & { onCommunityClick?: (id: string, event: 
     margin: "0px 0px 200px 0px"
   });
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (onCommunityClick) {
-      onCommunityClick(item.id, e);
-    } else {
-      onSelect(item.id);
-    }
+  const handleClick = () => {
+    onSelect(item.id);
   };
 
   return (
@@ -84,7 +80,10 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
   });
 
   const handleClick = (e: React.MouseEvent) => {
-    if (onCommunityClick) {
+    // Se for uma conversa direta (começa com "chat-"), usar onSelect diretamente
+    if (community.id.startsWith('chat-')) {
+      onSelect(community.id);
+    } else if (onCommunityClick) {
       onCommunityClick(community, e);
     } else {
       onSelect(community.id);
@@ -151,22 +150,46 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
   );
 };
 
+interface ConversationItem {
+  otherUser: {
+    id: string;
+    name: string;
+    email: string;
+    profileImage?: string | null;
+  };
+  lastMessage?: {
+    id: string;
+    content: string;
+    senderId: string;
+    receiverId: string;
+    isRead: boolean;
+    createdAt: string;
+    readAt?: string | null;
+  };
+  unreadCount: number;
+  isFromMe: boolean;
+}
+
 interface CommunityListProps {
   communities: Community[];
-  mockCommunities?: Community[]; // Comunidades mockadas para a lista de chats
   selectedCommunityId?: string;
   onSelectCommunity: (communityId: string) => void;
   onCreateCommunity: () => void;
   onCommunityClick?: (community: Community, event: React.MouseEvent) => void;
+  conversations?: ConversationItem[];
+  selectedChatUserId?: string | null;
+  onSelectConversation?: (userId: string) => void;
 }
 
 export function CommunityList({
   communities,
-  mockCommunities = [],
   selectedCommunityId,
   onSelectCommunity,
   onCreateCommunity,
   onCommunityClick,
+  conversations = [],
+  selectedChatUserId,
+  onSelectConversation,
 }: CommunityListProps) {
   const getInitials = (name: string) => {
     return name
@@ -199,8 +222,25 @@ export function CommunityList({
     avatarUrl: community.avatarUrl || undefined,
   }));
 
-  // Usar comunidades mockadas para a lista de chats, ou as da API se não houver mocks
-  const chatCommunities = mockCommunities.length > 0 ? mockCommunities : communities;
+  // Converter conversas para formato de Community para exibição
+  const conversationCommunities: Community[] = conversations.map((conv) => ({
+    id: `chat-${conv.otherUser.id}`,
+    name: conv.otherUser.name,
+    description: conv.lastMessage?.content || '',
+    avatarUrl: conv.otherUser.profileImage || undefined,
+    memberCount: 2,
+    isOwner: false,
+    isMember: true,
+    lastMessage: conv.lastMessage ? {
+      content: conv.lastMessage.content,
+      sender: conv.isFromMe ? 'Você' : conv.otherUser.name,
+      timestamp: conv.lastMessage.createdAt,
+    } : undefined,
+    createdAt: conv.lastMessage?.createdAt || new Date().toISOString(),
+  }));
+
+  // Apenas conversas diretas de usuários
+  const chatCommunities = conversationCommunities;
 
   return (
     <div className="flex gap-3 h-full">
@@ -229,20 +269,12 @@ export function CommunityList({
               <div className="text-gray-500 text-xs py-2">Nenhuma comunidade</div>
             ) : (
               navItems.map((item, index) => {
-                const community = communities.find(c => c.id === item.id);
-                const handleClick = community && onCommunityClick 
-                  ? (e: React.MouseEvent) => {
-                      onCommunityClick(community, e);
-                    }
-                  : undefined;
-                
                 return (
                   <NavItem 
                     key={item.id} 
                     item={item} 
                     index={index} 
                     onSelect={onSelectCommunity}
-                    onCommunityClick={handleClick ? (id, e) => handleClick(e) : undefined}
                   />
                 );
               })
@@ -284,7 +316,15 @@ export function CommunityList({
           onItemSelect={(item, index) => {
             const community = chatCommunities[index];
             if (community) {
-              onSelectCommunity(community.id);
+              // Verificar se é uma conversa direta (começa com "chat-")
+              if (community.id.startsWith('chat-')) {
+                const userId = community.id.replace('chat-', '');
+                if (onSelectConversation) {
+                  onSelectConversation(userId);
+                }
+              } else {
+                onSelectCommunity(community.id);
+              }
             }
           }}
         >
@@ -293,8 +333,21 @@ export function CommunityList({
               key={community.id}
               community={community}
               index={index}
-              isSelected={selectedCommunityId === community.id}
-              onSelect={onSelectCommunity}
+              isSelected={
+                community.id.startsWith('chat-')
+                  ? selectedChatUserId === community.id.replace('chat-', '')
+                  : selectedCommunityId === community.id
+              }
+              onSelect={(id) => {
+                if (id.startsWith('chat-')) {
+                  const userId = id.replace('chat-', '');
+                  if (onSelectConversation) {
+                    onSelectConversation(userId);
+                  }
+                } else {
+                  onSelectCommunity(id);
+                }
+              }}
               getInitials={getInitials}
               formatTime={formatTime}
               onCommunityClick={onCommunityClick}
