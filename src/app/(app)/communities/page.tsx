@@ -17,6 +17,9 @@ import { CommunityJoinTooltip } from "@/components/features/communities/Communit
 import { NotificationsDropdown } from "@/components/features/notifications/NotificationsDropdown";
 import { getConversations, Conversation } from "@/api/messages/get-conversations";
 import { DirectChatView } from "@/components/features/chat/DirectChatView";
+import { ChatSkeleton } from "@/components/features/chat/ChatSkeleton";
+import { ChatHeaderSkeleton } from "@/components/features/chat/ChatHeaderSkeleton";
+import { ChatSidebarSkeleton } from "@/components/features/chat/ChatSidebarSkeleton";
 import { getUserProfile } from "@/api/auth/get-user-profile";
 import { useProfile } from "@/hooks/features/profile";
 import { useChat } from "@/hooks/features/chat/useChat";
@@ -491,6 +494,7 @@ export default function CommunitiesPage() {
   const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(chatUserId || null);
   const [chatUser, setChatUser] = useState<{ id: string; name: string; profileImage?: string | null } | null>(null);
   const [isLoadingChatUser, setIsLoadingChatUser] = useState(false);
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   
   // Combinar comunidades da API com mocks para busca
   const allCommunities = [...communities, ...MOCK_COMMUNITIES];
@@ -555,9 +559,26 @@ export default function CommunitiesPage() {
   // Carregar conversa quando chatUserId mudar
   useEffect(() => {
     if (selectedChatUserId) {
-      loadConversation(selectedChatUserId);
+      setIsLoadingConversation(true);
+      // Mock delay para visualizar skeletons (2 segundos)
+      setTimeout(() => {
+        loadConversation(selectedChatUserId);
+      }, 2000);
+    } else {
+      setIsLoadingConversation(false);
     }
   }, [selectedChatUserId, loadConversation]);
+
+  // Detectar quando as mensagens foram carregadas
+  useEffect(() => {
+    if (selectedChatUserId && directMessages.length > 0) {
+      // Pequeno delay para garantir que tudo foi renderizado
+      const timer = setTimeout(() => {
+        setIsLoadingConversation(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedChatUserId, directMessages.length]);
 
   const loadConversations = async () => {
     try {
@@ -579,6 +600,8 @@ export default function CommunitiesPage() {
     if (!userId) return;
     try {
       setIsLoadingChatUser(true);
+      // Mock delay para visualizar skeletons (1.5 segundos)
+      await new Promise(resolve => setTimeout(resolve, 1500));
       const response = await getUserProfile(userId);
       if (response.success && response.data) {
         const userData = {
@@ -941,53 +964,55 @@ export default function CommunitiesPage() {
       {selectedChatUserId && userProfile ? (
         <div className="flex-1 flex flex-col gap-3">
           {/* Header Global - Fora da Ilha */}
-          <div className="flex items-center justify-between gap-4">
-            {/* Nome do Usuário */}
-            <h1 className="text-white font-semibold text-2xl">
-              {chatUser ? chatUser.name : 'Carregando...'}
-            </h1>
-            
-            {/* Search Bar + Actions */}
-            <div className="flex items-center gap-4">
-              {/* Search Bar */}
-              <div className="relative" style={{ width: '280px' }}>
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
-                  style={{
-                    background: 'rgb(30, 30, 30)',
-                  }}
-                />
-              </div>
-
-              {/* Right Actions */}
-              <div className="flex items-center gap-3">
-                <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
-                  <Settings className="w-5 h-5 text-gray-400" />
-                </button>
-                <NotificationsDropdown />
-                <div className="w-12 h-12 rounded-full relative">
-                  <img 
-                    src="https://i.pravatar.cc/150?img=68" 
-                    alt="User Avatar"
-                    className="w-full h-full rounded-full object-cover"
+          {isLoadingChatUser || !chatUser || isLoadingConversation ? (
+            <ChatHeaderSkeleton />
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              {/* Nome do Usuário */}
+              <h1 className="text-white font-semibold text-2xl">
+                {chatUser.name}
+              </h1>
+              
+              {/* Search Bar + Actions */}
+              <div className="flex items-center gap-4">
+                {/* Search Bar */}
+                <div className="relative" style={{ width: '280px' }}>
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
+                    style={{
+                      background: 'rgb(30, 30, 30)',
+                    }}
                   />
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9FE02] rounded-full border-2 border-[#040404]" />
+                </div>
+
+                {/* Right Actions */}
+                <div className="flex items-center gap-3">
+                  <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
+                    <Settings className="w-5 h-5 text-gray-400" />
+                  </button>
+                  <NotificationsDropdown />
+                  <div className="w-12 h-12 rounded-full relative">
+                    <img 
+                      src="https://i.pravatar.cc/150?img=68" 
+                      alt="User Avatar"
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9FE02] rounded-full border-2 border-[#040404]" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Conteúdo Principal - Chat + Sidebar */}
           <div className="flex-1 flex gap-3 overflow-hidden pt-2">
             {/* Área do Chat Direto - Ilha */}
             <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
-              {isLoadingChatUser || !chatUser ? (
-                <div className="flex items-center justify-center h-full">
-                  <LoadingGrid size="40" color="#B3E240" />
-                </div>
+              {isLoadingChatUser || !chatUser || isLoadingConversation ? (
+                <ChatSkeleton />
               ) : (
                 <DirectChatView
                   friendId={chatUser.id}
@@ -1005,21 +1030,25 @@ export default function CommunitiesPage() {
             </div>
             
             {/* Community Info Sidebar - Ilhas Direita */}
-            {chatUser && (
-              <CommunityInfo 
-                community={{
-                  id: `chat-${chatUser.id}`,
-                  name: chatUser.name,
-                  description: '',
-                  avatarUrl: chatUser.profileImage || undefined,
-                  memberCount: 2,
-                  isOwner: false,
-                  isMember: true,
-                }}
-                onStartVideoCall={() => {}}
-                onStartVoiceCall={() => {}}
-                isFromSidebar={false}
-              />
+            {isLoadingChatUser || !chatUser || isLoadingConversation ? (
+              <ChatSidebarSkeleton />
+            ) : (
+              chatUser && (
+                <CommunityInfo 
+                  community={{
+                    id: `chat-${chatUser.id}`,
+                    name: chatUser.name,
+                    description: '',
+                    avatarUrl: chatUser.profileImage || undefined,
+                    memberCount: 2,
+                    isOwner: false,
+                    isMember: true,
+                  }}
+                  onStartVideoCall={() => {}}
+                  onStartVoiceCall={() => {}}
+                  isFromSidebar={false}
+                />
+              )
             )}
           </div>
         </div>
