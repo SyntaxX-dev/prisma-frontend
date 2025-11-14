@@ -35,7 +35,7 @@ interface NavbarProps {
 
 export function Navbar({}: NavbarProps) {
 
-  const navItems = ["Dashboard", "Cursos", "Trilhas", "Certificados", "Minha Conta", "Suporte"];
+  const navItems = ["Dashboard", "Vistos Atualmente", "Cursos", "Trilhas", "Certificados", "Minha Conta", "Suporte"];
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -92,6 +92,8 @@ export function Navbar({}: NavbarProps) {
   const handleNavClick = (item: string) => {
     if (item === "Dashboard") {
       navigateWithLoading('/dashboard', 'Carregando Dashboard...');
+    } else if (item === "Vistos Atualmente") {
+      navigateWithLoading('/watching', 'Carregando vídeos...');
     } else if (item === "Cursos") {
       navigateWithLoading('/courses', 'Carregando Cursos...');
     } else if (item === "Trilhas") {
@@ -108,6 +110,8 @@ export function Navbar({}: NavbarProps) {
   const isActive = (item: string) => {
     if (item === "Dashboard") {
       return pathname === '/dashboard';
+    } else if (item === "Vistos Atualmente") {
+      return pathname === '/watching';
     } else if (item === "Cursos") {
       return pathname.startsWith('/courses');
     }

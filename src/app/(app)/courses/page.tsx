@@ -11,7 +11,6 @@ import { usePageDataLoad } from "@/hooks/shared";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../components/ui/button";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
 
 interface Course {
   id: string;
@@ -155,17 +154,7 @@ function CoursesContent() {
                   >
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-white/10">
-                        {course.imageUrl ? (
-                          <Image
-                            src={course.imageUrl}
-                            alt={course.name}
-                            width={48}
-                            height={48}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-2xl">📚</div>
-                        )}
+                        <div className="text-2xl">📚</div>
                       </div>
                       <div className="flex-1">
                         <h3 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">

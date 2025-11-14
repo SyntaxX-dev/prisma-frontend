@@ -13,6 +13,8 @@ import type { CourseProgress } from "@/types/progress";
 import type { Video as ModuleVideo, ModuleProgress, ModuleWithVideos } from "@/api/modules/get-modules-by-subcourse";
 import Image from "next/image";
 import { useCacheInvalidation } from "@/hooks/shared";
+import { saveVideoTimestamp } from "@/api/progress/save-video-timestamp";
+import { getInProgressVideos } from "@/api/progress/get-in-progress-videos";
 
 const modulesWithVideosCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 10 * 60 * 1000;
@@ -100,6 +102,9 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [lastFetchedSubCourseId, setLastFetchedSubCourseId] = useState<string | null>(null);
   const [courseProgress, setCourseProgress] = useState<CourseProgress | null>(null);
   const fetchingRef = useRef(false);
+  const playerRef = useRef<any>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const savedTimestampRef = useRef<number>(0);
 
   const fetchModules = async () => {
     if (!subCourseId) {
@@ -219,6 +224,236 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     }
   }, [localVideoPlaying]);
 
+  // Inicializar YouTube Player API para rastreamento de progresso
+  useEffect(() => {
+    if (!selectedVideo?.youtubeId) return;
+
+    console.log('[Progress] 🎬 Inicializando rastreamento para:', selectedVideo.youtubeId);
+
+    // Carregar YouTube IFrame API se necessário
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+
+    // Buscar progresso salvo antes de criar o player
+    const fetchSavedProgress = async () => {
+      try {
+        const response = await getInProgressVideos();
+        const savedVideo = response.data.videos.find(v => v.videoId === selectedVideo.youtubeId);
+
+        if (savedVideo && savedVideo.currentTimestamp) {
+          savedTimestampRef.current = savedVideo.currentTimestamp;
+          console.log('[Progress] 📍 Progresso salvo encontrado:', savedVideo.currentTimestamp, 'segundos');
+        } else {
+          savedTimestampRef.current = 0;
+          console.log('[Progress] 🆕 Nenhum progresso salvo, iniciando do zero');
+        }
+      } catch (error) {
+        console.error('[Progress] ❌ Erro ao buscar progresso salvo:', error);
+        savedTimestampRef.current = 0;
+      }
+    };
+
+    // Aguardar e inicializar player
+    const initPlayer = async () => {
+      // Buscar progresso salvo primeiro
+      await fetchSavedProgress();
+
+      if (window.YT && window.YT.Player) {
+        const containerId = `youtube-player-${selectedVideo.id}`;
+        const container = document.getElementById(containerId);
+
+        if (container) {
+          try {
+            // Destruir player existente se houver
+            if (playerRef.current) {
+              playerRef.current.destroy();
+              playerRef.current = null;
+            }
+
+            // Criar novo player - a API criará o iframe automaticamente
+            playerRef.current = new window.YT.Player(containerId, {
+              videoId: selectedVideo.youtubeId,
+              playerVars: {
+                autoplay: localVideoPlaying ? 1 : 0,
+                controls: 1,
+                enablejsapi: 1,
+                modestbranding: 1,
+                rel: 0,
+                start: Math.floor(savedTimestampRef.current), // Iniciar do progresso salvo
+              },
+              events: {
+                onReady: (event: any) => {
+                  console.log('[Progress] ✅ Player pronto');
+                  // Se deve estar tocando, iniciar
+                  if (localVideoPlaying) {
+                    event.target.playVideo();
+                  }
+                },
+                onStateChange: async (event: any) => {
+                  console.log('[Progress] 🔄 Estado:', event.data);
+                  if (event.data === 1) { // PLAYING
+                    setLocalVideoPlaying(true);
+                    startProgressTracking();
+                  } else if (event.data === 2) { // PAUSED
+                    setLocalVideoPlaying(false);
+                    stopProgressTracking();
+                    saveProgress();
+                  } else if (event.data === 0) { // ENDED
+                    console.log('[Progress] 🎉 Vídeo finalizado! Marcando como completado...');
+                    setLocalVideoPlaying(false);
+                    stopProgressTracking();
+
+                    // Marcar vídeo como completado (sempre true quando terminar)
+                    if (selectedVideo?.videoId) {
+                      try {
+                        // Se já estiver completado, não fazer nada
+                        if (selectedVideo.isCompleted) {
+                          console.log('[Progress] ✅ Vídeo já estava completado');
+                          return;
+                        }
+
+                        // Marcar como completado no backend
+                        await markVideoCompleted({
+                          videoId: selectedVideo.videoId,
+                          isCompleted: true
+                        });
+
+                        // Atualizar estado local
+                        setVideos(prevVideos =>
+                          prevVideos.map(v =>
+                            v.id === selectedVideo.id
+                              ? { ...v, isCompleted: true, watched: true, completedAt: new Date().toISOString() }
+                              : v
+                          )
+                        );
+
+                        setSelectedVideo(prev => prev ? {
+                          ...prev,
+                          isCompleted: true,
+                          watched: true,
+                          completedAt: new Date().toISOString()
+                        } : null);
+
+                        // Atualizar progresso do curso
+                        setCourseProgress(prev => {
+                          if (!prev) return null;
+                          const newCompleted = prev.completedVideos + 1;
+                          return {
+                            ...prev,
+                            completedVideos: newCompleted,
+                            progressPercentage: Math.round((newCompleted / prev.totalVideos) * 100),
+                            isCompleted: newCompleted === prev.totalVideos
+                          };
+                        });
+
+                        // Invalidar cache
+                        await invalidateTags(['offensives', 'streak']);
+
+                        console.log('[Progress] ✅ Vídeo marcado como completado com sucesso!');
+                      } catch (error) {
+                        console.error('[Progress] ❌ Erro ao marcar como completado:', error);
+                      }
+                    }
+                  }
+                }
+              }
+            });
+            console.log('[Progress] ✅ Player criado');
+          } catch (error) {
+            console.error('[Progress] ❌ Erro ao criar player:', error);
+          }
+        }
+      }
+    };
+
+    // Aguardar API estar pronta
+    const waitForYT = () => {
+      if (window.YT && window.YT.Player) {
+        initPlayer();
+      } else {
+        const timer = setTimeout(waitForYT, 100);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    const timer = setTimeout(waitForYT, 500);
+
+    return () => {
+      clearTimeout(timer);
+      stopProgressTracking();
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+        } catch (e) {
+          console.log('[Progress] Player já foi destruído');
+        }
+        playerRef.current = null;
+      }
+    };
+  }, [selectedVideo?.id, selectedVideo?.youtubeId]);
+
+  const startProgressTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    // Salvar progresso a cada 1 segundo
+    progressIntervalRef.current = setInterval(() => {
+      saveProgress();
+    }, 1000);
+
+    console.log('[Progress] 🔄 Rastreamento iniciado (1s)');
+  };
+
+  const stopProgressTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+      console.log('[Progress] ⏹️ Rastreamento pausado');
+    }
+  };
+
+  const saveProgress = async () => {
+    if (!playerRef.current || !selectedVideo?.youtubeId) return;
+
+    try {
+      const currentTime = Math.floor(playerRef.current.getCurrentTime?.() || 0);
+      const duration = Math.floor(playerRef.current.getDuration?.() || 0);
+
+      console.log('[Progress] 📊 Salvando:', {
+        currentTime,
+        duration,
+        videoId: selectedVideo.youtubeId,
+        videoTitle: selectedVideo.title
+      });
+
+      // Salvar até 1 segundo antes do final (para não conflitar com o evento ENDED)
+      if (currentTime > 0 && currentTime < duration - 1) {
+        const response = await saveVideoTimestamp({
+          videoId: selectedVideo.youtubeId,
+          timestamp: currentTime,
+        });
+        console.log('[Progress] 💾 Salvo com sucesso:', {
+          currentTime,
+          videoId: selectedVideo.youtubeId,
+          response
+        });
+      } else if (currentTime >= duration - 1) {
+        console.log('[Progress] ⏭️ Perto do fim, não salvando (será marcado como completo)');
+      }
+    } catch (error) {
+      console.error('[Progress] ❌ Erro ao salvar:', error);
+      console.error('[Progress] ❌ Detalhes do vídeo:', {
+        videoId: selectedVideo?.youtubeId,
+        title: selectedVideo?.title,
+        id: selectedVideo?.id
+      });
+    }
+  };
 
   const modules: ModuleDisplay[] = (() => {
     if (videos.length === 0) return [];
@@ -435,25 +670,20 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         <div className="relative bg-black aspect-video shadow-2xl rounded-4xl">
           {selectedVideo?.youtubeId ? (
             <>
-              <iframe
-                key={iframeKey}
-                data-video-iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${selectedVideo?.youtubeId}?autoplay=${localVideoPlaying ? 1 : 0}&mute=${false}&rel=0&modestbranding=1&controls=1&enablejsapi=1`}
-                title={selectedVideo?.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full rounded-3xl"
+              {/* Container onde o YouTube Player API criará o iframe */}
+              <div
                 id={`youtube-player-${selectedVideo?.id}`}
+                className="absolute inset-0 w-full h-full rounded-3xl overflow-hidden"
               />
 
               {!localVideoPlaying && (
                 <div
                   className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-3xl cursor-pointer z-10 hover:bg-black/30 transition-all duration-300"
                   onClick={() => {
-                    setLocalVideoPlaying(true);
+                    if (playerRef.current) {
+                      playerRef.current.playVideo();
+                      setLocalVideoPlaying(true);
+                    }
                   }}
                 >
                   <div className="bg-green-500 hover:bg-green-600 rounded-full w-24 h-24 flex items-center justify-center shadow-2xl hover:shadow-green-500/25 transition-all">
@@ -470,7 +700,12 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     variant="ghost"
                     size="sm"
                     className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm border border-white/20"
-                    onClick={() => setLocalVideoPlaying(false)}
+                    onClick={() => {
+                      if (playerRef.current) {
+                        playerRef.current.pauseVideo();
+                        setLocalVideoPlaying(false);
+                      }
+                    }}
                   >
                     Pausar
                   </Button>

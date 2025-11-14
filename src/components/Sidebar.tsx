@@ -97,7 +97,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     } else if (item === "Chats") {
       navigateWithLoading('/courses', 'Carregando Chats...');
     } else if (item === "Vistos atualmente") {
-      navigateWithLoading('/courses', 'Carregando Vistos atualmente...');
+      navigateWithLoading('/watching', 'Carregando Vistos atualmente...');
     } else if (item === "Meu resumo") {
       navigateWithLoading('/courses', 'Carregando Meu resumo...');
     } else if (item === "Perfil") {
