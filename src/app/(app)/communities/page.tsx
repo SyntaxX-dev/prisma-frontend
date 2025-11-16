@@ -23,7 +23,9 @@ import { ChatSidebarSkeleton } from "@/components/features/chat/ChatSidebarSkele
 import { getUserProfile } from "@/api/auth/get-user-profile";
 import { useProfile } from "@/hooks/features/profile";
 import { useChat } from "@/hooks/features/chat/useChat";
+import { useCommunityChat } from "@/hooks/features/chat/useCommunityChat";
 import { Message } from "@/api/messages/send-message";
+import type { CommunityMessage as CommunityMessageType } from "@/types/community-chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -517,10 +519,7 @@ export default function CommunitiesPage() {
   
   const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>(communityIdFromUrl || undefined);
-  const [messages, setMessages] = useState<CommunityMessage[]>([]);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [tooltipCommunity, setTooltipCommunity] = useState<Community | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | undefined>();
@@ -561,6 +560,20 @@ export default function CommunitiesPage() {
     editMessage,
     deleteMessage,
   } = useChat();
+
+  // Hook para chat de comunidades
+  const {
+    messages: communityMessages,
+    pinnedMessages: communityPinnedMessages,
+    isConnected: isCommunityConnected,
+    sendMessage: sendCommunityMessage,
+    editMessage: editCommunityMessage,
+    deleteMessage: deleteCommunityMessage,
+    pinMessage: pinCommunityMessage,
+    unpinMessage: unpinCommunityMessage,
+    loadMessages: loadCommunityMessages,
+    loadPinnedMessages: loadCommunityPinnedMessages,
+  } = useCommunityChat(selectedCommunityId || null);
 
   // Definir loadChatUser antes dos useEffects que o usam
   const loadChatUser = useCallback(async (userId: string) => {
@@ -768,11 +781,10 @@ export default function CommunitiesPage() {
   // Load messages when community is selected
   useEffect(() => {
     if (selectedCommunityId) {
-      loadMessages(selectedCommunityId);
-    } else {
-      setMessages([]);
+      loadCommunityMessages(50, 0);
+      loadCommunityPinnedMessages();
     }
-  }, [selectedCommunityId]);
+  }, [selectedCommunityId, loadCommunityMessages, loadCommunityPinnedMessages]);
 
   const loadCommunities = async () => {
     try {
@@ -927,55 +939,16 @@ export default function CommunitiesPage() {
     }
   };
 
-  const loadMessages = async (communityId: string) => {
-    try {
-      setIsLoadingMessages(true);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Usar mocks das conversas - se não houver mock específico, usar o mock padrão
-      let communityMessages = MOCK_MESSAGES[communityId];
-      
-      // Se não houver mensagens mockadas para esta comunidade, usar as mensagens padrão
-      if (!communityMessages || communityMessages.length === 0) {
-        communityMessages = MOCK_MESSAGES["1"] || [];
-        // Atualizar o communityId das mensagens para corresponder à comunidade selecionada
-        communityMessages = communityMessages.map(msg => ({
-          ...msg,
-          communityId: communityId,
-        }));
-      }
-      
-      setMessages(communityMessages);
-    } catch (error) {
-      toast.error("Failed to load messages");
-    } finally {
-      setIsLoadingMessages(false);
-    }
-  };
-
   const handleSendMessage = async (content: string) => {
     if (!selectedCommunityId) return;
 
     try {
-      setIsSendingMessage(true);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const newMessage: CommunityMessage = {
-        id: `msg-${Date.now()}`,
-        communityId: selectedCommunityId,
-        senderId: "current",
-        senderName: "You",
-        senderAvatar: "https://i.pravatar.cc/150?img=68",
-        content,
-        timestamp: new Date().toISOString(),
-        isOwn: true,
-      };
-      
-      setMessages((prev) => [...prev, newMessage]);
+      const result = await sendCommunityMessage(content);
+      if (!result.success) {
+        toast.error(result.message || "Erro ao enviar mensagem");
+      }
     } catch (error) {
-      toast.error("Failed to send message");
-    } finally {
-      setIsSendingMessage(false);
+      toast.error("Erro ao enviar mensagem");
     }
   };
 
@@ -1278,12 +1251,19 @@ export default function CommunitiesPage() {
             {/* Área do Chat - Ilha */}
             <CommunityChat
               community={selectedCommunity}
-              messages={messages}
+              messages={communityMessages}
+              pinnedMessages={communityPinnedMessages}
+              currentUserId={userProfile?.id}
+              currentUserName={userProfile?.name}
+              currentUserAvatar={userProfile?.profileImage}
               onSendMessage={handleSendMessage}
+              onEditMessage={editCommunityMessage}
+              onDeleteMessage={deleteCommunityMessage}
+              onPinMessage={pinCommunityMessage}
+              onUnpinMessage={unpinCommunityMessage}
               onStartVideoCall={handleStartVideoCall}
               onStartVoiceCall={handleStartVoiceCall}
-              isLoading={isSendingMessage}
-              isLoadingMessages={isLoadingMessages}
+              isConnected={isCommunityConnected}
             />
             
             {/* Community Info Sidebar - Ilhas Direita */}
@@ -1292,6 +1272,8 @@ export default function CommunitiesPage() {
               onStartVideoCall={handleStartVideoCall}
               onStartVoiceCall={handleStartVoiceCall}
               isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
+              pinnedMessages={communityPinnedMessages}
+              currentUserId={userProfile?.id}
             />
           </div>
         </div>

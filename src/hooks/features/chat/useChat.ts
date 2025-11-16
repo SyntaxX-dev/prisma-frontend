@@ -12,6 +12,7 @@ import { unpinMessage } from '@/api/messages/unpin-message';
 import { getPinnedMessages, PinnedMessage } from '@/api/messages/get-pinned-messages';
 import { editMessage } from '@/api/messages/edit-message';
 import { deleteMessage } from '@/api/messages/delete-message';
+import type { MessageEditedEvent } from '@/types/message-events';
 
 export function useChat() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -139,6 +140,38 @@ export function useChat() {
             });
         }
         return prev;
+      });
+    });
+
+    // Evento: mensagem editada em tempo real
+    newSocket.on('message_edited', (data: MessageEditedEvent) => {
+      console.log('[useChat] ✏️ Evento message_edited recebido:', data);
+
+      // Verificar se a mensagem editada pertence à conversa atual
+      // A mensagem pertence à conversa se o currentChatUserIdRef é o senderId ou receiverId
+      const isFromCurrentConversation =
+        data.senderId === currentChatUserIdRef.current ||
+        data.receiverId === currentChatUserIdRef.current;
+
+      if (!isFromCurrentConversation) {
+        console.log('[useChat] ⚠️ Mensagem editada não é da conversa atual, ignorando');
+        return;
+      }
+
+      // Atualizar a mensagem na lista com novo conteúdo e flag edited
+      setMessages((prev) => {
+        const messageExists = prev.some((msg) => msg.id === data.id);
+        if (!messageExists) {
+          console.log('[useChat] ⚠️ Mensagem não encontrada na UI, ignorando');
+          return prev;
+        }
+
+        console.log('[useChat] ✅ Atualizando mensagem editada na UI');
+        return prev.map((msg) =>
+          msg.id === data.id
+            ? { ...msg, content: data.content, edited: true, updatedAt: data.updatedAt }
+            : msg
+        );
       });
     });
 

@@ -275,10 +275,13 @@ export function DirectChatView({
                         : 'bg-[#29292E] text-white border border-[#323238]'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                    <p className="text-sm whitespace-pre-wrap break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{msg.content}</p>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-400">{timeAgo}</span>
+                    {msg.edited && (
+                      <span className="text-xs text-gray-500 italic">(editado)</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -339,8 +342,15 @@ export function DirectChatView({
           onKeyDown={handleKeyDown}
           placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
           disabled={!isConnected}
-          className="min-h-[44px] max-h-[120px] resize-none bg-[#29292E] border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240]"
+          className="!h-[44px] !max-h-[44px] resize-none bg-[#29292E] border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240] overflow-y-auto overflow-x-hidden"
           rows={1}
+          style={{ 
+            wordBreak: 'break-word', 
+            overflowWrap: 'break-word',
+            whiteSpace: 'pre-wrap',
+            height: '44px',
+            maxHeight: '44px'
+          }}
         />
         <Button
           onClick={handleSend}

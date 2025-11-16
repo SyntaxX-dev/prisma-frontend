@@ -4,7 +4,6 @@ import {
   Phone,
   Video,
   Pin,
-  Users,
   ChevronRight,
   ChevronDown,
   Image as ImageIcon,
@@ -17,14 +16,15 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getCommunityMembers } from "@/api/communities/get-community-members";
 import type { CommunityMember } from "@/api/communities/get-community-members";
-import type { PinnedMessage } from "@/api/messages/get-pinned-messages";
+import type { PinnedCommunityMessage } from "@/types/community-chat";
+import { getUserProfile } from "@/api/auth/get-user-profile";
 
 interface CommunityInfoProps {
   community: Community;
   onStartVideoCall?: () => void;
   onStartVoiceCall?: () => void;
   isFromSidebar?: boolean; // Indica se a comunidade vem da sidebar (API) ou é uma conversa mockada
-  pinnedMessages?: PinnedMessage[];
+  pinnedMessages?: PinnedCommunityMessage[];
   currentUserId?: string;
   friendName?: string;
   friendAvatar?: string | null;
@@ -45,6 +45,7 @@ export function CommunityInfo({
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [membersError, setMembersError] = useState<string | null>(null);
+  const [memberMap, setMemberMap] = useState<Map<string, { name: string; avatar?: string }>>(new Map());
   
   // Ref para evitar chamadas duplicadas
   const hasLoadedMembers = useRef<string | null>(null);
@@ -87,7 +88,18 @@ export function CommunityInfo({
       });
       
       if (response.success && response.data) {
-        setMembers(response.data.members || []);
+        const membersList = response.data.members || [];
+        setMembers(membersList);
+        
+        // Criar mapa de membros para fácil acesso
+        const newMemberMap = new Map<string, { name: string; avatar?: string }>();
+        membersList.forEach((member: CommunityMember) => {
+          newMemberMap.set(member.id, {
+            name: member.name,
+            avatar: member.profileImage || undefined,
+          });
+        });
+        setMemberMap(newMemberMap);
       }
     } catch (error: any) {
       console.error('Erro ao carregar membros:', error);
@@ -98,6 +110,61 @@ export function CommunityInfo({
       setIsLoadingMembers(false);
     }
   };
+
+  // Buscar perfis de usuários das mensagens fixadas que não estão na lista de membros
+  useEffect(() => {
+    const loadPinnedMessageUsers = async () => {
+      if (!pinnedMessages.length || memberMap.size === 0) return;
+
+      const missingUserIds = Array.from(
+        new Set(
+          pinnedMessages
+            .map(pinned => pinned.message.senderId)
+            .filter(id => id !== currentUserId && !memberMap.has(id))
+        )
+      );
+
+      if (missingUserIds.length === 0) return;
+
+      try {
+        const userPromises = missingUserIds.map(async (userId) => {
+          try {
+            const response = await getUserProfile(userId);
+            if (response.success && response.data) {
+              return {
+                id: userId,
+                name: response.data.name,
+                avatar: response.data.profileImage || undefined,
+              };
+            }
+          } catch (error) {
+            console.error(`[CommunityInfo] Erro ao buscar perfil do usuário ${userId}:`, error);
+          }
+          return null;
+        });
+
+        const users = (await Promise.all(userPromises)).filter(Boolean) as Array<{
+          id: string;
+          name: string;
+          avatar?: string;
+        }>;
+
+        if (users.length > 0) {
+          setMemberMap((prev) => {
+            const newMap = new Map(prev);
+            users.forEach((user) => {
+              newMap.set(user.id, { name: user.name, avatar: user.avatar });
+            });
+            return newMap;
+          });
+        }
+      } catch (error) {
+        console.error('[CommunityInfo] Erro ao carregar usuários das mensagens fixadas:', error);
+      }
+    };
+
+    loadPinnedMessageUsers();
+  }, [pinnedMessages, currentUserId, memberMap]);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? "" : section);
@@ -132,7 +199,7 @@ export function CommunityInfo({
           background: 'rgb(14, 14, 14)',
         }}
       >
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button 
             onClick={onStartVoiceCall}
             className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-[#1a1a1a] transition-colors cursor-pointer"
@@ -152,16 +219,6 @@ export function CommunityInfo({
           >
             <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgb(26, 26, 26)' }}>
               <Video className="w-4 h-4 text-gray-400" />
-            </div>
-          </button>
-          <button className="flex flex-col items-center gap-2 p-2 rounded-lg transition-colors cursor-pointer">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgb(26, 26, 26)' }}>
-              <Pin className="w-4 h-4 text-gray-400" />
-            </div>
-          </button>
-          <button className="flex flex-col items-center gap-2 p-2 rounded-lg transition-colors cursor-pointer">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgb(26, 26, 26)' }}>
-              <Users className="w-4 h-4 text-gray-400" />
             </div>
           </button>
         </div>
@@ -246,8 +303,13 @@ export function CommunityInfo({
                 ) : (
                   pinnedMessages.map((pinnedMsg) => {
                     const isFromCurrentUser = pinnedMsg.message.senderId === currentUserId;
-                    const senderName = isFromCurrentUser ? 'Você' : (friendName || 'Usuário');
-                    const senderAvatar = isFromCurrentUser ? undefined : (friendAvatar || undefined);
+                    const member = memberMap.get(pinnedMsg.message.senderId);
+                    const senderName = isFromCurrentUser 
+                      ? 'Você' 
+                      : (member?.name || friendName || 'Usuário');
+                    const senderAvatar = isFromCurrentUser 
+                      ? undefined 
+                      : (member?.avatar || friendAvatar || undefined);
                     
                     return (
                       <div 

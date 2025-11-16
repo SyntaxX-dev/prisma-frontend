@@ -13,6 +13,8 @@ export interface Message {
   content: string;
   isRead: boolean;
   createdAt: string;
+  edited?: boolean;
+  updatedAt?: string | null;
 }
 
 export interface SendMessageResponse {

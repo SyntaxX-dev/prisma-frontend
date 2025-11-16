@@ -5,38 +5,65 @@ import {
   Send, 
   Paperclip, 
   Smile, 
-  MoreHorizontal, 
-  Phone, 
-  Video, 
-  Search,
-  Mic
+  Mic,
+  Pin,
+  Trash2,
+  Pencil,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Community, CommunityMessage } from "@/types/community";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "motion/react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import type { Community } from "@/types/community";
+import type { CommunityMessage, PinnedCommunityMessage } from "@/types/community-chat";
+import { getCommunityMembers, type CommunityMember } from "@/api/communities/get-community-members";
+import { getUserProfile } from "@/api/auth/get-user-profile";
 
 interface CommunityChatProps {
   community: Community;
   messages: CommunityMessage[];
-  onSendMessage: (content: string) => void;
+  pinnedMessages?: PinnedCommunityMessage[];
+  currentUserId?: string;
+  currentUserName?: string;
+  currentUserAvatar?: string | null;
+  onSendMessage: (content: string) => Promise<void>;
+  onEditMessage?: (messageId: string, content: string) => Promise<{ success: boolean; message?: string }>;
+  onDeleteMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
+  onPinMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
+  onUnpinMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
   onStartVideoCall?: () => void;
   onStartVoiceCall?: () => void;
-  isLoading?: boolean;
-  isLoadingMessages?: boolean;
+  isConnected?: boolean;
 }
 
 export function CommunityChat({
   community,
   messages,
+  pinnedMessages = [],
+  currentUserId,
+  currentUserName,
+  currentUserAvatar,
   onSendMessage,
+  onEditMessage,
+  onDeleteMessage,
+  onPinMessage,
+  onUnpinMessage,
   onStartVideoCall,
   onStartVoiceCall,
-  isLoading,
-  isLoadingMessages = false,
+  isConnected = false,
 }: CommunityChatProps) {
   const [messageInput, setMessageInput] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [memberMap, setMemberMap] = useState<Map<string, { name: string; avatar?: string }>>(new Map());
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -47,17 +74,137 @@ export function CommunityChat({
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = () => {
-    if (messageInput.trim()) {
-      onSendMessage(messageInput.trim());
+  // Carregar informações dos membros da comunidade
+  useEffect(() => {
+    const loadMembers = async () => {
+      if (!community.id) return;
+      
+      try {
+        setIsLoadingMembers(true);
+        const response = await getCommunityMembers({
+          communityId: community.id,
+          limit: 100,
+          offset: 0,
+        });
+
+        if (response.success && response.data.members) {
+          const newMemberMap = new Map<string, { name: string; avatar?: string }>();
+          
+          // Adicionar membros da comunidade
+          response.data.members.forEach((member: CommunityMember) => {
+            newMemberMap.set(member.id, {
+              name: member.name,
+              avatar: member.profileImage || undefined,
+            });
+          });
+
+          // Adicionar usuário atual se não estiver na lista
+          if (currentUserId && currentUserName) {
+            newMemberMap.set(currentUserId, {
+              name: currentUserName,
+              avatar: currentUserAvatar || undefined,
+            });
+          }
+
+          setMemberMap(newMemberMap);
+        }
+      } catch (error) {
+        console.error('[CommunityChat] Erro ao carregar membros:', error);
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
+
+    loadMembers();
+  }, [community.id, currentUserId, currentUserName, currentUserAvatar]);
+
+  // Buscar perfis de usuários que não estão na lista de membros (caso apareçam nas mensagens)
+  useEffect(() => {
+    const loadMissingUsers = async () => {
+      if (!messages.length) return;
+
+      const missingUserIds = Array.from(
+        new Set(
+          messages
+            .map(msg => msg.senderId)
+            .filter(id => id !== currentUserId && !memberMap.has(id))
+        )
+      );
+
+      if (missingUserIds.length === 0) return;
+
+      try {
+        const userPromises = missingUserIds.map(async (userId) => {
+          try {
+            const response = await getUserProfile(userId);
+            if (response.success && response.data) {
+              return {
+                id: userId,
+                name: response.data.name,
+                avatar: response.data.profileImage || undefined,
+              };
+            }
+          } catch (error) {
+            console.error(`[CommunityChat] Erro ao buscar perfil do usuário ${userId}:`, error);
+          }
+          return null;
+        });
+
+        const users = (await Promise.all(userPromises)).filter(Boolean) as Array<{
+          id: string;
+          name: string;
+          avatar?: string;
+        }>;
+
+        if (users.length > 0) {
+          setMemberMap((prev) => {
+            const newMap = new Map(prev);
+            users.forEach((user) => {
+              newMap.set(user.id, { name: user.name, avatar: user.avatar });
+            });
+            return newMap;
+          });
+        }
+      } catch (error) {
+        console.error('[CommunityChat] Erro ao carregar usuários faltantes:', error);
+      }
+    };
+
+    if (memberMap.size > 0) {
+      loadMissingUsers();
+    }
+  }, [messages, currentUserId, memberMap]);
+
+  const handleSend = async () => {
+    if (!messageInput.trim() || !isConnected) return;
+
+    // Se estiver editando, fazer a edição ao invés de enviar nova mensagem
+    if (editingMessageId && onEditMessage) {
+      const result = await onEditMessage(editingMessageId, messageInput.trim());
+      if (result.success) {
+        setEditingMessageId(null);
+        setHoveredMessageId(null);
+        setMessageInput("");
+      }
+      return;
+    }
+
+    try {
+      await onSendMessage(messageInput.trim());
       setMessageInput("");
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    } else if (e.key === 'Escape' && editingMessageId) {
+      e.preventDefault();
+      setEditingMessageId(null);
+      setMessageInput("");
     }
   };
 
@@ -72,16 +219,13 @@ export function CommunityChat({
 
   const formatTime = (timestamp: string) => {
     try {
-      const date = new Date(timestamp);
-      return date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ptBR });
     } catch {
       return "";
     }
   };
+
+  const isOwn = (senderId: string) => senderId === currentUserId;
 
   return (
     <div 
@@ -91,57 +235,73 @@ export function CommunityChat({
       }}
     >
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
-        {isLoadingMessages ? (
-          <div className="space-y-6">
-            {[...Array(5)].map((_, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <div>
-                  <Skeleton 
-                    className="flex rounded-full w-8 h-8" 
-                    style={{ background: 'rgb(26, 26, 26)' }}
-                  />
-                </div>
-                <div className="w-full flex flex-col gap-2">
-                  <Skeleton 
-                    className="h-3 w-3/5 rounded-lg" 
-                    style={{ background: 'rgb(26, 26, 26)' }}
-                  />
-                  <Skeleton 
-                    className="h-3 w-4/5 rounded-lg" 
-                    style={{ background: 'rgb(26, 26, 26)' }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
+      <div className="flex-1 overflow-y-auto p-5 pt-12 space-y-6 pb-32">
+        {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgb(26, 26, 26)' }}>
                 <Smile className="w-8 h-8 text-gray-600" />
               </div>
               <p className="text-gray-500 text-sm">
-                No messages yet. Start the conversation!
+                Nenhuma mensagem ainda. Comece a conversar!
               </p>
             </div>
           </div>
         ) : (
           <>
             {messages.map((message, index) => {
-              const isOwn = message.isOwn;
+              const messageIsOwn = isOwn(message.senderId);
               const showAvatar = index === 0 || messages[index - 1].senderId !== message.senderId;
-              const showName = showAvatar && !isOwn;
-              
+              const showName = showAvatar && !messageIsOwn;
+              const member = memberMap.get(message.senderId) || { 
+                name: messageIsOwn ? (currentUserName || "Você") : "Usuário", 
+                avatar: messageIsOwn ? (currentUserAvatar || undefined) : undefined 
+              };
+              const isPinned = pinnedMessages.some(p => p.messageId === message.id);
+              const isHovered = hoveredMessageId === message.id;
+              const isEditing = editingMessageId === message.id;
+              const timeAgo = formatTime(message.createdAt);
+
+              const handlePin = async () => {
+                if (isPinned && onUnpinMessage) {
+                  await onUnpinMessage(message.id);
+                } else if (!isPinned && onPinMessage) {
+                  await onPinMessage(message.id);
+                }
+              };
+
+              const handleEdit = () => {
+                setEditingMessageId(message.id);
+                setMessageInput(message.content);
+                setTimeout(() => {
+                  const textarea = document.querySelector('textarea[placeholder*="mensagem"]') as HTMLTextAreaElement;
+                  textarea?.focus();
+                }, 100);
+              };
+
+              const handleCancelEdit = () => {
+                setEditingMessageId(null);
+                setHoveredMessageId(null);
+                setMessageInput("");
+              };
+
+              const handleDelete = () => {
+                setMessageToDelete(message.id);
+                setDeleteConfirmOpen(true);
+              };
+
               return (
                 <div
                   key={message.id}
-                  className={`flex gap-2 ${isOwn ? "flex-row-reverse" : ""}`}
+                  className={`flex gap-3 ${messageIsOwn ? "flex-row-reverse" : ""} group relative`}
                 >
                   <div className="w-8 flex-shrink-0">
-                    {showAvatar && !isOwn && (
+                    {showAvatar && (
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={message.senderAvatar} />
+                        <AvatarImage 
+                          src={messageIsOwn ? (currentUserAvatar || member.avatar) : member.avatar} 
+                          alt={member.name}
+                        />
                         <AvatarFallback 
                           className="text-xs font-medium"
                           style={{
@@ -149,7 +309,7 @@ export function CommunityChat({
                             color: '#000',
                           }}
                         >
-                          {getInitials(message.senderName)}
+                          {getInitials(member.name)}
                         </AvatarFallback>
                       </Avatar>
                     )}
@@ -157,38 +317,92 @@ export function CommunityChat({
 
                   <div
                     className={`flex flex-col max-w-[70%] ${
-                      isOwn ? "items-end" : "items-start"
-                    }`}
+                      messageIsOwn ? "items-end" : "items-start"
+                    } relative`}
+                    onMouseEnter={() => setHoveredMessageId(message.id)}
+                    onMouseLeave={() => !isEditing && setHoveredMessageId(null)}
                   >
                     {showName && (
                       <span className="text-xs text-gray-500 mb-1 px-1">
-                        {message.senderName}
+                        {member.name}
                       </span>
                     )}
-                    
+
+                    {/* Ícones de ação no hover */}
+                    <AnimatePresence>
+                      {(isHovered || isEditing) && (messageIsOwn || onPinMessage) && (
+                        <>
+                          {/* Pin - qualquer membro pode fixar */}
+                          {onPinMessage && (
+                            <motion.button
+                              initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                              transition={{ duration: 0.2, delay: 0 }}
+                              onClick={handlePin}
+                              className={`absolute ${messageIsOwn ? 'right-0' : 'left-0'} -top-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E] transition-colors z-10 shadow-lg cursor-pointer`}
+                              title={isPinned ? 'Desfixar mensagem' : 'Fixar mensagem'}
+                            >
+                              <Pin className={`w-4 h-4 ${isPinned ? 'text-[#B3E240] fill-[#B3E240]' : 'text-gray-400'}`} />
+                            </motion.button>
+                          )}
+
+                          {/* Editar/Cancelar - apenas o autor */}
+                          {messageIsOwn && onEditMessage && (
+                            <motion.button
+                              initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                              transition={{ duration: 0.2, delay: 0.05 }}
+                              onClick={isEditing ? handleCancelEdit : handleEdit}
+                              className={`absolute ${messageIsOwn ? 'right-10' : 'left-10'} ${isEditing ? '-top-12' : '-top-10'} w-8 h-8 flex items-center justify-center rounded-full ${isEditing ? 'bg-red-600 border-red-600 hover:bg-red-700' : 'bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E]'} transition-colors z-10 shadow-lg cursor-pointer`}
+                              title={isEditing ? 'Cancelar edição' : 'Editar mensagem'}
+                            >
+                              {isEditing ? (
+                                <X className="w-4 h-4 text-white" />
+                              ) : (
+                                <Pencil className="w-4 h-4 text-gray-400" />
+                              )}
+                            </motion.button>
+                          )}
+
+                          {/* Deletar - apenas o autor */}
+                          {messageIsOwn && onDeleteMessage && (
+                            <motion.button
+                              initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                              transition={{ duration: 0.2, delay: 0.1 }}
+                              onClick={handleDelete}
+                              className={`absolute ${messageIsOwn ? 'right-20' : 'left-20'} -top-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E] transition-colors z-10 shadow-lg cursor-pointer`}
+                              title="Deletar mensagem"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400" />
+                            </motion.button>
+                          )}
+                        </>
+                      )}
+                    </AnimatePresence>
+
                     <div className="group relative">
                       <div
                         className={`px-3 py-2 rounded-lg ${
-                          isOwn
-                            ? "rounded-tr-sm"
-                            : "rounded-tl-sm"
+                          messageIsOwn
+                            ? "rounded-tr-sm bg-[#B3E240] text-black"
+                            : "rounded-tl-sm bg-[#29292E] text-white border border-[#323238]"
                         }`}
-                        style={{
-                          background: isOwn ? '#C9FE02' : 'rgb(26, 26, 26)',
-                          color: isOwn ? '#000' : '#fff',
-                        }}
                       >
-                        <p className={`text-[13px] leading-relaxed break-words ${isOwn ? 'text-black' : 'text-white'}`}>
+                        <p className={`text-sm leading-relaxed break-words ${messageIsOwn ? 'text-black' : 'text-white'}`} style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                           {message.content}
                         </p>
                       </div>
                       
-                      <div className={`flex items-center gap-1 mt-1 px-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                      <div className={`flex items-center gap-1 mt-1 px-1 ${messageIsOwn ? "justify-end" : "justify-start"}`}>
                         <span className="text-[10px] text-gray-600">
-                          {formatTime(message.timestamp)}
+                          {timeAgo}
                         </span>
-                        {isOwn && (
-                          <span className="text-[10px] text-gray-600">✓✓</span>
+                        {message.edited && (
+                          <span className="text-[10px] text-gray-500 italic">(editado)</span>
                         )}
                       </div>
                     </div>
@@ -203,11 +417,7 @@ export function CommunityChat({
 
       {/* Input */}
       <div 
-        className="p-4"
-        style={{
-          background: 'rgb(30, 30, 30)',
-          borderTop: '1px solid rgb(26, 26, 26)',
-        }}
+        className="p-4 border-t border-white/10 bg-[#1a1a1a]"
       >
         <div className="flex items-center gap-2">
           <Button
@@ -218,21 +428,22 @@ export function CommunityChat({
             <Paperclip className="w-4 h-4" />
           </Button>
 
-          <div 
-            className="flex-1 relative rounded-lg overflow-hidden"
-            style={{
-              background: 'rgb(26, 26, 26)',
+          <Textarea
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
+            disabled={!isConnected}
+            className="!h-[44px] !max-h-[44px] resize-none bg-[#29292E] border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240] overflow-y-auto overflow-x-hidden flex-1"
+            rows={1}
+            style={{ 
+              wordBreak: 'break-word', 
+              overflowWrap: 'break-word',
+              whiteSpace: 'pre-wrap',
+              height: '44px',
+              maxHeight: '44px'
             }}
-          >
-            <Input
-              placeholder="Your message"
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading}
-              className="bg-transparent border-0 text-white placeholder:text-gray-500 focus-visible:ring-0 h-9 text-sm cursor-text"
-            />
-          </div>
+          />
 
           <Button
             variant="ghost"
@@ -252,18 +463,59 @@ export function CommunityChat({
 
           <Button
             onClick={handleSend}
-            disabled={!messageInput.trim() || isLoading}
+            disabled={!messageInput.trim() || !isConnected}
             size="icon"
             className="rounded-lg w-9 h-9 cursor-pointer"
             style={{
-              background: messageInput.trim() ? '#C9FE02' : 'rgb(26, 26, 26)',
-              color: messageInput.trim() ? '#000' : '#666',
+              background: messageInput.trim() && isConnected ? '#C9FE02' : 'rgb(26, 26, 26)',
+              color: messageInput.trim() && isConnected ? '#000' : '#666',
             }}
           >
             <Send className="w-4 h-4" />
           </Button>
         </div>
       </div>
+
+      {/* Modal de confirmação para deletar */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Excluir mensagem</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Tem certeza que deseja excluir esta mensagem? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setMessageToDelete(null);
+              }}
+              variant="ghost"
+              className="text-gray-400 hover:text-white"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (messageToDelete && onDeleteMessage) {
+                  const result = await onDeleteMessage(messageToDelete);
+                  if (result.success) {
+                    console.log('Mensagem excluída com sucesso');
+                  } else {
+                    console.error('Erro ao excluir mensagem:', result.message);
+                  }
+                }
+                setDeleteConfirmOpen(false);
+                setMessageToDelete(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
