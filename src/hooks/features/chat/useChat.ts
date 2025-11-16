@@ -7,6 +7,11 @@ import { sendMessage as sendMessageApi } from '@/api/messages/send-message';
 import { getConversation } from '@/api/messages/get-conversation';
 import { markMessagesAsRead } from '@/api/messages/mark-as-read';
 import { Message } from '@/api/messages/send-message';
+import { pinMessage } from '@/api/messages/pin-message';
+import { unpinMessage } from '@/api/messages/unpin-message';
+import { getPinnedMessages, PinnedMessage } from '@/api/messages/get-pinned-messages';
+import { editMessage } from '@/api/messages/edit-message';
+import { deleteMessage } from '@/api/messages/delete-message';
 
 export function useChat() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -15,6 +20,7 @@ export function useChat() {
   const [currentChatUserId, setCurrentChatUserId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
+  const [pinnedMessages, setPinnedMessages] = useState<PinnedMessage[]>([]);
   const socketRef = useRef<Socket | null>(null);
   const currentChatUserIdRef = useRef<string | null>(null);
 
@@ -90,6 +96,52 @@ export function useChat() {
       }
     });
 
+    newSocket.on('message_deleted', (data: { messageId: string; message: Message }) => {
+      console.log('[useChat] 🗑️ Evento message_deleted recebido:', data);
+      
+      // Verificar se a mensagem deletada pertence à conversa atual
+      const isFromCurrentConversation = 
+        data.message.senderId === currentChatUserIdRef.current || 
+        data.message.receiverId === currentChatUserIdRef.current;
+      
+      if (!isFromCurrentConversation) {
+        console.log('[useChat] ⚠️ Mensagem deletada não é da conversa atual, ignorando');
+        return;
+      }
+      
+      // Atualizar a mensagem na lista com o conteúdo "Mensagem apagada"
+      setMessages((prev) => {
+        const messageExists = prev.some((msg) => msg.id === data.messageId);
+        if (!messageExists) {
+          console.log('[useChat] ⚠️ Mensagem não encontrada na UI, ignorando');
+          return prev;
+        }
+        
+        console.log('[useChat] ✅ Atualizando mensagem deletada na UI');
+        return prev.map((msg) =>
+          msg.id === data.messageId ? data.message : msg
+        );
+      });
+      
+      // Se a mensagem estava fixada, atualizar a lista de fixadas
+      setPinnedMessages((prev) => {
+        const wasPinned = prev.some((p) => p.messageId === data.messageId);
+        if (wasPinned && currentChatUserIdRef.current) {
+          // Recarregar mensagens fixadas para remover a deletada
+          getPinnedMessages(currentChatUserIdRef.current)
+            .then((response) => {
+              if (response.success) {
+                setPinnedMessages(response.data);
+              }
+            })
+            .catch((error) => {
+              console.error('[useChat] Erro ao recarregar mensagens fixadas após deletar:', error);
+            });
+        }
+        return prev;
+      });
+    });
+
     setSocket(newSocket);
     socketRef.current = newSocket;
 
@@ -110,6 +162,7 @@ export function useChat() {
       setCurrentChatUserId(friendId);
       currentChatUserIdRef.current = friendId; // Atualizar ref também
       setMessages([]);
+      setPinnedMessages([]);
       // Limpar indicador de typing ao carregar nova conversa
       setIsTyping(false);
       setTypingUserId(null);
@@ -119,6 +172,16 @@ export function useChat() {
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
       setMessages(sortedMessages);
+
+      // Carregar mensagens fixadas
+      try {
+        const pinnedResponse = await getPinnedMessages(friendId);
+        if (pinnedResponse.success) {
+          setPinnedMessages(pinnedResponse.data);
+        }
+      } catch (error) {
+        console.error('[useChat] Erro ao carregar mensagens fixadas:', error);
+      }
 
       await markMessagesAsRead(friendId);
     } catch (error) {
@@ -214,6 +277,88 @@ export function useChat() {
     });
   }, []);
 
+  const pinMessageHandler = useCallback(async (messageId: string, friendId: string) => {
+    if (!currentChatUserId) return;
+    
+    try {
+      const response = await pinMessage(messageId, friendId);
+      if (response.success) {
+        // Recarregar mensagens fixadas
+        const pinnedResponse = await getPinnedMessages(friendId);
+        if (pinnedResponse.success) {
+          setPinnedMessages(pinnedResponse.data);
+        }
+        return { success: true };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      console.error('[useChat] Erro ao fixar mensagem:', error);
+      return { success: false, message: 'Erro ao fixar mensagem' };
+    }
+  }, [currentChatUserId]);
+
+  const unpinMessageHandler = useCallback(async (messageId: string) => {
+    if (!currentChatUserId) return;
+    
+    try {
+      const response = await unpinMessage(messageId);
+      if (response.success) {
+        // Recarregar mensagens fixadas
+        const pinnedResponse = await getPinnedMessages(currentChatUserId);
+        if (pinnedResponse.success) {
+          setPinnedMessages(pinnedResponse.data);
+        }
+        return { success: true };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      console.error('[useChat] Erro ao desfixar mensagem:', error);
+      return { success: false, message: 'Erro ao desfixar mensagem' };
+    }
+  }, [currentChatUserId]);
+
+  const editMessageHandler = useCallback(async (messageId: string, content: string) => {
+    try {
+      const response = await editMessage(messageId, content);
+      if (response.success) {
+        // Atualizar a mensagem na lista
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === messageId
+              ? { ...msg, content: response.data.content }
+              : msg
+          )
+        );
+        return { success: true };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      console.error('[useChat] Erro ao editar mensagem:', error);
+      return { success: false, message: 'Erro ao editar mensagem' };
+    }
+  }, []);
+
+  const deleteMessageHandler = useCallback(async (messageId: string) => {
+    try {
+      const response = await deleteMessage(messageId);
+      if (response.success) {
+        // Não remover a mensagem aqui - o evento WebSocket message_deleted
+        // será recebido e atualizará a mensagem com "Mensagem apagada"
+        // A atualização da lista de fixadas também será feita pelo evento WebSocket
+        console.log('[useChat] ✅ Mensagem deletada com sucesso, aguardando evento WebSocket');
+        return { success: true };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      console.error('[useChat] Erro ao excluir mensagem:', error);
+      return { success: false, message: 'Erro ao excluir mensagem' };
+    }
+  }, []);
+
   return {
     socket,
     isConnected,
@@ -221,9 +366,14 @@ export function useChat() {
     currentChatUserId,
     isTyping,
     typingUserId,
+    pinnedMessages,
     loadConversation,
     sendMessage,
     sendTypingIndicator,
+    pinMessage: pinMessageHandler,
+    unpinMessage: unpinMessageHandler,
+    editMessage: editMessageHandler,
+    deleteMessage: deleteMessageHandler,
     setMessages,
   };
 }

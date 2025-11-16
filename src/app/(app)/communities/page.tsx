@@ -555,6 +555,11 @@ export default function CommunitiesPage() {
     loadConversation,
     sendMessage,
     sendTypingIndicator,
+    pinMessage,
+    unpinMessage,
+    pinnedMessages,
+    editMessage,
+    deleteMessage,
   } = useChat();
 
   // Definir loadChatUser antes dos useEffects que o usam
@@ -1186,11 +1191,17 @@ export default function CommunitiesPage() {
                   friendAvatar={chatUser.profileImage}
                   currentUserId={userProfile.id}
                   currentUserName={userProfile.name}
+                  currentUserAvatar={userProfile.profileImage}
                   messages={directMessages}
                   isConnected={isConnected}
                   isTyping={isTyping && typingUserId === chatUser.id}
                   onSend={sendMessage}
                   onTyping={sendTypingIndicator}
+                  onPinMessage={pinMessage}
+                  onUnpinMessage={unpinMessage}
+                  pinnedMessages={pinnedMessages}
+                  onEditMessage={editMessage}
+                  onDeleteMessage={deleteMessage}
                 />
               )}
             </div>
@@ -1213,6 +1224,10 @@ export default function CommunitiesPage() {
                   onStartVideoCall={() => {}}
                   onStartVoiceCall={() => {}}
                   isFromSidebar={false}
+                  pinnedMessages={pinnedMessages}
+                  currentUserId={userProfile.id}
+                  friendName={chatUser.name}
+                  friendAvatar={chatUser.profileImage}
                 />
               )
             )}

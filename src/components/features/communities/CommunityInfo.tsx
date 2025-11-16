@@ -17,15 +17,29 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getCommunityMembers } from "@/api/communities/get-community-members";
 import type { CommunityMember } from "@/api/communities/get-community-members";
+import type { PinnedMessage } from "@/api/messages/get-pinned-messages";
 
 interface CommunityInfoProps {
   community: Community;
   onStartVideoCall?: () => void;
   onStartVoiceCall?: () => void;
   isFromSidebar?: boolean; // Indica se a comunidade vem da sidebar (API) ou é uma conversa mockada
+  pinnedMessages?: PinnedMessage[];
+  currentUserId?: string;
+  friendName?: string;
+  friendAvatar?: string | null;
 }
 
-export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall, isFromSidebar = false }: CommunityInfoProps) {
+export function CommunityInfo({ 
+  community, 
+  onStartVideoCall, 
+  onStartVoiceCall, 
+  isFromSidebar = false,
+  pinnedMessages = [],
+  currentUserId,
+  friendName,
+  friendAvatar,
+}: CommunityInfoProps) {
   const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<string>("photos");
   const [members, setMembers] = useState<CommunityMember[]>([]);
@@ -227,55 +241,43 @@ export function CommunityInfo({ community, onStartVideoCall, onStartVoiceCall, i
                   overflowY: 'auto',
                 }}
               >
-                {[
-                  { 
-                    id: "1",
-                    sender: "Harry Fettel", 
-                    content: "Hey guys! Don't forget about our meeting next week!", 
-                    avatar: "https://i.pravatar.cc/150?img=12",
-                    timestamp: "2h"
-                  },
-                  { 
-                    id: "2",
-                    sender: "Conner Garcia", 
-                    content: "Absolutely, I'll be there! Looking forward to catching up.", 
-                    avatar: "https://i.pravatar.cc/150?img=15",
-                    timestamp: "1h"
-                  },
-                  { 
-                    id: "3",
-                    sender: "Frank Garcia", 
-                    content: "We will start celebrating Oleg's birthday soon", 
-                    avatar: "https://i.pravatar.cc/150?img=33",
-                    timestamp: "30m"
-                  },
-                ].map((message) => (
-                  <div 
-                    key={message.id} 
-                    className="flex items-start gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer"
-                  >
-                    <Avatar className="w-8 h-8 shrink-0">
-                      <AvatarImage src={message.avatar} alt={message.sender} />
-                      <AvatarFallback 
-                        className="text-xs font-medium"
-                        style={{
-                          background: '#C9FE02',
-                          color: '#000',
-                        }}
+                {pinnedMessages.length === 0 ? (
+                  <p className="text-xs text-gray-500 text-center py-4">Nenhuma mensagem fixada</p>
+                ) : (
+                  pinnedMessages.map((pinnedMsg) => {
+                    const isFromCurrentUser = pinnedMsg.message.senderId === currentUserId;
+                    const senderName = isFromCurrentUser ? 'Você' : (friendName || 'Usuário');
+                    const senderAvatar = isFromCurrentUser ? undefined : (friendAvatar || undefined);
+                    
+                    return (
+                      <div 
+                        key={pinnedMsg.id} 
+                        className="flex items-start gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer"
                       >
-                        {getInitials(message.sender)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm text-white font-medium truncate">{message.sender}</p>
-                        <span className="text-xs text-gray-500 shrink-0">{message.timestamp}</span>
+                        <Avatar className="w-8 h-8 shrink-0">
+                          <AvatarImage src={senderAvatar || undefined} alt={senderName} />
+                          <AvatarFallback 
+                            className="text-xs font-medium"
+                            style={{
+                              background: '#C9FE02',
+                              color: '#000',
+                            }}
+                          >
+                            {senderName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm text-white font-medium truncate">{senderName}</p>
+                            <span className="text-xs text-gray-500 shrink-0">{pinnedMsg.timeSincePinned}</span>
+                          </div>
+                          <p className="text-xs text-gray-400 line-clamp-2">{pinnedMsg.message.content}</p>
+                        </div>
+                        <Pin className="w-3 h-3 text-gray-500 shrink-0 mt-1" />
                       </div>
-                      <p className="text-xs text-gray-400 line-clamp-2">{message.content}</p>
-                    </div>
-                    <Pin className="w-3 h-3 text-gray-500 shrink-0 mt-1" />
-                  </div>
-                ))}
+                    );
+                  })
+                )}
               </div>
             </>
           )}

@@ -5,9 +5,19 @@ import { Message } from '@/api/messages/send-message';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Send } from 'lucide-react';
+import { Send, Pin, Trash2, Pencil, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { PinnedMessage } from '@/api/messages/get-pinned-messages';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface DirectChatViewProps {
   friendId: string;
@@ -15,11 +25,17 @@ interface DirectChatViewProps {
   friendAvatar?: string | null;
   currentUserId: string;
   currentUserName: string;
+  currentUserAvatar?: string | null;
   messages: Message[];
   isConnected: boolean;
   isTyping: boolean;
   onSend: (receiverId: string, content: string) => Promise<void>;
   onTyping: (receiverId: string, isTyping: boolean) => void;
+  onPinMessage?: (messageId: string, friendId: string) => Promise<{ success: boolean; message?: string }>;
+  onUnpinMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
+  pinnedMessages?: PinnedMessage[];
+  onEditMessage?: (messageId: string, content: string) => Promise<{ success: boolean; message?: string }>;
+  onDeleteMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 export function DirectChatView({
@@ -28,13 +44,23 @@ export function DirectChatView({
   friendAvatar,
   currentUserId,
   currentUserName,
+  currentUserAvatar,
   messages,
   isConnected,
   isTyping,
   onSend,
   onTyping,
+  onPinMessage,
+  onUnpinMessage,
+  pinnedMessages = [],
+  onEditMessage,
+  onDeleteMessage,
 }: DirectChatViewProps) {
   const [message, setMessage] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -49,6 +75,21 @@ export function DirectChatView({
       console.log('[DirectChatView] ⚠️ Não pode enviar:', { hasMessage: !!message.trim(), isConnected });
       return;
     }
+    
+    // Se estiver editando, fazer a edição ao invés de enviar nova mensagem
+    if (editingMessageId && onEditMessage) {
+      const result = await onEditMessage(editingMessageId, message.trim());
+      if (result.success) {
+        setEditingMessageId(null);
+        setHoveredMessageId(null);
+        setMessage('');
+      } else {
+        console.error('Erro ao editar mensagem:', result.message);
+        // TODO: Mostrar toast de erro
+      }
+      return;
+    }
+    
     const messageToSend = message.trim();
     console.log('[DirectChatView] 📤 Iniciando envio de mensagem:', messageToSend);
     console.log('[DirectChatView] Estado atual de mensagens antes de enviar:', messages.length);
@@ -96,13 +137,17 @@ export function DirectChatView({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    } else if (e.key === 'Escape' && editingMessageId) {
+      e.preventDefault();
+      setEditingMessageId(null);
+      setMessage('');
     }
   };
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a]">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pt-12 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-400 text-sm">Nenhuma mensagem ainda. Comece a conversar!</p>
@@ -112,12 +157,55 @@ export function DirectChatView({
             const isOwn = msg.senderId === currentUserId;
             const messageDate = new Date(msg.createdAt);
             const timeAgo = formatDistanceToNow(messageDate, { addSuffix: true, locale: ptBR });
+            const isPinned = pinnedMessages.some(p => p.messageId === msg.id);
+            const isHovered = hoveredMessageId === msg.id;
+            const isEditing = editingMessageId === msg.id;
+
+            const handlePin = async () => {
+              if (isPinned && onUnpinMessage) {
+                const result = await onUnpinMessage(msg.id);
+                if (result.success) {
+                  console.log('Mensagem desfixada');
+                }
+              } else if (!isPinned && onPinMessage) {
+                const result = await onPinMessage(msg.id, friendId);
+                if (result.success) {
+                  console.log('Mensagem fixada');
+                } else {
+                  console.error('Erro ao fixar:', result.message);
+                }
+              }
+            };
+
+            const handleEdit = () => {
+              setEditingMessageId(msg.id);
+              setMessage(msg.content);
+              // Focar no input
+              setTimeout(() => {
+                const textarea = document.querySelector('textarea[placeholder*="Digite"], textarea[placeholder*="Edite"]') as HTMLTextAreaElement;
+                textarea?.focus();
+              }, 100);
+            };
+
+            const handleCancelEdit = () => {
+              setEditingMessageId(null);
+              setHoveredMessageId(null);
+              setMessage('');
+            };
+
+            const handleDelete = () => {
+              setMessageToDelete(msg.id);
+              setDeleteConfirmOpen(true);
+            };
 
             return (
-              <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
+              <div
+                key={msg.id}
+                className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''} group relative`}
+              >
                 <Avatar className="w-8 h-8 shrink-0">
                   <AvatarImage
-                    src={isOwn ? undefined : friendAvatar || undefined}
+                    src={isOwn ? (currentUserAvatar || undefined) : (friendAvatar || undefined)}
                     alt={isOwn ? currentUserName : friendName}
                   />
                   <AvatarFallback className="bg-[#B3E240] text-black text-xs">
@@ -125,7 +213,61 @@ export function DirectChatView({
                   </AvatarFallback>
                 </Avatar>
 
-                <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                <div 
+                  className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[70%] relative`}
+                  onMouseEnter={() => setHoveredMessageId(msg.id)}
+                  onMouseLeave={() => !isEditing && setHoveredMessageId(null)}
+                >
+                  {/* Ícones de ação no hover - 3 bolinhas separadas com animação */}
+                  <AnimatePresence>
+                    {(isHovered || isEditing) && isOwn && (
+                      <>
+                        {/* Bolinha 1 - Pin */}
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                          transition={{ duration: 0.2, delay: 0 }}
+                          onClick={handlePin}
+                          className={`absolute ${isOwn ? 'right-0' : 'left-0'} -top-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E] transition-colors z-10 shadow-lg cursor-pointer`}
+                          title={isPinned ? 'Desfixar mensagem' : 'Fixar mensagem'}
+                        >
+                          <Pin className={`w-4 h-4 ${isPinned ? 'text-[#B3E240] fill-[#B3E240]' : 'text-gray-400'}`} />
+                        </motion.button>
+                        
+                        {/* Bolinha 2 - Editar/Cancelar */}
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                          transition={{ duration: 0.2, delay: 0.05 }}
+                          onClick={isEditing ? handleCancelEdit : handleEdit}
+                          className={`absolute ${isOwn ? 'right-10' : 'left-10'} ${isEditing ? '-top-12' : '-top-10'} w-8 h-8 flex items-center justify-center rounded-full ${isEditing ? 'bg-red-600 border-red-600 hover:bg-red-700' : 'bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E]'} transition-colors z-10 shadow-lg cursor-pointer`}
+                          title={isEditing ? 'Cancelar edição' : 'Editar mensagem'}
+                        >
+                          {isEditing ? (
+                            <X className="w-4 h-4 text-white" />
+                          ) : (
+                            <Pencil className="w-4 h-4 text-gray-400" />
+                          )}
+                        </motion.button>
+                        
+                        {/* Bolinha 3 - Deletar */}
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                          transition={{ duration: 0.2, delay: 0.1 }}
+                          onClick={handleDelete}
+                          className={`absolute ${isOwn ? 'right-20' : 'left-20'} -top-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E] transition-colors z-10 shadow-lg cursor-pointer`}
+                          title="Deletar mensagem"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400" />
+                        </motion.button>
+                      </>
+                    )}
+                  </AnimatePresence>
+
                   <div
                     className={`rounded-lg px-4 py-2 ${
                       isOwn
@@ -137,7 +279,6 @@ export function DirectChatView({
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-400">{timeAgo}</span>
-                    {isOwn && msg.isRead && <span className="text-xs text-gray-400">✓✓</span>}
                   </div>
                 </div>
               </div>
@@ -196,7 +337,7 @@ export function DirectChatView({
           value={message}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder={isConnected ? "Digite uma mensagem..." : "Conectando..."}
+          placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
           disabled={!isConnected}
           className="min-h-[44px] max-h-[120px] resize-none bg-[#29292E] border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240]"
           rows={1}
@@ -209,6 +350,48 @@ export function DirectChatView({
           <Send className="w-4 h-4" />
         </Button>
       </div>
+
+      {/* Modal de confirmação para deletar */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Excluir mensagem</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Tem certeza que deseja excluir esta mensagem? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setMessageToDelete(null);
+              }}
+              variant="ghost"
+              className="text-gray-400 hover:text-white"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (messageToDelete && onDeleteMessage) {
+                  const result = await onDeleteMessage(messageToDelete);
+                  if (result.success) {
+                    console.log('Mensagem excluída com sucesso');
+                  } else {
+                    console.error('Erro ao excluir mensagem:', result.message);
+                    // TODO: Mostrar toast de erro
+                  }
+                }
+                setDeleteConfirmOpen(false);
+                setMessageToDelete(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
