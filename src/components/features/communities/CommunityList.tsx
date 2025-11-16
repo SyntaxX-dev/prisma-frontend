@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useRef } from 'react';
-import { Plus, Settings } from "lucide-react";
+import { Plus, Settings, Home } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Community } from "@/types/community";
 import { motion, useInView } from 'motion/react';
 import AnimatedList from "@/components/shared/AnimatedList";
+import { useRouter } from "next/navigation";
 
 interface NavItemProps {
   item: { id: string; label: string; avatarUrl?: string; active?: boolean };
@@ -242,6 +243,8 @@ export function CommunityList({
   // Apenas conversas diretas de usuários
   const chatCommunities = conversationCommunities;
 
+  const router = useRouter();
+
   return (
     <div className="flex gap-3 h-full">
       {/* Sidebar Cilíndrica - Navegação */}
@@ -251,6 +254,19 @@ export function CommunityList({
           background: 'rgb(14, 14, 14)',
         }}
       >
+        {/* Botão Voltar ao Dashboard */}
+        <button 
+          onClick={() => router.push('/dashboard')}
+          className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 cursor-pointer"
+          style={{
+            background: 'rgb(30, 30, 30)',
+            color: '#C9FE02',
+          }}
+          title="Voltar ao Dashboard"
+        >
+          <Home className="w-5 h-5" />
+        </button>
+
         {/* Logo */}
         <div className="w-12 h-12 flex items-center justify-center shrink-0">
           <img 

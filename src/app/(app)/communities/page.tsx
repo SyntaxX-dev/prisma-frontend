@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, Settings } from "lucide-react";
 import { CommunityList } from "@/components/features/communities/CommunityList";
@@ -473,6 +473,42 @@ const MOCK_CALL_PARTICIPANTS = [
   { id: "4", name: "Ana Oliveira", avatarUrl: "https://i.pravatar.cc/150?img=45", isMuted: false, isVideoOff: false, isSpeaking: false },
 ];
 
+// Funções para gerenciar última conversa no localStorage
+const LAST_CONVERSATION_KEY = 'last_conversation_communities';
+
+interface LastConversation {
+  type: 'community' | 'chat';
+  id: string;
+}
+
+const saveLastConversation = (type: 'community' | 'chat', id: string) => {
+  if (typeof window !== 'undefined') {
+    try {
+      const lastConversation: LastConversation = { type, id };
+      localStorage.setItem(LAST_CONVERSATION_KEY, JSON.stringify(lastConversation));
+      console.log('[CommunitiesPage] 💾 Última conversa salva:', lastConversation);
+    } catch (error) {
+      console.error('[CommunitiesPage] Erro ao salvar última conversa:', error);
+    }
+  }
+};
+
+const loadLastConversation = (): LastConversation | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem(LAST_CONVERSATION_KEY);
+      if (saved) {
+        const lastConversation = JSON.parse(saved) as LastConversation;
+        console.log('[CommunitiesPage] 📂 Última conversa carregada:', lastConversation);
+        return lastConversation;
+      }
+    } catch (error) {
+      console.error('[CommunitiesPage] Erro ao carregar última conversa:', error);
+    }
+  }
+  return null;
+};
+
 export default function CommunitiesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -505,6 +541,7 @@ export default function CommunitiesPage() {
 
   // Ref para evitar chamadas duplicadas
   const hasLoadedCommunities = useRef(false);
+  const hasRestoredLastConversation = useRef(false);
   
   // Hook para obter dados do usuário logado
   const { userProfile } = useProfile();
@@ -520,6 +557,47 @@ export default function CommunitiesPage() {
     sendTypingIndicator,
   } = useChat();
 
+  // Definir loadChatUser antes dos useEffects que o usam
+  const loadChatUser = useCallback(async (userId: string) => {
+    if (!userId) return;
+    try {
+      setIsLoadingChatUser(true);
+      // Mock delay para visualizar skeletons (1.5 segundos)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await getUserProfile(userId);
+      if (response.success && response.data) {
+        const userData = {
+          id: response.data.id,
+          name: response.data.name,
+          profileImage: response.data.profileImage,
+        };
+        setChatUser(userData);
+        
+        // Adicionar à lista de conversas se não existir
+        setConversations(prev => {
+          const exists = prev.some(c => c.otherUser.id === userId);
+          if (!exists) {
+            return [{
+              otherUser: {
+                id: userData.id,
+                name: userData.name,
+                email: '',
+                profileImage: userData.profileImage,
+              },
+              unreadCount: 0,
+              isFromMe: false,
+            }, ...prev];
+          }
+          return prev;
+        });
+      }
+    } catch (error) {
+      console.error('[CommunitiesPage] Erro ao carregar usuário do chat:', error);
+    } finally {
+      setIsLoadingChatUser(false);
+    }
+  }, []);
+
   // Load communities - apenas uma vez
   useEffect(() => {
     if (!hasLoadedCommunities.current) {
@@ -528,33 +606,119 @@ export default function CommunitiesPage() {
     }
   }, []);
 
+  // Este useEffect foi removido - a restauração agora é feita no useEffect abaixo (linha 709)
+  // que verifica searchParams diretamente, evitando conflitos
+
+  // Resetar flag quando não há parâmetros na URL e comunidades foram carregadas
+  // Isso permite restaurar a última conversa toda vez que entrar em /communities sem parâmetros
+  useEffect(() => {
+    const chatParam = searchParams.get('chat');
+    const communityParam = searchParams.get('community');
+    
+    // Se não há parâmetros na URL e comunidades já foram carregadas, resetar flag
+    // Isso permite restaurar quando entrar na página sem parâmetros
+    if (!chatParam && !communityParam && !isLoadingCommunities && communities.length > 0) {
+      // Só resetar se ainda não foi restaurado nesta verificação
+      // Isso evita loops infinitos
+      if (hasRestoredLastConversation.current) {
+        // Se já foi restaurado mas não há parâmetros, significa que o usuário voltou à página
+        // Resetar para permitir restaurar novamente
+        hasRestoredLastConversation.current = false;
+      }
+    }
+  }, [searchParams, isLoadingCommunities, communities]);
+
   // Carregar conversas
   useEffect(() => {
     loadConversations();
   }, []);
 
   // Sincronizar communityId com URL
+  // IMPORTANTE: Não interferir se houver um chat na URL
   useEffect(() => {
+    const chatParam = searchParams.get('chat');
     const communityParam = searchParams.get('community');
-    if (communityParam && communityParam !== selectedCommunityId) {
-      setSelectedCommunityId(communityParam);
-    } else if (!communityParam && selectedCommunityId) {
-      // Se não há param na URL mas há estado, manter estado (pode ser seleção inicial)
-      // Não limpar aqui para evitar loops
+    
+    // Só sincronizar communityId se não houver chat na URL
+    if (!chatParam) {
+      if (communityParam && communityParam !== selectedCommunityId) {
+        setSelectedCommunityId(communityParam);
+      } else if (!communityParam && selectedCommunityId) {
+        // Se não há param na URL mas há estado, manter estado (pode ser seleção inicial)
+        // Não limpar aqui para evitar loops
+      }
     }
   }, [searchParams, selectedCommunityId]);
 
-  // Atualizar chatUserId quando mudar na URL
+  // Salvar última conversa quando há parâmetros na URL (chat ou community)
+  // Isso garante que ao sair e voltar, o estado seja restaurado
   useEffect(() => {
     const chatParam = searchParams.get('chat');
+    const communityParam = searchParams.get('community');
+    
+    // Salvar automaticamente quando há parâmetros na URL
+    if (chatParam) {
+      saveLastConversation('chat', chatParam);
+      console.log('[CommunitiesPage] 💾 Chat salvo automaticamente:', chatParam);
+    } else if (communityParam) {
+      saveLastConversation('community', communityParam);
+      console.log('[CommunitiesPage] 💾 Comunidade salva automaticamente:', communityParam);
+    }
+  }, [searchParams]);
+
+  // Atualizar chatUserId quando mudar na URL e restaurar última conversa se necessário
+  useEffect(() => {
+    const chatParam = searchParams.get('chat');
+    const communityParam = searchParams.get('community');
+    
+    // Se não há parâmetros na URL e ainda não restauramos, restaurar última conversa
+    // Priorizar chats sobre comunidades se ambos estiverem salvos
+    if (!chatParam && !communityParam && !hasRestoredLastConversation.current && !isLoadingCommunities) {
+      const lastConversation = loadLastConversation();
+      if (lastConversation) {
+        console.log('[CommunitiesPage] 🔄 Restaurando última conversa ao entrar na página:', lastConversation);
+        hasRestoredLastConversation.current = true;
+        
+        // Priorizar chats - se for chat, restaurar imediatamente
+        if (lastConversation.type === 'chat') {
+          // Para chats, podemos restaurar mesmo sem conversations carregado
+          // loadChatUser será chamado automaticamente quando a URL for atualizada
+          setSelectedChatUserId(lastConversation.id);
+          const params = new URLSearchParams();
+          params.set('chat', lastConversation.id);
+          router.push(`/communities?${params.toString()}`);
+          return;
+        } else if (lastConversation.type === 'community') {
+          // Para comunidades, precisamos que communities esteja carregado
+          if (communities.length > 0) {
+            const community = communities.find(c => c.id === lastConversation.id);
+            if (community && (community.isMember || community.isOwner)) {
+              setSelectedCommunityId(lastConversation.id);
+              const params = new URLSearchParams();
+              params.set('community', lastConversation.id);
+              router.push(`/communities?${params.toString()}`);
+              return;
+            }
+          }
+        }
+      }
+    }
+    
+    // Processar parâmetros da URL
     if (chatParam) {
       setSelectedChatUserId(chatParam);
       loadChatUser(chatParam);
-    } else {
+      // Marcar como restaurado quando há parâmetros na URL
+      hasRestoredLastConversation.current = true;
+    } else if (communityParam) {
+      // Marcar como restaurado quando há parâmetros na URL
+      hasRestoredLastConversation.current = true;
+    } else if (!chatParam && !communityParam) {
+      // Só limpar se não houver parâmetros
       setSelectedChatUserId(null);
       setChatUser(null);
     }
-  }, [searchParams]);
+  }, [searchParams, isLoadingCommunities, communities, router, loadChatUser]);
 
   // Carregar conversa quando chatUserId mudar
   useEffect(() => {
@@ -593,46 +757,6 @@ export default function CommunitiesPage() {
     } catch (error) {
       console.error('[CommunitiesPage] Erro ao carregar conversas:', error);
       setConversations([]);
-    }
-  };
-
-  const loadChatUser = async (userId: string) => {
-    if (!userId) return;
-    try {
-      setIsLoadingChatUser(true);
-      // Mock delay para visualizar skeletons (1.5 segundos)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const response = await getUserProfile(userId);
-      if (response.success && response.data) {
-        const userData = {
-          id: response.data.id,
-          name: response.data.name,
-          profileImage: response.data.profileImage,
-        };
-        setChatUser(userData);
-        
-        // Adicionar à lista de conversas se não existir
-        setConversations(prev => {
-          const exists = prev.some(c => c.otherUser.id === userId);
-          if (!exists) {
-            return [{
-              otherUser: {
-                id: userData.id,
-                name: userData.name,
-                email: '',
-                profileImage: userData.profileImage,
-              },
-              unreadCount: 0,
-              isFromMe: false,
-            }, ...prev];
-          }
-          return prev;
-        });
-      }
-    } catch (error) {
-      console.error('[CommunitiesPage] Erro ao carregar usuário do chat:', error);
-    } finally {
-      setIsLoadingChatUser(false);
     }
   };
 
@@ -729,9 +853,35 @@ export default function CommunitiesPage() {
       setCommunities(mappedCommunities);
       
        // Selecionar primeira comunidade que o usuário é membro ou dono
-       // Só se não houver communityId na URL
+       // Só se não houver communityId na URL e não houver última conversa salva
        const currentCommunityIdFromUrl = searchParams.get('community');
-       if (!selectedCommunityId && !currentCommunityIdFromUrl) {
+       const currentChatUserIdFromUrl = searchParams.get('chat');
+       
+       // Só selecionar automaticamente se não houver parâmetros na URL
+       if (!selectedCommunityId && !currentCommunityIdFromUrl && !currentChatUserIdFromUrl) {
+         // Verificar se há última conversa salva
+         const lastConversation = loadLastConversation();
+         
+         if (lastConversation) {
+           // Se há uma última conversa salva, não selecionar comunidade automaticamente
+           // A restauração será feita pelo useEffect que monitora searchParams
+           if (lastConversation.type === 'chat') {
+             // Se é um chat, não selecionar comunidade - o chat será restaurado pelo useEffect
+             return;
+           } else if (lastConversation.type === 'community') {
+             const lastCommunity = mappedCommunities.find(c => c.id === lastConversation.id);
+             if (lastCommunity && (lastCommunity.isMember || lastCommunity.isOwner)) {
+               setSelectedCommunityId(lastCommunity.id);
+               const params = new URLSearchParams();
+               params.set('community', lastCommunity.id);
+               router.push(`/communities?${params.toString()}`);
+               return; // Não continuar para seleção automática
+             }
+           }
+           // Se a última conversa não existe mais ou não é válida, continuar para seleção automática
+         }
+         
+         // Se não há última conversa válida, selecionar primeira comunidade
          const userCommunity = mappedCommunities.find(
            (c) => c.isMember || c.isOwner
          );
@@ -739,6 +889,8 @@ export default function CommunitiesPage() {
          if (userCommunity) {
            // Se encontrou uma comunidade que o usuário faz parte, abrir ela
            setSelectedCommunityId(userCommunity.id);
+           // Salvar como última conversa
+           saveLastConversation('community', userCommunity.id);
            // Atualizar URL
            const params = new URLSearchParams();
            params.set('community', userCommunity.id);
@@ -751,13 +903,19 @@ export default function CommunitiesPage() {
        // Em caso de erro, usar mocks como fallback
        setCommunities(MOCK_COMMUNITIES);
        const currentCommunityIdFromUrl = searchParams.get('community');
-       if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId && !currentCommunityIdFromUrl) {
-         // Abrir um chat pessoal (mock) em caso de erro
-         setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
-         // Atualizar URL
-         const params = new URLSearchParams();
-         params.set('community', MOCK_COMMUNITIES[0].id);
-         router.push(`/communities?${params.toString()}`);
+       const currentChatUserIdFromUrl = searchParams.get('chat');
+       // Só selecionar comunidade automaticamente se não houver chat na URL e não houver última conversa salva
+       if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId && !currentCommunityIdFromUrl && !currentChatUserIdFromUrl) {
+         // Verificar se há uma última conversa salva antes de selecionar automaticamente
+         const lastConversation = loadLastConversation();
+         if (!lastConversation || lastConversation.type !== 'chat') {
+           // Só selecionar comunidade se não houver chat salvo
+           setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
+           // Atualizar URL
+           const params = new URLSearchParams();
+           params.set('community', MOCK_COMMUNITIES[0].id);
+           router.push(`/communities?${params.toString()}`);
+         }
        }
      } finally {
       setIsLoadingCommunities(false);
@@ -827,6 +985,8 @@ export default function CommunitiesPage() {
     // Se for membro ou dono, abrir normalmente
     if (community.isMember || community.isOwner) {
       setSelectedCommunityId(community.id);
+      // Salvar como última conversa
+      saveLastConversation('community', community.id);
       // Atualizar URL
       const params = new URLSearchParams(searchParams.toString());
       params.set('community', community.id);
@@ -852,6 +1012,8 @@ export default function CommunitiesPage() {
     // Se havia uma comunidade selecionada no tooltip, abrir ela
     if (tooltipCommunity) {
       setSelectedCommunityId(tooltipCommunity.id);
+      // Salvar como última conversa
+      saveLastConversation('community', tooltipCommunity.id);
       // Atualizar URL
       const params = new URLSearchParams(searchParams.toString());
       params.set('community', tooltipCommunity.id);
@@ -938,6 +1100,8 @@ export default function CommunitiesPage() {
           onSelectCommunity={(id) => {
             setSelectedCommunityId(id);
             setSelectedChatUserId(null);
+            // Salvar como última conversa
+            saveLastConversation('community', id);
             // Atualizar URL com community param
             const params = new URLSearchParams(searchParams.toString());
             params.set('community', id);
@@ -951,6 +1115,8 @@ export default function CommunitiesPage() {
           onSelectConversation={(userId) => {
             setSelectedChatUserId(userId);
             setSelectedCommunityId(undefined);
+            // Salvar como última conversa
+            saveLastConversation('chat', userId);
             // Atualizar URL com chat param
             const params = new URLSearchParams(searchParams.toString());
             params.set('chat', userId);
