@@ -257,10 +257,11 @@ export function CommunityList({
   };
 
   // Usar as comunidades da API como navItems
+  // Só marcar como ativo se não houver chat de usuário selecionado
   const navItems = communities.map((community) => ({
     id: community.id,
     label: getInitials(community.name),
-    active: selectedCommunityId === community.id,
+    active: selectedCommunityId === community.id && !selectedChatUserId,
     avatarUrl: community.avatarUrl || undefined,
   }));
 
