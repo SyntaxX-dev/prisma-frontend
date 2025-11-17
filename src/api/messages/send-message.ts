@@ -39,8 +39,8 @@ export async function sendMessage(
     console.log('[sendMessage] Estrutura da resposta:', {
       success: response.success,
       hasData: !!response.data,
-      hasMessage: !!response.data?.message,
-      message: response.data?.message
+      messageId: response.data?.id,
+      content: response.data?.content
     });
     return response;
   } catch (error) {

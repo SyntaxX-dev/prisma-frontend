@@ -123,14 +123,20 @@ export function useCommunityChat(communityId: string | null) {
       if (data.communityId === currentCommunityId) {
         console.log('[useCommunityChat] ✅ Mensagem é da comunidade atual, adicionando');
         setMessages((prev) => {
-          // Verificar se a mensagem já existe (evitar duplicatas)
-          const exists = prev.some((msg) => msg.id === data.id);
+          // Verificar se a mensagem já existe (evitar duplicatas) 
+          const exists = prev.some((msg) => msg.id === data.id);   
           if (exists) {
             console.log('[useCommunityChat] ⚠️ Mensagem já existe, ignorando');
             return prev;
           }
           console.log('[useCommunityChat] ✅ Adicionando nova mensagem ao estado');
-          return [...prev, data];
+          // Converter NewCommunityMessageEvent para CommunityMessage adicionando propriedades faltantes
+          const communityMessage: CommunityMessage = {
+            ...data,
+            edited: false,
+            updatedAt: null,
+          };
+          return [...prev, communityMessage];
         });
       } else {
         console.log('[useCommunityChat] ⚠️ Mensagem não é da comunidade atual, ignorando:', {
@@ -240,7 +246,8 @@ export function useCommunityChat(communityId: string | null) {
         setMessages(sortedMessages);
         console.log('[useCommunityChat] ✅ Mensagens carregadas:', sortedMessages.length);
       } else {
-        console.error('[useCommunityChat] ❌ Erro ao carregar mensagens:', response.message);
+        const errorMessage = 'message' in response ? response.message : 'Erro ao carregar mensagens';
+        console.error('[useCommunityChat] ❌ Erro ao carregar mensagens:', errorMessage);
       }
     } catch (error) {
       console.error('[useCommunityChat] ❌ Erro ao carregar mensagens:', error);
@@ -256,7 +263,8 @@ export function useCommunityChat(communityId: string | null) {
         setPinnedMessages(response.data);
         console.log('[useCommunityChat] ✅ Mensagens fixadas carregadas:', response.data.length);
       } else {
-        console.error('[useCommunityChat] ❌ Erro ao carregar mensagens fixadas:', response.message);
+        const errorMessage = 'message' in response ? response.message : 'Erro ao carregar mensagens fixadas';
+        console.error('[useCommunityChat] ❌ Erro ao carregar mensagens fixadas:', errorMessage);
       }
     } catch (error) {
       console.error('[useCommunityChat] ❌ Erro ao carregar mensagens fixadas:', error);

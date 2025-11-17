@@ -785,8 +785,10 @@ export function useChat() {
     });
   }, []);
 
-  const pinMessageHandler = useCallback(async (messageId: string, friendId: string) => {
-    if (!currentChatUserId) return;
+  const pinMessageHandler = useCallback(async (messageId: string, friendId: string): Promise<{ success: boolean; message?: string }> => {
+    if (!currentChatUserId) {
+      return { success: false, message: 'Chat não selecionado' };
+    }
     
     try {
       const response = await pinMessage(messageId, friendId);
@@ -806,8 +808,10 @@ export function useChat() {
     }
   }, [currentChatUserId]);
 
-  const unpinMessageHandler = useCallback(async (messageId: string) => {
-    if (!currentChatUserId) return;
+  const unpinMessageHandler = useCallback(async (messageId: string): Promise<{ success: boolean; message?: string }> => {
+    if (!currentChatUserId) {
+      return { success: false, message: 'Chat não selecionado' };
+    }
     
     try {
       const response = await unpinMessage(messageId);

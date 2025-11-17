@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, Settings } from "lucide-react";
 import { CommunityList } from "@/components/features/communities/CommunityList";
@@ -512,7 +512,7 @@ const loadLastConversation = (): LastConversation | null => {
   return null;
 };
 
-export default function CommunitiesPage() {
+function CommunitiesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const chatUserId = searchParams.get('chat');
@@ -1275,6 +1275,7 @@ export default function CommunitiesPage() {
                 memberCount: 2,
                 isOwner: false,
                 isMember: true,
+                createdAt: new Date().toISOString(),
               }}
               onStartVideoCall={() => {}}
               onStartVoiceCall={() => {}}
@@ -1411,5 +1412,17 @@ export default function CommunitiesPage() {
       />
       </div>
     </div>
+  );
+}
+
+export default function CommunitiesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+        <LoadingGrid />
+      </div>
+    }>
+      <CommunitiesPageContent />
+    </Suspense>
   );
 }
