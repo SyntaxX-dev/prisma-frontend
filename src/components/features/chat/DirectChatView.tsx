@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useUserStatus } from '@/providers/UserStatusProvider';
 
 interface DirectChatViewProps {
   friendId: string;
@@ -63,6 +64,17 @@ export function DirectChatView({
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { statusMap, getStatus } = useUserStatus();
+  const hasLoadedFriendStatusRef = useRef<string | null>(null);
+
+  // Buscar status do amigo quando o componente montar ou friendId mudar
+  useEffect(() => {
+    if (friendId && friendId !== hasLoadedFriendStatusRef.current) {
+      hasLoadedFriendStatusRef.current = friendId;
+      // Sempre tentar buscar, a função getStatus já verifica o cache internamente
+      getStatus(friendId);
+    }
+  }, [friendId, getStatus]);
 
   useEffect(() => {
     console.log('[DirectChatView] Mensagens atualizadas:', messages.length, 'mensagens');
@@ -203,15 +215,27 @@ export function DirectChatView({
                 key={msg.id}
                 className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''} group relative`}
               >
-                <Avatar className="w-8 h-8 shrink-0">
-                  <AvatarImage
-                    src={isOwn ? (currentUserAvatar || undefined) : (friendAvatar || undefined)}
-                    alt={isOwn ? currentUserName : friendName}
-                  />
-                  <AvatarFallback className="bg-[#B3E240] text-black text-xs">
-                    {(isOwn ? currentUserName : friendName).charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative shrink-0">
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarImage
+                      src={isOwn ? (currentUserAvatar || undefined) : (friendAvatar || undefined)}
+                      alt={isOwn ? currentUserName : friendName}
+                    />
+                    <AvatarFallback className="bg-[#B3E240] text-black text-xs">
+                      {(isOwn ? currentUserName : friendName).charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Indicador de online - apenas para mensagens do amigo */}
+                  {!isOwn && friendId && (
+                    <div 
+                      className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors"
+                      style={{ 
+                        background: statusMap.get(friendId) === 'online' ? '#C9FE02' : '#666',
+                        borderColor: 'rgb(14, 14, 14)' 
+                      }} 
+                    />
+                  )}
+                </div>
 
                 <div 
                   className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[70%] relative`}

@@ -7,6 +7,7 @@ import { LoadingWrapper } from "@/components/shared/LoadingWrapper";
 import { NotificationProvider as ToastNotificationProvider } from "@/components/shared/NotificationProvider";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { UserStatusProvider } from "@/providers/UserStatusProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,12 +38,14 @@ export default function RootLayout({
       >
         <QueryProvider>
           <LoadingProvider>
-            <NotificationsProvider>
-              <LoadingWrapper>
-                {children}
-              </LoadingWrapper>
-              <ToastNotificationProvider />
-            </NotificationsProvider>
+            <UserStatusProvider>
+              <NotificationsProvider>
+                <LoadingWrapper>
+                  {children}
+                </LoadingWrapper>
+                <ToastNotificationProvider />
+              </NotificationsProvider>
+            </UserStatusProvider>
           </LoadingProvider>
         </QueryProvider>
       </body>

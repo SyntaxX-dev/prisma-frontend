@@ -24,6 +24,7 @@ import { getUserProfile } from "@/api/auth/get-user-profile";
 import { useProfile } from "@/hooks/features/profile";
 import { useChat } from "@/hooks/features/chat/useChat";
 import { useCommunityChat } from "@/hooks/features/chat/useCommunityChat";
+import { useUserStatus } from "@/providers/UserStatusProvider";
 import { Message } from "@/api/messages/send-message";
 import type { CommunityMessage as CommunityMessageType } from "@/types/community-chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -545,6 +546,16 @@ export default function CommunitiesPage() {
   // Hook para obter dados do usuário logado
   const { userProfile } = useProfile();
   
+  // Hook para status online
+  const { statusMap, getBatchStatus, getStatus } = useUserStatus();
+  
+  // Buscar status do próprio usuário quando o perfil estiver disponível
+  useEffect(() => {
+    if (userProfile?.id) {
+      getStatus(userProfile.id);
+    }
+  }, [userProfile?.id, getStatus]);
+  
   // Hook para chat direto
   const {
     messages: directMessages,
@@ -867,7 +878,21 @@ export default function CommunitiesPage() {
       
       console.log('[loadCommunities] Comunidades mapeadas:', mappedCommunities);
       
-      setCommunities(mappedCommunities);
+      // Filtrar comunidades privadas que o usuário não pertence
+      const filteredCommunities = mappedCommunities.filter((community) => {
+        // Se for pública, sempre mostrar
+        if (community.visibility === 'PUBLIC') {
+          return true;
+        }
+        // Se for privada, só mostrar se for membro ou dono
+        if (community.visibility === 'PRIVATE') {
+          return community.isMember || community.isOwner;
+        }
+        // Se não tiver visibility definida, mostrar apenas se for membro ou dono (comportamento padrão seguro)
+        return community.isMember || community.isOwner;
+      });
+      
+      setCommunities(filteredCommunities);
       
        // Selecionar primeira comunidade que o usuário é membro ou dono
        // Só se não houver communityId na URL e não houver última conversa salva
@@ -886,7 +911,7 @@ export default function CommunitiesPage() {
              // Se é um chat, não selecionar comunidade - o chat será restaurado pelo useEffect
              return;
            } else if (lastConversation.type === 'community') {
-             const lastCommunity = mappedCommunities.find(c => c.id === lastConversation.id);
+             const lastCommunity = filteredCommunities.find(c => c.id === lastConversation.id);
              if (lastCommunity && (lastCommunity.isMember || lastCommunity.isOwner)) {
                setSelectedCommunityId(lastCommunity.id);
                const params = new URLSearchParams();
@@ -899,7 +924,7 @@ export default function CommunitiesPage() {
          }
          
          // Se não há última conversa válida, selecionar primeira comunidade
-         const userCommunity = mappedCommunities.find(
+         const userCommunity = filteredCommunities.find(
            (c) => c.isMember || c.isOwner
          );
          
@@ -973,14 +998,21 @@ export default function CommunitiesPage() {
       return;
     }
 
-    // Se não for membro, mostrar tooltip
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const tooltipWidth = 320;
-    setTooltipPosition({
-      x: rect.left + rect.width / 2 - tooltipWidth / 2, // Centralizar tooltip em relação ao item
-      y: rect.bottom + 10, // Abaixo do item com espaçamento
-    });
-    setTooltipCommunity(community);
+    // Se não for membro, verificar se é pública
+    // Se for pública, mostrar tooltip para entrar
+    if (community.visibility === 'PUBLIC') {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      const tooltipWidth = 320;
+      setTooltipPosition({
+        x: rect.left + rect.width / 2 - tooltipWidth / 2, // Centralizar tooltip em relação ao item
+        y: rect.bottom + 10, // Abaixo do item com espaçamento
+      });
+      setTooltipCommunity(community);
+      return;
+    }
+
+    // Se for privada e não for membro, não fazer nada (não deveria aparecer na lista)
+    // Mas por segurança, apenas não fazer nada
   };
 
   // Handler para sucesso ao entrar na comunidade
@@ -1076,15 +1108,30 @@ export default function CommunitiesPage() {
           communities={communities}
           selectedCommunityId={selectedCommunityId}
           onSelectCommunity={(id) => {
-            setSelectedCommunityId(id);
-            setSelectedChatUserId(null);
-            // Salvar como última conversa
-            saveLastConversation('community', id);
-            // Atualizar URL com community param
-            const params = new URLSearchParams(searchParams.toString());
-            params.set('community', id);
-            params.delete('chat'); // Remover chat param se existir
-            router.push(`/communities?${params.toString()}`);
+            // Buscar a comunidade na lista
+            const community = communities.find(c => c.id === id);
+            if (!community) return;
+            
+            // Se for membro ou dono, abrir normalmente
+            if (community.isMember || community.isOwner) {
+              setSelectedCommunityId(id);
+              setSelectedChatUserId(null);
+              // Salvar como última conversa
+              saveLastConversation('community', id);
+              // Atualizar URL com community param
+              const params = new URLSearchParams(searchParams.toString());
+              params.set('community', id);
+              params.delete('chat'); // Remover chat param se existir
+              router.push(`/communities?${params.toString()}`);
+            } else if (community.visibility === 'PUBLIC') {
+              // Se for pública e não for membro, mostrar tooltip centralizado
+              setTooltipPosition({
+                x: window.innerWidth / 2 - 160,
+                y: window.innerHeight / 2 - 200,
+              });
+              setTooltipCommunity(community);
+            }
+            // Se for privada e não for membro, não fazer nada (não deveria aparecer na lista)
           }}
           onCreateCommunity={() => setIsCreateModalOpen(true)}
           onCommunityClick={handleCommunityClick}
@@ -1235,12 +1282,24 @@ export default function CommunitiesPage() {
                 </button>
                 <NotificationsDropdown />
                 <div className="w-12 h-12 rounded-full relative">
-                  <img 
-                    src="https://i.pravatar.cc/150?img=68" 
-                    alt="User Avatar"
-                    className="w-full h-full rounded-full object-cover"
+                  <Avatar className="w-12 h-12">
+                    <AvatarImage 
+                      src={userProfile?.profileImage || undefined} 
+                      alt={userProfile?.name || 'User'} 
+                    />
+                    <AvatarFallback 
+                      className="bg-[#C9FE02] text-black text-sm font-semibold"
+                    >
+                      {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Indicador de status online */}
+                  <div 
+                    className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#040404] transition-colors"
+                    style={{ 
+                      background: userProfile?.id && statusMap.get(userProfile.id) === 'online' ? '#C9FE02' : '#666'
+                    }} 
                   />
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9FE02] rounded-full border-2 border-[#040404]" />
                 </div>
               </div>
             </div>

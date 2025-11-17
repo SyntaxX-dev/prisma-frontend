@@ -25,6 +25,7 @@ export function useCommunityChat(communityId: string | null) {
   const [pinnedMessages, setPinnedMessages] = useState<PinnedCommunityMessage[]>([]);
   const socketRef = useRef<Socket | null>(null);
   const currentCommunityIdRef = useRef<string | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -60,14 +61,33 @@ export function useCommunityChat(communityId: string | null) {
 
     newSocket.on('connect', () => {
       console.log('[useCommunityChat] ✅ Conectado ao WebSocket');
+      console.log('[useCommunityChat] Socket ID:', newSocket.id);
       setIsConnected(true);
       socketRef.current = newSocket;
       currentCommunityIdRef.current = communityId;
+      setSocket(newSocket);
+      console.log('[useCommunityChat] communityId definido:', communityId);
+
+      // Iniciar heartbeat a cada 30 segundos
+      heartbeatIntervalRef.current = setInterval(() => {
+        if (newSocket.connected) {
+          console.log('[useCommunityChat] 💓 Enviando heartbeat');
+          newSocket.emit('heartbeat');
+        }
+      }, 30000); // 30 segundos
+    });
+
+    newSocket.on('heartbeat_ack', (data: any) => {
+      console.log('[useCommunityChat] ✅ Heartbeat confirmado:', data);
     });
 
     newSocket.on('disconnect', () => {
       console.log('[useCommunityChat] ❌ Desconectado do WebSocket');
       setIsConnected(false);
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
     });
 
     newSocket.on('connect_error', (error) => {
@@ -75,12 +95,33 @@ export function useCommunityChat(communityId: string | null) {
       setIsConnected(false);
     });
 
+    // Log quando o socket recebe qualquer evento (para debug)
+    newSocket.onAny((eventName, ...args) => {
+      console.log('[useCommunityChat] 📡 Evento recebido no socket:', eventName, {
+        eventName,
+        argsCount: args.length,
+        firstArg: args[0],
+        socketId: newSocket.id,
+        connected: newSocket.connected,
+      });
+      if (eventName === 'new_community_message') {
+        console.log('[useCommunityChat] 🎯 Evento new_community_message detectado via onAny:', args);
+      }
+    });
+
     // Evento: nova mensagem na comunidade
     newSocket.on('new_community_message', (data: NewCommunityMessageEvent) => {
       console.log('[useCommunityChat] 📨 Nova mensagem recebida:', data);
+      console.log('[useCommunityChat] currentCommunityIdRef atual:', currentCommunityIdRef.current);
+      console.log('[useCommunityChat] communityId do parâmetro:', communityId);
+      console.log('[useCommunityChat] data.communityId:', data.communityId);
 
+      // Usar ref para ter sempre o valor mais atualizado
+      const currentCommunityId = currentCommunityIdRef.current || communityId;
+      
       // Só adicionar se for da comunidade atual
-      if (data.communityId === communityId) {
+      if (data.communityId === currentCommunityId) {
+        console.log('[useCommunityChat] ✅ Mensagem é da comunidade atual, adicionando');
         setMessages((prev) => {
           // Verificar se a mensagem já existe (evitar duplicatas)
           const exists = prev.some((msg) => msg.id === data.id);
@@ -88,7 +129,13 @@ export function useCommunityChat(communityId: string | null) {
             console.log('[useCommunityChat] ⚠️ Mensagem já existe, ignorando');
             return prev;
           }
+          console.log('[useCommunityChat] ✅ Adicionando nova mensagem ao estado');
           return [...prev, data];
+        });
+      } else {
+        console.log('[useCommunityChat] ⚠️ Mensagem não é da comunidade atual, ignorando:', {
+          messageCommunityId: data.communityId,
+          currentCommunityId: currentCommunityId,
         });
       }
     });
@@ -157,12 +204,27 @@ export function useCommunityChat(communityId: string | null) {
 
     setSocket(newSocket);
 
+    // Atualizar ref imediatamente também
+    currentCommunityIdRef.current = communityId;
+
     return () => {
-      console.log('[useCommunityChat] 🧹 Limpando socket');
+      console.log('[useCommunityChat] 🧹 Limpando socket e heartbeat');
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
       newSocket.disconnect();
       socketRef.current = null;
       currentCommunityIdRef.current = null;
     };
+  }, [communityId]);
+
+  // Atualizar ref quando communityId mudar (mesmo que o socket já esteja conectado)
+  useEffect(() => {
+    if (communityId) {
+      console.log('[useCommunityChat] 🔄 Atualizando currentCommunityIdRef:', communityId);
+      currentCommunityIdRef.current = communityId;
+    }
   }, [communityId]);
 
   const loadMessages = useCallback(async (limit: number = 50, offset: number = 0) => {

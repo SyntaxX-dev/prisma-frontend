@@ -63,8 +63,18 @@ export function useAuth() {
     showSuccess(`Bem-vindo, ${user.name}!`);
   };
 
-  const logout = () => {
+  const logout = async () => {
     const userName = authState.user?.name || 'Usuário';
+    
+    // Importar logoutUser dinamicamente para evitar problemas de importação circular
+    try {
+      const { logoutUser } = await import('@/api/auth/logout');
+      await logoutUser();
+    } catch (error) {
+      console.error('[useAuth] Erro ao fazer logout no backend:', error);
+      // Continuar mesmo se houver erro
+    }
+    
     clearAuthState();
     localStorage.removeItem('remember_me');
     localStorage.removeItem('auth_expires');

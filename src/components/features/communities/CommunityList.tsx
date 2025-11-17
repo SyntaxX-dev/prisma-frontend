@@ -1,17 +1,30 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Plus, Settings, Home } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Community } from "@/types/community";
 import { motion, useInView } from 'motion/react';
 import AnimatedList from "@/components/shared/AnimatedList";
 import { useRouter } from "next/navigation";
+import { useUserStatus } from "@/providers/UserStatusProvider";
 
 interface NavItemProps {
   item: { id: string; label: string; avatarUrl?: string; active?: boolean };
   index: number;
   onSelect: (id: string) => void;
+}
+
+interface CommunityItemProps {
+  community: Community;
+  index: number;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+  getInitials: (name: string) => string;
+  formatTime: (timestamp: string) => string;
+  onCommunityClick?: (community: Community, event: React.MouseEvent) => void;
+  isConversation?: boolean;
+  userId?: string;
 }
 
 const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
@@ -62,6 +75,9 @@ interface CommunityItemProps {
   getInitials: (name: string) => string;
   formatTime: (timestamp: string) => string;
   onCommunityClick?: (community: Community, event: React.MouseEvent) => void;
+  isConversation?: boolean;
+  userId?: string;
+  statusMap?: Map<string, 'online' | 'offline'>;
 }
 
 const CommunityItem: React.FC<CommunityItemProps> = ({
@@ -71,7 +87,10 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
   onSelect,
   getInitials,
   formatTime,
+  isConversation = false,
+  userId,
   onCommunityClick,
+  statusMap,
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
   const inView = useInView(itemRef, { 
@@ -121,8 +140,15 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
                 {getInitials(community.name)}
               </AvatarFallback>
             </Avatar>
-            {/* Online indicator */}
-            <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a]" style={{ background: '#C9FE02' }} />
+            {/* Indicador de online - apenas para conversas */}
+            {isConversation && userId && statusMap && (
+              <div 
+                className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a] transition-colors"
+                style={{ 
+                  background: statusMap.get(userId) === 'online' ? '#C9FE02' : '#666'
+                }} 
+              />
+            )}
           </div>
 
           <div className="flex-1 min-w-0 text-left">
@@ -192,6 +218,21 @@ export function CommunityList({
   selectedChatUserId,
   onSelectConversation,
 }: CommunityListProps) {
+  const { statusMap, getBatchStatus } = useUserStatus();
+  const hasLoadedConversationStatusRef = useRef<string>('');
+  
+  // Buscar status dos usuários das conversas
+  useEffect(() => {
+    const userIds = conversations.map(c => c.otherUser.id);
+    const conversationsKey = userIds.sort().join(',');
+    
+    // Só buscar se a lista de conversas mudou
+    if (userIds.length > 0 && conversationsKey !== hasLoadedConversationStatusRef.current) {
+      hasLoadedConversationStatusRef.current = conversationsKey;
+      getBatchStatus(userIds);
+    }
+  }, [conversations, getBatchStatus]);
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -344,31 +385,39 @@ export function CommunityList({
             }
           }}
         >
-          {chatCommunities.map((community, index) => (
-            <CommunityItem
-              key={community.id}
-              community={community}
-              index={index}
-              isSelected={
-                community.id.startsWith('chat-')
-                  ? selectedChatUserId === community.id.replace('chat-', '')
-                  : selectedCommunityId === community.id
-              }
-              onSelect={(id) => {
-                if (id.startsWith('chat-')) {
-                  const userId = id.replace('chat-', '');
-                  if (onSelectConversation) {
-                    onSelectConversation(userId);
-                  }
-                } else {
-                  onSelectCommunity(id);
+          {chatCommunities.map((community, index) => {
+            const isConversation = community.id.startsWith('chat-');
+            const userId = isConversation ? community.id.replace('chat-', '') : undefined;
+            
+            return (
+              <CommunityItem
+                key={community.id}
+                community={community}
+                index={index}
+                isSelected={
+                  isConversation
+                    ? selectedChatUserId === userId
+                    : selectedCommunityId === community.id
                 }
-              }}
-              getInitials={getInitials}
-              formatTime={formatTime}
-              onCommunityClick={onCommunityClick}
-            />
-          ))}
+                onSelect={(id) => {
+                  if (id.startsWith('chat-')) {
+                    const userId = id.replace('chat-', '');
+                    if (onSelectConversation) {
+                      onSelectConversation(userId);
+                    }
+                  } else {
+                    onSelectCommunity(id);
+                  }
+                }}
+                getInitials={getInitials}
+                formatTime={formatTime}
+                onCommunityClick={onCommunityClick}
+                isConversation={isConversation}
+                userId={userId}
+                statusMap={statusMap}
+              />
+            );
+          })}
         </AnimatedList>
       </div>
     </div>

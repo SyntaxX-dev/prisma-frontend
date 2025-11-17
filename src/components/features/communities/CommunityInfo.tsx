@@ -18,6 +18,7 @@ import { getCommunityMembers } from "@/api/communities/get-community-members";
 import type { CommunityMember } from "@/api/communities/get-community-members";
 import type { PinnedCommunityMessage } from "@/types/community-chat";
 import { getUserProfile } from "@/api/auth/get-user-profile";
+import { useUserStatus } from "@/providers/UserStatusProvider";
 
 interface CommunityInfoProps {
   community: Community;
@@ -46,9 +47,11 @@ export function CommunityInfo({
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [membersError, setMembersError] = useState<string | null>(null);
   const [memberMap, setMemberMap] = useState<Map<string, { name: string; avatar?: string }>>(new Map());
+  const { statusMap, getBatchStatus } = useUserStatus();
   
   // Ref para evitar chamadas duplicadas
   const hasLoadedMembers = useRef<string | null>(null);
+  const hasLoadedMemberStatusRef = useRef<string>('');
   
   const getInitials = (name: string) => {
     return name
@@ -100,6 +103,16 @@ export function CommunityInfo({
           });
         });
         setMemberMap(newMemberMap);
+        
+        // Buscar status de todos os membros (incluindo o próprio usuário se estiver na lista)
+        const memberIds = membersList.map(m => m.id);
+        const membersKey = memberIds.sort().join(',');
+        
+        // Só buscar se a lista de membros mudou
+        if (memberIds.length > 0 && membersKey !== hasLoadedMemberStatusRef.current) {
+          hasLoadedMemberStatusRef.current = membersKey;
+          getBatchStatus(memberIds);
+        }
       }
     } catch (error: any) {
       console.error('Erro ao carregar membros:', error);
@@ -273,8 +286,14 @@ export function CommunityInfo({
                             {getInitials(member.name)}
                           </AvatarFallback>
                         </Avatar>
-                        {/* Indicador de online - por enquanto sempre verde, pode ser ajustado depois */}
-                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#C9FE02] rounded-full border-2" style={{ borderColor: 'rgb(30, 30, 30)' }} />
+                        {/* Indicador de online */}
+                        <div 
+                          className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors`}
+                          style={{ 
+                            background: (statusMap.get(member.id) === 'online' || (currentUserId && member.id === currentUserId && statusMap.get(currentUserId) === 'online')) ? '#C9FE02' : '#666',
+                            borderColor: 'rgb(30, 30, 30)' 
+                          }} 
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
