@@ -39,12 +39,12 @@ export default function RootLayout({
         <QueryProvider>
           <LoadingProvider>
             <UserStatusProvider>
-              <NotificationsProvider>
-                <LoadingWrapper>
-                  {children}
-                </LoadingWrapper>
-                <ToastNotificationProvider />
-              </NotificationsProvider>
+            <NotificationsProvider>
+              <LoadingWrapper>
+                {children}
+              </LoadingWrapper>
+              <ToastNotificationProvider />
+            </NotificationsProvider>
             </UserStatusProvider>
           </LoadingProvider>
         </QueryProvider>

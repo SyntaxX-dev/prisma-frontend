@@ -66,6 +66,7 @@ export function CommunityChat({
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,6 +75,43 @@ export function CommunityChat({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Escutar evento para fazer scroll até uma mensagem específica
+  useEffect(() => {
+    const handleScrollToMessage = (event: CustomEvent<{ messageId: string }>) => {
+      const { messageId } = event.detail;
+      const messageElement = messageRefs.current.get(messageId);
+      
+      if (messageElement) {
+        // Aguardar um pouco para garantir que o DOM está atualizado
+        setTimeout(() => {
+          messageElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          
+          // Adicionar um destaque temporário na mensagem
+          messageElement.style.transition = 'all 0.3s ease';
+          messageElement.style.backgroundColor = 'rgba(179, 226, 64, 0.1)';
+          messageElement.style.padding = '8px';
+          messageElement.style.borderRadius = '16px';
+          setTimeout(() => {
+            messageElement.style.backgroundColor = '';
+            messageElement.style.padding = '';
+            messageElement.style.borderRadius = '';
+            setTimeout(() => {
+              messageElement.style.transition = '';
+            }, 300);
+          }, 2000);
+        }, 100);
+      }
+    };
+
+    window.addEventListener('scrollToMessage', handleScrollToMessage as EventListener);
+    return () => {
+      window.removeEventListener('scrollToMessage', handleScrollToMessage as EventListener);
+    };
+  }, []);
 
   // Fechar emoji picker quando clicar fora
   useEffect(() => {
@@ -312,10 +350,17 @@ export function CommunityChat({
                 setMessageToDelete(message.id);
                 setDeleteConfirmOpen(true);
               };
-
+              
               return (
                 <div
                   key={message.id}
+                  ref={(el) => {
+                    if (el) {
+                      messageRefs.current.set(message.id, el);
+                    } else {
+                      messageRefs.current.delete(message.id);
+                    }
+                  }}
                   className={`flex gap-3 ${messageIsOwn ? "flex-row-reverse" : ""} group relative`}
                 >
                   <div className="w-8 flex-shrink-0">
@@ -406,7 +451,7 @@ export function CommunityChat({
                         </>
                       )}
                     </AnimatePresence>
-
+                    
                     <div className="group relative">
                       <div
                         className={`px-3 py-2 rounded-lg ${
@@ -459,7 +504,7 @@ export function CommunityChat({
             disabled={!isConnected}
             className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240] focus:outline-none focus:ring-0 rounded-md px-3 py-1.5 text-sm flex-1 overflow-y-auto overflow-x-hidden"
             rows={1}
-            style={{ 
+            style={{
               wordBreak: 'break-word', 
               overflowWrap: 'break-word',
               whiteSpace: 'pre-wrap',
@@ -471,14 +516,14 @@ export function CommunityChat({
           />
 
           <div className="relative" ref={emojiPickerRef}>
-            <Button
-              variant="ghost"
-              size="icon"
+          <Button
+            variant="ghost"
+            size="icon"
               onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
               className={`text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer ${isEmojiPickerOpen ? 'bg-[#1a1a1a] text-white' : ''}`}
-            >
-              <Smile className="w-4 h-4" />
-            </Button>
+          >
+            <Smile className="w-4 h-4" />
+          </Button>
             {isEmojiPickerOpen && (
               <div className="absolute bottom-full right-0 mb-2 z-50">
                 <div className="bg-[#202024] border border-[#323238] rounded-lg shadow-lg">

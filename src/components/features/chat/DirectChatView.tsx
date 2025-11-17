@@ -66,6 +66,7 @@ export function DirectChatView({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const { statusMap, getStatus } = useUserStatus();
   const hasLoadedFriendStatusRef = useRef<string | null>(null);
 
@@ -83,6 +84,43 @@ export function DirectChatView({
     console.log('[DirectChatView] IDs das mensagens:', messages.map(m => ({ id: m.id, senderId: m.senderId, content: m.content.substring(0, 20) })));
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Escutar evento para fazer scroll até uma mensagem específica
+  useEffect(() => {
+    const handleScrollToMessage = (event: CustomEvent<{ messageId: string }>) => {
+      const { messageId } = event.detail;
+      const messageElement = messageRefs.current.get(messageId);
+      
+      if (messageElement) {
+        // Aguardar um pouco para garantir que o DOM está atualizado
+        setTimeout(() => {
+          messageElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          
+          // Adicionar um destaque temporário na mensagem
+          messageElement.style.transition = 'all 0.3s ease';
+          messageElement.style.backgroundColor = 'rgba(179, 226, 64, 0.1)';
+          messageElement.style.padding = '8px';
+          messageElement.style.borderRadius = '16px';
+          setTimeout(() => {
+            messageElement.style.backgroundColor = '';
+            messageElement.style.padding = '';
+            messageElement.style.borderRadius = '';
+            setTimeout(() => {
+              messageElement.style.transition = '';
+            }, 300);
+          }, 2000);
+        }, 100);
+      }
+    };
+
+    window.addEventListener('scrollToMessage', handleScrollToMessage as EventListener);
+    return () => {
+      window.removeEventListener('scrollToMessage', handleScrollToMessage as EventListener);
+    };
+  }, []);
 
   // Fechar emoji picker quando clicar fora
   useEffect(() => {
@@ -237,6 +275,13 @@ export function DirectChatView({
             return (
               <div
                 key={msg.id}
+                ref={(el) => {
+                  if (el) {
+                    messageRefs.current.set(msg.id, el);
+                  } else {
+                    messageRefs.current.delete(msg.id);
+                  }
+                }}
                 className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''} group relative`}
               >
                 <div className="relative shrink-0">
@@ -249,16 +294,6 @@ export function DirectChatView({
                       {(isOwn ? currentUserName : friendName).charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  {/* Indicador de online - apenas para mensagens do amigo */}
-                  {!isOwn && friendId && (
-                    <div 
-                      className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors"
-                      style={{ 
-                        background: statusMap.get(friendId) === 'online' ? '#C9FE02' : '#666',
-                        borderColor: 'rgb(14, 14, 14)' 
-                      }} 
-                    />
-                  )}
                 </div>
 
                 <div 

@@ -532,6 +532,10 @@ export default function CommunitiesPage() {
   const [isLoadingChatUser, setIsLoadingChatUser] = useState(false);
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   
+  // Estados para loading do chat da comunidade
+  const [isLoadingCommunityMessages, setIsLoadingCommunityMessages] = useState(false);
+  const [isLoadingCommunityPinnedMessages, setIsLoadingCommunityPinnedMessages] = useState(false);
+  
   // Combinar comunidades da API com mocks para busca
   const allCommunities = [...communities, ...MOCK_COMMUNITIES];
   
@@ -755,7 +759,7 @@ export default function CommunitiesPage() {
       setIsLoadingConversation(true);
       // Mock delay para visualizar skeletons (2 segundos)
       setTimeout(() => {
-        loadConversation(selectedChatUserId);
+      loadConversation(selectedChatUserId);
       }, 2000);
     } else {
       setIsLoadingConversation(false);
@@ -792,10 +796,41 @@ export default function CommunitiesPage() {
   // Load messages when community is selected
   useEffect(() => {
     if (selectedCommunityId) {
-      loadCommunityMessages(50, 0);
-      loadCommunityPinnedMessages();
+      setIsLoadingCommunityMessages(true);
+      setIsLoadingCommunityPinnedMessages(true);
+      // Mock delay para visualizar skeletons (2 segundos)
+      const loadTimer = setTimeout(() => {
+        loadCommunityMessages(50, 0);
+        loadCommunityPinnedMessages();
+      }, 2000);
+      return () => clearTimeout(loadTimer);
+    } else {
+      setIsLoadingCommunityMessages(false);
+      setIsLoadingCommunityPinnedMessages(false);
     }
   }, [selectedCommunityId, loadCommunityMessages, loadCommunityPinnedMessages]);
+
+  // Detectar quando as mensagens da comunidade foram carregadas
+  useEffect(() => {
+    if (selectedCommunityId && communityMessages.length >= 0 && isLoadingCommunityMessages) {
+      // Aguardar um pouco após as mensagens serem carregadas para garantir que tudo foi renderizado
+      const timer = setTimeout(() => {
+        setIsLoadingCommunityMessages(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedCommunityId, communityMessages.length, isLoadingCommunityMessages]);
+
+  // Detectar quando as mensagens fixadas da comunidade foram carregadas
+  useEffect(() => {
+    if (selectedCommunityId && isLoadingCommunityPinnedMessages) {
+      // Aguardar um pouco após as mensagens fixadas serem carregadas
+      const timer = setTimeout(() => {
+        setIsLoadingCommunityPinnedMessages(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedCommunityId, communityPinnedMessages.length, isLoadingCommunityPinnedMessages]);
 
   const loadCommunities = async () => {
     try {
@@ -894,7 +929,7 @@ export default function CommunitiesPage() {
       
       setCommunities(filteredCommunities);
       
-       // Selecionar primeira comunidade que o usuário é membro ou dono
+      // Selecionar primeira comunidade que o usuário é membro ou dono
        // Só se não houver communityId na URL e não houver última conversa salva
        const currentCommunityIdFromUrl = searchParams.get('community');
        const currentChatUserIdFromUrl = searchParams.get('chat');
@@ -925,25 +960,25 @@ export default function CommunitiesPage() {
          
          // Se não há última conversa válida, selecionar primeira comunidade
          const userCommunity = filteredCommunities.find(
-           (c) => c.isMember || c.isOwner
-         );
-         
-         if (userCommunity) {
-           // Se encontrou uma comunidade que o usuário faz parte, abrir ela
-           setSelectedCommunityId(userCommunity.id);
+          (c) => c.isMember || c.isOwner
+        );
+        
+        if (userCommunity) {
+          // Se encontrou uma comunidade que o usuário faz parte, abrir ela
+          setSelectedCommunityId(userCommunity.id);
            // Salvar como última conversa
            saveLastConversation('community', userCommunity.id);
            // Atualizar URL
            const params = new URLSearchParams();
            params.set('community', userCommunity.id);
            router.push(`/communities?${params.toString()}`);
-         }
-       }
-     } catch (error: any) {
-       console.error('Erro ao carregar comunidades:', error);
-       toast.error("Erro ao carregar comunidades");
-       // Em caso de erro, usar mocks como fallback
-       setCommunities(MOCK_COMMUNITIES);
+        }
+      }
+    } catch (error: any) {
+      console.error('Erro ao carregar comunidades:', error);
+      toast.error("Erro ao carregar comunidades");
+      // Em caso de erro, usar mocks como fallback
+      setCommunities(MOCK_COMMUNITIES);
        const currentCommunityIdFromUrl = searchParams.get('community');
        const currentChatUserIdFromUrl = searchParams.get('chat');
        // Só selecionar comunidade automaticamente se não houver chat na URL e não houver última conversa salva
@@ -952,14 +987,14 @@ export default function CommunitiesPage() {
          const lastConversation = loadLastConversation();
          if (!lastConversation || lastConversation.type !== 'chat') {
            // Só selecionar comunidade se não houver chat salvo
-           setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
+        setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
            // Atualizar URL
            const params = new URLSearchParams();
            params.set('community', MOCK_COMMUNITIES[0].id);
            router.push(`/communities?${params.toString()}`);
          }
-       }
-     } finally {
+      }
+    } finally {
       setIsLoadingCommunities(false);
     }
   };
@@ -1001,13 +1036,13 @@ export default function CommunitiesPage() {
     // Se não for membro, verificar se é pública
     // Se for pública, mostrar tooltip para entrar
     if (community.visibility === 'PUBLIC') {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      const tooltipWidth = 320;
-      setTooltipPosition({
-        x: rect.left + rect.width / 2 - tooltipWidth / 2, // Centralizar tooltip em relação ao item
-        y: rect.bottom + 10, // Abaixo do item com espaçamento
-      });
-      setTooltipCommunity(community);
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const tooltipWidth = 320;
+    setTooltipPosition({
+      x: rect.left + rect.width / 2 - tooltipWidth / 2, // Centralizar tooltip em relação ao item
+      y: rect.bottom + 10, // Abaixo do item com espaçamento
+    });
+    setTooltipCommunity(community);
       return;
     }
 
@@ -1114,8 +1149,8 @@ export default function CommunitiesPage() {
             
             // Se for membro ou dono, abrir normalmente
             if (community.isMember || community.isOwner) {
-              setSelectedCommunityId(id);
-              setSelectedChatUserId(null);
+            setSelectedCommunityId(id);
+            setSelectedChatUserId(null);
               // Salvar como última conversa
               saveLastConversation('community', id);
               // Atualizar URL com community param
@@ -1158,44 +1193,44 @@ export default function CommunitiesPage() {
           {isLoadingChatUser || !chatUser || isLoadingConversation ? (
             <ChatHeaderSkeleton />
           ) : (
-            <div className="flex items-center justify-between gap-4">
-              {/* Nome do Usuário */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Nome do Usuário */}
               <h1 className="text-white font-semibold text-2xl">
                 {chatUser.name}
               </h1>
-              
-              {/* Search Bar + Actions */}
-              <div className="flex items-center gap-4">
-                {/* Search Bar */}
-                <div className="relative" style={{ width: '280px' }}>
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
-                    style={{
-                      background: 'rgb(30, 30, 30)',
-                    }}
-                  />
-                </div>
+            
+            {/* Search Bar + Actions */}
+            <div className="flex items-center gap-4">
+              {/* Search Bar */}
+              <div className="relative" style={{ width: '280px' }}>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
+                  style={{
+                    background: 'rgb(30, 30, 30)',
+                  }}
+                />
+              </div>
 
-                {/* Right Actions */}
-                <div className="flex items-center gap-3">
-                  <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
-                    <Settings className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <NotificationsDropdown />
-                  <div className="w-12 h-12 rounded-full relative">
-                    <img 
-                      src="https://i.pravatar.cc/150?img=68" 
-                      alt="User Avatar"
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9FE02] rounded-full border-2 border-[#040404]" />
-                  </div>
+              {/* Right Actions */}
+              <div className="flex items-center gap-3">
+                <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
+                  <Settings className="w-5 h-5 text-gray-400" />
+                </button>
+                <NotificationsDropdown />
+                <div className="w-12 h-12 rounded-full relative">
+                  <img 
+                    src="https://i.pravatar.cc/150?img=68" 
+                    alt="User Avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9FE02] rounded-full border-2 border-[#040404]" />
                 </div>
               </div>
             </div>
+          </div>
           )}
 
           {/* Conteúdo Principal - Chat + Sidebar */}
@@ -1231,24 +1266,24 @@ export default function CommunitiesPage() {
               <ChatSidebarSkeleton />
             ) : (
               chatUser && (
-                <CommunityInfo 
-                  community={{
-                    id: `chat-${chatUser.id}`,
-                    name: chatUser.name,
-                    description: '',
-                    avatarUrl: chatUser.profileImage || undefined,
-                    memberCount: 2,
-                    isOwner: false,
-                    isMember: true,
-                  }}
-                  onStartVideoCall={() => {}}
-                  onStartVoiceCall={() => {}}
-                  isFromSidebar={false}
+            <CommunityInfo 
+              community={{
+                id: `chat-${chatUser.id}`,
+                name: chatUser.name,
+                description: '',
+                avatarUrl: chatUser.profileImage || undefined,
+                memberCount: 2,
+                isOwner: false,
+                isMember: true,
+              }}
+              onStartVideoCall={() => {}}
+              onStartVoiceCall={() => {}}
+              isFromSidebar={false}
                   pinnedMessages={pinnedMessages}
                   currentUserId={userProfile.id}
                   friendName={chatUser.name}
                   friendAvatar={chatUser.profileImage}
-                />
+            />
               )
             )}
           </div>
@@ -1308,32 +1343,42 @@ export default function CommunitiesPage() {
           {/* Conteúdo Principal - Chat + Sidebar */}
           <div className="flex-1 flex gap-3 overflow-hidden pt-2">
             {/* Área do Chat - Ilha */}
-            <CommunityChat
-              community={selectedCommunity}
-              messages={communityMessages}
-              pinnedMessages={communityPinnedMessages}
-              currentUserId={userProfile?.id}
-              currentUserName={userProfile?.name}
-              currentUserAvatar={userProfile?.profileImage}
-              onSendMessage={handleSendMessage}
-              onEditMessage={editCommunityMessage}
-              onDeleteMessage={deleteCommunityMessage}
-              onPinMessage={pinCommunityMessage}
-              onUnpinMessage={unpinCommunityMessage}
-              onStartVideoCall={handleStartVideoCall}
-              onStartVoiceCall={handleStartVoiceCall}
-              isConnected={isCommunityConnected}
-            />
+            {isLoadingCommunityMessages ? (
+              <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
+                <ChatSkeleton />
+              </div>
+            ) : (
+              <CommunityChat
+                community={selectedCommunity}
+                messages={communityMessages}
+                pinnedMessages={communityPinnedMessages}
+                currentUserId={userProfile?.id}
+                currentUserName={userProfile?.name}
+                currentUserAvatar={userProfile?.profileImage}
+                onSendMessage={handleSendMessage}
+                onEditMessage={editCommunityMessage}
+                onDeleteMessage={deleteCommunityMessage}
+                onPinMessage={pinCommunityMessage}
+                onUnpinMessage={unpinCommunityMessage}
+                onStartVideoCall={handleStartVideoCall}
+                onStartVoiceCall={handleStartVoiceCall}
+                isConnected={isCommunityConnected}
+              />
+            )}
             
             {/* Community Info Sidebar - Ilhas Direita */}
-            <CommunityInfo 
-              community={selectedCommunity}
-              onStartVideoCall={handleStartVideoCall}
-              onStartVoiceCall={handleStartVoiceCall}
-              isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
-              pinnedMessages={communityPinnedMessages}
-              currentUserId={userProfile?.id}
-            />
+            {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
+              <ChatSidebarSkeleton />
+            ) : (
+              <CommunityInfo 
+                community={selectedCommunity}
+                onStartVideoCall={handleStartVideoCall}
+                onStartVoiceCall={handleStartVoiceCall}
+                isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
+                pinnedMessages={communityPinnedMessages}
+                currentUserId={userProfile?.id}
+              />
+            )}
           </div>
         </div>
       ) : (
