@@ -4,6 +4,7 @@ import {
   Phone,
   Video,
   Pin,
+  X,
   ChevronRight,
   ChevronDown,
   Image as ImageIcon,
@@ -29,6 +30,7 @@ interface CommunityInfoProps {
   currentUserId?: string;
   friendName?: string;
   friendAvatar?: string | null;
+  onUnpinMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 export function CommunityInfo({ 
@@ -40,6 +42,7 @@ export function CommunityInfo({
   currentUserId,
   friendName,
   friendAvatar,
+  onUnpinMessage,
 }: CommunityInfoProps) {
   const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<string>("photos");
@@ -336,6 +339,18 @@ export function CommunityInfo({
                   ? undefined 
                   : (member?.avatar || friendAvatar || undefined);
                 
+                const handleUnpin = async (e: React.MouseEvent) => {
+                  e.stopPropagation(); // Prevenir que o clique dispare o scroll
+                  if (onUnpinMessage) {
+                    const result = await onUnpinMessage(pinnedMsg.messageId);
+                    if (result.success) {
+                      console.log('Mensagem desfixada');
+                    } else {
+                      console.error('Erro ao desfixar:', result.message);
+                    }
+                  }
+                };
+
                 return (
                   <div 
                     key={pinnedMsg.id} 
@@ -366,7 +381,13 @@ export function CommunityInfo({
                       </div>
                       <p className="text-xs text-gray-400 line-clamp-2">{pinnedMsg.message.content}</p>
                     </div>
-                    <Pin className="w-3 h-3 text-gray-500 shrink-0 mt-1" />
+                    <button
+                      onClick={handleUnpin}
+                      className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer shrink-0 mt-1"
+                      title="Desfixar mensagem"
+                    >
+                      <X className="w-3 h-3 text-gray-500 hover:text-white" />
+                    </button>
                   </div>
                 );
               })

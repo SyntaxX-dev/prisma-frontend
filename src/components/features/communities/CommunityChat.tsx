@@ -322,6 +322,13 @@ export function CommunityChat({
               const isHovered = hoveredMessageId === message.id;
               const isEditing = editingMessageId === message.id;
               const timeAgo = formatTime(message.createdAt);
+              
+              // Verificar se a mensagem ainda pode ser editada (15 minutos após o envio)
+              const messageDate = new Date(message.createdAt);
+              const now = new Date();
+              const timeDiff = now.getTime() - messageDate.getTime();
+              const minutesDiff = timeDiff / (1000 * 60);
+              const canEdit = minutesDiff <= 15;
 
               const handlePin = async () => {
                 if (isPinned && onUnpinMessage) {
@@ -416,7 +423,7 @@ export function CommunityChat({
                           )}
 
                           {/* Editar/Cancelar - apenas o autor */}
-                          {messageIsOwn && onEditMessage && (
+                          {messageIsOwn && onEditMessage && canEdit && (
                             <motion.button
                               initial={{ opacity: 0, scale: 0.5, y: 5 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -431,6 +438,19 @@ export function CommunityChat({
                               ) : (
                                 <Pencil className="w-4 h-4 text-gray-400" />
                               )}
+                            </motion.button>
+                          )}
+                          {messageIsOwn && onEditMessage && !canEdit && (
+                            <motion.button
+                              initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                              transition={{ duration: 0.2, delay: 0.05 }}
+                              disabled
+                              className={`absolute ${messageIsOwn ? 'right-10' : 'left-10'} -top-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 opacity-40 cursor-not-allowed z-10 shadow-lg`}
+                              title="Tempo de edição expirado (15 minutos)"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-600" />
                             </motion.button>
                           )}
 

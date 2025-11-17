@@ -1283,6 +1283,7 @@ export default function CommunitiesPage() {
                   currentUserId={userProfile.id}
                   friendName={chatUser.name}
                   friendAvatar={chatUser.profileImage}
+                  onUnpinMessage={unpinMessage}
             />
               )
             )}
@@ -1377,6 +1378,7 @@ export default function CommunitiesPage() {
                 isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
                 pinnedMessages={communityPinnedMessages}
                 currentUserId={userProfile?.id}
+                onUnpinMessage={unpinCommunityMessage}
               />
             )}
           </div>

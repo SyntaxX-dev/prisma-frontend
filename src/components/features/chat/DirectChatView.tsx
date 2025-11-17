@@ -234,6 +234,12 @@ export function DirectChatView({
             const isPinned = pinnedMessages.some(p => p.messageId === msg.id);
             const isHovered = hoveredMessageId === msg.id;
             const isEditing = editingMessageId === msg.id;
+            
+            // Verificar se a mensagem ainda pode ser editada (15 minutos após o envio)
+            const now = new Date();
+            const timeDiff = now.getTime() - messageDate.getTime();
+            const minutesDiff = timeDiff / (1000 * 60);
+            const canEdit = minutesDiff <= 15;
 
             const handlePin = async () => {
               if (isPinned && onUnpinMessage) {
@@ -319,21 +325,36 @@ export function DirectChatView({
                         </motion.button>
                         
                         {/* Bolinha 2 - Editar/Cancelar */}
-                        <motion.button
-                          initial={{ opacity: 0, scale: 0.5, y: 5 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.5, y: 5 }}
-                          transition={{ duration: 0.2, delay: 0.05 }}
-                          onClick={isEditing ? handleCancelEdit : handleEdit}
-                          className={`absolute ${isOwn ? 'right-10' : 'left-10'} ${isEditing ? '-top-12' : '-top-10'} w-8 h-8 flex items-center justify-center rounded-full ${isEditing ? 'bg-red-600 border-red-600 hover:bg-red-700' : 'bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E]'} transition-colors z-10 shadow-lg cursor-pointer`}
-                          title={isEditing ? 'Cancelar edição' : 'Editar mensagem'}
-                        >
-                          {isEditing ? (
-                            <X className="w-4 h-4 text-white" />
-                          ) : (
-                            <Pencil className="w-4 h-4 text-gray-400" />
-                          )}
-                        </motion.button>
+                        {canEdit && (
+                          <motion.button
+                            initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                            transition={{ duration: 0.2, delay: 0.05 }}
+                            onClick={isEditing ? handleCancelEdit : handleEdit}
+                            className={`absolute ${isOwn ? 'right-10' : 'left-10'} ${isEditing ? '-top-12' : '-top-10'} w-8 h-8 flex items-center justify-center rounded-full ${isEditing ? 'bg-red-600 border-red-600 hover:bg-red-700' : 'bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E]'} transition-colors z-10 shadow-lg cursor-pointer`}
+                            title={isEditing ? 'Cancelar edição' : 'Editar mensagem'}
+                          >
+                            {isEditing ? (
+                              <X className="w-4 h-4 text-white" />
+                            ) : (
+                              <Pencil className="w-4 h-4 text-gray-400" />
+                            )}
+                          </motion.button>
+                        )}
+                        {!canEdit && (
+                          <motion.button
+                            initial={{ opacity: 0, scale: 0.5, y: 5 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.5, y: 5 }}
+                            transition={{ duration: 0.2, delay: 0.05 }}
+                            disabled
+                            className={`absolute ${isOwn ? 'right-10' : 'left-10'} -top-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 opacity-40 cursor-not-allowed z-10 shadow-lg`}
+                            title="Tempo de edição expirado (15 minutos)"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-600" />
+                          </motion.button>
+                        )}
                         
                         {/* Bolinha 3 - Deletar */}
                         <motion.button
