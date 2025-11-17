@@ -5,18 +5,17 @@ import {
   Send, 
   Paperclip, 
   Smile, 
-  Mic,
   Pin,
   Trash2,
   Pencil,
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "motion/react";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Community } from "@/types/community";
@@ -64,7 +63,9 @@ export function CommunityChat({
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const [memberMap, setMemberMap] = useState<Map<string, { name: string; avatar?: string }>>(new Map());
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -73,6 +74,28 @@ export function CommunityChat({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Fechar emoji picker quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setIsEmojiPickerOpen(false);
+      }
+    };
+
+    if (isEmojiPickerOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isEmojiPickerOpen]);
+
+  const handleEmojiClick = (emojiData: { emoji: string }) => {
+    setMessageInput((prev) => prev + emojiData.emoji);
+    setIsEmojiPickerOpen(false);
+  };
 
   // Carregar informações dos membros da comunidade
   useEffect(() => {
@@ -428,38 +451,49 @@ export function CommunityChat({
             <Paperclip className="w-4 h-4" />
           </Button>
 
-          <Textarea
+          <textarea
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
             disabled={!isConnected}
-            className="!h-[44px] !max-h-[44px] resize-none bg-[#29292E] border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240] overflow-y-auto overflow-x-hidden flex-1"
+            className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240] focus:outline-none focus:ring-0 rounded-md px-3 py-1.5 text-sm flex-1 overflow-y-auto overflow-x-hidden"
             rows={1}
             style={{ 
               wordBreak: 'break-word', 
               overflowWrap: 'break-word',
               whiteSpace: 'pre-wrap',
-              height: '44px',
-              maxHeight: '44px'
+              height: '32px',
+              maxHeight: '32px',
+              minHeight: '32px',
+              lineHeight: '1.25rem'
             }}
           />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer"
-          >
-            <Smile className="w-4 h-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer"
-          >
-            <Mic className="w-4 h-4" />
-          </Button>
+          <div className="relative" ref={emojiPickerRef}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+              className={`text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer ${isEmojiPickerOpen ? 'bg-[#1a1a1a] text-white' : ''}`}
+            >
+              <Smile className="w-4 h-4" />
+            </Button>
+            {isEmojiPickerOpen && (
+              <div className="absolute bottom-full right-0 mb-2 z-50">
+                <div className="bg-[#202024] border border-[#323238] rounded-lg shadow-lg">
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    theme={Theme.DARK}
+                    width={300}
+                    height={350}
+                    skinTonesDisabled
+                    searchDisabled={false}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
 
           <Button
             onClick={handleSend}
