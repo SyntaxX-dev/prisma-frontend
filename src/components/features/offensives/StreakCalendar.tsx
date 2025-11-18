@@ -79,7 +79,6 @@ export function StreakCalendar({ streakData }: StreakCalendarProps = {}) {
     try {
       await refetch();
     } catch (error) {
-      console.error('❌ Erro ao refazer requisição de ofensivas:', error);
     }
   };
 

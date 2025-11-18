@@ -25,7 +25,6 @@ function validateSearchParams(params: Record<string, string | string[] | undefin
     const result = searchParamsSchema.parse(params);
     return result;
   } catch (error) {
-    console.warn('❌ Erro na validação dos search params:', error);
     const defaultResult = searchParamsSchema.parse({});
     return defaultResult;
   }

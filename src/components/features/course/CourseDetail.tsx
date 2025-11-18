@@ -197,7 +197,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         });
       }
     } catch (err) {
-      console.error('Erro ao buscar módulos com vídeos:', err);
     } finally {
       setLoading(false);
       fetchingRef.current = false;
@@ -207,7 +206,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   // Execute fetchModules only when subCourseId changes
   useEffect(() => {
     if (subCourseId && subCourseId !== lastFetchedSubCourseId) {
-      console.log('🚀 useEffect: Executando fetchModules para subCourseId:', subCourseId);
       fetchModules();
     }
   }, [subCourseId]);
@@ -228,7 +226,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   useEffect(() => {
     if (!selectedVideo?.youtubeId) return;
 
-    console.log('[Progress] 🎬 Inicializando rastreamento para:', selectedVideo.youtubeId);
 
     // Carregar YouTube IFrame API se necessário
     if (!window.YT) {
@@ -246,13 +243,10 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
         if (savedVideo && savedVideo.currentTimestamp) {
           savedTimestampRef.current = savedVideo.currentTimestamp;
-          console.log('[Progress] 📍 Progresso salvo encontrado:', savedVideo.currentTimestamp, 'segundos');
         } else {
           savedTimestampRef.current = 0;
-          console.log('[Progress] 🆕 Nenhum progresso salvo, iniciando do zero');
         }
       } catch (error) {
-        console.error('[Progress] ❌ Erro ao buscar progresso salvo:', error);
         savedTimestampRef.current = 0;
       }
     };
@@ -287,14 +281,12 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
               },
               events: {
                 onReady: (event: any) => {
-                  console.log('[Progress] ✅ Player pronto');
                   // Se deve estar tocando, iniciar
                   if (localVideoPlaying) {
                     event.target.playVideo();
                   }
                 },
                 onStateChange: async (event: any) => {
-                  console.log('[Progress] 🔄 Estado:', event.data);
                   if (event.data === 1) { // PLAYING
                     setLocalVideoPlaying(true);
                     startProgressTracking();
@@ -303,7 +295,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     stopProgressTracking();
                     saveProgress();
                   } else if (event.data === 0) { // ENDED
-                    console.log('[Progress] 🎉 Vídeo finalizado! Marcando como completado...');
                     setLocalVideoPlaying(false);
                     stopProgressTracking();
 
@@ -312,7 +303,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                       try {
                         // Se já estiver completado, não fazer nada
                         if (selectedVideo.isCompleted) {
-                          console.log('[Progress] ✅ Vídeo já estava completado');
                           return;
                         }
 
@@ -353,18 +343,14 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                         // Invalidar cache
                         await invalidateTags(['offensives', 'streak']);
 
-                        console.log('[Progress] ✅ Vídeo marcado como completado com sucesso!');
                       } catch (error) {
-                        console.error('[Progress] ❌ Erro ao marcar como completado:', error);
                       }
                     }
                   }
                 }
               }
             });
-            console.log('[Progress] ✅ Player criado');
           } catch (error) {
-            console.error('[Progress] ❌ Erro ao criar player:', error);
           }
         }
       }
@@ -389,7 +375,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         try {
           playerRef.current.destroy();
         } catch (e) {
-          console.log('[Progress] Player já foi destruído');
         }
         playerRef.current = null;
       }
@@ -406,14 +391,12 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       saveProgress();
     }, 1000);
 
-    console.log('[Progress] 🔄 Rastreamento iniciado (1s)');
   };
 
   const stopProgressTracking = () => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
-      console.log('[Progress] ⏹️ Rastreamento pausado');
     }
   };
 
@@ -424,34 +407,16 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       const currentTime = Math.floor(playerRef.current.getCurrentTime?.() || 0);
       const duration = Math.floor(playerRef.current.getDuration?.() || 0);
 
-      console.log('[Progress] 📊 Salvando:', {
-        currentTime,
-        duration,
-        videoId: selectedVideo.youtubeId,
-        videoTitle: selectedVideo.title
-      });
-
       // Salvar até 1 segundo antes do final (para não conflitar com o evento ENDED)
       if (currentTime > 0 && currentTime < duration - 1) {
         const response = await saveVideoTimestamp({
           videoId: selectedVideo.youtubeId,
           timestamp: currentTime,
         });
-        console.log('[Progress] 💾 Salvo com sucesso:', {
-          currentTime,
-          videoId: selectedVideo.youtubeId,
-          response
-        });
       } else if (currentTime >= duration - 1) {
-        console.log('[Progress] ⏭️ Perto do fim, não salvando (será marcado como completo)');
       }
     } catch (error) {
-      console.error('[Progress] ❌ Erro ao salvar:', error);
-      console.error('[Progress] ❌ Detalhes do vídeo:', {
-        videoId: selectedVideo?.youtubeId,
-        title: selectedVideo?.title,
-        id: selectedVideo?.id
-      });
+      // Erro ao salvar progresso
     }
   };
 
@@ -576,7 +541,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
           await (window as any).refetchOffensives();
         }
       } catch (error) {
-        console.error('Erro ao invalidar cache de offensives:', error);
       }
       
       if (response.success && response.data.courseProgress) {

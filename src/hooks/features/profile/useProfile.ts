@@ -150,7 +150,6 @@ export function useProfile() {
         }
       }
     } catch (err) {
-      console.error('Erro ao carregar perfil:', err);
       setError('Erro ao carregar dados do perfil');
     } finally {
       setIsLoading(false);
@@ -168,7 +167,6 @@ export function useProfile() {
       const notifications = await getNotifications();
       updateLocalProfile({ notification: notifications });
     } catch (error) {
-      console.error('Erro ao atualizar notificações:', error);
     }
   }, [updateLocalProfile]);
 
@@ -256,7 +254,6 @@ export function useProfile() {
       const updatedProfile = await getProfile();
       setUserProfile(updatedProfile);
     } catch (error) {
-      console.error('❌ Hook: Erro ao recarregar perfil:', error);
       throw error; // Re-throw para que a função chamadora possa capturar
     }
   }, []);
@@ -268,7 +265,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar nome:', error);
       setError('Erro ao atualizar nome');
     }
   }, [refreshProfile]);
@@ -279,7 +275,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar idade:', error);
       setError('Erro ao atualizar idade');
     }
   }, [refreshProfile]);
@@ -291,7 +286,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar foto do perfil:', error);
       setError('Erro ao atualizar foto do perfil');
     }
   }, [refreshProfile]);
@@ -303,7 +297,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('❌ Erro ao remover foto do perfil:', error);
       setError('Erro ao remover foto do perfil');
     }
   }, [refreshProfile]);
@@ -314,7 +307,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar links:', error);
       setError('Erro ao atualizar links');
     }
   }, [refreshProfile]);
@@ -325,7 +317,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar informações pessoais:', error);
       setError('Erro ao atualizar informações pessoais');
     }
   }, [refreshProfile]);
@@ -336,7 +327,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar sobre você:', error);
       setError('Erro ao atualizar sobre você');
     }
   }, [refreshProfile]);
@@ -356,13 +346,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error: any) {
-      console.error('❌ Hook: Erro ao atualizar momento de carreira:', error);
-      console.error('❌ Hook: Detalhes do erro:', {
-        status: error?.status,
-        message: error?.message,
-        details: error?.details,
-        response: error?.response
-      });
       setError('Erro ao atualizar momento de carreira');
       throw error; // Re-throw para que o modal possa capturar
     }
@@ -377,7 +360,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar habilidades:', error);
       setError('Erro ao atualizar habilidades');
       throw error; // Re-throw para que o modal possa tratar o erro
     }
@@ -389,7 +371,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar localização:', error);
       setError('Erro ao atualizar localização');
     }
   }, [refreshProfile]);
@@ -400,7 +381,6 @@ export function useProfile() {
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
       setError('Erro ao atualizar perfil');
     }
   }, [refreshProfile]);
@@ -410,7 +390,6 @@ export function useProfile() {
       const notifications = await getNotifications();
       updateLocalProfile({ notification: notifications });
     } catch (error) {
-      console.error('Erro ao atualizar notificações:', error);
     }
   }, [updateLocalProfile]);
 
@@ -501,7 +480,6 @@ export function useProfile() {
           await refreshProfile();
         }
       } catch (error) {
-        console.error('❌ Erro ao fazer upload da imagem:', error);
         setError('Erro ao fazer upload da imagem. Tente novamente.');
       } finally {
         setIsUploadingImage(false);
@@ -613,7 +591,6 @@ export function useProfile() {
         await updateNotificationsAfterChange();
       }
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
     } finally {
       handleModalClose();
     }
@@ -657,7 +634,6 @@ export function useProfile() {
         await updateNotificationsAfterChange();
       }
     } catch (error) {
-      console.error('Erro ao atualizar informações básicas:', error);
     } finally {
       setIsBasicInfoModalOpen(false);
     }
@@ -709,7 +685,6 @@ export function useProfile() {
         await updateNotificationsAfterChange();
       }
     } catch (error) {
-      console.error('Erro ao atualizar foco:', error);
     } finally {
       handleFocusModalClose();
     }
@@ -788,7 +763,6 @@ export function useProfile() {
         await updateNotificationsAfterChange();
       }
     } catch (error) {
-      console.error('Erro ao atualizar links:', error);
     } finally {
       setIsLinksModalOpen(false);
     }
@@ -819,7 +793,6 @@ export function useProfile() {
         await updateNotificationsAfterChange();
       }
     } catch (error) {
-      console.error('Erro ao atualizar sobre você:', error);
       setError('Erro ao atualizar sobre você');
     } finally {
       handleAboutModalClose();
@@ -835,7 +808,6 @@ export function useProfile() {
       await updateUserHabilities(habilities);
       await updateNotificationsAfterChange();
     } catch (error) {
-      console.error('Erro ao atualizar habilidades:', error);
       throw error;
     }
   }, [updateUserHabilities, updateNotificationsAfterChange]);

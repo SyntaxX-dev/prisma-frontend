@@ -56,7 +56,6 @@ const FuzzyText: React.FC<FuzzyTextProps> = ({
         document.body.removeChild(temp);
       }
       
-      console.log('FuzzyText fontSize:', fontSize, 'numericFontSize:', numericFontSize, 'fontSizeStr:', fontSizeStr);
 
       const text = React.Children.toArray(children).join('');
 

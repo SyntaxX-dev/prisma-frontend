@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { env } from '@/lib/env';
 import { sendCommunityMessage } from '@/api/communities/send-community-message';
+import type { MessageAttachment, MessageAttachmentResponse } from '@/types/file-upload';
 import { getCommunityMessages } from '@/api/communities/get-community-messages';
 import { editCommunityMessage } from '@/api/communities/edit-community-message';
 import { deleteCommunityMessage } from '@/api/communities/delete-community-message';
@@ -18,26 +19,342 @@ import type {
   CommunityMessageEditedEvent,
 } from '@/types/community-chat';
 
+// Socket compartilhado globalmente entre useChat e useCommunityChat
+// Importar do useChat (mesma referência)
+declare global {
+  var __sharedChatSocket: Socket | null;
+  var __sharedChatSocketListenersCount: number;
+}
+
+if (typeof window !== 'undefined') {
+  if (!window.__sharedChatSocket) {
+    window.__sharedChatSocket = null;
+  }
+  if (typeof window.__sharedChatSocketListenersCount === 'undefined') {
+    window.__sharedChatSocketListenersCount = 0;
+  }
+}
+
 export function useCommunityChat(communityId: string | null) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
   const [pinnedMessages, setPinnedMessages] = useState<PinnedCommunityMessage[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const currentCommunityIdRef = useRef<string | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingAttachmentFetchesRef = useRef<Set<string>>(new Set());
+
+  // Função auxiliar para registrar todos os listeners de comunidade
+  const registerCommunityListeners = useCallback((socket: Socket, commId: string) => {
+    if (!socket) {
+      return;
+    }
+    
+    // Remover listeners antigos para evitar duplicatas
+    if (socket.connected) {
+      socket.off('new_community_message');
+      socket.off('community_typing');
+      socket.off('community_message_deleted');
+      socket.off('community_message_edited');
+    }
+    
+    // Registrar listener de new_community_message
+    socket.on('new_community_message', (data: NewCommunityMessageEvent) => {
+      const currentCommunityId = currentCommunityIdRef.current || commId;
+      if (data.communityId === currentCommunityId) {
+        setMessages((prev) => {
+          const exists = prev.some((msg) => msg.id === data.id);
+          if (exists) {
+            return prev;
+          }
+          
+          const currentTime = Date.now();
+          const hasSimilarOptimistic = prev.some((msg) => {
+            if (!msg.id.startsWith('temp-')) return false;
+            if (msg.senderId !== data.senderId) return false;
+            if (msg.communityId !== data.communityId) return false;
+            
+            const optimisticTime = new Date(msg.createdAt).getTime();
+            const timeDiff = currentTime - optimisticTime;
+            if (timeDiff > 5000) return false;
+            
+            const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
+            if (optimisticHasAttachments) {
+              return true;
+            }
+            
+            const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+            return contentsMatch;
+          });
+          
+          if (hasSimilarOptimistic) {
+            const optimisticMsg = prev.find((msg) => {
+              if (!msg.id.startsWith('temp-')) return false;
+              if (msg.senderId !== data.senderId) return false;
+              if (msg.communityId !== data.communityId) return false;
+              const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+              return contentsMatch;
+            });
+            
+            const withoutOptimistic = prev.filter((msg) => {
+              if (!msg.id.startsWith('temp-')) return true;
+              if (msg.senderId !== data.senderId) return true;
+              if (msg.communityId !== data.communityId) return true;
+              const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+              return !contentsMatch;
+            });
+            
+            const finalAttachments = data.attachments && data.attachments.length > 0
+              ? data.attachments
+              : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
+                  ? optimisticMsg.attachments
+                  : []);
+            
+            const communityMessage: CommunityMessage = {
+              ...data,
+              edited: false,
+              updatedAt: null,
+              attachments: finalAttachments,
+            };
+            const updated = [...withoutOptimistic, communityMessage];
+            const sorted = updated.sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+            return sorted;
+          }
+          
+          const currentTimeForSimilar = Date.now();
+          const optimisticWithAttachments = prev.find((msg) => {
+            if (!msg.id.startsWith('temp-')) return false;
+            if (msg.senderId !== data.senderId) return false;
+            if (msg.communityId !== data.communityId) return false;
+            const optimisticTime = new Date(msg.createdAt).getTime();
+            const timeDiff = currentTimeForSimilar - optimisticTime;
+            if (timeDiff > 5000) return false;
+            return (msg.attachments?.length || 0) > 0;
+          });
+          
+          const finalAttachmentsForSimilar = data.attachments && data.attachments.length > 0
+            ? data.attachments
+            : (optimisticWithAttachments?.attachments && optimisticWithAttachments.attachments.length > 0
+                ? optimisticWithAttachments.attachments
+                : []);
+          
+          const communityMessage: CommunityMessage = {
+            ...data,
+            edited: false,
+            updatedAt: null,
+            attachments: finalAttachmentsForSimilar,
+          };
+          const updated = [...prev, communityMessage];
+          const sorted = updated.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          
+          // Se a mensagem não tem attachments, SEMPRE tentar buscar da API
+          // (o backend pode não estar enviando attachments no WebSocket)
+          if ((!finalAttachmentsForSimilar || finalAttachmentsForSimilar.length === 0) && data.id && !data.id.startsWith('temp-')) {
+            // Verificar se já estamos buscando attachments para esta mensagem
+            if (pendingAttachmentFetchesRef.current.has(data.id)) {
+              return sorted;
+            }
+            
+            const messageTime = new Date(data.createdAt).getTime();
+            const timeDiff = Date.now() - messageTime;
+            
+            // Sempre tentar buscar se não tiver attachments (mesmo que não seja recente)
+            // O backend pode não estar enviando attachments no WebSocket
+            if (timeDiff < 30000) { // 30 segundos para dar mais tempo
+              // Marcar que estamos buscando attachments para esta mensagem
+              pendingAttachmentFetchesRef.current.add(data.id);
+              
+              // Fazer múltiplas tentativas com intervalos crescentes
+              const attempts = [500, 1000, 2000];
+              attempts.forEach((delay, index) => {
+                setTimeout(async () => {
+                  try {
+                    // Verificar se a mensagem já tem attachments usando setMessages com callback
+                    let shouldContinue = true;
+                    setMessages((prev) => {
+                      const currentMsg = prev.find((msg) => msg.id === data.id);
+                      if (currentMsg && currentMsg.attachments && currentMsg.attachments.length > 0) {
+                        pendingAttachmentFetchesRef.current.delete(data.id);
+                        shouldContinue = false;
+                      }
+                      return prev; // Não alterar o estado, apenas verificar
+                    });
+                    
+                    if (!shouldContinue) {
+                      return;
+                    }
+                    
+                    const { getCommunityMessages } = await import('@/api/communities/get-community-messages');
+                    const response = await getCommunityMessages(data.communityId, 10, 0); // Buscar mais mensagens para garantir
+                    
+                    if (response.success && response.data.length > 0) {
+                      // Procurar a mensagem específica na lista
+                      const foundMessage = response.data.find((msg: CommunityMessage) => msg.id === data.id);
+                      
+                      if (foundMessage && foundMessage.attachments && foundMessage.attachments.length > 0) {
+                        setMessages((prev) => {
+                          // Verificar novamente se a mensagem ainda não tem attachments
+                          const msg = prev.find((m) => m.id === data.id);
+                          if (msg && msg.attachments && msg.attachments.length > 0) {
+                            return prev;
+                          }
+                          
+                          const updated = prev.map((msg) => 
+                            msg.id === data.id 
+                              ? { ...msg, attachments: foundMessage.attachments }
+                              : msg
+                          );
+                          return updated;
+                        });
+                        // Remover da lista de buscas pendentes após sucesso
+                        pendingAttachmentFetchesRef.current.delete(data.id);
+                      } else {
+                        // Se foi a última tentativa e não encontrou, remover da lista
+                        if (index === attempts.length - 1) {
+                          pendingAttachmentFetchesRef.current.delete(data.id);
+                        }
+                      }
+                    } else {
+                      // Se foi a última tentativa e não encontrou, remover da lista
+                      if (index === attempts.length - 1) {
+                        pendingAttachmentFetchesRef.current.delete(data.id);
+                      }
+                    }
+                  } catch (error) {
+                    // Se foi a última tentativa e deu erro, remover da lista
+                    if (index === attempts.length - 1) {
+                      pendingAttachmentFetchesRef.current.delete(data.id);
+                    }
+                  }
+                }, delay);
+              });
+            }
+          }
+          
+          return sorted;
+        });
+      }
+    });
+
+    // Registrar listener de community_message_deleted
+    socket.on('community_message_deleted', (data: CommunityMessageDeletedEvent) => {
+      const currentCommunityId = currentCommunityIdRef.current || commId;
+      if (data.communityId === currentCommunityId) {
+        setMessages((prev) => prev.filter((msg) => msg.id !== data.messageId));
+        setPinnedMessages((prev) => prev.filter((msg) => msg.id !== data.messageId));
+      }
+    });
+
+    // Registrar listener de community_message_edited
+    socket.on('community_message_edited', (data: CommunityMessageEditedEvent) => {
+      const currentCommunityId = currentCommunityIdRef.current || commId;
+      if (data.communityId === currentCommunityId) {
+        setMessages((prev) => {
+          const messageExists = prev.some((msg) => msg.id === data.id);
+          if (!messageExists) {
+            return prev;
+          }
+          return prev.map((msg) =>
+            msg.id === data.id
+              ? { ...msg, content: data.content, edited: true, updatedAt: data.updatedAt }
+              : msg
+          );
+        });
+      }
+    });
+
+    // Registrar listener de community_typing
+    socket.on('community_typing', (data: { userId: string; communityId: string; isTyping: boolean }) => {
+      const currentCommunityId = currentCommunityIdRef.current || commId;
+      if (data.communityId === currentCommunityId) {
+        setIsTyping(data.isTyping);
+        setTypingUserId(data.isTyping ? data.userId : null);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!communityId) return;
-
+    
     const token = localStorage.getItem('auth_token');
     if (!token) return;
 
+    // Se não há communityId, apenas limpar estado mas NÃO desconectar o socket compartilhado
+    // O socket pode estar sendo usado pelo useChat
+    if (!communityId) {
+      socketRef.current = null;
+      currentCommunityIdRef.current = null;
+      setSocket(null);
+      setIsConnected(false);
+      setMessages([]);
+      setPinnedMessages([]);
+      setIsTyping(false);
+      setTypingUserId(null);
+      return;
+    }
+
+    // Verificar se já existe um socket compartilhado
+    if (window.__sharedChatSocket) {
+      const wasAlreadyUsingSharedSocket = socketRef.current === window.__sharedChatSocket;
+      socketRef.current = window.__sharedChatSocket;
+      setSocket(window.__sharedChatSocket);
+      currentCommunityIdRef.current = communityId;
+      
+      // Incrementar contador apenas se ainda não estava usando o socket compartilhado
+      if (!wasAlreadyUsingSharedSocket) {
+        window.__sharedChatSocketListenersCount++;
+      }
+      
+      // Se o socket está conectado, usar imediatamente
+      if (window.__sharedChatSocket.connected) {
+        setIsConnected(true);
+        registerCommunityListeners(window.__sharedChatSocket, communityId);
+        
+        // Iniciar heartbeat se ainda não estiver ativo
+        if (!heartbeatIntervalRef.current) {
+          heartbeatIntervalRef.current = setInterval(() => {
+            if (window.__sharedChatSocket?.connected) {
+              window.__sharedChatSocket.emit('heartbeat');
+            }
+          }, 30000);
+        }
+      } else {
+        // Se o socket está desconectado, tentar reconectar
+        setIsConnected(false);
+        
+        // Registrar listeners quando o socket conectar
+        window.__sharedChatSocket.once('connect', () => {
+          setIsConnected(true);
+          registerCommunityListeners(window.__sharedChatSocket!, communityId);
+          
+          // Iniciar heartbeat se ainda não estiver ativo
+          if (!heartbeatIntervalRef.current) {
+            heartbeatIntervalRef.current = setInterval(() => {
+              if (window.__sharedChatSocket?.connected) {
+                window.__sharedChatSocket.emit('heartbeat');
+              }
+            }, 30000);
+          }
+        });
+        
+        // Tentar reconectar
+        window.__sharedChatSocket.connect();
+      }
+      
+      return;
+    }
+
     if (socketRef.current?.connected && currentCommunityIdRef.current === communityId) return;
 
-    // Desconectar socket anterior se mudou de comunidade
-    if (socketRef.current && currentCommunityIdRef.current !== communityId) {
+    // Desconectar socket anterior se mudou de comunidade (apenas se não for compartilhado)
+    if (socketRef.current && currentCommunityIdRef.current !== communityId && socketRef.current !== window.__sharedChatSocket) {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
@@ -59,30 +376,35 @@ export function useCommunityChat(communityId: string | null) {
       reconnectionAttempts: 5,
     });
 
+    // Tornar este socket o compartilhado
+    window.__sharedChatSocket = newSocket;
+    if (window.__sharedChatSocketListenersCount === 0) {
+      window.__sharedChatSocketListenersCount = 1;
+    } else {
+      window.__sharedChatSocketListenersCount++;
+    }
+
     newSocket.on('connect', () => {
-      console.log('[useCommunityChat] ✅ Conectado ao WebSocket');
-      console.log('[useCommunityChat] Socket ID:', newSocket.id);
       setIsConnected(true);
       socketRef.current = newSocket;
       currentCommunityIdRef.current = communityId;
       setSocket(newSocket);
-      console.log('[useCommunityChat] communityId definido:', communityId);
+
+      // Registrar listeners de comunidade quando o socket conectar
+      registerCommunityListeners(newSocket, communityId);
 
       // Iniciar heartbeat a cada 30 segundos
       heartbeatIntervalRef.current = setInterval(() => {
         if (newSocket.connected) {
-          console.log('[useCommunityChat] 💓 Enviando heartbeat');
           newSocket.emit('heartbeat');
         }
       }, 30000); // 30 segundos
     });
 
     newSocket.on('heartbeat_ack', (data: any) => {
-      console.log('[useCommunityChat] ✅ Heartbeat confirmado:', data);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('[useCommunityChat] ❌ Desconectado do WebSocket');
       setIsConnected(false);
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
@@ -91,75 +413,249 @@ export function useCommunityChat(communityId: string | null) {
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('[useCommunityChat] ❌ Erro de conexão:', error);
       setIsConnected(false);
     });
 
     // Log quando o socket recebe qualquer evento (para debug)
     newSocket.onAny((eventName, ...args) => {
-      console.log('[useCommunityChat] 📡 Evento recebido no socket:', eventName, {
-        eventName,
-        argsCount: args.length,
-        firstArg: args[0],
-        socketId: newSocket.id,
-        connected: newSocket.connected,
-      });
       if (eventName === 'new_community_message') {
-        console.log('[useCommunityChat] 🎯 Evento new_community_message detectado via onAny:', args);
+      }
+      if (eventName === 'community_typing') {
       }
     });
 
     // Evento: nova mensagem na comunidade
     newSocket.on('new_community_message', (data: NewCommunityMessageEvent) => {
-      console.log('[useCommunityChat] 📨 Nova mensagem recebida:', data);
-      console.log('[useCommunityChat] currentCommunityIdRef atual:', currentCommunityIdRef.current);
-      console.log('[useCommunityChat] communityId do parâmetro:', communityId);
-      console.log('[useCommunityChat] data.communityId:', data.communityId);
 
       // Usar ref para ter sempre o valor mais atualizado
       const currentCommunityId = currentCommunityIdRef.current || communityId;
       
       // Só adicionar se for da comunidade atual
       if (data.communityId === currentCommunityId) {
-        console.log('[useCommunityChat] ✅ Mensagem é da comunidade atual, adicionando');
         setMessages((prev) => {
           // Verificar se a mensagem já existe (evitar duplicatas) 
           const exists = prev.some((msg) => msg.id === data.id);   
           if (exists) {
-            console.log('[useCommunityChat] ⚠️ Mensagem já existe, ignorando');
             return prev;
           }
-          console.log('[useCommunityChat] ✅ Adicionando nova mensagem ao estado');
+          
+          // Verificar se há uma mensagem otimista similar (mesmo sender e comunidade)
+          // IMPORTANTE: Buscar por sender e comunidade, e considerar similar se:
+          // 1. A mensagem otimista tem attachments (sempre substituir)
+          // 2. O conteúdo é igual (ou ambos são vazios)
+          // 3. A mensagem otimista foi criada recentemente (últimos 5 segundos)
+          const currentTime = Date.now();
+          const hasSimilarOptimistic = prev.some((msg) => {
+            if (!msg.id.startsWith('temp-')) return false;
+            if (msg.senderId !== data.senderId) return false;
+            if (msg.communityId !== data.communityId) return false;
+            
+            // Verificar se a mensagem otimista foi criada recentemente (últimos 5 segundos)
+            const optimisticTime = new Date(msg.createdAt).getTime();
+            const timeDiff = currentTime - optimisticTime;
+            if (timeDiff > 5000) return false; // Muito antiga, não é similar
+            
+            // Se a mensagem otimista tem attachments, sempre considerar como similar
+            const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
+            if (optimisticHasAttachments) {
+              return true; // Sempre substituir se a otimista tem attachments
+            }
+            
+            // Se não tem attachments, verificar se o conteúdo é igual
+            const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+            return contentsMatch;
+          });
+          
+          if (hasSimilarOptimistic) {
+            // Encontrar a mensagem otimista para preservar seus attachments se necessário
+            // IMPORTANTE: Buscar por conteúdo e sender, não por quantidade de attachments
+            const optimisticMsg = prev.find((msg) => {
+              if (!msg.id.startsWith('temp-')) return false;
+              if (msg.senderId !== data.senderId) return false;
+              if (msg.communityId !== data.communityId) return false;
+              const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+              return contentsMatch;
+            });
+            
+            // Remover mensagens otimistas similares e adicionar a real
+            // IMPORTANTE: Remover qualquer mensagem otimista com mesmo conteúdo e sender
+            const withoutOptimistic = prev.filter((msg) => {
+              if (!msg.id.startsWith('temp-')) return true;
+              if (msg.senderId !== data.senderId) return true;
+              if (msg.communityId !== data.communityId) return true;
+              const contentsMatch =
+                (!msg.content && !data.content) || msg.content === data.content;
+              return !contentsMatch; // Manter apenas mensagens com conteúdo diferente
+            });
+            
+            // Preservar attachments da mensagem otimista se a mensagem real não tiver attachments
+            // mas a otimista tiver (caso o backend ainda não tenha enviado os attachments no WebSocket)
+            const finalAttachments = data.attachments && data.attachments.length > 0
+              ? data.attachments
+              : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
+                  ? optimisticMsg.attachments
+                  : []);
+            
+            // Converter NewCommunityMessageEvent para CommunityMessage adicionando propriedades faltantes
+            const communityMessage: CommunityMessage = {
+              ...data,
+              edited: false,
+              updatedAt: null,
+              attachments: finalAttachments,
+            };
+            const updated = [...withoutOptimistic, communityMessage];
+            const sorted = updated.sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+            return sorted;
+          }
+          
+          // Se a mensagem não tem attachments mas há uma mensagem otimista similar com attachments,
+          // usar os attachments da otimista (caso o backend ainda não tenha enviado no WebSocket)
+          // Buscar por mensagens otimistas recentes do mesmo sender
+          const currentTimeForSimilar = Date.now();
+          const similarOptimistic = prev.find((msg) => {
+            if (!msg.id.startsWith('temp-')) return false;
+            if (msg.senderId !== data.senderId) return false;
+            if (msg.communityId !== data.communityId) return false;
+            
+            // Verificar se a mensagem otimista foi criada recentemente (últimos 5 segundos)
+            const optimisticTime = new Date(msg.createdAt).getTime();
+            const timeDiff = currentTimeForSimilar - optimisticTime;
+            if (timeDiff > 5000) return false; // Muito antiga, não é similar
+            
+            // Se tem attachments, sempre considerar
+            const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
+            if (optimisticHasAttachments) return true;
+            
+            // Se não tem attachments, verificar se o conteúdo é igual
+            const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+            return contentsMatch;
+          });
+          
+          const finalAttachments = data.attachments && data.attachments.length > 0
+            ? data.attachments
+            : (similarOptimistic?.attachments && similarOptimistic.attachments.length > 0
+                ? similarOptimistic.attachments
+                : []);
+          
+          if (similarOptimistic && finalAttachments.length > 0 && (!data.attachments || data.attachments.length === 0)) {
+          }
+          
           // Converter NewCommunityMessageEvent para CommunityMessage adicionando propriedades faltantes
           const communityMessage: CommunityMessage = {
             ...data,
             edited: false,
             updatedAt: null,
+            attachments: finalAttachments,
           };
-          return [...prev, communityMessage];
-        });
-      } else {
-        console.log('[useCommunityChat] ⚠️ Mensagem não é da comunidade atual, ignorando:', {
-          messageCommunityId: data.communityId,
-          currentCommunityId: currentCommunityId,
+          const updated = [...prev, communityMessage];
+          const sorted = updated.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          
+          // Se a mensagem não tem attachments, SEMPRE tentar buscar da API
+          // (o backend pode não estar enviando attachments no WebSocket)
+          if ((!finalAttachments || finalAttachments.length === 0) && data.id && !data.id.startsWith('temp-')) {
+            // Verificar se já estamos buscando attachments para esta mensagem
+            if (pendingAttachmentFetchesRef.current.has(data.id)) {
+              return sorted;
+            }
+            
+            const messageTime = new Date(data.createdAt).getTime();
+            const timeDiff = Date.now() - messageTime;
+            
+            // Sempre tentar buscar se não tiver attachments (mesmo que não seja recente)
+            // O backend pode não estar enviando attachments no WebSocket
+            if (timeDiff < 30000) { // 30 segundos para dar mais tempo
+              // Marcar que estamos buscando attachments para esta mensagem
+              pendingAttachmentFetchesRef.current.add(data.id);
+              
+              // Mensagem recente sem attachments - tentar buscar da API
+              
+              // Fazer múltiplas tentativas com intervalos crescentes
+              const attempts = [500, 1000, 2000];
+              attempts.forEach((delay, index) => {
+                setTimeout(async () => {
+                  try {
+                    // Verificar se a mensagem já tem attachments usando setMessages com callback
+                    let shouldContinue = true;
+                    setMessages((prev) => {
+                      const currentMsg = prev.find((msg) => msg.id === data.id);
+                      if (currentMsg && currentMsg.attachments && currentMsg.attachments.length > 0) {
+                        pendingAttachmentFetchesRef.current.delete(data.id);
+                        shouldContinue = false;
+                      }
+                      return prev; // Não alterar o estado, apenas verificar
+                    });
+                    
+                    if (!shouldContinue) {
+                      return;
+                    }
+                    
+                    const { getCommunityMessages } = await import('@/api/communities/get-community-messages');
+                    const response = await getCommunityMessages(data.communityId, 10, 0); // Buscar mais mensagens para garantir
+                    
+                    if (response.success && response.data.length > 0) {
+                      // Procurar a mensagem específica na lista
+                      const foundMessage = response.data.find((msg: CommunityMessage) => msg.id === data.id);
+                      
+                      if (foundMessage && foundMessage.attachments && foundMessage.attachments.length > 0) {
+                        setMessages((prev) => {
+                          // Verificar novamente se a mensagem ainda não tem attachments
+                          const msg = prev.find((m) => m.id === data.id);
+                          if (msg && msg.attachments && msg.attachments.length > 0) {
+                            return prev;
+                          }
+                          
+                          const updated = prev.map((msg) => 
+                            msg.id === data.id 
+                              ? { ...msg, attachments: foundMessage.attachments }
+                              : msg
+                          );
+                          return updated;
+                        });
+                        // Remover da lista de buscas pendentes após sucesso
+                        pendingAttachmentFetchesRef.current.delete(data.id);
+                      } else {
+                        // Se foi a última tentativa e não encontrou, remover da lista
+                        if (index === attempts.length - 1) {
+                          pendingAttachmentFetchesRef.current.delete(data.id);
+                        }
+                      }
+                    } else {
+                      // Se foi a última tentativa e não encontrou, remover da lista
+                      if (index === attempts.length - 1) {
+                        pendingAttachmentFetchesRef.current.delete(data.id);
+                      }
+                    }
+                  } catch (error) {
+                    // Se foi a última tentativa e deu erro, remover da lista
+                    if (index === attempts.length - 1) {
+                      pendingAttachmentFetchesRef.current.delete(data.id);
+                    }
+                  }
+                }, delay);
+              });
+            }
+          }
+          
+          return sorted;
         });
       }
     });
 
     // Evento: mensagem deletada na comunidade
     newSocket.on('community_message_deleted', (data: CommunityMessageDeletedEvent) => {
-      console.log('[useCommunityChat] 🗑️ Mensagem deletada recebida:', data);
 
       // Só atualizar se for da comunidade atual
       if (data.communityId === communityId) {
         setMessages((prev) => {
           const messageExists = prev.some((msg) => msg.id === data.messageId);
           if (!messageExists) {
-            console.log('[useCommunityChat] ⚠️ Mensagem não encontrada na UI, ignorando');
             return prev;
           }
 
-          console.log('[useCommunityChat] ✅ Atualizando mensagem deletada na UI');
           return prev.map((msg) =>
             msg.id === data.messageId ? { ...msg, content: data.message.content } : msg
           );
@@ -177,7 +673,6 @@ export function useCommunityChat(communityId: string | null) {
                 }
               })
               .catch((error) => {
-                console.error('[useCommunityChat] Erro ao recarregar mensagens fixadas após deletar:', error);
               });
           }
           return prev;
@@ -187,18 +682,15 @@ export function useCommunityChat(communityId: string | null) {
 
     // Evento: mensagem editada na comunidade em tempo real
     newSocket.on('community_message_edited', (data: CommunityMessageEditedEvent) => {
-      console.log('[useCommunityChat] ✏️ Mensagem editada recebida:', data);
 
       // Só atualizar se for da comunidade atual
       if (data.communityId === communityId) {
         setMessages((prev) => {
           const messageExists = prev.some((msg) => msg.id === data.id);
           if (!messageExists) {
-            console.log('[useCommunityChat] ⚠️ Mensagem não encontrada na UI, ignorando');
             return prev;
           }
 
-          console.log('[useCommunityChat] ✅ Atualizando mensagem editada na UI');
           return prev.map((msg) =>
             msg.id === data.id
               ? { ...msg, content: data.content, edited: true, updatedAt: data.updatedAt }
@@ -208,18 +700,46 @@ export function useCommunityChat(communityId: string | null) {
       }
     });
 
+    // Evento: typing indicator
+    newSocket.on('community_typing', (data: { userId: string; communityId: string; isTyping: boolean }) => {
+      // Só atualizar se for da comunidade atual
+      const currentCommunityId = currentCommunityIdRef.current || communityId;
+      if (data.communityId === currentCommunityId) {
+        setIsTyping(data.isTyping);
+        setTypingUserId(data.isTyping ? data.userId : null);
+      } else {
+      }
+    });
+
     setSocket(newSocket);
 
     // Atualizar ref imediatamente também
     currentCommunityIdRef.current = communityId;
 
     return () => {
-      console.log('[useCommunityChat] 🧹 Limpando socket e heartbeat');
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
       }
-      newSocket.disconnect();
+      
+      // Decrementar contador de listeners apenas se este socket é o compartilhado
+      if (newSocket === window.__sharedChatSocket) {
+        window.__sharedChatSocketListenersCount--;
+        
+        // NÃO desconectar o socket se ainda há outros listeners (useChat pode estar usando)
+        // Sempre manter o socket compartilhado conectado se há pelo menos 1 listener
+        if (window.__sharedChatSocketListenersCount <= 0) {
+          window.__sharedChatSocketListenersCount = 0;
+          // NÃO desconectar o socket - deixar para o useChat gerenciar
+          // window.__sharedChatSocket = null;
+        }
+      } else {
+        // Este é um socket antigo que não é mais o compartilhado, desconectar
+        if (newSocket.connected) {
+          newSocket.disconnect();
+        }
+      }
+      
       socketRef.current = null;
       currentCommunityIdRef.current = null;
     };
@@ -228,7 +748,6 @@ export function useCommunityChat(communityId: string | null) {
   // Atualizar ref quando communityId mudar (mesmo que o socket já esteja conectado)
   useEffect(() => {
     if (communityId) {
-      console.log('[useCommunityChat] 🔄 Atualizando currentCommunityIdRef:', communityId);
       currentCommunityIdRef.current = communityId;
     }
   }, [communityId]);
@@ -236,7 +755,6 @@ export function useCommunityChat(communityId: string | null) {
   const loadMessages = useCallback(async (limit: number = 50, offset: number = 0) => {
     if (!communityId) return;
     try {
-      console.log('[useCommunityChat] 📥 Carregando mensagens:', { communityId, limit, offset });
       const response = await getCommunityMessages(communityId, limit, offset);
       if (response.success) {
         // Ordenar mensagens por data de criação
@@ -244,51 +762,218 @@ export function useCommunityChat(communityId: string | null) {
           (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
         setMessages(sortedMessages);
-        console.log('[useCommunityChat] ✅ Mensagens carregadas:', sortedMessages.length);
       } else {
         const errorMessage = 'message' in response ? response.message : 'Erro ao carregar mensagens';
-        console.error('[useCommunityChat] ❌ Erro ao carregar mensagens:', errorMessage);
       }
     } catch (error) {
-      console.error('[useCommunityChat] ❌ Erro ao carregar mensagens:', error);
     }
   }, [communityId]);
 
   const loadPinnedMessages = useCallback(async () => {
     if (!communityId) return;
     try {
-      console.log('[useCommunityChat] 📌 Carregando mensagens fixadas:', { communityId });
       const response = await getPinnedCommunityMessages(communityId);
       if (response.success) {
         setPinnedMessages(response.data);
-        console.log('[useCommunityChat] ✅ Mensagens fixadas carregadas:', response.data.length);
       } else {
         const errorMessage = 'message' in response ? response.message : 'Erro ao carregar mensagens fixadas';
-        console.error('[useCommunityChat] ❌ Erro ao carregar mensagens fixadas:', errorMessage);
       }
     } catch (error) {
-      console.error('[useCommunityChat] ❌ Erro ao carregar mensagens fixadas:', error);
     }
   }, [communityId]);
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content?: string, attachments?: MessageAttachment[]) => {
     if (!communityId) return { success: false, message: 'Comunidade não selecionada' };
+    if (!content?.trim() && (!attachments || attachments.length === 0)) {
+      return { success: false, message: 'Mensagem ou anexo é obrigatório' };
+    }
+    
+    // Obter userId do token JWT
+    let senderId = '';
     try {
-      console.log('[useCommunityChat] 📤 Enviando mensagem:', { communityId, content });
-      const response = await sendCommunityMessage(communityId, content);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        senderId = payload.sub || payload.userId || payload.id || '';
+      }
+    } catch (e) {
+    }
+    
+    // Criar mensagem otimista temporária
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    const optimisticMessage: CommunityMessage = {
+      id: tempId,
+      communityId: communityId,
+      senderId: senderId,
+      content: content?.trim() || '',
+      createdAt: new Date().toISOString(),
+      edited: false,
+      updatedAt: null,
+      attachments: attachments?.map((att, index) => ({
+        id: `temp-attachment-${index}`,
+        fileUrl: att.fileUrl,
+        fileName: att.fileName,
+        fileType: att.fileType,
+        fileSize: att.fileSize,
+        thumbnailUrl: att.thumbnailUrl || null,
+        width: att.width || null,
+        height: att.height || null,
+        duration: att.duration || null,
+      })),
+    };
+    
+    
+    // Adicionar mensagem otimista imediatamente
+    setMessages((prev) => {
+      const updated = [...prev, optimisticMessage];
+      return updated.sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+    });
+    
+    try {
+      const response = await sendCommunityMessage(communityId, content, attachments);
       if (response.success) {
-        // A mensagem será adicionada via WebSocket, mas podemos adicionar otimisticamente
+        // A mensagem será adicionada via WebSocket, mas podemos adicionar/atualizar com a resposta da API
         setMessages((prev) => {
           const exists = prev.some((msg) => msg.id === response.data.id);
-          if (exists) return prev;
-          return [...prev, response.data];
+          if (exists) {
+            // Se a mensagem já existe (adicionada pelo WebSocket), atualizar os attachments se a resposta da API tiver
+            return prev.map((msg) => {
+              if (msg.id === response.data.id) {
+                // Se a mensagem não tem attachments mas a resposta da API tem, atualizar
+                if ((!msg.attachments || msg.attachments.length === 0) && attachments && attachments.length > 0) {
+                  const mappedAttachments: MessageAttachmentResponse[] =
+                    attachments.map((attachment, index) => ({
+                      id: attachment.cloudinaryPublicId || `temp-${response.data.id}-${index}`,
+                      fileUrl: attachment.fileUrl,
+                      fileName: attachment.fileName,
+                      fileType: attachment.fileType,
+                      fileSize: attachment.fileSize,
+                      thumbnailUrl: attachment.thumbnailUrl || attachment.fileUrl,
+                      width: attachment.width ?? null,
+                      height: attachment.height ?? null,
+                      duration: attachment.duration ?? null,
+                    }));
+                  return { ...msg, attachments: mappedAttachments };
+                }
+              }
+              return msg;
+            });
+          }
+
+          // Verificar se há uma mensagem otimista similar para substituir
+          // IMPORTANTE: Buscar por conteúdo e sender, não por quantidade de attachments
+          const optimisticMsg = prev.find((msg) => {
+            if (!msg.id.startsWith('temp-')) return false;
+            if (msg.senderId !== response.data.senderId) return false;
+            if (msg.communityId !== response.data.communityId) return false;
+            const contentsMatch = (!msg.content && !response.data.content) || msg.content === response.data.content;
+            return contentsMatch;
+          });
+
+          if (optimisticMsg) {
+            // Remover mensagens otimistas similares (qualquer mensagem otimista com mesmo conteúdo e sender)
+            const withoutOptimistic = prev.filter((msg) => {
+              if (!msg.id.startsWith('temp-')) return true;
+              if (msg.senderId !== response.data.senderId) return true;
+              if (msg.communityId !== response.data.communityId) return true;
+              const contentsMatch = (!msg.content && !response.data.content) || msg.content === response.data.content;
+              return !contentsMatch; // Manter apenas mensagens com conteúdo diferente
+            });
+
+            // Preservar attachments da mensagem otimista se a resposta da API não tiver attachments
+            // mas a otimista tiver (caso o backend ainda não tenha processado os attachments)
+            const finalAttachments = attachments && attachments.length > 0
+              ? attachments.map((attachment, index) => ({
+                  id: attachment.cloudinaryPublicId || `temp-${response.data.id}-${index}`,
+                  fileUrl: attachment.fileUrl,
+                  fileName: attachment.fileName,
+                  fileType: attachment.fileType,
+                  fileSize: attachment.fileSize,
+                  thumbnailUrl: attachment.thumbnailUrl || attachment.fileUrl,
+                  width: attachment.width ?? null,
+                  height: attachment.height ?? null,
+                  duration: attachment.duration ?? null,
+                }))
+              : (optimisticMsg.attachments && optimisticMsg.attachments.length > 0
+                      ? optimisticMsg.attachments
+                      : []);
+    
+            const messageWithAttachments: CommunityMessage = {
+              ...response.data,
+              attachments: finalAttachments,
+            };
+
+            const updated = [...withoutOptimistic, messageWithAttachments];
+            const sorted = updated.sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+            return sorted;
+          }
+
+          // Se não há mensagem otimista, verificar se a mensagem real já existe (adicionada pelo WebSocket)
+          const alreadyExists = prev.some((msg) => msg.id === response.data.id);
+          
+          if (alreadyExists) {
+            // Se a mensagem já existe (adicionada pelo WebSocket), atualizar os attachments se a resposta da API tiver
+            return prev.map((msg) => {
+              if (msg.id === response.data.id) {
+                // Se a mensagem não tem attachments mas a resposta da API tem, atualizar
+                if ((!msg.attachments || msg.attachments.length === 0) && attachments && attachments.length > 0) {
+                  const mappedAttachments: MessageAttachmentResponse[] =
+                    attachments.map((attachment, index) => ({
+                      id: attachment.cloudinaryPublicId || `temp-${response.data.id}-${index}`,
+                      fileUrl: attachment.fileUrl,
+                      fileName: attachment.fileName,
+                      fileType: attachment.fileType,
+                      fileSize: attachment.fileSize,
+                      thumbnailUrl: attachment.thumbnailUrl || attachment.fileUrl,
+                      width: attachment.width ?? null,
+                      height: attachment.height ?? null,
+                      duration: attachment.duration ?? null,
+                    }));
+                  return { ...msg, attachments: mappedAttachments };
+                }
+              }
+              return msg;
+            });
+          }
+
+          // Se não há mensagem otimista e a mensagem real não existe, adicionar normalmente
+          const mappedAttachments: MessageAttachmentResponse[] =
+            attachments?.map((attachment, index) => ({
+              id: attachment.cloudinaryPublicId || `temp-${response.data.id}-${index}`,
+              fileUrl: attachment.fileUrl,
+              fileName: attachment.fileName,
+              fileType: attachment.fileType,
+              fileSize: attachment.fileSize,
+              thumbnailUrl: attachment.thumbnailUrl || attachment.fileUrl,
+              width: attachment.width ?? null,
+              height: attachment.height ?? null,
+              duration: attachment.duration ?? null,
+            })) || [];
+
+          const messageWithAttachments: CommunityMessage = {
+            ...response.data,
+            attachments: mappedAttachments,
+          };
+
+          const updated = [...prev, messageWithAttachments];
+          const sorted = updated.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          return sorted;
         });
         return { success: true };
       } else {
+        // Remover mensagem otimista em caso de erro
+        setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useCommunityChat] ❌ Erro ao enviar mensagem:', error);
+      // Remover mensagem otimista em caso de erro
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
       return { success: false, message: 'Erro ao enviar mensagem' };
     }
   }, [communityId]);
@@ -296,7 +981,6 @@ export function useCommunityChat(communityId: string | null) {
   const editMessageHandler = useCallback(async (messageId: string, content: string) => {
     if (!communityId) return { success: false, message: 'Comunidade não selecionada' };
     try {
-      console.log('[useCommunityChat] ✏️ Editando mensagem:', { communityId, messageId, content });
       const response = await editCommunityMessage(communityId, messageId, content);
       if (response.success) {
         // Atualizar a mensagem na lista
@@ -312,7 +996,6 @@ export function useCommunityChat(communityId: string | null) {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useCommunityChat] ❌ Erro ao editar mensagem:', error);
       return { success: false, message: 'Erro ao editar mensagem' };
     }
   }, [communityId]);
@@ -320,18 +1003,15 @@ export function useCommunityChat(communityId: string | null) {
   const deleteMessageHandler = useCallback(async (messageId: string) => {
     if (!communityId) return { success: false, message: 'Comunidade não selecionada' };
     try {
-      console.log('[useCommunityChat] 🗑️ Excluindo mensagem:', { communityId, messageId });
       const response = await deleteCommunityMessage(communityId, messageId);
       if (response.success) {
         // Não remover a mensagem aqui - o evento WebSocket community_message_deleted
         // será recebido e atualizará a mensagem com "Mensagem apagada"
-        console.log('[useCommunityChat] ✅ Mensagem deletada com sucesso, aguardando evento WebSocket');
         return { success: true };
       } else {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useCommunityChat] ❌ Erro ao excluir mensagem:', error);
       return { success: false, message: 'Erro ao excluir mensagem' };
     }
   }, [communityId]);
@@ -339,7 +1019,6 @@ export function useCommunityChat(communityId: string | null) {
   const pinMessageHandler = useCallback(async (messageId: string) => {
     if (!communityId) return { success: false, message: 'Comunidade não selecionada' };
     try {
-      console.log('[useCommunityChat] 📌 Fixando mensagem:', { communityId, messageId });
       const response = await pinCommunityMessage(communityId, messageId);
       if (response.success) {
         // Recarregar mensagens fixadas
@@ -349,7 +1028,6 @@ export function useCommunityChat(communityId: string | null) {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useCommunityChat] ❌ Erro ao fixar mensagem:', error);
       return { success: false, message: 'Erro ao fixar mensagem' };
     }
   }, [communityId, loadPinnedMessages]);
@@ -357,7 +1035,6 @@ export function useCommunityChat(communityId: string | null) {
   const unpinMessageHandler = useCallback(async (messageId: string) => {
     if (!communityId) return { success: false, message: 'Comunidade não selecionada' };
     try {
-      console.log('[useCommunityChat] 📌 Desfixando mensagem:', { communityId, messageId });
       const response = await unpinCommunityMessage(communityId, messageId);
       if (response.success) {
         // Recarregar mensagens fixadas
@@ -367,16 +1044,33 @@ export function useCommunityChat(communityId: string | null) {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useCommunityChat] ❌ Erro ao desfixar mensagem:', error);
       return { success: false, message: 'Erro ao desfixar mensagem' };
     }
   }, [communityId, loadPinnedMessages]);
+
+  const sendTypingIndicator = useCallback((isTyping: boolean) => {
+    if (!socketRef.current || !socketRef.current.connected || !communityId) {
+      return;
+    }
+    
+    // O backend adiciona o userId automaticamente do token JWT
+    // Enviar apenas communityId e isTyping conforme documentação
+    const payload = {
+      communityId,
+          isTyping,
+        };
+        
+        socketRef.current.emit('community_typing', payload);
+  }, [communityId]);
 
   return {
     messages,
     pinnedMessages,
     isConnected,
+    isTyping,
+    typingUserId,
     sendMessage,
+    sendTypingIndicator,
     editMessage: editMessageHandler,
     deleteMessage: deleteMessageHandler,
     pinMessage: pinMessageHandler,

@@ -32,7 +32,6 @@ function WatchingContent() {
       const response = await getInProgressVideos();
       setVideos(response.data.videos);
     } catch (err) {
-      console.error('Erro ao carregar vídeos em progresso:', err);
       setError('Não foi possível carregar os vídeos. Tente novamente.');
     } finally {
       setIsLoading(false);

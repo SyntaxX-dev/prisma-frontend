@@ -1,5 +1,7 @@
 // Tipos para Chat de Comunidades
 
+import type { MessageAttachmentResponse } from './file-upload';
+
 export interface CommunityMessage {
   id: string;
   communityId: string;
@@ -8,6 +10,7 @@ export interface CommunityMessage {
   createdAt: string;
   edited: boolean;
   updatedAt?: string | null;
+  attachments?: MessageAttachmentResponse[];
 }
 
 export interface PinnedCommunityMessage {
@@ -31,6 +34,7 @@ export interface NewCommunityMessageEvent {
   senderId: string;
   content: string;
   createdAt: string;
+  attachments?: MessageAttachmentResponse[];
 }
 
 export interface CommunityMessageDeletedEvent {
@@ -53,8 +57,11 @@ export interface CommunityMessageEditedEvent {
   updatedAt: string | null;
 }
 
+import type { MessageAttachment } from './file-upload';
+
 export interface SendCommunityMessageRequest {
-  content: string;
+  content?: string;
+  attachments?: MessageAttachment[];
 }
 
 export interface EditCommunityMessageRequest {

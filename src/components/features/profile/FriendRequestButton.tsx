@@ -34,8 +34,6 @@ export function FriendRequestButton({ userId, isFriend: initialIsFriend }: Frien
         getFriendRequests('received'),
       ]);
       
-      console.log('[FriendRequestButton] Resposta completa:', { sentResponse, receivedResponse });
-      console.log('[FriendRequestButton] userId sendo verificado:', userId);
       
       // Verificar se há pedido enviado para este usuário
       const sentRequest = sentResponse.data.requests?.find(
@@ -64,17 +62,14 @@ export function FriendRequestButton({ userId, isFriend: initialIsFriend }: Frien
         );
         
         if (acceptedRequest) {
-          console.log('[FriendRequestButton] ✅ Amizade encontrada, status ACCEPTED');
           setRequestStatus('accepted');
           setIsFriend(true);
         } else {
-          console.log('[FriendRequestButton] ❌ Nenhuma amizade encontrada, status NONE');
           setRequestStatus('none');
           setIsFriend(false);
         }
       }
     } catch (error: any) {
-      console.error('Erro ao verificar status do pedido:', error);
       setRequestStatus('none');
       setIsFriend(false);
     } finally {
@@ -106,34 +101,20 @@ export function FriendRequestButton({ userId, isFriend: initialIsFriend }: Frien
 
     // Escutar quando amizade for removida - igual ao pedido de amizade
     const handleFriendRemoved = (data: { userId: string; friendId: string; friendName: string; removedAt: string }) => {
-      console.log('[FriendRequestButton] 🗑️ Evento friend_removed recebido via Socket.IO:', data);
-      console.log('[FriendRequestButton] 📊 Verificando se evento é relacionado ao perfil visualizado:', {
-        userId: userId,
-        dataUserId: data.userId,
-        dataFriendId: data.friendId,
-        isRelated: data.friendId === userId || data.userId === userId
-      });
-      
       // Se o evento é relacionado ao perfil sendo visualizado (userId), recarregar status
       // Isso garante que quando qualquer um dos dois usuários remove a amizade, ambos veem a atualização
       if (data.friendId === userId || data.userId === userId) {
-        console.log('[FriendRequestButton] ✅ Evento relacionado ao perfil visualizado!');
-        console.log('[FriendRequestButton] 🔄 Recarregando status do pedido...');
         // Recarregar status do pedido, igual ao que acontece quando recebe friend_request
         checkRequestStatus();
-        console.log('[FriendRequestButton] ✅ Status recarregado - botão será atualizado');
       } else {
-        console.log('[FriendRequestButton] ⚠️ Evento não relacionado ao perfil visualizado - ignorando');
       }
     };
 
     // Escutar quando amizade for aceita
     const handleFriendAccepted = (data: any) => {
-      console.log('[FriendRequestButton] ✅ Amizade aceita via Socket.IO:', data);
       // Verificar se o evento é relacionado ao perfil sendo visualizado
       const relatedUserId = data.relatedUserId || data.requester?.id || data.receiver?.id;
       if (relatedUserId === userId || data.requester?.id === userId || data.receiver?.id === userId) {
-        console.log('[FriendRequestButton] ✅ Evento relacionado, recarregando status...');
         // Recarregar status do pedido
         checkRequestStatus();
       }
@@ -166,7 +147,6 @@ export function FriendRequestButton({ userId, isFriend: initialIsFriend }: Frien
         setRequestStatus('pending');
       }
     } catch (error: any) {
-      console.error('Erro ao enviar pedido de amizade:', error);
       
       // Se já existe pedido pendente, atualizar status
       if (error.message?.includes('já existe') || error.message?.includes('Já existe')) {
@@ -183,15 +163,10 @@ export function FriendRequestButton({ userId, isFriend: initialIsFriend }: Frien
   const handleRemoveFriendship = async () => {
     if (!userId || isLoading) return;
 
-    console.log('[FriendRequestButton] 🗑️ Iniciando remoção de amizade...');
-    console.log('[FriendRequestButton] 📍 userId do amigo a ser removido:', userId);
     
     setIsLoading(true);
     try {
-      console.log('[FriendRequestButton] 📤 Enviando requisição DELETE para /friendships/' + userId);
       const response = await removeFriendship(userId);
-      console.log('[FriendRequestButton] ✅ Resposta da API de remover amizade:', response);
-      console.log('[FriendRequestButton] ⏳ Aguardando evento friend_removed via Socket.IO...');
       
       // O estado será atualizado via Socket.IO quando o backend emitir o evento
       // Mas atualizamos localmente também para feedback imediato
@@ -201,20 +176,12 @@ export function FriendRequestButton({ userId, isFriend: initialIsFriend }: Frien
       
       // Recarregar status após um pequeno delay para garantir que o backend processou
       setTimeout(() => {
-        console.log('[FriendRequestButton] 🔄 Recarregando status após delay...');
         checkRequestStatus();
       }, 500);
     } catch (error: any) {
-      console.error('[FriendRequestButton] ❌ Erro ao desfazer amizade:', error);
-      console.error('[FriendRequestButton] 📋 Detalhes do erro:', {
-        message: error.message,
-        status: error.status,
-        response: error.response
-      });
       toast.error(error.message || 'Erro ao desfazer amizade');
     } finally {
       setIsLoading(false);
-      console.log('[FriendRequestButton] ✅ Processo de remoção finalizado');
     }
   };
 

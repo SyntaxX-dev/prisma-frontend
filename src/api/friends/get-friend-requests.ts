@@ -50,11 +50,9 @@ export async function getFriendRequests(type?: 'sent' | 'received'): Promise<Get
   try {
     const url = type ? `/friendships/requests?type=${type}` : '/friendships/requests';
     const response = await httpClient.get<any>(url);
-    console.log('[getFriendRequests] Resposta completa:', JSON.stringify(response, null, 2));
     
     // Se data é um array direto (estrutura atual da API)
     if (Array.isArray(response.data)) {
-      console.log('[getFriendRequests] ✅ Resposta veio como array direto, convertendo para formato esperado');
       // Converter para FriendRequestItem[]
       const requests: FriendRequestItem[] = response.data.map((req: any) => ({
         id: req.id,
@@ -133,7 +131,6 @@ export async function getFriendRequests(type?: 'sent' | 'received'): Promise<Get
     }
     
     // Fallback: retornar estrutura vazia
-    console.warn('[getFriendRequests] ⚠️ Estrutura de resposta não reconhecida, retornando vazio');
     return {
       success: true,
       data: {
@@ -141,7 +138,6 @@ export async function getFriendRequests(type?: 'sent' | 'received'): Promise<Get
       },
     };
   } catch (error) {
-    console.error('[getFriendRequests] Erro:', error);
     throw error as ApiError;
   }
 }

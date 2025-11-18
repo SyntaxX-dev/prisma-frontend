@@ -13,14 +13,11 @@ export async function getCommunityMessages(
   offset: number = 0
 ): Promise<GetCommunityMessagesResponse | GetCommunityMessagesError> {
   try {
-    console.log('[getCommunityMessages] Buscando mensagens:', { communityId, limit, offset });
     const response = await httpClient.get<GetCommunityMessagesResponse>(
       `/communities/${communityId}/messages?limit=${limit}&offset=${offset}`
     );
-    console.log('[getCommunityMessages] ✅ Mensagens recebidas:', response);
     return response;
   } catch (error) {
-    console.error('[getCommunityMessages] ❌ Erro ao buscar mensagens:', error);
     const apiError = error as ApiError;
     return {
       success: false,

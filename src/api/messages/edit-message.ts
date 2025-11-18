@@ -28,17 +28,14 @@ export async function editMessage(
   content: string
 ): Promise<EditMessageResponse | EditMessageError> {
   try {
-    console.log('[editMessage] Editando mensagem:', { messageId, content });
     const response = await httpClient.put<EditMessageResponse>(
       `/messages/${messageId}`,
       {
         content,
       }
     );
-    console.log('[editMessage] ✅ Mensagem editada com sucesso:', response);
     return response;
   } catch (error) {
-    console.error('[editMessage] ❌ Erro ao editar mensagem:', error);
     const apiError = error as ApiError;
     return {
       success: false,

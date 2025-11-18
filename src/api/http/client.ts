@@ -9,24 +9,11 @@ export interface ApiError {
 export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
 	const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 	
-	console.log('[httpClient] fetchJson chamado:', {
-		path,
-		tokenExists: !!token,
-		tokenLength: token?.length || 0,
-		tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
-	});
-	
 	const headers: HeadersInit = { 
 		'Content-Type': 'application/json', 
 		...(token && { 'Authorization': `Bearer ${token}` }),
 		...(init?.headers || {}) 
 	};
-	
-	const headersObj = headers as Record<string, string>;
-	console.log('[httpClient] Headers enviados:', {
-		'Content-Type': headersObj['Content-Type'],
-		'Authorization': headersObj['Authorization'] ? `${headersObj['Authorization'].substring(0, 30)}...` : 'não enviado'
-	});
 	
 	const res = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
 		...init,

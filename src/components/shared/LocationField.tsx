@@ -58,7 +58,6 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
       const fullAddress = `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
       onChange(fullAddress);
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
       alert('Erro ao buscar CEP');
     } finally {
       setIsLoading(false);
@@ -86,7 +85,6 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
         alert('Localização não encontrada');
       }
     } catch (error) {
-      console.error('Erro ao buscar endereço:', error);
       alert('Erro ao buscar endereço');
     } finally {
       setIsLoading(false);

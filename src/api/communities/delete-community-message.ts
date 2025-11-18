@@ -16,14 +16,11 @@ export async function deleteCommunityMessage(
   messageId: string
 ): Promise<DeleteCommunityMessageResponse | DeleteCommunityMessageError> {
   try {
-    console.log('[deleteCommunityMessage] Excluindo mensagem:', { communityId, messageId });
     const response = await httpClient.delete<DeleteCommunityMessageResponse>(
       `/communities/${communityId}/messages/${messageId}`
     );
-    console.log('[deleteCommunityMessage] ✅ Mensagem excluída com sucesso:', response);
     return response;
   } catch (error) {
-    console.error('[deleteCommunityMessage] ❌ Erro ao excluir mensagem:', error);
     const apiError = error as ApiError;
     return {
       success: false,

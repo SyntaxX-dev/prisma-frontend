@@ -1,10 +1,14 @@
 import { httpClient } from '../http/client';
 import { ApiError } from '../http/client';
+import type { MessageAttachment } from '@/types/file-upload';
 
 export interface SendMessageRequest {
   receiverId: string;
-  content: string;
+  content?: string;
+  attachments?: MessageAttachment[];
 }
+
+import type { MessageAttachmentResponse } from '@/types/file-upload';
 
 export interface Message {
   id: string;
@@ -15,6 +19,7 @@ export interface Message {
   createdAt: string;
   edited?: boolean;
   updatedAt?: string | null;
+  attachments?: MessageAttachmentResponse[];
 }
 
 export interface SendMessageResponse {
@@ -24,27 +29,20 @@ export interface SendMessageResponse {
 
 export async function sendMessage(
   receiverId: string,
-  content: string
+  content?: string,
+  attachments?: MessageAttachment[]
 ): Promise<SendMessageResponse> {
   try {
-    console.log('[sendMessage] Enviando mensagem:', { receiverId, content });
     const response = await httpClient.post<SendMessageResponse>(
       '/messages',
       {
         receiverId,
-        content,
-      }
-    );
-    console.log('[sendMessage] ✅ Resposta completa da API:', JSON.stringify(response, null, 2));
-    console.log('[sendMessage] Estrutura da resposta:', {
-      success: response.success,
-      hasData: !!response.data,
-      messageId: response.data?.id,
-      content: response.data?.content
-    });
+        content: content || '',
+            attachments,
+          }
+        );
     return response;
   } catch (error) {
-    console.error('[sendMessage] ❌ Erro ao enviar mensagem:', error);
     throw error as ApiError;
   }
 }

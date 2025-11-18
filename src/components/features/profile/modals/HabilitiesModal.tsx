@@ -119,7 +119,6 @@ export function HabilitiesModal({
             toast.success('Habilidades atualizadas com sucesso!');
             onClose();
         } catch (error) {
-            console.error('Erro ao salvar habilidades:', error);
             toast.error('Erro ao salvar habilidades. Tente novamente.');
         } finally {
             setIsLoading(false);

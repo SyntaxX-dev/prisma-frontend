@@ -31,14 +31,11 @@ export async function getPinnedMessages(
   friendId: string
 ): Promise<GetPinnedMessagesResponse | GetPinnedMessagesError> {
   try {
-    console.log('[getPinnedMessages] Buscando mensagens fixadas:', { friendId });
     const response = await httpClient.get<GetPinnedMessagesResponse>(
       `/messages/conversation/${friendId}/pinned`
     );
-    console.log('[getPinnedMessages] ✅ Mensagens fixadas recebidas:', response);
     return response;
   } catch (error) {
-    console.error('[getPinnedMessages] ❌ Erro ao buscar mensagens fixadas:', error);
     const apiError = error as ApiError;
     return {
       success: false,

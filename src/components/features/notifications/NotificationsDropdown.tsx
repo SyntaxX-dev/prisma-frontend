@@ -31,23 +31,18 @@ export function NotificationsDropdown() {
     setIsLoadingRequests(true);
     try {
       const response = await getFriendRequests('received');
-      console.log('[NotificationsDropdown] Pedidos recebidos:', response);
-      console.log('[NotificationsDropdown] Requests array:', response.data.requests);
       
       // Filtrar apenas pedidos pendentes
       const pendingRequests = (response.data.requests || []).filter(
         (req) => req.status === 'PENDING'
       );
       
-      console.log('[NotificationsDropdown] Pedidos pendentes:', pendingRequests);
       setFriendRequests(pendingRequests);
       
       // Atualizar contador de não lidas se houver pedidos pendentes
       if (pendingRequests.length > 0) {
-        console.log('[NotificationsDropdown] ✅ Encontrados', pendingRequests.length, 'pedidos pendentes');
       }
     } catch (error) {
-      console.error('[NotificationsDropdown] Erro ao carregar pedidos:', error);
     } finally {
       setIsLoadingRequests(false);
     }
@@ -68,28 +63,18 @@ export function NotificationsDropdown() {
   // Escutar eventos do WebSocket para atualizar pedidos em tempo real
   useEffect(() => {
     if (!socket) {
-      console.log('[NotificationsDropdown] ⚠️ Socket não disponível');
       return;
     }
 
-    console.log('[NotificationsDropdown] 🔌 Socket disponível:', {
-      connected: socket.connected,
-      id: socket.id,
-      isConnected,
-    });
-
     const handleFriendRequest = () => {
-      console.log('[NotificationsDropdown] 📩 Evento friend_request recebido, recarregando pedidos...');
       loadFriendRequests();
     };
 
     const handleFriendRemoved = () => {
-      console.log('[NotificationsDropdown] 🗑️ Evento friend_removed recebido, recarregando pedidos...');
       loadFriendRequests();
     };
 
     const handleFriendAccepted = () => {
-      console.log('[NotificationsDropdown] ✅ Evento friend_accepted recebido, recarregando pedidos...');
       loadFriendRequests();
     };
 
@@ -100,17 +85,14 @@ export function NotificationsDropdown() {
 
     // Log quando socket conectar
     socket.on('connect', () => {
-      console.log('[NotificationsDropdown] ✅ Socket conectado no componente');
     });
 
     // Log quando socket desconectar
     socket.on('disconnect', (reason) => {
-      console.log('[NotificationsDropdown] ❌ Socket desconectado:', reason);
     });
 
     // Log quando autenticado
     socket.on('connected', (data: { userId: string }) => {
-      console.log('[NotificationsDropdown] ✅ Autenticado no componente:', data);
     });
 
     return () => {
@@ -328,7 +310,6 @@ export function NotificationsDropdown() {
               .filter((notification) => {
                 // NÃO mostrar notificações de pedido de amizade aqui - elas já aparecem na seção "Pedidos de Amizade"
                 if (notification.type === 'FRIEND_REQUEST') {
-                  console.log('[NotificationsDropdown] ⚠️ Filtrando notificação de pedido de amizade - já aparece na seção de pedidos:', notification.id);
                   return false;
                 }
                 return true;

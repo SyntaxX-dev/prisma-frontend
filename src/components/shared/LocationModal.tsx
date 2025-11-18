@@ -55,7 +55,6 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
       const fullAddress = `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
       setFinalLocation(fullAddress);
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
       alert('Erro ao buscar CEP');
     } finally {
       setIsLoading(false);
@@ -82,7 +81,6 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
         alert('Localização não encontrada');
       }
     } catch (error) {
-      console.error('Erro ao buscar localização:', error);
       alert('Erro ao buscar localização');
     } finally {
       setIsLoading(false);

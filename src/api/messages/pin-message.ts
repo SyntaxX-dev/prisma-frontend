@@ -32,17 +32,14 @@ export async function pinMessage(
   friendId: string
 ): Promise<PinMessageResponse | PinMessageError> {
   try {
-    console.log('[pinMessage] Fixando mensagem:', { messageId, friendId });
     const response = await httpClient.post<PinMessageResponse>(
       `/messages/${messageId}/pin`,
       {
         friendId,
       }
     );
-    console.log('[pinMessage] ✅ Mensagem fixada com sucesso:', response);
     return response;
   } catch (error) {
-    console.error('[pinMessage] ❌ Erro ao fixar mensagem:', error);
     const apiError = error as ApiError;
     return {
       success: false,
