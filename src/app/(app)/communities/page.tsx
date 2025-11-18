@@ -24,6 +24,8 @@ import { getUserProfile } from "@/api/auth/get-user-profile";
 import { useProfile } from "@/hooks/features/profile";
 import { useChat } from "@/hooks/features/chat/useChat";
 import { useCommunityChat } from "@/hooks/features/chat/useCommunityChat";
+import { useVoiceCall } from "@/hooks/features/chat/useVoiceCall";
+import { VoiceCallModal } from "@/components/features/chat/VoiceCallModal";
 import { useUserStatus } from "@/providers/UserStatusProvider";
 import { Message } from "@/api/messages/send-message";
 import type { CommunityMessage as CommunityMessageType } from "@/types/community-chat";
@@ -559,6 +561,7 @@ function CommunitiesPageContent() {
   
   // Hook para chat direto
   const {
+    socket,
     messages: directMessages,
     isConnected,
     isTyping,
@@ -572,6 +575,16 @@ function CommunitiesPageContent() {
     editMessage,
     deleteMessage,
   } = useChat();
+
+  // Hook para chamadas de voz
+  const {
+    callState,
+    startCall,
+    acceptCall,
+    rejectCall,
+    endCall,
+    toggleLocalAudio,
+  } = useVoiceCall(socket);
 
   // Hook para chat de comunidades
   const {
@@ -1244,6 +1257,13 @@ function CommunitiesPageContent() {
                   pinnedMessages={pinnedMessages}
                   onEditMessage={editMessage}
                   onDeleteMessage={deleteMessage}
+                  onStartCall={async (receiverId) => {
+                    try {
+                      await startCall(receiverId);
+                    } catch (error) {
+                      console.error('Erro ao iniciar chamada:', error);
+                    }
+                  }}
                 />
               )}
             </div>
@@ -1265,7 +1285,13 @@ function CommunitiesPageContent() {
                 createdAt: new Date().toISOString(),
               }}
               onStartVideoCall={() => {}}
-              onStartVoiceCall={() => {}}
+              onStartVoiceCall={async () => {
+                try {
+                  await startCall(chatUser.id);
+                } catch (error) {
+                  console.error('Erro ao iniciar chamada:', error);
+                }
+              }}
               isFromSidebar={false}
                   pinnedMessages={pinnedMessages}
                   currentUserId={userProfile.id}
@@ -1400,6 +1426,55 @@ function CommunitiesPageContent() {
           refreshCommunities();
         }}
       />
+
+      {/* Voice Call Modal - Aparece sempre que há uma chamada ativa */}
+      {callState.status !== 'idle' && (
+        <VoiceCallModal
+          callState={callState}
+          currentUserId={userProfile?.id}
+          callerName={
+            callState.callerName ||
+            (callState.callerId === userProfile?.id
+              ? userProfile.name
+              : callState.callerId && callState.callerId !== userProfile?.id
+                ? 'Usuário'
+                : chatUser?.name || 'Usuário')
+          }
+          callerAvatar={
+            callState.callerAvatar !== undefined
+              ? callState.callerAvatar
+              : callState.callerId === userProfile?.id
+                ? userProfile.profileImage
+                : chatUser?.profileImage || null
+          }
+          receiverName={
+            callState.receiverId === userProfile?.id
+              ? userProfile.name
+              : callState.receiverId && callState.receiverId !== userProfile?.id
+                ? 'Usuário'
+                : chatUser?.name || 'Usuário'
+          }
+          receiverAvatar={
+            callState.receiverId === userProfile?.id
+              ? userProfile.profileImage
+              : chatUser?.profileImage || null
+          }
+          onAccept={async (roomId) => {
+            try {
+              await acceptCall(roomId);
+            } catch (error) {
+              console.error('Erro ao aceitar chamada:', error);
+            }
+          }}
+          onReject={(roomId) => {
+            rejectCall(roomId);
+          }}
+          onEnd={() => {
+            endCall();
+          }}
+          onToggleAudio={toggleLocalAudio}
+        />
+      )}
       </div>
     </div>
   );

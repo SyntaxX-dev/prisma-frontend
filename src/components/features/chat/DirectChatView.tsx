@@ -5,7 +5,7 @@ import { Message } from '@/api/messages/send-message';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Send, Pin, Trash2, Pencil, X, Smile, Paperclip } from 'lucide-react';
+import { Send, Pin, Trash2, Pencil, X, Smile, Paperclip, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PinnedMessage } from '@/api/messages/get-pinned-messages';
 import { motion, AnimatePresence } from 'motion/react';
@@ -42,6 +42,7 @@ interface DirectChatViewProps {
   pinnedMessages?: PinnedMessage[];
   onEditMessage?: (messageId: string, content: string) => Promise<{ success: boolean; message?: string }>;
   onDeleteMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
+  onStartCall?: (receiverId: string) => Promise<void>;
 }
 
 export function DirectChatView({
@@ -62,6 +63,7 @@ export function DirectChatView({
   pinnedMessages = [],
   onEditMessage,
   onDeleteMessage,
+  onStartCall,
 }: DirectChatViewProps) {
   const [message, setMessage] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -489,13 +491,6 @@ export function DirectChatView({
 
         {(() => {
           const shouldShow = isTyping && typingUserId && typingUserId === friendId && typingUserId !== currentUserId;
-          console.log('[DirectChatView] Verificando se deve mostrar typing indicator', {
-            isTyping,
-            typingUserId,
-            friendId,
-            currentUserId,
-            shouldShow,
-          });
           return shouldShow;
         })() && (
           <div className="flex gap-3">
@@ -639,6 +634,24 @@ export function DirectChatView({
             </div>
           )}
         </div>
+        {onStartCall && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={async () => {
+              try {
+                await onStartCall(friendId);
+              } catch (error) {
+                console.error('Erro ao iniciar chamada:', error);
+              }
+            }}
+            disabled={!isConnected}
+            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer shrink-0"
+            title="Iniciar chamada de voz"
+          >
+            <Phone className="w-4 h-4" />
+          </Button>
+        )}
         <Button
           onClick={handleSend}
           disabled={!isConnected || (!message.trim() && pendingAttachments.length === 0) || uploading}
