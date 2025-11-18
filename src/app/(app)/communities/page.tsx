@@ -1427,8 +1427,8 @@ function CommunitiesPageContent() {
         }}
       />
 
-      {/* Voice Call Modal - Aparece sempre que há uma chamada ativa */}
-      {callState.status !== 'idle' && (
+      {/* Voice Call Modal - Aparece sempre que há uma chamada ativa ou erro */}
+      {(callState.status !== 'idle' || callState.error) && (
         <VoiceCallModal
           callState={callState}
           currentUserId={userProfile?.id}

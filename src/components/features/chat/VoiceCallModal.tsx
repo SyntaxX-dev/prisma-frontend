@@ -39,9 +39,10 @@ export function VoiceCallModal({
   onEnd,
   onToggleAudio,
 }: VoiceCallModalProps) {
-  const isOpen = callState.status !== 'idle';
+  const isOpen = callState.status !== 'idle' || (callState.status === 'idle' && !!callState.error);
   const isRinging = callState.status === 'ringing';
   const isActive = callState.status === 'active';
+  const hasError = !!callState.error;
   
   // Determinar se é chamada recebida ou enviada
   // Chamada recebida: quando o currentUserId é o receiverId (ou seja, não é o callerId)
@@ -74,6 +75,7 @@ export function VoiceCallModal({
       <DialogContent className="bg-[#1a1a1a] border border-white/10 max-w-md p-8">
         <DialogHeader className="sr-only">
           <DialogTitle>
+            {hasError && 'Erro na chamada'}
             {isRinging && isIncoming && `Chamada recebida de ${displayName}`}
             {isRinging && !isIncoming && `Chamando ${displayName}`}
             {isActive && `Chamada em andamento com ${displayName}`}
@@ -82,43 +84,68 @@ export function VoiceCallModal({
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center gap-6">
-          {/* Avatar com animação de pulso quando tocando */}
-          <div className="relative">
-            <Avatar className="w-24 h-24 border-4 border-[#C9FE02]">
-              <AvatarImage src={displayAvatar || undefined} alt={displayName} />
-              <AvatarFallback className="bg-[#C9FE02] text-black text-2xl">
-                {displayName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            {isRinging && (
-              <motion.div
-                className="absolute inset-0 rounded-full border-4 border-[#C9FE02]"
-                animate={{
-                  scale: [1, 1.3, 1],
-                  opacity: [0.8, 0, 0.8],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              />
-            )}
-          </div>
+          {/* Se houver erro e status for idle, mostrar apenas o erro */}
+          {hasError && callState.status === 'idle' ? (
+            <div className="text-center w-full">
+              <div className="mb-4">
+                <div className="w-16 h-16 mx-auto bg-red-500/20 rounded-full flex items-center justify-center">
+                  <PhoneOff className="w-8 h-8 text-red-400" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Erro ao iniciar chamada
+              </h3>
+              <div className="mt-3 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+                <p className="text-sm text-red-400">{callState.error}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Avatar com animação de pulso quando tocando */}
+              <div className="relative">
+                <Avatar className="w-24 h-24 border-4 border-[#C9FE02]">
+                  <AvatarImage src={displayAvatar || undefined} alt={displayName} />
+                  <AvatarFallback className="bg-[#C9FE02] text-black text-2xl">
+                    {displayName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {isRinging && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-4 border-[#C9FE02]"
+                    animate={{
+                      scale: [1, 1.3, 1],
+                      opacity: [0.8, 0, 0.8],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                  />
+                )}
+              </div>
 
-          {/* Nome e status */}
-          <div className="text-center">
-            <h3 className="text-xl font-semibold text-white mb-2">
-              {displayName}
-            </h3>
-            <DialogDescription className="text-gray-400">
-              {isRinging && isIncoming && 'Chamada recebida'}
-              {isRinging && !isIncoming && 'Chamando...'}
-              {isActive && 'Chamada em andamento'}
-              {callState.status === 'rejected' && 'Chamada rejeitada'}
-              {callState.status === 'ended' && 'Chamada encerrada'}
-            </DialogDescription>
-          </div>
+              {/* Nome e status */}
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {displayName}
+                </h3>
+                <DialogDescription className="text-gray-400">
+                  {isRinging && isIncoming && 'Chamada recebida'}
+                  {isRinging && !isIncoming && 'Chamando...'}
+                  {isActive && 'Chamada em andamento'}
+                  {callState.status === 'rejected' && 'Chamada rejeitada'}
+                  {callState.status === 'ended' && 'Chamada encerrada'}
+                </DialogDescription>
+                {/* Mensagem de erro */}
+                {callState.error && (
+                  <div className="mt-3 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+                    <p className="text-sm text-red-400">{callState.error}</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Botões de ação */}
           <AnimatePresence mode="wait">
@@ -209,7 +236,7 @@ export function VoiceCallModal({
               </motion.div>
             )}
 
-            {(callState.status === 'rejected' || callState.status === 'ended') && (
+            {(callState.status === 'rejected' || callState.status === 'ended' || hasError) && (
               <motion.div
                 key="ended"
                 initial={{ opacity: 0, scale: 0.9 }}

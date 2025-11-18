@@ -31,6 +31,7 @@ export function useVoiceCall(socket: Socket | null) {
     receiverId: null,
     isLocalAudioEnabled: true,
     isRemoteAudioEnabled: true,
+    error: null,
   });
 
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -41,6 +42,13 @@ export function useVoiceCall(socket: Socket | null) {
   const callerInfoRef = useRef<{ id: string; name: string; avatar?: string | null } | null>(null);
   const activeSocketRef = useRef<Socket | null>(null);
   const pendingOfferRef = useRef<CallOfferEvent | null>(null);
+  const ringtoneAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ringtoneIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingCallRef = useRef<{ receiverId: string; offer: RTCSessionDescriptionInit } | null>(null);
+  const activeAudioContextsRef = useRef<Set<AudioContext>>(new Set());
+  const activeOscillatorsRef = useRef<Set<OscillatorNode>>(new Set());
+  const activeGainNodesRef = useRef<Set<GainNode>>(new Set());
+  const isStoppingRingtoneRef = useRef<boolean>(false);
 
   // Obter ID do usuário atual do token
   useEffect(() => {
@@ -201,6 +209,19 @@ export function useVoiceCall(socket: Socket | null) {
 
     const handleCallRejected = () => {
       console.log('[useVoiceCall] Chamada rejeitada');
+      
+      // Parar som imediatamente ao receber evento de chamada rejeitada
+      // Acessar diretamente os refs para garantir que o som pare
+      if (ringtoneAudioRef.current) {
+        ringtoneAudioRef.current.pause();
+        ringtoneAudioRef.current.currentTime = 0;
+        ringtoneAudioRef.current = null;
+      }
+      if (ringtoneIntervalRef.current) {
+        clearInterval(ringtoneIntervalRef.current);
+        ringtoneIntervalRef.current = null;
+      }
+      
       pendingOfferRef.current = null;
       setCallState((prev) => ({
         ...prev,
@@ -250,10 +271,86 @@ export function useVoiceCall(socket: Socket | null) {
     };
 
     const handleCallEnded = () => {
+      // Primeiro: atualizar estado (isso fará o useEffect parar o som)
       setCallState((prev) => ({
         ...prev,
         status: 'ended',
       }));
+      
+      // Segundo: parar som diretamente (múltiplas camadas de proteção)
+      // Acessar diretamente os refs para garantir que o som pare
+      if (ringtoneAudioRef.current) {
+        try {
+          ringtoneAudioRef.current.pause();
+          ringtoneAudioRef.current.currentTime = 0;
+          ringtoneAudioRef.current.src = '';
+          ringtoneAudioRef.current.load();
+        } catch (error) {
+          // Ignorar erros
+        }
+        ringtoneAudioRef.current = null;
+      }
+      if (ringtoneIntervalRef.current) {
+        clearInterval(ringtoneIntervalRef.current);
+        ringtoneIntervalRef.current = null;
+      }
+      
+      // Silenciar e desconectar todos os gainNodes (para o som imediatamente)
+      const gainNodesToDisconnect = Array.from(activeGainNodesRef.current);
+      activeGainNodesRef.current.clear();
+      gainNodesToDisconnect.forEach((gainNode) => {
+        try {
+          // Primeiro: silenciar (definir gain para 0)
+          const audioContext = (gainNode as any).context;
+          if (audioContext && audioContext.currentTime !== undefined) {
+            gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+          } else {
+            gainNode.gain.value = 0;
+          }
+          // Segundo: desconectar
+          gainNode.disconnect();
+        } catch (error) {
+          // Se falhar, tentar apenas desconectar
+          try {
+            gainNode.disconnect();
+          } catch (e) {
+            // Ignorar erros
+          }
+        }
+      });
+      
+      // Parar todos os osciladores ativos
+      const oscillatorsToStop = Array.from(activeOscillatorsRef.current);
+      activeOscillatorsRef.current.clear();
+      oscillatorsToStop.forEach((oscillator) => {
+        try {
+          oscillator.stop();
+        } catch (error) {
+          // Ignorar erros
+        }
+      });
+      
+      // Fechar todos os AudioContexts
+      const contextsToClose = Array.from(activeAudioContextsRef.current);
+      activeAudioContextsRef.current.clear();
+      contextsToClose.forEach((audioContext) => {
+        try {
+          if (audioContext.state === 'running') {
+            audioContext.suspend().catch(() => {
+              if (audioContext.state !== 'closed') {
+                audioContext.close().catch(() => {});
+              }
+            });
+          } else if (audioContext.state !== 'closed') {
+            audioContext.close().catch(() => {});
+          }
+        } catch (error) {
+          // Ignorar erros
+        }
+      });
+      
+      // Terceiro: limpar recursos
       cleanup();
     };
 
@@ -357,8 +454,457 @@ export function useVoiceCall(socket: Socket | null) {
     };
   }, [socket]);
 
+  // Parar som de toque
+  const stopRingtone = useCallback(() => {
+    console.log('[useVoiceCall] [stopRingtone] ===== INICIANDO PARADA DO SOM =====');
+    console.log('[useVoiceCall] [stopRingtone] Estado ANTES de parar:', {
+      intervalExists: !!ringtoneIntervalRef.current,
+      oscillatorsCount: activeOscillatorsRef.current.size,
+      gainNodesCount: activeGainNodesRef.current.size,
+      contextsCount: activeAudioContextsRef.current.size,
+      audioExists: !!ringtoneAudioRef.current,
+      isStopping: isStoppingRingtoneRef.current
+    });
+    
+    // PRIMEIRO: Marcar que estamos parando (evita criar novos osciladores)
+    // Isso DEVE ser feito ANTES de limpar o intervalo para evitar race conditions
+    isStoppingRingtoneRef.current = true;
+    console.log('[useVoiceCall] [stopRingtone] Flag isStopping definida como true');
+    
+    // SEGUNDO: parar intervalo imediatamente (evita criar novos sons)
+    if (ringtoneIntervalRef.current) {
+      const intervalId = ringtoneIntervalRef.current;
+      clearInterval(intervalId);
+      ringtoneIntervalRef.current = null;
+      console.log('[useVoiceCall] [stopRingtone] Intervalo limpo (ID:', intervalId, ')');
+    } else {
+      console.log('[useVoiceCall] [stopRingtone] Nenhum intervalo ativo para limpar');
+    }
+
+    // Segundo: PARAR todos os osciladores PRIMEIRO (evita criar novos sons)
+    const oscillatorsToStop = Array.from(activeOscillatorsRef.current);
+    console.log('[useVoiceCall] [stopRingtone] Parando', oscillatorsToStop.length, 'osciladores primeiro');
+    activeOscillatorsRef.current.clear();
+    oscillatorsToStop.forEach((oscillator, index) => {
+      try {
+        // Parar oscilador imediatamente
+        const audioContext = (oscillator as any).context;
+        const contextState = audioContext ? audioContext.state : 'unknown';
+        const currentTime = audioContext && audioContext.currentTime !== undefined ? audioContext.currentTime : 0;
+        
+        console.log('[useVoiceCall] [stopRingtone] Parando oscilador', index + 1, 'de', oscillatorsToStop.length, {
+          contextState,
+          currentTime,
+          oscillatorType: oscillator.type,
+          oscillatorFrequency: oscillator.frequency?.value
+        });
+        
+        if (audioContext && audioContext.currentTime !== undefined) {
+          oscillator.stop(audioContext.currentTime);
+        } else {
+          oscillator.stop(0);
+        }
+        // Desconectar também
+        try {
+          oscillator.disconnect();
+          console.log('[useVoiceCall] [stopRingtone] Oscilador', index + 1, 'desconectado');
+        } catch (e) {
+          console.warn('[useVoiceCall] [stopRingtone] Erro ao desconectar oscilador', index + 1, ':', e);
+        }
+      } catch (error) {
+        console.error('[useVoiceCall] [stopRingtone] Erro ao parar oscilador', index + 1, ':', error);
+        // Se tudo falhar, tentar desconectar
+        try {
+          oscillator.disconnect();
+        } catch (e) {
+          // Ignorar todos os erros
+        }
+      }
+    });
+    console.log('[useVoiceCall] [stopRingtone] Todos os osciladores foram processados');
+
+    // Terceiro: SILENCIAR e DESCONECTAR todos os gainNodes (isso para o som IMEDIATAMENTE!)
+    const gainNodesToDisconnect = Array.from(activeGainNodesRef.current);
+    console.log('[useVoiceCall] [stopRingtone] Silenciando e desconectando', gainNodesToDisconnect.length, 'gainNodes');
+    activeGainNodesRef.current.clear();
+    gainNodesToDisconnect.forEach((gainNode, index) => {
+      try {
+        // Primeiro: cancelar TODOS os valores agendados e silenciar imediatamente
+        const audioContext = (gainNode as any).context;
+        const contextState = audioContext ? audioContext.state : 'unknown';
+        const currentTime = audioContext && audioContext.currentTime !== undefined ? audioContext.currentTime : 0;
+        const currentGain = gainNode.gain.value;
+        
+        console.log('[useVoiceCall] [stopRingtone] Processando gainNode', index + 1, 'de', gainNodesToDisconnect.length, {
+          contextState,
+          currentTime,
+          currentGain
+        });
+        
+        if (audioContext && audioContext.currentTime !== undefined) {
+          // Cancelar todos os valores agendados
+          gainNode.gain.cancelScheduledValues(0); // Cancelar desde o início
+          // Definir gain para 0 AGORA (sem delay)
+          gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+          // Forçar valor imediatamente (bypass do agendamento)
+          gainNode.gain.value = 0;
+          console.log('[useVoiceCall] [stopRingtone] GainNode', index + 1, 'silenciado (gain = 0)');
+        } else {
+          // Fallback: silenciar diretamente
+          gainNode.gain.value = 0;
+          console.log('[useVoiceCall] [stopRingtone] GainNode', index + 1, 'silenciado (fallback, gain = 0)');
+        }
+        
+        // Segundo: desconectar do destino (isso também para o som)
+        gainNode.disconnect();
+        console.log('[useVoiceCall] [stopRingtone] GainNode', index + 1, 'desconectado');
+      } catch (error) {
+        console.error('[useVoiceCall] [stopRingtone] Erro ao processar gainNode', index + 1, ':', error);
+        // Se falhar, tentar apenas silenciar e desconectar
+        try {
+          gainNode.gain.value = 0;
+          gainNode.disconnect();
+        } catch (e) {
+          // Ignorar todos os erros
+        }
+      }
+    });
+    console.log('[useVoiceCall] [stopRingtone] Todos os gainNodes foram processados');
+
+    // Quarto: FECHAR todos os AudioContexts (isso para TODOS os osciladores conectados imediatamente!)
+    const contextsToClose = Array.from(activeAudioContextsRef.current);
+    console.log('[useVoiceCall] [stopRingtone] Fechando', contextsToClose.length, 'AudioContexts');
+    activeAudioContextsRef.current.clear();
+    
+    // Fechar todos os contextos de forma mais agressiva
+    contextsToClose.forEach((audioContext, index) => {
+      try {
+        const initialState = audioContext.state;
+        console.log('[useVoiceCall] [stopRingtone] Processando AudioContext', index + 1, 'de', contextsToClose.length, {
+          state: initialState,
+          currentTime: audioContext.currentTime
+        });
+        
+        // Primeiro: tentar suspender (mais rápido que fechar)
+        if (audioContext.state === 'running') {
+          console.log('[useVoiceCall] [stopRingtone] Suspendo AudioContext', index + 1);
+          audioContext.suspend().then(() => {
+            console.log('[useVoiceCall] [stopRingtone] AudioContext', index + 1, 'suspenso, fechando agora');
+            // Depois de suspender, fechar para liberar recursos
+            if (audioContext.state !== 'closed') {
+              audioContext.close().catch(() => {});
+            }
+          }).catch((err) => {
+            console.warn('[useVoiceCall] [stopRingtone] Erro ao suspender AudioContext', index + 1, ', fechando diretamente:', err);
+            // Se suspender falhar, tentar fechar diretamente
+            if (audioContext.state !== 'closed') {
+              audioContext.close().catch(() => {});
+            }
+          });
+        } else if (audioContext.state !== 'closed') {
+          // Se não estiver rodando, fechar diretamente
+          console.log('[useVoiceCall] [stopRingtone] Fechando AudioContext', index + 1, 'diretamente (state:', audioContext.state, ')');
+          audioContext.close().catch(() => {});
+        } else {
+          console.log('[useVoiceCall] [stopRingtone] AudioContext', index + 1, 'já está fechado');
+        }
+      } catch (error) {
+        console.error('[useVoiceCall] [stopRingtone] Erro ao processar AudioContext', index + 1, ':', error);
+        // Se tudo falhar, tentar fechar como último recurso
+        try {
+          if (audioContext.state !== 'closed') {
+            audioContext.close().catch(() => {});
+          }
+        } catch (e) {
+          // Ignorar todos os erros
+        }
+      }
+    });
+    console.log('[useVoiceCall] [stopRingtone] Todos os AudioContexts foram processados');
+
+    // Quinto: parar TODOS os osciladores ativos individualmente (backup, caso algum não tenha sido parado)
+    const oscillatorsToStopBackup = Array.from(activeOscillatorsRef.current);
+    console.log('[useVoiceCall] Parando', oscillatorsToStopBackup.length, 'osciladores individualmente (backup)');
+    activeOscillatorsRef.current.clear();
+    oscillatorsToStopBackup.forEach((oscillator) => {
+      try {
+        // Primeiro: desconectar o oscilador (isso para o som imediatamente)
+        try {
+          oscillator.disconnect();
+        } catch (e) {
+          // Ignorar erros de desconexão
+        }
+        
+        // Segundo: parar o oscilador
+        const audioContext = (oscillator as any).context;
+        if (audioContext && audioContext.currentTime !== undefined) {
+          oscillator.stop(audioContext.currentTime); // Parar agora
+        } else {
+          oscillator.stop(0); // Fallback: parar imediatamente
+        }
+      } catch (error) {
+        // Se tudo falhar, tentar novamente
+        try {
+          oscillator.disconnect();
+        } catch (e) {
+          // Ignorar todos os erros
+        }
+      }
+    });
+
+    // Sexto: parar áudio de arquivo se existir
+    if (ringtoneAudioRef.current) {
+      try {
+        console.log('[useVoiceCall] [stopRingtone] Parando áudio de arquivo');
+        ringtoneAudioRef.current.pause();
+        ringtoneAudioRef.current.currentTime = 0;
+        ringtoneAudioRef.current.src = ''; // Limpar src para garantir que pare
+        ringtoneAudioRef.current.load(); // Forçar reload
+        console.log('[useVoiceCall] [stopRingtone] Áudio de arquivo parado');
+      } catch (error) {
+        console.warn('[useVoiceCall] [stopRingtone] Erro ao parar áudio de arquivo:', error);
+      }
+      ringtoneAudioRef.current = null;
+    }
+    
+    // NÃO resetar a flag aqui - ela será resetada quando iniciarmos um novo som
+    // Isso garante que nenhum callback pendente do intervalo possa criar novos toques
+    
+    console.log('[useVoiceCall] [stopRingtone] ===== PARADA DO SOM CONCLUÍDA =====');
+    console.log('[useVoiceCall] [stopRingtone] Estado DEPOIS de parar:', {
+      intervalExists: !!ringtoneIntervalRef.current,
+      oscillatorsCount: activeOscillatorsRef.current.size,
+      gainNodesCount: activeGainNodesRef.current.size,
+      contextsCount: activeAudioContextsRef.current.size,
+      audioExists: !!ringtoneAudioRef.current,
+      isStopping: isStoppingRingtoneRef.current
+    });
+  }, []);
+
+  // Função para criar som de toque usando Web Audio API (toque de telefone clássico)
+  const createRingtone = useCallback(() => {
+    if (typeof window === 'undefined' || !window.AudioContext) {
+      return null;
+    }
+
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioContextClass();
+      
+      // Registrar AudioContext para poder fechá-lo depois
+      activeAudioContextsRef.current.add(audioContext);
+      
+      // Se o AudioContext estiver suspenso, tentar resumir
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch((error) => {
+          console.warn('[useVoiceCall] Não foi possível resumir AudioContext:', error);
+          return null;
+        });
+      }
+
+      const oscillator1 = audioContext.createOscillator();
+      const oscillator2 = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      // Registrar osciladores e gainNode para poder pará-los depois
+      activeOscillatorsRef.current.add(oscillator1);
+      activeOscillatorsRef.current.add(oscillator2);
+      activeGainNodesRef.current.add(gainNode);
+      
+      console.log('[useVoiceCall] [createRingtone] Criados:', {
+        audioContextId: audioContext.state,
+        oscillatorsCount: activeOscillatorsRef.current.size,
+        gainNodesCount: activeGainNodesRef.current.size,
+        contextsCount: activeAudioContextsRef.current.size,
+        isStopping: isStoppingRingtoneRef.current
+      });
+
+      // Frequências típicas de um toque de telefone (duas notas simultâneas)
+      oscillator1.frequency.value = 440; // Lá (A4)
+      oscillator2.frequency.value = 480; // Si bemol (Bb4)
+      
+      // Configurar volume com fade in/out suave
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.05);
+      gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.35);
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.4);
+
+      // Conectar
+      oscillator1.connect(gainNode);
+      oscillator2.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Tipo de onda (sine para som mais suave)
+      oscillator1.type = 'sine';
+      oscillator2.type = 'sine';
+
+      return { audioContext, oscillator1, oscillator2, gainNode };
+    } catch (error) {
+      console.error('[useVoiceCall] Erro ao criar toque:', error);
+      return null;
+    }
+  }, []);
+
+  // Função para iniciar toque com Web Audio API
+  const startWebAudioRingtone = useCallback(() => {
+    try {
+      // Resetar flag quando iniciar
+      isStoppingRingtoneRef.current = false;
+      
+      // Tocar toque em loop usando interval
+      const playTone = () => {
+        // Verificar se estamos parando OU se o intervalo foi limpo
+        if (isStoppingRingtoneRef.current || !ringtoneIntervalRef.current) {
+          console.log('[useVoiceCall] [startWebAudioRingtone] [playTone] Ignorando criação de novo toque (estamos parando ou intervalo foi limpo)');
+          return;
+        }
+        
+        console.log('[useVoiceCall] [startWebAudioRingtone] [playTone] Criando novo toque (intervalo ativo)');
+        
+        try {
+          const ringtone = createRingtone();
+          if (ringtone) {
+            const { audioContext, oscillator1, oscillator2 } = ringtone;
+            
+            // Verificar se estamos parando antes de iniciar os osciladores
+            if (isStoppingRingtoneRef.current) {
+              // Se estamos parando, parar os osciladores imediatamente e limpar
+              try {
+                oscillator1.stop(0);
+                oscillator2.stop(0);
+                // Remover do Set já que não vamos usá-los
+                activeOscillatorsRef.current.delete(oscillator1);
+                activeOscillatorsRef.current.delete(oscillator2);
+                activeAudioContextsRef.current.delete(audioContext);
+                audioContext.close().catch(() => {});
+              } catch (e) {
+                // Ignorar erros
+              }
+              return;
+            }
+            
+            // Iniciar os osciladores apenas se não estivermos parando
+            console.log('[useVoiceCall] [startWebAudioRingtone] Iniciando osciladores:', {
+              audioContextState: audioContext.state,
+              currentTime: audioContext.currentTime,
+              oscillatorsCount: activeOscillatorsRef.current.size,
+              gainNodesCount: activeGainNodesRef.current.size,
+              contextsCount: activeAudioContextsRef.current.size
+            });
+            oscillator1.start();
+            oscillator2.start();
+            oscillator1.stop(audioContext.currentTime + 0.4);
+            oscillator2.stop(audioContext.currentTime + 0.4);
+            console.log('[useVoiceCall] [startWebAudioRingtone] Osciladores iniciados e agendados para parar em', audioContext.currentTime + 0.4);
+          }
+        } catch (error) {
+          console.error('[useVoiceCall] Erro ao tocar toque:', error);
+        }
+      };
+
+      // Tocar a cada 2 segundos (0.4s de toque, 1.6s de pausa)
+      console.log('[useVoiceCall] [startWebAudioRingtone] Configurando intervalo de 2000ms');
+      ringtoneIntervalRef.current = setInterval(playTone, 2000);
+      console.log('[useVoiceCall] [startWebAudioRingtone] Intervalo configurado, tocando imediatamente');
+      playTone(); // Tocar imediatamente
+    } catch (error) {
+      console.error('[useVoiceCall] Erro ao iniciar Web Audio ringtone:', error);
+    }
+  }, [createRingtone]);
+
+  // Tocar som de toque
+  const playRingtone = useCallback(() => {
+    console.log('[useVoiceCall] [playRingtone] Iniciando som de toque');
+    try {
+      // Parar qualquer toque anterior
+      stopRingtone();
+
+      // Tentar usar arquivo de áudio primeiro (se existir)
+      const audioFile = '/ringtone.mp3'; // Você pode adicionar um arquivo de áudio aqui
+      
+      // Criar elemento de áudio
+      const audio = new Audio();
+      
+      // Configurar eventos de erro para não interromper o fluxo
+      audio.addEventListener('error', () => {
+        // Se falhar ao carregar arquivo, usar Web Audio API
+        console.log('[useVoiceCall] Arquivo de áudio não encontrado, usando Web Audio API');
+        startWebAudioRingtone();
+      });
+
+      // Tentar carregar arquivo, se falhar usar Web Audio API
+      audio.src = audioFile;
+      audio.loop = true;
+      audio.volume = 0.5;
+
+      // Tentar tocar arquivo de áudio
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // Arquivo de áudio funcionou
+            ringtoneAudioRef.current = audio;
+          })
+          .catch((error) => {
+            // Se falhar ao tocar (autoplay bloqueado ou arquivo não existe), usar Web Audio API
+            console.log('[useVoiceCall] Não foi possível tocar arquivo de áudio, usando Web Audio API:', error);
+            startWebAudioRingtone();
+          });
+      } else {
+        // Se play() não retornar promise, tentar Web Audio API
+        startWebAudioRingtone();
+      }
+    } catch (error) {
+      // Se houver qualquer erro, apenas logar e não interromper a chamada
+      console.error('[useVoiceCall] Erro ao tocar som de toque:', error);
+    }
+  }, [stopRingtone, startWebAudioRingtone]);
+
+  // Controlar som de toque baseado no status da chamada
+  useEffect(() => {
+    try {
+      // Só tocar som se houver uma chamada ativa (com roomId) e status for 'ringing'
+      if (callState.status === 'ringing' && callState.roomId) {
+        // Usar setTimeout para garantir que não interfira com o fluxo da chamada
+        const timeoutId = setTimeout(() => {
+          try {
+            playRingtone();
+          } catch (error) {
+            console.error('[useVoiceCall] Erro ao tocar som de toque:', error);
+          }
+        }, 100);
+        
+        // Cleanup: parar som se o status mudar antes do timeout
+        return () => {
+          clearTimeout(timeoutId);
+          stopRingtone();
+        };
+      } else {
+        // Parar som imediatamente se não estiver em 'ringing'
+        stopRingtone();
+      }
+    } catch (error) {
+      // Se houver erro ao tocar som, apenas logar e não interromper a chamada
+      console.error('[useVoiceCall] Erro ao controlar som de toque:', error);
+      // Garantir que o som pare mesmo em caso de erro
+      stopRingtone();
+    }
+
+    // Cleanup ao desmontar - sempre parar o som
+    return () => {
+      try {
+        stopRingtone();
+      } catch (error) {
+        console.error('[useVoiceCall] Erro ao parar som de toque:', error);
+      }
+    };
+  }, [callState.status, callState.roomId, playRingtone, stopRingtone]);
+
   // Limpar recursos
   const cleanup = useCallback(() => {
+    stopRingtone();
+
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
@@ -376,7 +922,8 @@ export function useVoiceCall(socket: Socket | null) {
     }
 
     roomIdRef.current = null;
-  }, []);
+    pendingCallRef.current = null; // Limpar chamada pendente
+  }, [stopRingtone]);
 
   // Iniciar chamada
   const startCall = useCallback(
@@ -388,10 +935,12 @@ export function useVoiceCall(socket: Socket | null) {
       }
 
       try {
+        // Limpar erro anterior
         setCallState((prev) => ({
           ...prev,
           status: 'initiating',
           receiverId: null, // Não definir receiverId aqui, será definido quando receber call:incoming
+          error: null,
         }));
 
         // 1. Solicitar acesso ao microfone
@@ -452,6 +1001,7 @@ export function useVoiceCall(socket: Socket | null) {
               roomId: roomId,
               callerId: currentUserIdRef.current,
               receiverId: null, // Não definir receiverId aqui, será definido quando receber call:incoming
+              error: null,
             }));
 
             // 8. Enviar offer
@@ -461,23 +1011,98 @@ export function useVoiceCall(socket: Socket | null) {
               offer: offer,
             });
           } else {
-            console.error('[useVoiceCall] Erro ao iniciar chamada:', response.error);
-            setCallState((prev) => ({
-              ...prev,
-              status: 'idle',
-            }));
-            cleanup();
-            throw new Error(response.error || 'Erro ao iniciar chamada');
+            const errorMessage = response.error || 'Erro ao iniciar chamada';
+            
+            // Se o erro for "Usuário offline", permitir a chamada continuar (como Discord)
+            // A chamada ficará tocando e o usuário poderá atender quando entrar online
+            if (errorMessage.toLowerCase().includes('offline') || errorMessage.toLowerCase().includes('usuário offline')) {
+              console.log('[useVoiceCall] Usuário offline, mas permitindo chamada continuar (como Discord)');
+              
+              // Armazenar chamada pendente para tentar novamente quando o usuário entrar online
+              pendingCallRef.current = {
+                receiverId: receiverId,
+                offer: offer,
+              };
+              
+              // Criar um roomId temporário para manter a chamada ativa
+              // O backend pode não ter criado o room, mas vamos manter o estado de "ringing"
+              const tempRoomId = `pending-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+              roomIdRef.current = tempRoomId;
+              
+              setCallState((prev) => ({
+                ...prev,
+                status: 'ringing',
+                roomId: tempRoomId,
+                callerId: currentUserIdRef.current,
+                receiverId: receiverId, // Armazenar receiverId para referência
+                error: null, // Não mostrar como erro
+              }));
+
+              // Tentar reenviar a chamada periodicamente (a cada 5 segundos)
+              const retryInterval = setInterval(() => {
+                const activeSocket = activeSocketRef.current || socket;
+                if (activeSocket && activeSocket.connected && pendingCallRef.current) {
+                  console.log('[useVoiceCall] Tentando reenviar chamada para usuário que estava offline...');
+                  activeSocket.emit('call:initiate', { receiverId: pendingCallRef.current.receiverId }, (retryResponse: CallInitiateResponse) => {
+                    if (retryResponse.success && retryResponse.roomId) {
+                      const newRoomId = retryResponse.roomId; // TypeScript agora sabe que é string
+                      console.log('[useVoiceCall] Usuário entrou online! Chamada criada:', newRoomId);
+                      clearInterval(retryInterval);
+                      
+                      // Salvar offer antes de limpar pendingCallRef
+                      const offerToSend = pendingCallRef.current?.offer || offer;
+                      const savedReceiverId = pendingCallRef.current?.receiverId;
+                      pendingCallRef.current = null;
+                      
+                      roomIdRef.current = newRoomId;
+                      
+                      setCallState((prev) => ({
+                        ...prev,
+                        roomId: newRoomId,
+                      }));
+
+                      // Enviar offer com o roomId correto
+                      activeSocket.emit('call:offer', {
+                        roomId: newRoomId,
+                        offer: offerToSend,
+                      });
+                    }
+                  });
+                } else {
+                  clearInterval(retryInterval);
+                }
+              }, 5000);
+
+              // Limpar intervalo quando a chamada for aceita ou encerrada
+              setTimeout(() => {
+                clearInterval(retryInterval);
+              }, 60000); // Parar de tentar após 1 minuto
+            } else {
+              // Para outros erros, mostrar normalmente
+              console.warn('[useVoiceCall] Erro ao iniciar chamada:', errorMessage);
+              
+              // Limpar recursos antes de atualizar o estado
+              cleanup();
+              
+              setCallState((prev) => ({
+                ...prev,
+                status: 'idle',
+                error: errorMessage,
+              }));
+            }
           }
         });
       } catch (error) {
         console.error('Erro ao iniciar chamada:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao iniciar chamada';
+        
+        cleanup();
+        
         setCallState((prev) => ({
           ...prev,
           status: 'idle',
+          error: errorMessage,
         }));
-        cleanup();
-        throw error;
       }
     },
     [socket, cleanup]
@@ -580,8 +1205,24 @@ export function useVoiceCall(socket: Socket | null) {
   // Rejeitar chamada
   const rejectCall = useCallback(
     (roomId: string) => {
+      // Parar som imediatamente ao rejeitar
+      stopRingtone();
+      
       const activeSocket = activeSocketRef.current || socket;
-      if (!activeSocket || !activeSocket.connected) return;
+      if (!activeSocket || !activeSocket.connected) {
+        // Mesmo sem socket, limpar estado e recursos
+        setCallState({
+          status: 'idle',
+          roomId: null,
+          callerId: null,
+          receiverId: null,
+          isLocalAudioEnabled: true,
+          isRemoteAudioEnabled: true,
+          error: null,
+        });
+        cleanup();
+        return;
+      }
 
       console.log('[useVoiceCall] Rejeitando chamada, roomId:', roomId);
       pendingOfferRef.current = null;
@@ -593,21 +1234,16 @@ export function useVoiceCall(socket: Socket | null) {
         receiverId: null,
         isLocalAudioEnabled: true,
         isRemoteAudioEnabled: true,
+        error: null,
       });
       cleanup();
     },
-    [socket, cleanup]
+    [socket, cleanup, stopRingtone]
   );
 
   // Encerrar chamada
   const endCall = useCallback(() => {
-    const activeSocket = activeSocketRef.current || socket;
-    if (!activeSocket || !activeSocket.connected) return;
-
-    if (callState.roomId) {
-      activeSocket.emit('call:end', { roomId: callState.roomId });
-    }
-
+    // Primeiro: atualizar estado para 'idle' imediatamente (isso fará o useEffect parar o som)
     setCallState({
       status: 'idle',
       roomId: null,
@@ -615,9 +1251,21 @@ export function useVoiceCall(socket: Socket | null) {
       receiverId: null,
       isLocalAudioEnabled: true,
       isRemoteAudioEnabled: true,
+      error: null,
     });
+    
+    // Segundo: parar som imediatamente (múltiplas camadas de proteção)
+    stopRingtone();
+    
+    // Terceiro: limpar recursos
     cleanup();
-  }, [socket, callState.roomId, cleanup]);
+    
+    // Quarto: notificar backend (não bloqueia a parada do som)
+    const activeSocket = activeSocketRef.current || socket;
+    if (activeSocket && activeSocket.connected && callState.roomId) {
+      activeSocket.emit('call:end', { roomId: callState.roomId });
+    }
+  }, [socket, callState.roomId, cleanup, stopRingtone]);
 
   // Alternar áudio local (mute/unmute)
   const toggleLocalAudio = useCallback(() => {

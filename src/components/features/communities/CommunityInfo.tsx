@@ -214,7 +214,8 @@ export function CommunityInfo({
           </button>
           <button 
             onClick={onStartVideoCall}
-            className="flex flex-col items-center gap-2 p-2 rounded-lg transition-colors cursor-pointer"
+            disabled={true}
+            className="flex flex-col items-center gap-2 p-2 rounded-lg transition-colors cursor-not-allowed opacity-50"
           >
             <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgb(26, 26, 26)' }}>
               <Video className="w-4 h-4 text-gray-400" />

@@ -645,9 +645,9 @@ export function DirectChatView({
                 console.error('Erro ao iniciar chamada:', error);
               }
             }}
-            disabled={!isConnected}
-            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer shrink-0"
-            title="Iniciar chamada de voz"
+            disabled={true}
+            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-not-allowed shrink-0 opacity-50"
+            title="Chamada de voz desabilitada"
           >
             <Phone className="w-4 h-4" />
           </Button>

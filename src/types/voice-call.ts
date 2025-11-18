@@ -85,5 +85,6 @@ export interface VoiceCallState {
   isRemoteAudioEnabled: boolean;
   callerName?: string;
   callerAvatar?: string | null;
+  error?: string | null; // Mensagem de erro, se houver
 }
 
