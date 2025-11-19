@@ -767,10 +767,19 @@ export function useVoiceCall(socket: Socket | null) {
       
       // Se o AudioContext estiver suspenso, tentar resumir
       if (audioContext.state === 'suspended') {
+        // Tentar resumir imediatamente
         audioContext.resume().catch((error) => {
           console.warn('[useVoiceCall] Não foi possível resumir AudioContext:', error);
-          return null;
         });
+        
+        // Se ainda estiver suspenso após um pequeno delay, tentar novamente
+        setTimeout(() => {
+          if (audioContext.state === 'suspended') {
+            audioContext.resume().catch((error) => {
+              console.warn('[useVoiceCall] Não foi possível resumir AudioContext (tentativa 2):', error);
+            });
+          }
+        }, 100);
       }
 
       const oscillator1 = audioContext.createOscillator();
@@ -795,10 +804,12 @@ export function useVoiceCall(socket: Socket | null) {
       oscillator2.frequency.value = 480; // Si bemol (Bb4)
       
       // Configurar volume com fade in/out suave
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.05);
-      gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.35);
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.4);
+      // Usar um tempo futuro para garantir que o contexto esteja rodando
+      const startTime = audioContext.currentTime;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.05);
+      gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.35);
+      gainNode.gain.linearRampToValueAtTime(0, startTime + 0.4);
 
       // Conectar
       oscillator1.connect(gainNode);
@@ -808,6 +819,15 @@ export function useVoiceCall(socket: Socket | null) {
       // Tipo de onda (sine para som mais suave)
       oscillator1.type = 'sine';
       oscillator2.type = 'sine';
+
+      // Se o contexto estiver suspenso, tentar resumir antes de iniciar
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          console.log('[useVoiceCall] [createRingtone] AudioContext resumido com sucesso');
+        }).catch((error) => {
+          console.warn('[useVoiceCall] [createRingtone] Não foi possível resumir AudioContext:', error);
+        });
+      }
 
       return { audioContext, oscillator1, oscillator2, gainNode };
     } catch (error) {
@@ -862,10 +882,32 @@ export function useVoiceCall(socket: Socket | null) {
               gainNodesCount: activeGainNodesRef.current.size,
               contextsCount: activeAudioContextsRef.current.size
             });
-            oscillator1.start();
-            oscillator2.start();
-            oscillator1.stop(audioContext.currentTime + 0.4);
-            oscillator2.stop(audioContext.currentTime + 0.4);
+            
+            // Se o contexto estiver suspenso, tentar resumir antes de iniciar
+            if (audioContext.state === 'suspended') {
+              audioContext.resume().then(() => {
+                console.log('[useVoiceCall] [startWebAudioRingtone] AudioContext resumido, iniciando osciladores');
+                const startTime = audioContext.currentTime;
+                oscillator1.start(startTime);
+                oscillator2.start(startTime);
+                oscillator1.stop(startTime + 0.4);
+                oscillator2.stop(startTime + 0.4);
+              }).catch((error) => {
+                console.warn('[useVoiceCall] [startWebAudioRingtone] Não foi possível resumir AudioContext:', error);
+                // Tentar iniciar mesmo assim
+                const startTime = audioContext.currentTime;
+                oscillator1.start(startTime);
+                oscillator2.start(startTime);
+                oscillator1.stop(startTime + 0.4);
+                oscillator2.stop(startTime + 0.4);
+              });
+            } else {
+              const startTime = audioContext.currentTime;
+              oscillator1.start(startTime);
+              oscillator2.start(startTime);
+              oscillator1.stop(startTime + 0.4);
+              oscillator2.stop(startTime + 0.4);
+            }
             console.log('[useVoiceCall] [startWebAudioRingtone] Osciladores iniciados e agendados para parar em', audioContext.currentTime + 0.4);
           }
         } catch (error) {
