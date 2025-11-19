@@ -23,23 +23,35 @@ const getRTCConfig = (): RTCConfiguration => {
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
   ];
 
   // TURN servers públicos gratuitos (relay quando conexão direta falha)
   // Estes são necessários em produção para contornar NATs/firewalls
+  // Usando múltiplos servidores para redundância
   const publicTurnServers = [
+    // Metered.ca Open Relay (gratuito, sem limite) - UDP
     {
       urls: 'turn:openrelay.metered.ca:80',
       username: 'openrelayproject',
       credential: 'openrelayproject',
     },
+    // Metered.ca Open Relay - TCP
     {
       urls: 'turn:openrelay.metered.ca:443',
       username: 'openrelayproject',
       credential: 'openrelayproject',
     },
+    // Metered.ca Open Relay - TCP explicit
     {
       urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    // Metered.ca Open Relay - UDP explicit
+    {
+      urls: 'turn:openrelay.metered.ca:80?transport=udp',
       username: 'openrelayproject',
       credential: 'openrelayproject',
     },
@@ -54,7 +66,8 @@ const getRTCConfig = (): RTCConfiguration => {
     const customTurnCredential = (window as any).__CUSTOM_TURN_CREDENTIAL;
 
     if (customTurnUrl && customTurnUsername && customTurnCredential) {
-      iceServers.push({
+      // Adicionar no início para ter prioridade
+      iceServers.unshift({
         urls: customTurnUrl,
         username: customTurnUsername,
         credential: customTurnCredential,
@@ -62,7 +75,13 @@ const getRTCConfig = (): RTCConfiguration => {
     }
   }
 
-  return { iceServers };
+  console.log('[useVoiceCall] Configuração RTC com', iceServers.length, 'ICE servers');
+
+  return { 
+    iceServers,
+    iceTransportPolicy: 'all', // Tentar todos os tipos de conexão (host, srflx, relay)
+    iceCandidatePoolSize: 10, // Pré-coletar mais candidates
+  };
 };
 
 const RTC_CONFIG = getRTCConfig();
@@ -1010,7 +1029,20 @@ export function useVoiceCall(socket: Socket | null) {
           const state = peerConnectionRef.current?.iceConnectionState;
           console.log('[useVoiceCall] Estado ICE mudou:', state);
           if (state === 'failed') {
-            console.error('[useVoiceCall] Conexão ICE falhou - pode ser necessário TURN server');
+            console.error('[useVoiceCall] ❌ Conexão ICE falhou - tentando reiniciar ICE...');
+            // Tentar reiniciar ICE gathering
+            if (peerConnectionRef.current) {
+              try {
+                peerConnectionRef.current.restartIce();
+                console.log('[useVoiceCall] Reinício de ICE iniciado');
+              } catch (error) {
+                console.error('[useVoiceCall] Erro ao reiniciar ICE:', error);
+              }
+            }
+          } else if (state === 'connected' || state === 'completed') {
+            console.log('[useVoiceCall] ✅ Conexão ICE estabelecida com sucesso!');
+          } else if (state === 'disconnected') {
+            console.warn('[useVoiceCall] ⚠️ Conexão ICE desconectada - tentando reconectar...');
           }
         };
 
@@ -1029,11 +1061,22 @@ export function useVoiceCall(socket: Socket | null) {
         // 4. Configurar ICE candidates
         peerConnectionRef.current.onicecandidate = (event) => {
           if (event.candidate) {
+            const candidateType = event.candidate.type; // 'host', 'srflx', 'prflx', 'relay'
+            const isRelay = candidateType === 'relay';
             console.log('[useVoiceCall] ICE candidate encontrado:', {
-              type: event.candidate.type,
+              type: candidateType,
               protocol: event.candidate.protocol,
               address: event.candidate.address,
+              port: event.candidate.port,
+              isRelay: isRelay,
+              priority: event.candidate.priority,
             });
+            
+            // Log especial para relay (TURN) - importante para produção
+            if (isRelay) {
+              console.log('[useVoiceCall] ✅ Usando TURN server (relay) - necessário para produção!');
+            }
+            
             if (roomIdRef.current) {
               const activeSocket = activeSocketRef.current || socket;
               if (activeSocket) {
@@ -1045,6 +1088,24 @@ export function useVoiceCall(socket: Socket | null) {
             }
           } else {
             console.log('[useVoiceCall] Coleta de ICE candidates concluída');
+            // Verificar se temos candidates relay
+            if (peerConnectionRef.current) {
+              peerConnectionRef.current.getStats().then((stats) => {
+                let hasRelay = false;
+                stats.forEach((report) => {
+                  if (report.type === 'local-candidate' && report.candidateType === 'relay') {
+                    hasRelay = true;
+                  }
+                });
+                if (hasRelay) {
+                  console.log('[useVoiceCall] ✅ TURN server (relay) disponível na conexão');
+                } else {
+                  console.warn('[useVoiceCall] ⚠️ Nenhum candidate relay encontrado - conexão pode falhar em produção');
+                }
+              }).catch(() => {
+                // Ignorar erros de stats
+              });
+            }
           }
         };
 
@@ -1225,7 +1286,20 @@ export function useVoiceCall(socket: Socket | null) {
           const state = peerConnectionRef.current?.iceConnectionState;
           console.log('[useVoiceCall] Estado ICE mudou (aceitar):', state);
           if (state === 'failed') {
-            console.error('[useVoiceCall] Conexão ICE falhou (aceitar) - pode ser necessário TURN server');
+            console.error('[useVoiceCall] ❌ Conexão ICE falhou (aceitar) - tentando reiniciar ICE...');
+            // Tentar reiniciar ICE gathering
+            if (peerConnectionRef.current) {
+              try {
+                peerConnectionRef.current.restartIce();
+                console.log('[useVoiceCall] Reinício de ICE iniciado (aceitar)');
+              } catch (error) {
+                console.error('[useVoiceCall] Erro ao reiniciar ICE (aceitar):', error);
+              }
+            }
+          } else if (state === 'connected' || state === 'completed') {
+            console.log('[useVoiceCall] ✅ Conexão ICE estabelecida com sucesso (aceitar)!');
+          } else if (state === 'disconnected') {
+            console.warn('[useVoiceCall] ⚠️ Conexão ICE desconectada (aceitar) - tentando reconectar...');
           }
         };
 
@@ -1244,11 +1318,22 @@ export function useVoiceCall(socket: Socket | null) {
         // 4. Configurar ICE candidates
         peerConnectionRef.current.onicecandidate = (event) => {
           if (event.candidate) {
+            const candidateType = event.candidate.type; // 'host', 'srflx', 'prflx', 'relay'
+            const isRelay = candidateType === 'relay';
             console.log('[useVoiceCall] ICE candidate encontrado (aceitar):', {
-              type: event.candidate.type,
+              type: candidateType,
               protocol: event.candidate.protocol,
               address: event.candidate.address,
+              port: event.candidate.port,
+              isRelay: isRelay,
+              priority: event.candidate.priority,
             });
+            
+            // Log especial para relay (TURN) - importante para produção
+            if (isRelay) {
+              console.log('[useVoiceCall] ✅ Usando TURN server (relay) - necessário para produção! (aceitar)');
+            }
+            
             const activeSocket = activeSocketRef.current || socket;
             if (activeSocket) {
               activeSocket.emit('call:ice-candidate', {
@@ -1258,6 +1343,24 @@ export function useVoiceCall(socket: Socket | null) {
             }
           } else {
             console.log('[useVoiceCall] Coleta de ICE candidates concluída (aceitar)');
+            // Verificar se temos candidates relay
+            if (peerConnectionRef.current) {
+              peerConnectionRef.current.getStats().then((stats) => {
+                let hasRelay = false;
+                stats.forEach((report) => {
+                  if (report.type === 'local-candidate' && report.candidateType === 'relay') {
+                    hasRelay = true;
+                  }
+                });
+                if (hasRelay) {
+                  console.log('[useVoiceCall] ✅ TURN server (relay) disponível na conexão (aceitar)');
+                } else {
+                  console.warn('[useVoiceCall] ⚠️ Nenhum candidate relay encontrado - conexão pode falhar em produção (aceitar)');
+                }
+              }).catch(() => {
+                // Ignorar erros de stats
+              });
+            }
           }
         };
 
