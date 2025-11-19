@@ -1,4 +1,4 @@
-import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, ChevronDown, ArrowLeft } from "lucide-react";
+import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, ChevronDown, ArrowLeft, Brain } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Badge } from "../../ui/badge";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -15,6 +15,10 @@ import Image from "next/image";
 import { useCacheInvalidation } from "@/hooks/shared";
 import { saveVideoTimestamp } from "@/api/progress/save-video-timestamp";
 import { getInProgressVideos } from "@/api/progress/get-in-progress-videos";
+import InteractiveMindMap from "./InteractiveMindMap";
+import { generateMindMap, getMindMapByVideo } from "@/api/mind-map/generate-mind-map";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const modulesWithVideosCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 10 * 60 * 1000;
@@ -101,6 +105,10 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [loading, setLoading] = useState(false);
   const [lastFetchedSubCourseId, setLastFetchedSubCourseId] = useState<string | null>(null);
   const [courseProgress, setCourseProgress] = useState<CourseProgress | null>(null);
+  const [mindMap, setMindMap] = useState<string | null>(null);
+  const [mindMapLoading, setMindMapLoading] = useState(false);
+  const [mindMapError, setMindMapError] = useState<string | null>(null);
+  const [mindMapViewMode, setMindMapViewMode] = useState<'interactive' | 'text'>('interactive');
   const fetchingRef = useRef(false);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -630,6 +638,63 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     }
   };
 
+  const fetchExistingMindMap = useCallback(async () => {
+    if (!selectedVideo?.id) return;
+
+    try {
+      const response = await getMindMapByVideo(selectedVideo.id);
+
+      if (response.success && response.data) {
+        setMindMap(response.data.content);
+      }
+    } catch {
+      // Silenciosamente falha - não há mapa mental existente
+      console.log('Nenhum mapa mental existente encontrado');
+    }
+  }, [selectedVideo?.id]);
+
+  const handleGenerateMindMap = async () => {
+    if (!selectedVideo) return;
+
+    setMindMapLoading(true);
+    setMindMapError(null);
+
+    try {
+      const url = selectedVideo.url || `https://youtube.com/watch?v=${selectedVideo.youtubeId}`;
+      const response = await generateMindMap({
+        videoId: selectedVideo.id,
+        videoTitle: selectedVideo.title,
+        videoDescription: selectedVideo.description || "Sem descrição disponível",
+        videoUrl: url,
+      });
+
+      setMindMap(response.data.content);
+    } catch (err: unknown) {
+      let errorMessage = 'Erro ao gerar mapa mental';
+
+      const message = err instanceof Error ? err.message : String(err);
+
+      if (message.includes('503') || message.includes('Service Unavailable')) {
+        errorMessage = '⚠️ O serviço Gemini AI está temporariamente indisponível. Tente novamente em alguns instantes.';
+      } else if (message.includes('500') || message.includes('Internal Server Error')) {
+        errorMessage = '⚠️ Erro interno do servidor. Por favor, tente novamente.';
+      } else if (message.includes('401') || message.includes('API Key')) {
+        errorMessage = '🔑 Erro de autenticação com a API Gemini.';
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      setMindMapError(errorMessage);
+    } finally {
+      setMindMapLoading(false);
+    }
+  };
+
+  // Buscar mapa mental existente quando o vídeo mudar
+  useEffect(() => {
+    fetchExistingMindMap();
+  }, [fetchExistingMindMap]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -812,6 +877,13 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Comentários
               </TabsTrigger>
+              <TabsTrigger
+                value="mindmap"
+                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
+              >
+                <Brain className="w-4 h-4 mr-2" />
+                Mapa Mental
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-6">
@@ -872,6 +944,146 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                   </div>
                 </div>
                 <p className="text-white/40 text-center">Nenhum comentário ainda</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="mindmap" className="mt-6">
+              <div className="space-y-4">
+                {!mindMap && !mindMapLoading && (
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
+                    <Brain className="w-16 h-16 text-white/30 mx-auto mb-4" />
+                    <p className="text-white/60 mb-6">
+                      Clique no botão abaixo para gerar um mapa mental inteligente deste vídeo usando IA Gemini
+                    </p>
+                    <Button
+                      onClick={handleGenerateMindMap}
+                      className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all"
+                    >
+                      <Brain className="w-5 h-5 mr-2" />
+                      Gerar Mapa Mental
+                    </Button>
+                  </div>
+                )}
+
+                {mindMapLoading && (
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
+                    <LoadingGrid size="60" color="#B3E240" />
+                    <p className="text-white/80 text-lg font-semibold mt-6">Gerando mapa mental com IA Gemini...</p>
+                    <p className="text-white/50 text-sm mt-2">Isso pode levar alguns segundos. Por favor, aguarde.</p>
+                  </div>
+                )}
+
+                {mindMapError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-red-400">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 text-3xl">⚠️</div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-lg mb-2">Erro ao gerar mapa mental</p>
+                        <p className="text-sm text-red-300 leading-relaxed mb-4">{mindMapError}</p>
+                        <Button
+                          onClick={handleGenerateMindMap}
+                          className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30"
+                        >
+                          <Brain className="w-4 h-4 mr-2" />
+                          Tentar novamente
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {mindMap && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex gap-1 bg-white/5 backdrop-blur-sm rounded-lg p-1 border border-white/10">
+                        <Button
+                          onClick={() => setMindMapViewMode('interactive')}
+                          variant="ghost"
+                          size="sm"
+                          className={`${
+                            mindMapViewMode === 'interactive'
+                              ? 'bg-green-500 text-black hover:bg-green-600'
+                              : 'text-white/60 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          <Brain className="w-4 h-4 mr-2" />
+                          Interativo
+                        </Button>
+                        <Button
+                          onClick={() => setMindMapViewMode('text')}
+                          variant="ghost"
+                          size="sm"
+                          className={`${
+                            mindMapViewMode === 'text'
+                              ? 'bg-green-500 text-black hover:bg-green-600'
+                              : 'text-white/60 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Texto
+                        </Button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            const blob = new Blob([mindMap], { type: 'text/markdown' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `mapa-mental-${selectedVideo?.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.md`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                          }}
+                          variant="ghost"
+                          size="sm"
+                          className="text-white/60 hover:text-white hover:bg-white/10"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Baixar
+                        </Button>
+                        <Button
+                          onClick={handleGenerateMindMap}
+                          variant="ghost"
+                          size="sm"
+                          className="text-white/60 hover:text-white hover:bg-white/10"
+                        >
+                          <Brain className="w-4 h-4 mr-2" />
+                          Regerar
+                        </Button>
+                      </div>
+                    </div>
+
+                    {mindMapViewMode === 'interactive' ? (
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden" style={{ height: '600px' }}>
+                        <InteractiveMindMap markdown={mindMap} />
+                      </div>
+                    ) : (
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 overflow-auto" style={{ height: '600px' }}>
+                        <div className="prose prose-invert max-w-none text-white">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              h1: ({...props}) => <h1 className="text-white text-2xl font-bold mb-4" {...props} />,
+                              h2: ({...props}) => <h2 className="text-white text-xl font-semibold mb-3 mt-6" {...props} />,
+                              h3: ({...props}) => <h3 className="text-white text-lg font-medium mb-2 mt-4" {...props} />,
+                              p: ({...props}) => <p className="text-white/80 mb-3" {...props} />,
+                              ul: ({...props}) => <ul className="text-white/80 list-disc list-inside mb-3 space-y-1" {...props} />,
+                              ol: ({...props}) => <ol className="text-white/80 list-decimal list-inside mb-3 space-y-1" {...props} />,
+                              li: ({...props}) => <li className="text-white/80" {...props} />,
+                              strong: ({...props}) => <strong className="text-white font-semibold" {...props} />,
+                              em: ({...props}) => <em className="text-white/90 italic" {...props} />,
+                              code: ({...props}) => <code className="text-green-400 bg-white/10 px-1 py-0.5 rounded" {...props} />,
+                            }}
+                          >
+                            {mindMap}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

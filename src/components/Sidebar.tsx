@@ -1,4 +1,4 @@
-import { ChevronDown, Home, BookOpen, Users, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool } from "lucide-react";
+import { ChevronDown, Home, BookOpen, Users, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -100,6 +100,8 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
       navigateWithLoading('/watching', 'Carregando Vistos atualmente...');
     } else if (item === "Meu resumo") {
       navigateWithLoading('/courses', 'Carregando Meu resumo...');
+    } else if (item === "Mapas Mentais") {
+      navigateWithLoading('/mind-maps', 'Carregando Mapas Mentais...');
     } else if (item === "Perfil") {
       navigateWithLoading('/profile', 'Carregando Perfil...');
     } else if (item === "Configurações") {
@@ -113,7 +115,8 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     { icon: Users, label: "Comunidades" },
     { icon: MessageCircle, label: "Chats" },
     { icon: Eye, label: "Vistos atualmente" },
-    { icon: FileText, label: "Meu resumo" }
+    { icon: FileText, label: "Meu resumo" },
+    { icon: Brain, label: "Mapas Mentais" }
   ];
 
   const featuresItems = [
