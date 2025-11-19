@@ -1,19 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { Brain, Calendar, FileText, Loader2 } from 'lucide-react';
 import { listUserMindMaps, MindMapData } from '@/api/mind-map/generate-mind-map';
 import { Button } from '@/components/ui/button';
 import InteractiveMindMap from '@/components/features/course/InteractiveMindMap';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Navbar } from '@/components/layout';
+import { Sidebar } from '@/components/Sidebar';
+import DotGrid from '@/components/shared/DotGrid';
+import { LoadingGrid } from '@/components/ui/loading-grid';
+import { usePageDataLoad } from '@/hooks/shared';
 
-export default function MindMapsPage() {
+function MindMapsContent() {
+  const [isDark, setIsDark] = useState(true);
   const [mindMaps, setMindMaps] = useState<MindMapData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMindMap, setSelectedMindMap] = useState<MindMapData | null>(null);
   const [viewMode, setViewMode] = useState<'interactive' | 'text'>('interactive');
+
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+  };
+
+  usePageDataLoad({
+    waitForData: false,
+    customDelay: 0
+  });
 
   useEffect(() => {
     const fetchMindMaps = async () => {
@@ -47,10 +62,33 @@ export default function MindMapsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
-          <p className="text-white/70">Carregando mapas mentais...</p>
+      <div className="min-h-screen text-white relative">
+        {/* DotGrid Background */}
+        <div className="fixed inset-0 z-0">
+          <DotGrid
+            dotSize={1}
+            gap={24}
+            baseColor="rgba(255,255,255,0.25)"
+            activeColor="#B3E240"
+            proximity={120}
+            shockRadius={250}
+            shockStrength={5}
+            resistance={750}
+            returnDuration={1.5}
+          />
+        </div>
+
+        <div className="relative z-10 flex">
+          <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
+          <div className="flex-1">
+            <Navbar isDark={isDark} toggleTheme={toggleTheme} />
+            <div style={{ marginTop: '80px' }} className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
+                <p className="text-white/70">Carregando mapas mentais...</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -58,17 +96,60 @@ export default function MindMapsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-400">{error}</p>
+      <div className="min-h-screen text-white relative">
+        {/* DotGrid Background */}
+        <div className="fixed inset-0 z-0">
+          <DotGrid
+            dotSize={1}
+            gap={24}
+            baseColor="rgba(255,255,255,0.25)"
+            activeColor="#B3E240"
+            proximity={120}
+            shockRadius={250}
+            shockStrength={5}
+            resistance={750}
+            returnDuration={1.5}
+          />
+        </div>
+
+        <div className="relative z-10 flex">
+          <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
+          <div className="flex-1">
+            <Navbar isDark={isDark} toggleTheme={toggleTheme} />
+            <div style={{ marginTop: '80px' }} className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+              <div className="text-center">
+                <p className="text-red-400">{error}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen text-white relative">
+      {/* DotGrid Background */}
+      <div className="fixed inset-0 z-0">
+        <DotGrid
+          dotSize={1}
+          gap={24}
+          baseColor="rgba(255,255,255,0.25)"
+          activeColor="#B3E240"
+          proximity={120}
+          shockRadius={250}
+          shockStrength={5}
+          resistance={750}
+          returnDuration={1.5}
+        />
+      </div>
+
+      <div className="relative z-10 flex">
+        <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
+        <div className="flex-1">
+          <Navbar isDark={isDark} toggleTheme={toggleTheme} />
+          <div style={{ marginTop: '80px' }}>
+            <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
@@ -217,7 +298,22 @@ export default function MindMapsPage() {
             </div>
           </div>
         )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function MindMapsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <LoadingGrid size="60" color="#B3E240" />
+      </div>
+    }>
+      <MindMapsContent />
+    </Suspense>
   );
 }
