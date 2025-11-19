@@ -166,7 +166,7 @@ export function MindMapModal({
                     }
                   >
                     <Network className="w-4 h-4 mr-2" />
-                    Interativo
+                    Mapa Mental
                   </Button>
                   <Button
                     onClick={() => setViewMode('markdown')}
@@ -196,7 +196,7 @@ export function MindMapModal({
                     className="text-white/60 hover:text-white hover:bg-white/10"
                   >
                     <Brain className="w-4 h-4 mr-2" />
-                    Regerar
+                    Gerar novamente
                   </Button>
                 </div>
               </div>

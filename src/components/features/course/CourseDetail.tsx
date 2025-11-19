@@ -971,7 +971,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                           }`}
                         >
                           <Brain className="w-4 h-4 mr-2" />
-                          Interativo
+                          Mapa Mental
                         </Button>
                         <Button
                           onClick={() => setMindMapViewMode('text')}
@@ -1014,7 +1014,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                           className="text-white/60 hover:text-white hover:bg-white/10"
                         >
                           <Brain className="w-4 h-4 mr-2" />
-                          Regerar
+                          Gerar novamente
                         </Button>
                       </div>
                     </div>

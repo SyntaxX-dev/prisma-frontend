@@ -250,7 +250,7 @@ function MindMapsContent() {
                     }
                   >
                     <Brain className="w-4 h-4 mr-2" />
-                    Interativo
+                    Mapa Mental
                   </Button>
                   <Button
                     onClick={() => setViewMode('text')}
