@@ -31,27 +31,35 @@ const getRTCConfig = (): RTCConfiguration => {
   // Estes são necessários em produção para contornar NATs/firewalls
   // Usando múltiplos servidores para redundância
   const publicTurnServers = [
-    // Metered.ca Open Relay (gratuito, sem limite) - UDP
+    // Metered.ca Open Relay (gratuito, sem limite)
     {
       urls: 'turn:openrelay.metered.ca:80',
       username: 'openrelayproject',
       credential: 'openrelayproject',
     },
-    // Metered.ca Open Relay - TCP
     {
       urls: 'turn:openrelay.metered.ca:443',
       username: 'openrelayproject',
       credential: 'openrelayproject',
     },
-    // Metered.ca Open Relay - TCP explicit
     {
       urls: 'turn:openrelay.metered.ca:443?transport=tcp',
       username: 'openrelayproject',
       credential: 'openrelayproject',
     },
-    // Metered.ca Open Relay - UDP explicit
     {
       urls: 'turn:openrelay.metered.ca:80?transport=udp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    // Open Relay alternativo
+    {
+      urls: 'turn:relay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:relay.metered.ca:443',
       username: 'openrelayproject',
       credential: 'openrelayproject',
     },
@@ -1088,24 +1096,51 @@ export function useVoiceCall(socket: Socket | null) {
             }
           } else {
             console.log('[useVoiceCall] Coleta de ICE candidates concluída');
-            // Verificar se temos candidates relay
-            if (peerConnectionRef.current) {
-              peerConnectionRef.current.getStats().then((stats) => {
-                let hasRelay = false;
-                stats.forEach((report) => {
-                  if (report.type === 'local-candidate' && report.candidateType === 'relay') {
-                    hasRelay = true;
+            // Verificar se temos candidates relay após um pequeno delay
+            setTimeout(() => {
+              if (peerConnectionRef.current) {
+                peerConnectionRef.current.getStats().then((stats) => {
+                  let hasRelay = false;
+                  let relayCandidates: any[] = [];
+                  let hostCandidates = 0;
+                  let srflxCandidates = 0;
+                  
+                  stats.forEach((report) => {
+                    if (report.type === 'local-candidate') {
+                      if (report.candidateType === 'relay') {
+                        hasRelay = true;
+                        relayCandidates.push({
+                          protocol: report.protocol,
+                          address: report.address,
+                          port: report.port,
+                        });
+                      } else if (report.candidateType === 'host') {
+                        hostCandidates++;
+                      } else if (report.candidateType === 'srflx') {
+                        srflxCandidates++;
+                      }
+                    }
+                  });
+                  
+                  console.log('[useVoiceCall] Estatísticas de candidates:', {
+                    host: hostCandidates,
+                    srflx: srflxCandidates,
+                    relay: relayCandidates.length,
+                    relayDetails: relayCandidates,
+                  });
+                  
+                  if (hasRelay) {
+                    console.log('[useVoiceCall] ✅ TURN server (relay) disponível na conexão!');
+                  } else {
+                    console.error('[useVoiceCall] ❌ NENHUM candidate relay encontrado!');
+                    console.error('[useVoiceCall] ⚠️ A conexão provavelmente falhará em produção sem TURN servers.');
+                    console.error('[useVoiceCall] Verifique se os TURN servers estão acessíveis e configurados corretamente.');
                   }
+                }).catch((error) => {
+                  console.error('[useVoiceCall] Erro ao obter stats:', error);
                 });
-                if (hasRelay) {
-                  console.log('[useVoiceCall] ✅ TURN server (relay) disponível na conexão');
-                } else {
-                  console.warn('[useVoiceCall] ⚠️ Nenhum candidate relay encontrado - conexão pode falhar em produção');
-                }
-              }).catch(() => {
-                // Ignorar erros de stats
-              });
-            }
+              }
+            }, 2000); // Aguardar 2 segundos para garantir que todos os candidates foram coletados
           }
         };
 
@@ -1343,24 +1378,51 @@ export function useVoiceCall(socket: Socket | null) {
             }
           } else {
             console.log('[useVoiceCall] Coleta de ICE candidates concluída (aceitar)');
-            // Verificar se temos candidates relay
-            if (peerConnectionRef.current) {
-              peerConnectionRef.current.getStats().then((stats) => {
-                let hasRelay = false;
-                stats.forEach((report) => {
-                  if (report.type === 'local-candidate' && report.candidateType === 'relay') {
-                    hasRelay = true;
+            // Verificar se temos candidates relay após um pequeno delay
+            setTimeout(() => {
+              if (peerConnectionRef.current) {
+                peerConnectionRef.current.getStats().then((stats) => {
+                  let hasRelay = false;
+                  let relayCandidates: any[] = [];
+                  let hostCandidates = 0;
+                  let srflxCandidates = 0;
+                  
+                  stats.forEach((report) => {
+                    if (report.type === 'local-candidate') {
+                      if (report.candidateType === 'relay') {
+                        hasRelay = true;
+                        relayCandidates.push({
+                          protocol: report.protocol,
+                          address: report.address,
+                          port: report.port,
+                        });
+                      } else if (report.candidateType === 'host') {
+                        hostCandidates++;
+                      } else if (report.candidateType === 'srflx') {
+                        srflxCandidates++;
+                      }
+                    }
+                  });
+                  
+                  console.log('[useVoiceCall] Estatísticas de candidates (aceitar):', {
+                    host: hostCandidates,
+                    srflx: srflxCandidates,
+                    relay: relayCandidates.length,
+                    relayDetails: relayCandidates,
+                  });
+                  
+                  if (hasRelay) {
+                    console.log('[useVoiceCall] ✅ TURN server (relay) disponível na conexão (aceitar)!');
+                  } else {
+                    console.error('[useVoiceCall] ❌ NENHUM candidate relay encontrado (aceitar)!');
+                    console.error('[useVoiceCall] ⚠️ A conexão provavelmente falhará em produção sem TURN servers.');
+                    console.error('[useVoiceCall] Verifique se os TURN servers estão acessíveis e configurados corretamente.');
                   }
+                }).catch((error) => {
+                  console.error('[useVoiceCall] Erro ao obter stats (aceitar):', error);
                 });
-                if (hasRelay) {
-                  console.log('[useVoiceCall] ✅ TURN server (relay) disponível na conexão (aceitar)');
-                } else {
-                  console.warn('[useVoiceCall] ⚠️ Nenhum candidate relay encontrado - conexão pode falhar em produção (aceitar)');
-                }
-              }).catch(() => {
-                // Ignorar erros de stats
-              });
-            }
+              }
+            }, 2000); // Aguardar 2 segundos para garantir que todos os candidates foram coletados
           }
         };
 
