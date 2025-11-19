@@ -15,13 +15,57 @@ import type {
   CallInitiateResponse,
 } from '@/types/voice-call';
 
-// Configuração WebRTC (STUN servers gratuitos)
-const RTC_CONFIG: RTCConfiguration = {
-  iceServers: [
+// Configuração WebRTC (STUN + TURN servers)
+// TURN servers são necessários em produção quando há NATs/firewalls restritivos
+const getRTCConfig = (): RTCConfiguration => {
+  const iceServers: RTCIceServer[] = [
+    // STUN servers (descoberta de endereço IP público)
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-  ],
+    { urls: 'stun:stun2.l.google.com:19302' },
+  ];
+
+  // TURN servers públicos gratuitos (relay quando conexão direta falha)
+  // Estes são necessários em produção para contornar NATs/firewalls
+  const publicTurnServers = [
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ];
+
+  iceServers.push(...publicTurnServers);
+
+  // Permitir configuração customizada via variáveis de ambiente
+  if (typeof window !== 'undefined') {
+    const customTurnUrl = (window as any).__CUSTOM_TURN_URL;
+    const customTurnUsername = (window as any).__CUSTOM_TURN_USERNAME;
+    const customTurnCredential = (window as any).__CUSTOM_TURN_CREDENTIAL;
+
+    if (customTurnUrl && customTurnUsername && customTurnCredential) {
+      iceServers.push({
+        urls: customTurnUrl,
+        username: customTurnUsername,
+        credential: customTurnCredential,
+      });
+    }
+  }
+
+  return { iceServers };
 };
+
+const RTC_CONFIG = getRTCConfig();
 
 export function useVoiceCall(socket: Socket | null) {
   const [callState, setCallState] = useState<VoiceCallState>({
@@ -950,36 +994,74 @@ export function useVoiceCall(socket: Socket | null) {
         });
 
         // 2. Criar PeerConnection
+        console.log('[useVoiceCall] Criando PeerConnection com configuração:', RTC_CONFIG);
         peerConnectionRef.current = new RTCPeerConnection(RTC_CONFIG);
+
+        // Configurar listeners de conexão para debug
+        peerConnectionRef.current.onconnectionstatechange = () => {
+          const state = peerConnectionRef.current?.connectionState;
+          console.log('[useVoiceCall] Estado da conexão mudou:', state);
+          if (state === 'failed' || state === 'disconnected') {
+            console.error('[useVoiceCall] Conexão WebRTC falhou ou desconectou:', state);
+          }
+        };
+
+        peerConnectionRef.current.oniceconnectionstatechange = () => {
+          const state = peerConnectionRef.current?.iceConnectionState;
+          console.log('[useVoiceCall] Estado ICE mudou:', state);
+          if (state === 'failed') {
+            console.error('[useVoiceCall] Conexão ICE falhou - pode ser necessário TURN server');
+          }
+        };
+
+        peerConnectionRef.current.onicegatheringstatechange = () => {
+          console.log('[useVoiceCall] Estado de coleta ICE:', peerConnectionRef.current?.iceGatheringState);
+        };
 
         // 3. Adicionar stream local
         localStreamRef.current.getTracks().forEach((track) => {
           if (peerConnectionRef.current) {
             peerConnectionRef.current.addTrack(track, localStreamRef.current!);
+            console.log('[useVoiceCall] Track local adicionado:', track.kind, track.id);
           }
         });
 
         // 4. Configurar ICE candidates
         peerConnectionRef.current.onicecandidate = (event) => {
-          if (event.candidate && roomIdRef.current) {
-            const activeSocket = activeSocketRef.current || socket;
-            if (activeSocket) {
-              activeSocket.emit('call:ice-candidate', {
-                roomId: roomIdRef.current,
-                candidate: event.candidate.toJSON(),
-              });
+          if (event.candidate) {
+            console.log('[useVoiceCall] ICE candidate encontrado:', {
+              type: event.candidate.type,
+              protocol: event.candidate.protocol,
+              address: event.candidate.address,
+            });
+            if (roomIdRef.current) {
+              const activeSocket = activeSocketRef.current || socket;
+              if (activeSocket) {
+                activeSocket.emit('call:ice-candidate', {
+                  roomId: roomIdRef.current,
+                  candidate: event.candidate.toJSON(),
+                });
+              }
             }
+          } else {
+            console.log('[useVoiceCall] Coleta de ICE candidates concluída');
           }
         };
 
         // 5. Configurar stream remoto
         peerConnectionRef.current.ontrack = (event) => {
+          console.log('[useVoiceCall] Stream remoto recebido:', {
+            streams: event.streams.length,
+            trackKind: event.track.kind,
+            trackId: event.track.id,
+          });
           if (event.streams[0]) {
             remoteAudioRef.current = new Audio();
             remoteAudioRef.current.srcObject = event.streams[0];
             remoteAudioRef.current.play().catch((error) => {
-              console.error('Erro ao reproduzir áudio remoto:', error);
+              console.error('[useVoiceCall] Erro ao reproduzir áudio remoto:', error);
             });
+            console.log('[useVoiceCall] Áudio remoto configurado e reproduzindo');
           }
         };
 
@@ -1127,18 +1209,46 @@ export function useVoiceCall(socket: Socket | null) {
         });
 
         // 2. Criar PeerConnection
+        console.log('[useVoiceCall] Criando PeerConnection (aceitar chamada) com configuração:', RTC_CONFIG);
         peerConnectionRef.current = new RTCPeerConnection(RTC_CONFIG);
+
+        // Configurar listeners de conexão para debug
+        peerConnectionRef.current.onconnectionstatechange = () => {
+          const state = peerConnectionRef.current?.connectionState;
+          console.log('[useVoiceCall] Estado da conexão mudou (aceitar):', state);
+          if (state === 'failed' || state === 'disconnected') {
+            console.error('[useVoiceCall] Conexão WebRTC falhou ou desconectou (aceitar):', state);
+          }
+        };
+
+        peerConnectionRef.current.oniceconnectionstatechange = () => {
+          const state = peerConnectionRef.current?.iceConnectionState;
+          console.log('[useVoiceCall] Estado ICE mudou (aceitar):', state);
+          if (state === 'failed') {
+            console.error('[useVoiceCall] Conexão ICE falhou (aceitar) - pode ser necessário TURN server');
+          }
+        };
+
+        peerConnectionRef.current.onicegatheringstatechange = () => {
+          console.log('[useVoiceCall] Estado de coleta ICE (aceitar):', peerConnectionRef.current?.iceGatheringState);
+        };
 
         // 3. Adicionar stream local
         localStreamRef.current.getTracks().forEach((track) => {
           if (peerConnectionRef.current) {
             peerConnectionRef.current.addTrack(track, localStreamRef.current!);
+            console.log('[useVoiceCall] Track local adicionado (aceitar):', track.kind, track.id);
           }
         });
 
         // 4. Configurar ICE candidates
         peerConnectionRef.current.onicecandidate = (event) => {
           if (event.candidate) {
+            console.log('[useVoiceCall] ICE candidate encontrado (aceitar):', {
+              type: event.candidate.type,
+              protocol: event.candidate.protocol,
+              address: event.candidate.address,
+            });
             const activeSocket = activeSocketRef.current || socket;
             if (activeSocket) {
               activeSocket.emit('call:ice-candidate', {
@@ -1146,17 +1256,25 @@ export function useVoiceCall(socket: Socket | null) {
                 candidate: event.candidate.toJSON(),
               });
             }
+          } else {
+            console.log('[useVoiceCall] Coleta de ICE candidates concluída (aceitar)');
           }
         };
 
         // 5. Configurar stream remoto
         peerConnectionRef.current.ontrack = (event) => {
+          console.log('[useVoiceCall] Stream remoto recebido (aceitar):', {
+            streams: event.streams.length,
+            trackKind: event.track.kind,
+            trackId: event.track.id,
+          });
           if (event.streams[0]) {
             remoteAudioRef.current = new Audio();
             remoteAudioRef.current.srcObject = event.streams[0];
             remoteAudioRef.current.play().catch((error) => {
-              console.error('Erro ao reproduzir áudio remoto:', error);
+              console.error('[useVoiceCall] Erro ao reproduzir áudio remoto (aceitar):', error);
             });
+            console.log('[useVoiceCall] Áudio remoto configurado e reproduzindo (aceitar)');
           }
         };
 
