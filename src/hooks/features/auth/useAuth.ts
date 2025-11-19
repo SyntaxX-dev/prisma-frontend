@@ -71,7 +71,6 @@ export function useAuth() {
       const { logoutUser } = await import('@/api/auth/logout');
       await logoutUser();
     } catch (error) {
-      console.error('[useAuth] Erro ao fazer logout no backend:', error);
       // Continuar mesmo se houver erro
     }
     

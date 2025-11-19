@@ -177,7 +177,6 @@ export function ProfilePage() {
             // Atualizar também o estado local para exibição
             handleBasicInfoChange('cidade', location);
         } catch (error) {
-            console.error('Erro ao salvar localização:', error);
             // Ainda assim atualizar o estado local para exibição
             handleBasicInfoChange('cidade', location);
         }
@@ -216,7 +215,6 @@ export function ProfilePage() {
             
             return `No Prisma desde ${day}/${month}/${year}`;
         } catch (error) {
-            console.error('Erro ao formatar data:', error);
             return 'No Prisma desde 30/03/2020';
         }
     };
@@ -397,7 +395,6 @@ export function ProfilePage() {
                 setOtherUserProfile(response.data);
             }
         } catch (error) {
-            console.error('Erro ao carregar perfil do usuário:', error);
             setOtherUserProfile(null);
         } finally {
             setIsLoadingOtherProfile(false);
@@ -422,30 +419,12 @@ export function ProfilePage() {
 
         // Escutar quando amizade for removida - igual ao friend_request
         const handleFriendRemoved = (data: { userId: string; friendId: string; friendName: string; removedAt: string }) => {
-            console.log('[ProfilePage] 🗑️ Evento friend_removed recebido via Socket.IO:', data);
-            console.log('[ProfilePage] 📊 Verificando relacionamento:', {
-                currentUserId,
-                userId,
-                dataUserId: data.userId,
-                dataFriendId: data.friendId,
-                isOwnProfile,
-                isViewingOtherProfile: userId && !isOwnProfile
-            });
-            
             // Verificar se o evento é relacionado ao usuário logado OU ao perfil sendo visualizado
             const isRelatedToLoggedUser = currentUserId && (data.userId === currentUserId || data.friendId === currentUserId);
             const isRelatedToViewedProfile = userId && (data.userId === userId || data.friendId === userId);
             
-            console.log('[ProfilePage] ✅ Resultado da verificação:', {
-                isRelatedToLoggedUser,
-                isRelatedToViewedProfile,
-                shouldUpdate: isRelatedToLoggedUser || isRelatedToViewedProfile
-            });
-            
             // Só atualizar se estiver visualizando o perfil do outro usuário envolvido na amizade
             if (isRelatedToViewedProfile && userId && !isOwnProfile) {
-                console.log('[ProfilePage] 🔄 Usuário está visualizando perfil relacionado - recarregando perfil...');
-                console.log('[ProfilePage] 📍 Mostrando notificação apenas porque está na tela de perfil');
                 
                 // Mostrar notificação apenas se estiver visualizando o perfil do outro usuário
                 toast.success('Amizade desfeita', {
@@ -456,17 +435,13 @@ export function ProfilePage() {
                 loadOtherUserProfile();
             } else if (isRelatedToLoggedUser && isOwnProfile) {
                 // Se for o próprio perfil e o evento for relacionado, recarregar mas não mostrar notificação
-                console.log('[ProfilePage] 🔄 Recarregando próprio perfil após remoção de amizade...');
                 loadUserProfile();
             } else {
-                console.log('[ProfilePage] ⚠️ Evento não relacionado ou usuário não está na tela de perfil - ignorando...');
-                console.log('[ProfilePage] ℹ️ Nenhuma notificação será mostrada');
             }
         };
 
         // Escutar quando amizade for aceita
         const handleFriendAccepted = (data: any) => {
-            console.log('[ProfilePage] ✅ Amizade aceita via Socket.IO:', data);
             
             // Verificar se o evento é relacionado ao usuário logado OU ao perfil sendo visualizado
             const relatedUserId = data.relatedUserId || data.requester?.id || data.receiver?.id;
@@ -474,7 +449,6 @@ export function ProfilePage() {
             const isRelatedToViewedProfile = userId && relatedUserId === userId;
             
             if (isRelatedToLoggedUser || isRelatedToViewedProfile) {
-                console.log('[ProfilePage] 🔄 Recarregando perfil após aceitação de amizade...');
                 // Se estiver visualizando um perfil de outro usuário, recarregar
                 if (userId && !isOwnProfile) {
                     loadOtherUserProfile();
@@ -1469,7 +1443,6 @@ export function ProfilePage() {
                             await updateUserMomentCareer(momentCareer?.trim() || null);
                             setIsCareerModalOpen(false);
                         } catch (error: any) {
-                            console.error('❌ Erro ao atualizar momento de carreira:', error);
                             
                             // Mostrar erro específico para o usuário
                             if (error?.message?.includes('500 caracteres')) {

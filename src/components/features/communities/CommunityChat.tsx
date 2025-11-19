@@ -22,6 +22,10 @@ import type { Community } from "@/types/community";
 import type { CommunityMessage, PinnedCommunityMessage } from "@/types/community-chat";
 import { getCommunityMembers, type CommunityMember } from "@/api/communities/get-community-members";
 import { getUserProfile } from "@/api/auth/get-user-profile";
+import { FileUploadZone } from "../chat/FileUploadZone";
+import { FilePreview } from "../chat/FilePreview";
+import { useFileUpload } from "@/hooks/features/chat/useFileUpload";
+import type { MessageAttachment } from "@/types/file-upload";
 
 interface CommunityChatProps {
   community: Community;
@@ -30,7 +34,7 @@ interface CommunityChatProps {
   currentUserId?: string;
   currentUserName?: string;
   currentUserAvatar?: string | null;
-  onSendMessage: (content: string) => Promise<void>;
+  onSendMessage: (content?: string, attachments?: MessageAttachment[]) => Promise<void>;
   onEditMessage?: (messageId: string, content: string) => Promise<{ success: boolean; message?: string }>;
   onDeleteMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
   onPinMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
@@ -38,6 +42,9 @@ interface CommunityChatProps {
   onStartVideoCall?: () => void;
   onStartVoiceCall?: () => void;
   isConnected?: boolean;
+  isTyping?: boolean;
+  typingUserId?: string | null;
+  onTyping?: (isTyping: boolean) => void;
 }
 
 export function CommunityChat({
@@ -55,9 +62,24 @@ export function CommunityChat({
   onStartVideoCall,
   onStartVoiceCall,
   isConnected = false,
+  isTyping = false,
+  typingUserId,
+  onTyping,
 }: CommunityChatProps) {
   const [messageInput, setMessageInput] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([]);
+  
+  const { uploading, uploadFiles, ErrorModal } = useFileUpload({
+    isCommunity: true,
+    communityId: community.id,
+    onUploadComplete: (attachments) => {
+      setPendingAttachments((prev) => {
+        const updated = [...prev, ...attachments];
+        return updated;
+      });
+    },
+  });
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
@@ -65,16 +87,35 @@ export function CommunityChat({
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasScrolledToBottomRef = useRef<string | null>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (messages.length > 0 && messagesContainerRef.current) {
+      // Verificar se é uma nova comunidade ou se as mensagens mudaram
+      const shouldScroll = hasScrolledToBottomRef.current !== community.id || 
+                          messagesContainerRef.current.scrollHeight > messagesContainerRef.current.clientHeight;
+      
+      if (shouldScroll) {
+        // Usar requestAnimationFrame para garantir que o DOM foi atualizado
+        requestAnimationFrame(() => {
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+            hasScrolledToBottomRef.current = community.id;
+          }
+        });
+      }
+    }
+  }, [messages, community.id]);
 
   // Escutar evento para fazer scroll até uma mensagem específica
   useEffect(() => {
@@ -170,7 +211,6 @@ export function CommunityChat({
           setMemberMap(newMemberMap);
         }
       } catch (error) {
-        console.error('[CommunityChat] Erro ao carregar membros:', error);
       } finally {
         setIsLoadingMembers(false);
       }
@@ -206,7 +246,6 @@ export function CommunityChat({
               };
             }
           } catch (error) {
-            console.error(`[CommunityChat] Erro ao buscar perfil do usuário ${userId}:`, error);
           }
           return null;
         });
@@ -227,7 +266,6 @@ export function CommunityChat({
           });
         }
       } catch (error) {
-        console.error('[CommunityChat] Erro ao carregar usuários faltantes:', error);
       }
     };
 
@@ -236,8 +274,38 @@ export function CommunityChat({
     }
   }, [messages, currentUserId, memberMap]);
 
+  const handleFilesSelected = async (files: File[]) => {
+    try {
+      await uploadFiles(files, (index, progress) => {
+      });
+    } catch (error) {
+      // Erro já é tratado pelo hook e exibido no modal
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setPendingAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const prepareAttachmentsForSend = (attachments: MessageAttachment[]) => {
+    return attachments
+      .filter(
+        (attachment): attachment is MessageAttachment =>
+          Boolean(
+            attachment &&
+            attachment.fileUrl &&
+            attachment.cloudinaryPublicId &&
+            attachment.fileType
+          )
+      )
+      .map((attachment) => ({
+        ...attachment,
+        thumbnailUrl: attachment.thumbnailUrl || attachment.fileUrl,
+      }));
+  };
+
   const handleSend = async () => {
-    if (!messageInput.trim() || !isConnected) return;
+    if ((!messageInput.trim() && pendingAttachments.length === 0) || !isConnected) return;
 
     // Se estiver editando, fazer a edição ao invés de enviar nova mensagem
     if (editingMessageId && onEditMessage) {
@@ -250,11 +318,51 @@ export function CommunityChat({
       return;
     }
 
+    const messageToSend = messageInput.trim() || undefined;
+    const attachmentsToSend =
+      pendingAttachments.length > 0
+        ? prepareAttachmentsForSend(pendingAttachments)
+        : undefined;
+    
     try {
-      await onSendMessage(messageInput.trim());
+      await onSendMessage(messageToSend, attachmentsToSend);
       setMessageInput("");
+      setPendingAttachments([]);
+      
+      // Parar de digitar após enviar
+      if (onTyping && typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      if (onTyping) {
+        onTyping(false);
+      }
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setMessageInput(newValue);
+
+    // Sempre enviar indicador de digitação quando o usuário digita (mesmo que não tenha anexos)
+    // O sendTypingIndicator já verifica internamente se o socket está conectado
+    if (onTyping) {
+      // Limpar timeout anterior se existir
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+
+      // Sempre enviar typing: true quando o usuário digita
+      onTyping(true);
+
+      // Criar novo timeout para parar de digitar após 2 segundos
+      typingTimeoutRef.current = setTimeout(() => {
+        onTyping(false);
+        typingTimeoutRef.current = null;
+      }, 2000);
+    } else {
     }
   };
 
@@ -288,6 +396,11 @@ export function CommunityChat({
 
   const isOwn = (senderId: string) => senderId === currentUserId;
 
+  // Typing indicator data
+  const shouldShowTyping = isTyping && typingUserId && typingUserId !== currentUserId;
+  const typingMember = shouldShowTyping ? memberMap.get(typingUserId) : undefined;
+  const avatarSrc = typingMember?.avatar ?? undefined;
+
   return (
     <div 
       className="flex-1 flex flex-col h-full rounded-2xl overflow-hidden border border-white/10"
@@ -296,7 +409,7 @@ export function CommunityChat({
       }}
     >
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-5 pt-12 space-y-6 pb-32">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-5 pt-12 space-y-6 pb-32">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -473,16 +586,50 @@ export function CommunityChat({
                     </AnimatePresence>
                     
                     <div className="group relative">
-                      <div
-                        className={`px-3 py-2 rounded-lg ${
-                          messageIsOwn
-                            ? "rounded-tr-sm bg-[#B3E240] text-black"
-                            : "rounded-tl-sm bg-[#29292E] text-white border border-[#323238]"
-                        }`}
-                      >
-                        <p className={`text-sm leading-relaxed break-words ${messageIsOwn ? 'text-black' : 'text-white'}`} style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                          {message.content}
-                        </p>
+                      <div className="flex flex-col gap-2">
+                        {message.content && (
+                          <div
+                            className={`px-3 py-2 rounded-lg ${
+                              messageIsOwn
+                                ? "rounded-tr-sm bg-[#B3E240] text-black"
+                                : "rounded-tl-sm bg-[#29292E] text-white border border-[#323238]"
+                            }`}
+                          >
+                            <p className={`text-sm leading-relaxed break-words ${messageIsOwn ? 'text-black' : 'text-white'}`} style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                              {message.content}
+                            </p>
+                          </div>
+                        )}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="flex flex-col gap-2">
+                            {message.attachments.map((attachment) => {
+                              const isImage = attachment.fileType.startsWith("image/");
+                              if (isImage) {
+                                return (
+                                  <div
+                                    key={attachment.id}
+                                    className="relative w-full max-w-lg rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => window.open(attachment.fileUrl, "_blank")}
+                                  >
+                                    <img
+                                      src={attachment.thumbnailUrl || attachment.fileUrl}
+                                      alt={attachment.fileName}
+                                      className="w-full h-auto object-cover"
+                                      style={{ maxHeight: '600px' }}
+                                    />
+                                  </div>
+                                );
+                              }
+                              return (
+                                <FilePreview
+                                  key={attachment.id}
+                                  attachment={attachment}
+                                  size="medium"
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                       
                       <div className={`flex items-center gap-1 mt-1 px-1 ${messageIsOwn ? "justify-end" : "justify-start"}`}>
@@ -498,27 +645,119 @@ export function CommunityChat({
                 </div>
               );
             })}
+            
+            {/* Typing indicator */}
+            {shouldShowTyping && typingMember && (
+              <div className="flex gap-3">
+                <Avatar className="w-8 h-8 shrink-0">
+                  <AvatarImage
+                    src={avatarSrc}
+                    alt={typingMember?.name || "Usuário"}
+                  />
+                  <AvatarFallback className="bg-[#B3E240] text-black text-xs">
+                    {(typingMember?.name || "U").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="bg-[#29292E] border border-[#323238] rounded-lg px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400">
+                      {typingMember?.name || "Alguém"} está digitando
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span 
+                        className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
+                        style={{
+                          animation: 'typing-dot 1.4s infinite ease-in-out',
+                          animationDelay: '0ms'
+                        }}
+                      />
+                      <span 
+                        className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
+                        style={{
+                          animation: 'typing-dot 1.4s infinite ease-in-out',
+                          animationDelay: '200ms'
+                        }}
+                      />
+                      <span 
+                        className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
+                        style={{
+                          animation: 'typing-dot 1.4s infinite ease-in-out',
+                          animationDelay: '400ms'
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
 
       {/* Input */}
+      <FileUploadZone
+        onFilesSelected={handleFilesSelected}
+        disabled={!isConnected || uploading}
+        className="fixed inset-0"
+      />
       <div 
         className="p-4 border-t border-white/10 bg-[#1a1a1a]"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2">
+          {/* Preview de arquivos pendentes */}
+          {pendingAttachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 pb-2">
+              {pendingAttachments.map((attachment, index) => (
+                <div key={index} className="relative">
+                  <FilePreview
+                    attachment={{
+                      id: `pending-${index}`,
+                      fileUrl: attachment.fileUrl,
+                      fileName: attachment.fileName,
+                      fileType: attachment.fileType,
+                      fileSize: attachment.fileSize,
+                      thumbnailUrl: attachment.thumbnailUrl || null,
+                      width: attachment.width || null,
+                      height: attachment.height || null,
+                      duration: attachment.duration || null,
+                    }}
+                    onRemove={() => handleRemoveAttachment(index)}
+                    showRemove={true}
+                    size="small"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
-            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer"
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.multiple = true;
+              input.accept = 'image/*,application/pdf';
+              input.onchange = (e) => {
+                const files = Array.from((e.target as HTMLInputElement).files || []);
+                if (files.length > 0) {
+                  handleFilesSelected(files);
+                }
+              };
+              input.click();
+            }}
+            disabled={!isConnected || uploading}
+            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer shrink-0"
+            title="Anexar arquivo"
           >
             <Paperclip className="w-4 h-4" />
           </Button>
 
           <textarea
             value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
             disabled={!isConnected}
@@ -562,18 +801,24 @@ export function CommunityChat({
 
           <Button
             onClick={handleSend}
-            disabled={!messageInput.trim() || !isConnected}
+            disabled={(!messageInput.trim() && pendingAttachments.length === 0) || !isConnected || uploading}
             size="icon"
             className="rounded-lg w-9 h-9 cursor-pointer"
             style={{
-              background: messageInput.trim() && isConnected ? '#C9FE02' : 'rgb(26, 26, 26)',
-              color: messageInput.trim() && isConnected ? '#000' : '#666',
+              background: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#C9FE02' : 'rgb(26, 26, 26)',
+              color: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#000' : '#666',
             }}
           >
-            <Send className="w-4 h-4" />
+            {uploading ? (
+              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </Button>
+          </div>
         </div>
       </div>
+      {ErrorModal}
 
       {/* Modal de confirmação para deletar */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
@@ -600,9 +845,7 @@ export function CommunityChat({
                 if (messageToDelete && onDeleteMessage) {
                   const result = await onDeleteMessage(messageToDelete);
                   if (result.success) {
-                    console.log('Mensagem excluída com sucesso');
                   } else {
-                    console.error('Erro ao excluir mensagem:', result.message);
                   }
                 }
                 setDeleteConfirmOpen(false);

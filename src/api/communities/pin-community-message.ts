@@ -29,14 +29,11 @@ export async function pinCommunityMessage(
   messageId: string
 ): Promise<PinCommunityMessageResponse | PinCommunityMessageError> {
   try {
-    console.log('[pinCommunityMessage] Fixando mensagem:', { communityId, messageId });
     const response = await httpClient.post<PinCommunityMessageResponse>(
       `/communities/${communityId}/messages/${messageId}/pin`
     );
-    console.log('[pinCommunityMessage] ✅ Mensagem fixada com sucesso:', response);
     return response;
   } catch (error) {
-    console.error('[pinCommunityMessage] ❌ Erro ao fixar mensagem:', error);
     const apiError = error as ApiError;
     return {
       success: false,

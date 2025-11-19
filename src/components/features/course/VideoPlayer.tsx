@@ -26,7 +26,6 @@ export function VideoPlayer({ selectedVideo, isVideoPlaying, onPlayToggle, onPau
         onPause,
         onVideoEnd: () => {
             // Video ended - will be marked as completed by parent component
-            console.log('[VideoPlayer] Vídeo finalizado');
         },
     });
 

@@ -10,9 +10,7 @@ export async function logoutUser(): Promise<LogoutResponse> {
     // Chamar API de logout do backend para marcar como offline
     try {
       const response = await httpClient.post<LogoutResponse>('/auth/logout', {});
-      console.log('[logoutUser] ✅ Logout realizado no backend:', response);
     } catch (error) {
-      console.warn('[logoutUser] ⚠️ Erro ao fazer logout no backend (continuando mesmo assim):', error);
     }
 
     // Limpar localStorage
@@ -24,7 +22,6 @@ export async function logoutUser(): Promise<LogoutResponse> {
 
     return { success: true, message: 'Logout realizado com sucesso' };
   } catch (error) {
-    console.error('[logoutUser] ❌ Erro ao fazer logout:', error);
     throw error;
   }
 }

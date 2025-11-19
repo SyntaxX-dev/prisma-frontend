@@ -18,15 +18,12 @@ export async function editCommunityMessage(
   content: string
 ): Promise<EditCommunityMessageResponse | EditCommunityMessageError> {
   try {
-    console.log('[editCommunityMessage] Editando mensagem:', { communityId, messageId, content });
     const response = await httpClient.put<EditCommunityMessageResponse>(
       `/communities/${communityId}/messages/${messageId}`,
       { content }
     );
-    console.log('[editCommunityMessage] ✅ Mensagem editada com sucesso:', response);
     return response;
   } catch (error) {
-    console.error('[editCommunityMessage] ❌ Erro ao editar mensagem:', error);
     const apiError = error as ApiError;
     return {
       success: false,

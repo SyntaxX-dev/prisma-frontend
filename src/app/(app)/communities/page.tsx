@@ -24,6 +24,8 @@ import { getUserProfile } from "@/api/auth/get-user-profile";
 import { useProfile } from "@/hooks/features/profile";
 import { useChat } from "@/hooks/features/chat/useChat";
 import { useCommunityChat } from "@/hooks/features/chat/useCommunityChat";
+import { useVoiceCall } from "@/hooks/features/chat/useVoiceCall";
+import { VoiceCallModal } from "@/components/features/chat/VoiceCallModal";
 import { useUserStatus } from "@/providers/UserStatusProvider";
 import { Message } from "@/api/messages/send-message";
 import type { CommunityMessage as CommunityMessageType } from "@/types/community-chat";
@@ -34,6 +36,7 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
+import type { MessageAttachment } from "@/types/file-upload";
 
 // Mock data
 const MOCK_COMMUNITIES: Community[] = [
@@ -489,9 +492,7 @@ const saveLastConversation = (type: 'community' | 'chat', id: string) => {
     try {
       const lastConversation: LastConversation = { type, id };
       localStorage.setItem(LAST_CONVERSATION_KEY, JSON.stringify(lastConversation));
-      console.log('[CommunitiesPage] 💾 Última conversa salva:', lastConversation);
     } catch (error) {
-      console.error('[CommunitiesPage] Erro ao salvar última conversa:', error);
     }
   }
 };
@@ -502,11 +503,9 @@ const loadLastConversation = (): LastConversation | null => {
       const saved = localStorage.getItem(LAST_CONVERSATION_KEY);
       if (saved) {
         const lastConversation = JSON.parse(saved) as LastConversation;
-        console.log('[CommunitiesPage] 📂 Última conversa carregada:', lastConversation);
         return lastConversation;
       }
     } catch (error) {
-      console.error('[CommunitiesPage] Erro ao carregar última conversa:', error);
     }
   }
   return null;
@@ -562,6 +561,7 @@ function CommunitiesPageContent() {
   
   // Hook para chat direto
   const {
+    socket,
     messages: directMessages,
     isConnected,
     isTyping,
@@ -576,12 +576,25 @@ function CommunitiesPageContent() {
     deleteMessage,
   } = useChat();
 
+  // Hook para chamadas de voz
+  const {
+    callState,
+    startCall,
+    acceptCall,
+    rejectCall,
+    endCall,
+    toggleLocalAudio,
+  } = useVoiceCall(socket);
+
   // Hook para chat de comunidades
   const {
     messages: communityMessages,
     pinnedMessages: communityPinnedMessages,
     isConnected: isCommunityConnected,
+    isTyping: isCommunityTyping,
+    typingUserId: communityTypingUserId,
     sendMessage: sendCommunityMessage,
+    sendTypingIndicator: sendCommunityTypingIndicator,
     editMessage: editCommunityMessage,
     deleteMessage: deleteCommunityMessage,
     pinMessage: pinCommunityMessage,
@@ -625,7 +638,6 @@ function CommunitiesPageContent() {
         });
       }
     } catch (error) {
-      console.error('[CommunitiesPage] Erro ao carregar usuário do chat:', error);
     } finally {
       setIsLoadingChatUser(false);
     }
@@ -692,10 +704,8 @@ function CommunitiesPageContent() {
     // Salvar automaticamente quando há parâmetros na URL
     if (chatParam) {
       saveLastConversation('chat', chatParam);
-      console.log('[CommunitiesPage] 💾 Chat salvo automaticamente:', chatParam);
     } else if (communityParam) {
       saveLastConversation('community', communityParam);
-      console.log('[CommunitiesPage] 💾 Comunidade salva automaticamente:', communityParam);
     }
   }, [searchParams]);
 
@@ -709,7 +719,6 @@ function CommunitiesPageContent() {
     if (!chatParam && !communityParam && !hasRestoredLastConversation.current && !isLoadingCommunities) {
       const lastConversation = loadLastConversation();
       if (lastConversation) {
-        console.log('[CommunitiesPage] 🔄 Restaurando última conversa ao entrar na página:', lastConversation);
         hasRestoredLastConversation.current = true;
         
         // Priorizar chats - se for chat, restaurar imediatamente
@@ -739,17 +748,27 @@ function CommunitiesPageContent() {
     
     // Processar parâmetros da URL
     if (chatParam) {
+      // Limpar comunidade selecionada quando entrar em chat de usuário
+      if (selectedCommunityId) {
+        setSelectedCommunityId(undefined);
+      }
       setSelectedChatUserId(chatParam);
       loadChatUser(chatParam);
       // Marcar como restaurado quando há parâmetros na URL
       hasRestoredLastConversation.current = true;
     } else if (communityParam) {
+      // Limpar chat de usuário selecionado quando entrar em comunidade
+      if (selectedChatUserId) {
+        setSelectedChatUserId(null);
+        setChatUser(null);
+      }
       // Marcar como restaurado quando há parâmetros na URL
       hasRestoredLastConversation.current = true;
     } else if (!chatParam && !communityParam) {
       // Só limpar se não houver parâmetros
       setSelectedChatUserId(null);
       setChatUser(null);
+      setSelectedCommunityId(undefined);
     }
   }, [searchParams, isLoadingCommunities, communities, router, loadChatUser]);
 
@@ -780,15 +799,12 @@ function CommunitiesPageContent() {
   const loadConversations = async () => {
     try {
       const response = await getConversations();
-      console.log('[CommunitiesPage] Conversas recebidas da API:', response);
       if (response.success) {
         setConversations(response.data.conversations || []);
       } else {
-        console.warn('[CommunitiesPage] ⚠️ Resposta não foi bem-sucedida:', response);
         setConversations([]);
       }
     } catch (error) {
-      console.error('[CommunitiesPage] Erro ao carregar conversas:', error);
       setConversations([]);
     }
   };
@@ -845,27 +861,12 @@ function CommunitiesPageContent() {
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
           userIdFromToken = payload.sub || payload.userId || payload.id || null;
-          console.log('[loadCommunities] Token decodificado:', {
-            payload,
-            userIdFromToken,
-            exp: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'não encontrado',
-            isExpired: payload.exp ? Date.now() > payload.exp * 1000 : 'desconhecido'
-          });
         } catch (e) {
-          console.error('[loadCommunities] Erro ao decodificar token:', e);
         }
       }
       
-      console.log('[loadCommunities] Token no localStorage:', {
-        tokenExists: !!token,
-        tokenLength: token?.length || 0,
-        tokenPreview: token ? `${token.substring(0, 30)}...` : 'null',
-        userIdFromToken
-      });
-      
       const response = await getCommunities();
       
-      console.log('[loadCommunities] Resposta recebida:', response);
       
       // Verificar diferentes formatos de resposta
       let communitiesData: any[] = [];
@@ -892,7 +893,6 @@ function CommunitiesPageContent() {
       // Mapear dados da API para o formato esperado
       // IMPORTANTE: isOwner e isMember já vêm corretos da API quando o token JWT é enviado
       // O token é enviado automaticamente pelo httpClient se estiver em localStorage.getItem('auth_token')
-      console.log('[loadCommunities] Dados extraídos antes do mapeamento:', communitiesData);
       
       const mappedCommunities: Community[] = communitiesData.map((community: any) => {
         return {
@@ -911,7 +911,6 @@ function CommunitiesPageContent() {
         };
       });
       
-      console.log('[loadCommunities] Comunidades mapeadas:', mappedCommunities);
       
       // Filtrar comunidades privadas que o usuário não pertence
       const filteredCommunities = mappedCommunities.filter((community) => {
@@ -975,7 +974,6 @@ function CommunitiesPageContent() {
         }
       }
     } catch (error: any) {
-      console.error('Erro ao carregar comunidades:', error);
       toast.error("Erro ao carregar comunidades");
       // Em caso de erro, usar mocks como fallback
       setCommunities(MOCK_COMMUNITIES);
@@ -999,11 +997,9 @@ function CommunitiesPageContent() {
     }
   };
 
-  const handleSendMessage = async (content: string) => {
-    if (!selectedCommunityId) return;
-
+  const handleSendMessage = async (content?: string, attachments?: MessageAttachment[]) => {
     try {
-      const result = await sendCommunityMessage(content);
+      const result = await sendCommunityMessage(content, attachments);
       if (!result.success) {
         toast.error(result.message || "Erro ao enviar mensagem");
       }
@@ -1093,6 +1089,7 @@ function CommunitiesPageContent() {
         style={{
           background: '#040404',
         }}
+        suppressHydrationWarning
       >
         <LoadingGrid size="60" color="#C9FE02" />
       </div>
@@ -1249,14 +1246,24 @@ function CommunitiesPageContent() {
                   currentUserAvatar={userProfile.profileImage}
                   messages={directMessages}
                   isConnected={isConnected}
-                  isTyping={isTyping && typingUserId === chatUser.id}
-                  onSend={sendMessage}
+                  isTyping={isTyping}
+                  typingUserId={typingUserId}
+                  onSend={async (receiverId, content, attachments) => {
+                    await sendMessage(receiverId, content || '', attachments);
+                  }}
                   onTyping={sendTypingIndicator}
                   onPinMessage={pinMessage}
                   onUnpinMessage={unpinMessage}
                   pinnedMessages={pinnedMessages}
                   onEditMessage={editMessage}
                   onDeleteMessage={deleteMessage}
+                  onStartCall={async (receiverId) => {
+                    try {
+                      await startCall(receiverId);
+                    } catch (error) {
+                      console.error('Erro ao iniciar chamada:', error);
+                    }
+                  }}
                 />
               )}
             </div>
@@ -1278,7 +1285,13 @@ function CommunitiesPageContent() {
                 createdAt: new Date().toISOString(),
               }}
               onStartVideoCall={() => {}}
-              onStartVoiceCall={() => {}}
+              onStartVoiceCall={async () => {
+                try {
+                  await startCall(chatUser.id);
+                } catch (error) {
+                  console.error('Erro ao iniciar chamada:', error);
+                }
+              }}
               isFromSidebar={false}
                   pinnedMessages={pinnedMessages}
                   currentUserId={userProfile.id}
@@ -1365,6 +1378,9 @@ function CommunitiesPageContent() {
                 onStartVideoCall={handleStartVideoCall}
                 onStartVoiceCall={handleStartVoiceCall}
                 isConnected={isCommunityConnected}
+                isTyping={isCommunityTyping}
+                typingUserId={communityTypingUserId}
+                onTyping={sendCommunityTypingIndicator}
               />
             )}
             
@@ -1410,6 +1426,55 @@ function CommunitiesPageContent() {
           refreshCommunities();
         }}
       />
+
+      {/* Voice Call Modal - Aparece sempre que há uma chamada ativa ou erro */}
+      {(callState.status !== 'idle' || callState.error) && (
+        <VoiceCallModal
+          callState={callState}
+          currentUserId={userProfile?.id}
+          callerName={
+            callState.callerName ||
+            (callState.callerId === userProfile?.id
+              ? userProfile.name
+              : callState.callerId && callState.callerId !== userProfile?.id
+                ? 'Usuário'
+                : chatUser?.name || 'Usuário')
+          }
+          callerAvatar={
+            callState.callerAvatar !== undefined
+              ? callState.callerAvatar
+              : callState.callerId === userProfile?.id
+                ? userProfile.profileImage
+                : chatUser?.profileImage || null
+          }
+          receiverName={
+            callState.receiverId === userProfile?.id
+              ? userProfile.name
+              : callState.receiverId && callState.receiverId !== userProfile?.id
+                ? 'Usuário'
+                : chatUser?.name || 'Usuário'
+          }
+          receiverAvatar={
+            callState.receiverId === userProfile?.id
+              ? userProfile.profileImage
+              : chatUser?.profileImage || null
+          }
+          onAccept={async (roomId) => {
+            try {
+              await acceptCall(roomId);
+            } catch (error) {
+              console.error('Erro ao aceitar chamada:', error);
+            }
+          }}
+          onReject={(roomId) => {
+            rejectCall(roomId);
+          }}
+          onEnd={() => {
+            endCall();
+          }}
+          onToggleAudio={toggleLocalAudio}
+        />
+      )}
       </div>
     </div>
   );
@@ -1418,7 +1483,7 @@ function CommunitiesPageContent() {
 export default function CommunitiesPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]" suppressHydrationWarning>
         <LoadingGrid />
       </div>
     }>

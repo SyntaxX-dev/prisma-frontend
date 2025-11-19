@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { env } from '@/lib/env';
 import { sendMessage as sendMessageApi } from '@/api/messages/send-message';
+import type { MessageAttachment } from '@/types/file-upload';
 import { getConversation } from '@/api/messages/get-conversation';
 import { markMessagesAsRead } from '@/api/messages/mark-as-read';
 import { Message } from '@/api/messages/send-message';
@@ -13,6 +14,21 @@ import { getPinnedMessages, PinnedMessage } from '@/api/messages/get-pinned-mess
 import { editMessage } from '@/api/messages/edit-message';
 import { deleteMessage } from '@/api/messages/delete-message';
 import type { MessageEditedEvent } from '@/types/message-events';
+
+// Socket compartilhado globalmente entre useChat e useCommunityChat
+declare global {
+  var __sharedChatSocket: Socket | null;
+  var __sharedChatSocketListenersCount: number;
+}
+
+if (typeof window !== 'undefined') {
+  if (!window.__sharedChatSocket) {
+    window.__sharedChatSocket = null;
+  }
+  if (typeof window.__sharedChatSocketListenersCount === 'undefined') {
+    window.__sharedChatSocketListenersCount = 0;
+  }
+}
 
 export function useChat() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -24,8 +40,356 @@ export function useChat() {
   const [pinnedMessages, setPinnedMessages] = useState<PinnedMessage[]>([]);
   const socketRef = useRef<Socket | null>(null);
   const currentChatUserIdRef = useRef<string | null>(null);
-
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingAttachmentFetchesRef = useRef<Set<string>>(new Set());
+
+  // Função auxiliar para registrar todos os listeners do chat direto
+  const registerDirectChatListeners = useCallback((socket: Socket) => {
+    if (!socket) {
+      return;
+    }
+    
+    // Remover listeners antigos para evitar duplicatas
+    // IMPORTANTE: Só remover se o socket estiver conectado e tiver listeners
+    if (socket.connected) {
+      socket.off('new_message');
+      socket.off('typing');
+      socket.off('message_deleted');
+      socket.off('message_edited');
+      socket.off('messages_read');
+    }
+
+    // Registrar listener de new_message
+    socket.on('new_message', (message: Message) => {
+      const receivedAt = new Date().toISOString();
+      const messageCreatedAt = message.createdAt;
+      const delay = new Date(receivedAt).getTime() - new Date(messageCreatedAt).getTime();
+      
+      // Verificar se o socket está conectado
+      if (!socket.connected) {
+        return;
+      }
+      
+      // Obter ID do usuário atual do token
+      let currentUserId = '';
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          currentUserId = payload.sub || payload.userId || payload.id || '';
+        }
+      } catch (e) {
+        return;
+      }
+      
+      // Verificar se a mensagem pertence à conversa atual
+      const currentChatUserId = currentChatUserIdRef.current;
+      
+      if (!currentChatUserId || !currentUserId) {
+        return;
+      }
+      
+      const isFromCurrentConversation =
+        (message.senderId === currentUserId && message.receiverId === currentChatUserId) ||
+        (message.senderId === currentChatUserId && message.receiverId === currentUserId);
+
+      if (!isFromCurrentConversation) {
+        return;
+      }
+
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg.id === message.id);
+        if (exists) {
+          return prev;
+        }
+        
+        const hasSimilarOptimistic = prev.some((msg) => {
+          if (!msg.id.startsWith('temp-')) return false;
+          if (msg.senderId !== message.senderId) return false;
+          if (msg.receiverId !== message.receiverId) return false;
+          const contentsMatch = (!msg.content && !message.content) || msg.content === message.content;
+          if (!contentsMatch) return false;
+
+          const optimisticAttachmentsLength = msg.attachments?.length || 0;
+          const incomingAttachmentsLength = message.attachments?.length || 0;
+          const attachmentsMatch =
+            optimisticAttachmentsLength === incomingAttachmentsLength ||
+            (optimisticAttachmentsLength > 0 && incomingAttachmentsLength === 0);
+
+          return attachmentsMatch;
+        });
+        
+        if (hasSimilarOptimistic) {
+          const optimisticMsg = prev.find((msg) => {
+            if (!msg.id.startsWith('temp-')) return false;
+            if (msg.senderId !== message.senderId) return false;
+            if (msg.receiverId !== message.receiverId) return false;
+            const contentsMatch = (!msg.content && !message.content) || msg.content === message.content;
+            if (!contentsMatch) return false;
+
+            const optimisticAttachmentsLength = msg.attachments?.length || 0;
+            const incomingAttachmentsLength = message.attachments?.length || 0;
+            const attachmentsMatch =
+              optimisticAttachmentsLength === incomingAttachmentsLength ||
+              (optimisticAttachmentsLength > 0 && incomingAttachmentsLength === 0);
+
+            return attachmentsMatch;
+          });
+          
+          const withoutOptimistic = prev.filter((msg) => {
+            if (!msg.id.startsWith('temp-')) return true;
+            if (msg.senderId !== message.senderId) return true;
+            if (msg.receiverId !== message.receiverId) return true;
+            const contentsMatch =
+              (!msg.content && !message.content) || msg.content === message.content;
+            if (!contentsMatch) return true;
+
+            const optimisticAttachmentsLength = msg.attachments?.length || 0;
+            const incomingAttachmentsLength = message.attachments?.length || 0;
+            const attachmentsMatch =
+              optimisticAttachmentsLength === incomingAttachmentsLength ||
+              (optimisticAttachmentsLength > 0 && incomingAttachmentsLength === 0);
+
+            return !attachmentsMatch;
+          });
+          
+          const finalAttachments = message.attachments && message.attachments.length > 0
+            ? message.attachments
+            : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
+                ? optimisticMsg.attachments
+                : []);
+          
+          const messageWithAttachments = {
+            ...message,
+            attachments: finalAttachments,
+          };
+          
+          const updated = [...withoutOptimistic, messageWithAttachments];
+          const sorted = updated.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          return sorted;
+        }
+        
+        const currentTimeForSimilar = Date.now();
+        const similarOptimistic = prev.find((msg) => {
+          if (!msg.id.startsWith('temp-')) return false;
+          if (msg.senderId !== message.senderId) return false;
+          if (msg.receiverId !== message.receiverId) return false;
+          
+          const optimisticTime = new Date(msg.createdAt).getTime();
+          const timeDiff = currentTimeForSimilar - optimisticTime;
+          if (timeDiff > 5000) return false;
+          
+          const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
+          if (optimisticHasAttachments) return true;
+          
+          const contentsMatch = (!msg.content && !message.content) || msg.content === message.content;
+          return contentsMatch;
+        });
+        
+        const finalAttachments = message.attachments && message.attachments.length > 0
+          ? message.attachments
+          : (similarOptimistic?.attachments && similarOptimistic.attachments.length > 0
+              ? similarOptimistic.attachments
+              : []);
+        
+        if (similarOptimistic && finalAttachments.length > 0 && (!message.attachments || message.attachments.length === 0)) {
+        }
+        
+        const messageWithAttachments = {
+          ...message,
+          attachments: finalAttachments,
+        };
+        
+        const updated = [...prev, messageWithAttachments];
+        const sorted = updated.sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        
+        if ((!finalAttachments || finalAttachments.length === 0) && message.id && !message.id.startsWith('temp-')) {
+          if (pendingAttachmentFetchesRef.current.has(message.id)) {
+            return sorted;
+          }
+          
+          const messageTime = new Date(message.createdAt).getTime();
+          const timeDiff = Date.now() - messageTime;
+          
+          if (timeDiff < 30000) {
+            pendingAttachmentFetchesRef.current.add(message.id);
+            
+            const friendId = message.receiverId === currentUserId ? message.senderId : message.receiverId;
+            
+            const attempts = [500, 1000, 2000];
+            attempts.forEach((delay, index) => {
+              setTimeout(async () => {
+                try {
+                  let shouldContinue = true;
+                  setMessages((prev) => {
+                    const currentMsg = prev.find((msg) => msg.id === message.id);
+                    if (currentMsg && currentMsg.attachments && currentMsg.attachments.length > 0) {
+                      pendingAttachmentFetchesRef.current.delete(message.id);
+                      shouldContinue = false;
+                    }
+                    return prev;
+                  });
+                  
+                  if (!shouldContinue) {
+                    return;
+                  }
+                  
+                  const { getConversation } = await import('@/api/messages/get-conversation');
+                  const response = await getConversation(friendId, 10, 0);
+                  
+                  if (response.success && response.data.messages.length > 0) {
+                    const foundMessage = response.data.messages.find((msg: Message) => msg.id === message.id);
+                    
+                    if (foundMessage && foundMessage.attachments && foundMessage.attachments.length > 0) {
+                      setMessages((prev) => {
+                        const msg = prev.find((m) => m.id === message.id);
+                        if (msg && msg.attachments && msg.attachments.length > 0) {
+                          return prev;
+                        }
+                        
+                        const updated = prev.map((msg) => 
+                          msg.id === message.id 
+                            ? { ...msg, attachments: foundMessage.attachments }
+                            : msg
+                        );
+                        return updated;
+                      });
+                      pendingAttachmentFetchesRef.current.delete(message.id);
+                    } else {
+                      if (index === attempts.length - 1) {
+                        pendingAttachmentFetchesRef.current.delete(message.id);
+                      }
+                    }
+                  } else {
+                    if (index === attempts.length - 1) {
+                      pendingAttachmentFetchesRef.current.delete(message.id);
+                    }
+                  }
+                } catch (error) {
+                  if (index === attempts.length - 1) {
+                    pendingAttachmentFetchesRef.current.delete(message.id);
+                  }
+                }
+              }, delay);
+            });
+          }
+        }
+        
+        return sorted;
+      });
+    });
+
+    // Registrar listener de typing
+    socket.on('typing', (data: { userId?: string; receiverId?: string; senderId?: string; isTyping: boolean }) => {
+      if (!socket.connected) {
+        return;
+      }
+      
+      let currentUserId = '';
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          currentUserId = payload.sub || payload.userId || payload.id || '';
+        }
+      } catch (e) {
+        return;
+      }
+      
+      const typingUserId = data.userId || data.senderId;
+      const currentChatUserId = currentChatUserIdRef.current;
+      
+      if (!currentChatUserId) {
+        return;
+      }
+      
+      // Verificar se o evento é relevante para a conversa atual
+      // O evento é relevante se:
+      // 1. O usuário que está digitando é o amigo da conversa atual (typingUserId === currentChatUserId)
+      // 2. E o evento é direcionado para o usuário atual (targetUserId === currentUserId ou não especificado)
+      // OU simplesmente se o usuário que está digitando é o amigo da conversa atual
+      const isRelevantForCurrentChat = typingUserId === currentChatUserId;
+      
+      if (isRelevantForCurrentChat) {
+        setIsTyping(data.isTyping);
+        setTypingUserId(data.isTyping ? typingUserId : null);
+      }
+    });
+
+    // Registrar listener de message_deleted
+    socket.on('message_deleted', (data: { messageId: string; message: Message }) => {
+      const isFromCurrentConversation = 
+        data.message.senderId === currentChatUserIdRef.current || 
+        data.message.receiverId === currentChatUserIdRef.current;
+      
+      if (!isFromCurrentConversation) {
+        return;
+      }
+      
+      setMessages((prev) => {
+        const messageExists = prev.some((msg) => msg.id === data.messageId);
+        if (!messageExists) {
+          return prev;
+        }
+        
+        return prev.map((msg) =>
+          msg.id === data.messageId ? data.message : msg
+        );
+      });
+      
+      setPinnedMessages((prev) => {
+        const wasPinned = prev.some((p) => p.messageId === data.messageId);
+        if (wasPinned && currentChatUserIdRef.current) {
+          getPinnedMessages(currentChatUserIdRef.current)
+            .then((response) => {
+              if (response.success) {
+                setPinnedMessages(response.data);
+              }
+            })
+            .catch((error) => {
+            });
+        }
+        return prev;
+      });
+    });
+
+    // Registrar listener de message_edited
+    socket.on('message_edited', (data: MessageEditedEvent) => {
+      const isFromCurrentConversation =
+        data.senderId === currentChatUserIdRef.current ||
+        data.receiverId === currentChatUserIdRef.current;
+
+      if (!isFromCurrentConversation) {
+        return;
+      }
+
+      setMessages((prev) => {
+        const messageExists = prev.some((msg) => msg.id === data.id);
+        if (!messageExists) {
+          return prev;
+        }
+
+        return prev.map((msg) =>
+          msg.id === data.id
+            ? { ...msg, content: data.content, edited: true, updatedAt: data.updatedAt }
+            : msg
+        );
+      });
+    });
+
+    // Registrar listener de messages_read
+    socket.on('messages_read', (data: { receiverId: string; readAt: string }) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.senderId === data.receiverId ? { ...msg, isRead: true } : msg
+        )
+      );
+    });
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -33,7 +397,42 @@ export function useChat() {
     const token = localStorage.getItem('auth_token');
     if (!token) return;
 
-    if (socketRef.current?.connected) return;
+    // Verificar se já existe um socket compartilhado (mesmo que desconectado)
+    // Se existir, reutilizar e apenas re-registrar os listeners
+    if (window.__sharedChatSocket) {
+      const wasAlreadyUsingSharedSocket = socketRef.current === window.__sharedChatSocket;
+      socketRef.current = window.__sharedChatSocket;
+      setSocket(window.__sharedChatSocket);
+      setIsConnected(window.__sharedChatSocket.connected);
+      // Incrementar contador apenas se ainda não estava usando o socket compartilhado
+      // (evitar incrementar múltiplas vezes se o useEffect executar várias vezes)
+      if (!wasAlreadyUsingSharedSocket) {
+        window.__sharedChatSocketListenersCount++;
+      }
+      
+      // Se o socket está desconectado, tentar reconectar
+      if (!window.__sharedChatSocket.connected) {
+        window.__sharedChatSocket.connect();
+      }
+      
+      // IMPORTANTE: Sempre re-registrar os listeners, mesmo se já estava usando o socket
+      // Isso garante que os listeners estejam ativos após voltar de uma comunidade
+      registerDirectChatListeners(window.__sharedChatSocket);
+      return;
+    }
+
+    // Verificar se já existe um socket local conectado
+    if (socketRef.current?.connected) {
+      // Tornar este socket o compartilhado
+      window.__sharedChatSocket = socketRef.current;
+      if (window.__sharedChatSocketListenersCount === 0) {
+        window.__sharedChatSocketListenersCount = 1;
+      } else {
+        window.__sharedChatSocketListenersCount++;
+      }
+      registerDirectChatListeners(socketRef.current);
+      return;
+    }
 
     let apiUrl = env.NEXT_PUBLIC_API_URL;
     const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
@@ -52,359 +451,65 @@ export function useChat() {
       reconnectionAttempts: 5,
     });
 
-    // IMPORTANTE: Registrar TODOS os listeners IMEDIATAMENTE após criar o socket
-    // Isso garante que capturem todos os eventos desde o início, mesmo antes do connect
-    
-    // Log quando o socket recebe qualquer evento (para debug) - registrar PRIMEIRO
-    // IMPORTANTE: Este listener deve capturar TODOS os eventos, incluindo new_message e typing
+    // Registrar todos os listeners do chat direto usando a função auxiliar
+    registerDirectChatListeners(newSocket);
+
+    // Log quando o socket recebe qualquer evento (para debug)
     newSocket.onAny((eventName, ...args) => {
-      console.log('[useChat] 📡 Evento recebido no socket:', eventName, {
-        eventName,
-        argsCount: args.length,
-        firstArg: args[0],
-        socketId: newSocket.id,
-        connected: newSocket.connected,
-        timestamp: new Date().toISOString(),
-      });
       if (eventName === 'new_message') {
-        console.log('[useChat] 🎯 Evento new_message detectado via onAny:', args);
-        console.log('[useChat] 🔍 Verificando se listener está registrado...');
-        console.log('[useChat] 🔍 hasListeners(new_message):', newSocket.hasListeners('new_message'));
       }
       if (eventName === 'typing') {
-        console.log('[useChat] 🎯 Evento typing detectado via onAny:', args);
-        console.log('[useChat] 🔍 Verificando se listener está registrado...');
-        console.log('[useChat] 🔍 hasListeners(typing):', newSocket.hasListeners('typing'));
       }
     });
 
-    // Registrar listener de new_message IMEDIATAMENTE
-    console.log('[useChat] 📝 Registrando listener para new_message...');
-    newSocket.on('new_message', (message: Message) => {
-      const receivedAt = new Date().toISOString();
-      const messageCreatedAt = message.createdAt;
-      const delay = new Date(receivedAt).getTime() - new Date(messageCreatedAt).getTime();
-      
-      console.log('[useChat] 📨 Evento new_message recebido via Socket.IO:', message);
-      console.log('[useChat] ⏰ Timestamps:', {
-        messageCreatedAt,
-        receivedAt,
-        delayMs: delay,
-        delaySeconds: (delay / 1000).toFixed(2),
-      });
-      console.log('[useChat] Socket conectado:', newSocket.connected);
-      console.log('[useChat] Socket ID:', newSocket.id);
-      console.log('[useChat] currentChatUserIdRef atual:', currentChatUserIdRef.current);
-      console.log('[useChat] message.senderId:', message.senderId);
-      console.log('[useChat] message.receiverId:', message.receiverId);
-      
-      // Verificar se o socket está conectado
-      if (!newSocket.connected) {
-        console.log('[useChat] ⚠️ Socket não está conectado, ignorando mensagem');
+    // Os listeners de new_message, typing, message_deleted, message_edited e messages_read
+    // são registrados pela função registerDirectChatListeners acima
+
+    // Tornar este socket o compartilhado
+    // IMPORTANTE: Se já existe um socket compartilhado, não substituir
+    // Apenas usar o existente se estiver conectado
+    if (window.__sharedChatSocket && window.__sharedChatSocket !== null) {
+      const existingSharedSocket: Socket = window.__sharedChatSocket;
+      if (existingSharedSocket.connected) {
+        // Desconectar o novo socket e usar o compartilhado
+        newSocket.disconnect();
+        socketRef.current = existingSharedSocket;
+        setSocket(existingSharedSocket);
+        setIsConnected(true);
+        window.__sharedChatSocketListenersCount++;
+        registerDirectChatListeners(existingSharedSocket);
         return;
       }
-      
-      // Obter ID do usuário atual do token
-      let currentUserId = '';
-      try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-        if (token) {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          currentUserId = payload.sub || payload.userId || payload.id || '';
-        }
-      } catch (e) {
-        console.error('[useChat] Erro ao decodificar token:', e);
-        return;
-      }
-      
-      console.log('[useChat] currentUserId do token:', currentUserId);
-      
-      // Verificar se a mensagem pertence à conversa atual
-      // A mensagem pertence à conversa se:
-      // 1. O currentChatUserIdRef (amigo) está definido E
-      // 2. A mensagem é EXATAMENTE entre currentUserId e currentChatUserIdRef
-      const currentChatUserId = currentChatUserIdRef.current;
-      
-      // Se não temos currentChatUserId, não podemos verificar, então ignorar
-      if (!currentChatUserId) {
-        console.log('[useChat] ⚠️ currentChatUserIdRef não está definido, ignorando mensagem');
-        console.log('[useChat] 💡 Dica: Isso pode acontecer se a conversa ainda não foi carregada');
-        return;
-      }
-      
-      // Se não temos currentUserId, não podemos verificar corretamente
-      if (!currentUserId) {
-        console.log('[useChat] ⚠️ currentUserId não está disponível, ignorando mensagem');
-        return;
-      }
-      
-      // Verificar se a mensagem é EXATAMENTE entre os dois participantes da conversa
-      // A mensagem deve ter senderId E receiverId correspondendo exatamente a currentUserId e currentChatUserId (em qualquer ordem)
-      const isFromCurrentConversation =
-        // Caso 1: currentUserId é o sender e currentChatUserId é o receiver
-        (message.senderId === currentUserId && message.receiverId === currentChatUserId) ||
-        // Caso 2: currentChatUserId é o sender e currentUserId é o receiver
-        (message.senderId === currentChatUserId && message.receiverId === currentUserId);
-
-      console.log('[useChat] Verificação de conversa:', {
-        currentChatUserId,
-        currentUserId,
-        messageSenderId: message.senderId,
-        messageReceiverId: message.receiverId,
-        isFromCurrentConversation,
-        case1: message.senderId === currentUserId && message.receiverId === currentChatUserId,
-        case2: message.senderId === currentChatUserId && message.receiverId === currentUserId,
-      });
-
-      if (!isFromCurrentConversation) {
-        console.log('[useChat] ⚠️ Mensagem não é da conversa atual, ignorando:', {
-          messageSenderId: message.senderId,
-          messageReceiverId: message.receiverId,
-          currentChatUserId: currentChatUserId,
-          currentUserId: currentUserId,
-        });
-        return;
-      }
-
-      console.log('[useChat] ✅ Mensagem é da conversa atual, adicionando');
-      setMessages((prev) => {
-        // Verificar se a mensagem já existe (pode ter sido adicionada pela API response ou por outro evento)
-        const exists = prev.some((msg) => msg.id === message.id);
-        if (exists) {
-          console.log('[useChat] ⚠️ Mensagem já existe, ignorando duplicata do Socket.IO');
-          console.log('[useChat] 💡 Isso é normal se a mensagem foi adicionada pela resposta da API');
-          return prev;
-        }
-        
-        // Verificar se há uma mensagem otimista temporária com o mesmo conteúdo e timestamp similar
-        // Isso pode acontecer se o evento WebSocket chegar antes da resposta da API
-        const hasSimilarOptimistic = prev.some((msg) => 
-          msg.id.startsWith('temp-') && 
-          msg.content === message.content &&
-          msg.senderId === message.senderId &&
-          msg.receiverId === message.receiverId
-        );
-        
-        if (hasSimilarOptimistic) {
-          console.log('[useChat] 🔄 Encontrada mensagem otimista similar, substituindo pela real');
-          // Remover mensagens otimistas similares e adicionar a real
-          const withoutOptimistic = prev.filter((msg) => 
-            !(msg.id.startsWith('temp-') && 
-              msg.content === message.content &&
-              msg.senderId === message.senderId &&
-              msg.receiverId === message.receiverId)
-          );
-          const updated = [...withoutOptimistic, message];
-          const sorted = updated.sort(
-            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-          console.log('[useChat] 📊 Total de mensagens após substituir otimista:', sorted.length);
-          return sorted;
-        }
-        
-        console.log('[useChat] ✅ Adicionando mensagem recebida via Socket.IO ao estado');
-        const updated = [...prev, message];
-        const sorted = updated.sort(
-          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-        console.log('[useChat] 📊 Total de mensagens após adicionar:', sorted.length);
-        return sorted;
-      });
-    });
-
-    newSocket.on('messages_read', (data: { receiverId: string; readAt: string }) => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.senderId === data.receiverId ? { ...msg, isRead: true } : msg
-        )
-      );
-    });
-
-    newSocket.on('typing', (data: { userId?: string; receiverId?: string; senderId?: string; isTyping: boolean }) => {
-      console.log('[useChat] 📝 Evento typing recebido:', data);
-      console.log('[useChat] Socket conectado:', newSocket.connected);
-      console.log('[useChat] Socket ID:', newSocket.id);
-      console.log('[useChat] currentChatUserIdRef atual:', currentChatUserIdRef.current);
-      
-      // Verificar se o socket está conectado
-      if (!newSocket.connected) {
-        console.log('[useChat] ⚠️ Socket não está conectado, ignorando evento typing');
-        return;
-      }
-      
-      // Obter ID do usuário atual do token
-      let currentUserId = '';
-      try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-        if (token) {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          currentUserId = payload.sub || payload.userId || payload.id || '';
-        }
-      } catch (e) {
-        console.error('[useChat] Erro ao decodificar token para typing:', e);
-        return;
-      }
-      
-      // O backend pode enviar o evento de diferentes formas:
-      // 1. { userId, isTyping } - onde userId é quem está digitando
-      // 2. { senderId, receiverId, isTyping } - onde senderId é quem está digitando e receiverId é quem deve ver
-      const typingUserId = data.userId || data.senderId;
-      const targetUserId = data.receiverId;
-      const currentChatUserId = currentChatUserIdRef.current;
-      
-      console.log('[useChat] Dados do evento typing:', {
-        typingUserId,
-        targetUserId,
-        currentChatUserId,
-        currentUserId,
-        isTyping: data.isTyping,
-      });
-      
-      // Se não temos currentChatUserId, não podemos verificar
-      if (!currentChatUserId) {
-        console.log('[useChat] ⚠️ currentChatUserIdRef não está definido, ignorando evento typing');
-        return;
-      }
-      
-      // Verificar se o evento é para a conversa atual
-      // O evento é relevante se:
-      // 1. O usuário digitando é o amigo (currentChatUserId) E o target é o usuário atual, OU
-      // 2. O userId/senderId é o amigo (currentChatUserId)
-      const isRelevantForCurrentChat =
-        // Caso 1: O amigo está digitando e o target é o usuário atual (ou não há target)
-        (typingUserId === currentChatUserId && (targetUserId === currentUserId || !targetUserId)) ||
-        // Caso 2: O evento tem userId/senderId igual ao amigo (sem verificação de target)
-        (typingUserId === currentChatUserId);
-      
-      if (isRelevantForCurrentChat) {
-        console.log('[useChat] ✅ Evento typing é da conversa atual, atualizando indicador');
-        setIsTyping(data.isTyping);
-        setTypingUserId(data.isTyping ? currentChatUserId : null);
-      } else {
-        console.log('[useChat] ⚠️ Evento typing não é da conversa atual, ignorando:', {
-          typingUserId,
-          targetUserId,
-          currentChatUserId,
-          currentUserId,
-        });
-      }
-    });
-
-    newSocket.on('message_deleted', (data: { messageId: string; message: Message }) => {
-      console.log('[useChat] 🗑️ Evento message_deleted recebido:', data);
-      
-      // Verificar se a mensagem deletada pertence à conversa atual
-      const isFromCurrentConversation = 
-        data.message.senderId === currentChatUserIdRef.current || 
-        data.message.receiverId === currentChatUserIdRef.current;
-      
-      if (!isFromCurrentConversation) {
-        console.log('[useChat] ⚠️ Mensagem deletada não é da conversa atual, ignorando');
-        return;
-      }
-      
-      // Atualizar a mensagem na lista com o conteúdo "Mensagem apagada"
-      setMessages((prev) => {
-        const messageExists = prev.some((msg) => msg.id === data.messageId);
-        if (!messageExists) {
-          console.log('[useChat] ⚠️ Mensagem não encontrada na UI, ignorando');
-          return prev;
-        }
-        
-        console.log('[useChat] ✅ Atualizando mensagem deletada na UI');
-        return prev.map((msg) =>
-          msg.id === data.messageId ? data.message : msg
-        );
-      });
-      
-      // Se a mensagem estava fixada, atualizar a lista de fixadas
-      setPinnedMessages((prev) => {
-        const wasPinned = prev.some((p) => p.messageId === data.messageId);
-        if (wasPinned && currentChatUserIdRef.current) {
-          // Recarregar mensagens fixadas para remover a deletada
-          getPinnedMessages(currentChatUserIdRef.current)
-            .then((response) => {
-              if (response.success) {
-                setPinnedMessages(response.data);
-              }
-            })
-            .catch((error) => {
-              console.error('[useChat] Erro ao recarregar mensagens fixadas após deletar:', error);
-            });
-        }
-        return prev;
-      });
-    });
-
-    // Evento: mensagem editada em tempo real
-    newSocket.on('message_edited', (data: MessageEditedEvent) => {
-      console.log('[useChat] ✏️ Evento message_edited recebido:', data);
-
-      // Verificar se a mensagem editada pertence à conversa atual
-      // A mensagem pertence à conversa se o currentChatUserIdRef é o senderId ou receiverId
-      const isFromCurrentConversation =
-        data.senderId === currentChatUserIdRef.current ||
-        data.receiverId === currentChatUserIdRef.current;
-
-      if (!isFromCurrentConversation) {
-        console.log('[useChat] ⚠️ Mensagem editada não é da conversa atual, ignorando');
-        return;
-      }
-
-      // Atualizar a mensagem na lista com novo conteúdo e flag edited
-      setMessages((prev) => {
-        const messageExists = prev.some((msg) => msg.id === data.id);
-        if (!messageExists) {
-          console.log('[useChat] ⚠️ Mensagem não encontrada na UI, ignorando');
-          return prev;
-        }
-
-        console.log('[useChat] ✅ Atualizando mensagem editada na UI');
-        return prev.map((msg) =>
-          msg.id === data.id
-            ? { ...msg, content: data.content, edited: true, updatedAt: data.updatedAt }
-            : msg
-        );
-      });
-    });
+    }
+    
+    // Se não há socket compartilhado ou está desconectado, usar o novo
+    window.__sharedChatSocket = newSocket;
+    window.__sharedChatSocketListenersCount++;
 
     // Registrar listeners de eventos básicos (connect, disconnect, etc.)
     newSocket.on('connect', () => {
-      console.log('[useChat] ✅ Conectado ao WebSocket');
-      console.log('[useChat] Socket ID:', newSocket.id);
-      console.log('[useChat] Socket URL:', socketUrl);
-      console.log('[useChat] 🔍 Verificando listeners registrados...');
-      console.log('[useChat] 🔍 Socket listeners:', {
-        hasNewMessageListener: newSocket.hasListeners('new_message'),
-        hasTypingListener: newSocket.hasListeners('typing'),
-        hasHeartbeatAckListener: newSocket.hasListeners('heartbeat_ack'),
-        hasOnAnyListener: newSocket.hasListeners('*'), // onAny pode não aparecer aqui
-      });
-      console.log('[useChat] 🔍 Socket conectado:', newSocket.connected);
-      console.log('[useChat] 🔍 Socket transport:', (newSocket as any).io?.engine?.transport?.name);
       setIsConnected(true);
-      socketRef.current = newSocket; // Atualizar ref quando conectar
+      socketRef.current = newSocket;
       setSocket(newSocket);
       
+      // Re-registrar listeners quando o socket conectar (caso tenha sido desconectado)
+      registerDirectChatListeners(newSocket);
+      
       // Emitir um evento de teste para verificar se o socket está funcionando
-      console.log('[useChat] 🧪 Emitindo evento de teste...');
       newSocket.emit('test_connection', { timestamp: new Date().toISOString() });
 
       // Iniciar heartbeat a cada 30 segundos
       heartbeatIntervalRef.current = setInterval(() => {
         if (newSocket.connected) {
-          console.log('[useChat] 💓 Enviando heartbeat');
           newSocket.emit('heartbeat');
         }
-      }, 30000); // 30 segundos
+      }, 30000);
     });
 
     newSocket.on('heartbeat_ack', (data: any) => {
-      console.log('[useChat] ✅ Heartbeat confirmado:', data);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('[useChat] ❌ Desconectado do WebSocket');
       setIsConnected(false);
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
@@ -413,7 +518,6 @@ export function useChat() {
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('[useChat] ❌ Erro de conexão:', error);
       setIsConnected(false);
     });
 
@@ -422,50 +526,78 @@ export function useChat() {
     socketRef.current = newSocket;
 
     return () => {
-      console.log('[useChat] 🧹 Limpando socket e heartbeat');
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
       }
-      if (socketRef.current) {
-        socketRef.current.removeAllListeners();
-        socketRef.current.close();
-        socketRef.current = null;
+      
+      // NÃO remover listeners nem fechar o socket aqui
+      // O socket pode ser compartilhado com useCommunityChat
+      // Apenas decrementar o contador de listeners se este socket é o compartilhado
+      if (socketRef.current === window.__sharedChatSocket) {
+        window.__sharedChatSocketListenersCount--;
+        
+        // Se não há mais listeners, NÃO limpar a referência compartilhada
+        // Deixar o socket disponível para reutilização
+        if (window.__sharedChatSocketListenersCount < 0) {
+          window.__sharedChatSocketListenersCount = 0;
+        }
+      } else if (socketRef.current && socketRef.current !== window.__sharedChatSocket) {
+        // Este é um socket local que não é o compartilhado
+        if (socketRef.current.connected) {
+          socketRef.current.disconnect();
+        }
       }
-      setIsConnected(false);
     };
-  }, []);
+  }, [registerDirectChatListeners]);
 
-  // Atualizar ref quando currentChatUserId mudar (mesmo que o socket já esteja conectado)
+  // Atualizar ref e re-registrar listeners quando currentChatUserId mudar
+  // Isso garante que os listeners sejam sempre re-registrados, especialmente após voltar de uma comunidade
   useEffect(() => {
     if (currentChatUserId) {
-      console.log('[useChat] 🔄 Atualizando currentChatUserIdRef:', currentChatUserId);
+      // Atualizar a ref imediatamente
       currentChatUserIdRef.current = currentChatUserId;
+      
+      // Limpar indicador de typing ao mudar de conversa
+      setIsTyping(false);
+      setTypingUserId(null);
+      
+      // Verificar se o socket compartilhado está disponível e migrar para ele se necessário
+      const activeSocket = window.__sharedChatSocket?.connected 
+        ? window.__sharedChatSocket 
+        : socketRef.current;
+      
+      if (activeSocket?.connected) {
+        // Se não estamos usando o socket compartilhado mas ele está disponível, migrar
+        if (window.__sharedChatSocket?.connected && socketRef.current !== window.__sharedChatSocket) {
+          socketRef.current = window.__sharedChatSocket;
+          setSocket(window.__sharedChatSocket);
+          setIsConnected(true);
+        }
+        
+        // SEMPRE re-registrar listeners quando currentChatUserId mudar
+        // Isso garante que os listeners estejam ativos mesmo após voltar de uma comunidade
+        registerDirectChatListeners(activeSocket);
+      }
+    } else {
+      // Limpar ref quando não há conversa selecionada
+      currentChatUserIdRef.current = null;
+      setIsTyping(false);
+      setTypingUserId(null);
     }
-  }, [currentChatUserId]);
+  }, [currentChatUserId, registerDirectChatListeners]);
 
   // Escutar eventos customizados repassados pelo UserStatusProvider
-  // Isso é necessário porque o backend está enviando eventos apenas para o socket do UserStatusProvider
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleNewMessage = (event: CustomEvent<Message>) => {
-      console.log('[useChat] 📨 Evento new_message recebido via evento customizado:', event.detail);
       const message = event.detail;
       
-      // Usar a mesma lógica do listener do socket
       const receivedAt = new Date().toISOString();
       const messageCreatedAt = message.createdAt;
       const delay = new Date(receivedAt).getTime() - new Date(messageCreatedAt).getTime();
 
-      console.log('[useChat] ⏰ Timestamps:', {
-        messageCreatedAt,
-        receivedAt,
-        delayMs: delay,
-        delaySeconds: (delay / 1000).toFixed(2),
-      });
-
-      // Obter ID do usuário atual do token
       let currentUserId = '';
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -474,14 +606,12 @@ export function useChat() {
           currentUserId = payload.sub || payload.userId || payload.id || '';
         }
       } catch (e) {
-        console.error('[useChat] Erro ao decodificar token:', e);
         return;
       }
 
       const currentChatUserId = currentChatUserIdRef.current;
 
       if (!currentChatUserId || !currentUserId) {
-        console.log('[useChat] ⚠️ currentChatUserIdRef ou currentUserId não está definido, ignorando mensagem');
         return;
       }
 
@@ -490,42 +620,116 @@ export function useChat() {
         (message.senderId === currentChatUserId && message.receiverId === currentUserId);
 
       if (!isFromCurrentConversation) {
-        console.log('[useChat] ⚠️ Mensagem não é da conversa atual, ignorando');
         return;
       }
 
-      console.log('[useChat] ✅ Mensagem é da conversa atual, adicionando');
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === message.id);
         if (exists) {
-          console.log('[useChat] ⚠️ Mensagem já existe, ignorando duplicata');
           return prev;
         }
 
-        const hasSimilarOptimistic = prev.some((msg) =>
-          msg.id.startsWith('temp-') &&
-          msg.content === message.content &&
-          msg.senderId === message.senderId &&
-          msg.receiverId === message.receiverId
-        );
+        const hasSimilarOptimistic = prev.some((msg) => {
+          if (!msg.id.startsWith('temp-')) return false;
+          if (msg.senderId !== message.senderId) return false;
+          if (msg.receiverId !== message.receiverId) return false;
+          const contentsMatch = (!msg.content && !message.content) || msg.content === message.content;
+          if (!contentsMatch) return false;
+
+          const optimisticAttachmentsLength = msg.attachments?.length || 0;
+          const incomingAttachmentsLength = message.attachments?.length || 0;
+          const attachmentsMatch =
+            optimisticAttachmentsLength === incomingAttachmentsLength ||
+            (optimisticAttachmentsLength > 0 && incomingAttachmentsLength === 0);
+
+          return attachmentsMatch;
+        });
 
         if (hasSimilarOptimistic) {
-          console.log('[useChat] 🔄 Encontrada mensagem otimista similar, substituindo pela real');
-          const withoutOptimistic = prev.filter((msg) =>
-            !(msg.id.startsWith('temp-') &&
-              msg.content === message.content &&
-              msg.senderId === message.senderId &&
-              msg.receiverId === message.receiverId)
-          );
-          const updated = [...withoutOptimistic, message];
+          const optimisticMsg = prev.find((msg) => {
+            if (!msg.id.startsWith('temp-')) return false;
+            if (msg.senderId !== message.senderId) return false;
+            if (msg.receiverId !== message.receiverId) return false;
+            const contentsMatch = (!msg.content && !message.content) || msg.content === message.content;
+            if (!contentsMatch) return false;
+
+            const optimisticAttachmentsLength = msg.attachments?.length || 0;
+            const incomingAttachmentsLength = message.attachments?.length || 0;
+            const attachmentsMatch =
+              optimisticAttachmentsLength === incomingAttachmentsLength ||
+              (optimisticAttachmentsLength > 0 && incomingAttachmentsLength === 0);
+
+            return attachmentsMatch;
+          });
+          
+        const withoutOptimistic = prev.filter((msg) => {
+          if (!msg.id.startsWith('temp-')) return true;
+          if (msg.senderId !== message.senderId) return true;
+          if (msg.receiverId !== message.receiverId) return true;
+          const contentsMatch =
+            (!msg.content && !message.content) || msg.content === message.content;
+          if (!contentsMatch) return true;
+
+          const optimisticAttachmentsLength = msg.attachments?.length || 0;
+          const incomingAttachmentsLength = message.attachments?.length || 0;
+          const attachmentsMatch =
+            optimisticAttachmentsLength === incomingAttachmentsLength ||
+            (optimisticAttachmentsLength > 0 && incomingAttachmentsLength === 0);
+
+          return !attachmentsMatch;
+        });
+          
+          const finalAttachments = message.attachments && message.attachments.length > 0
+            ? message.attachments
+            : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
+                ? optimisticMsg.attachments
+                : []);
+          
+          const messageWithAttachments = {
+            ...message,
+            attachments: finalAttachments,
+          };
+          
+          const updated = [...withoutOptimistic, messageWithAttachments];
           const sorted = updated.sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
           return sorted;
         }
 
-        console.log('[useChat] ✅ Adicionando mensagem recebida via evento customizado ao estado');
-        const updated = [...prev, message];
+        
+        const currentTimeForCustom = Date.now();
+        const similarOptimistic = prev.find((msg) => {
+          if (!msg.id.startsWith('temp-')) return false;
+          if (msg.senderId !== message.senderId) return false;
+          if (msg.receiverId !== message.receiverId) return false;
+          
+          const optimisticTime = new Date(msg.createdAt).getTime();
+          const timeDiff = currentTimeForCustom - optimisticTime;
+          if (timeDiff > 5000) return false;
+          
+          const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
+          if (optimisticHasAttachments) return true;
+          
+          const contentsMatch = (!msg.content && !message.content) || msg.content === message.content;
+          return contentsMatch;
+        });
+        
+        const finalAttachments = message.attachments && message.attachments.length > 0
+          ? message.attachments
+          : (similarOptimistic?.attachments && similarOptimistic.attachments.length > 0
+              ? similarOptimistic.attachments
+              : []);
+        
+        if (similarOptimistic && finalAttachments.length > 0 && (!message.attachments || message.attachments.length === 0)) {
+        }
+        
+        const messageWithAttachments = {
+          ...message,
+          attachments: finalAttachments,
+        };
+        
+        const updated = [...prev, messageWithAttachments];
         const sorted = updated.sort(
           (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
@@ -534,7 +738,6 @@ export function useChat() {
     };
 
     const handleTyping = (event: CustomEvent<{ userId?: string; receiverId?: string; senderId?: string; isTyping: boolean }>) => {
-      console.log('[useChat] 📝 Evento typing recebido via evento customizado:', event.detail);
       const data = event.detail;
 
       let currentUserId = '';
@@ -545,7 +748,6 @@ export function useChat() {
           currentUserId = payload.sub || payload.userId || payload.id || '';
         }
       } catch (e) {
-        console.error('[useChat] Erro ao decodificar token para typing:', e);
         return;
       }
 
@@ -554,7 +756,6 @@ export function useChat() {
       const currentChatUserId = currentChatUserIdRef.current;
 
       if (!currentChatUserId) {
-        console.log('[useChat] ⚠️ currentChatUserIdRef não está definido, ignorando evento typing');
         return;
       }
 
@@ -563,16 +764,13 @@ export function useChat() {
         (typingUserId === currentChatUserId);
 
       if (isRelevantForCurrentChat) {
-        console.log('[useChat] ✅ Evento typing é da conversa atual, atualizando indicador');
         setIsTyping(data.isTyping);
         setTypingUserId(data.isTyping ? currentChatUserId : null);
       } else {
-        console.log('[useChat] ⚠️ Evento typing não é da conversa atual, ignorando');
       }
     };
 
     const handleMessageDeleted = (event: CustomEvent<{ messageId: string; message: Message }>) => {
-      console.log('[useChat] 🗑️ Evento message_deleted recebido via evento customizado:', event.detail);
       const data = event.detail;
 
       const isFromCurrentConversation =
@@ -580,18 +778,15 @@ export function useChat() {
         data.message.receiverId === currentChatUserIdRef.current;
 
       if (!isFromCurrentConversation) {
-        console.log('[useChat] ⚠️ Mensagem deletada não é da conversa atual, ignorando');
         return;
       }
 
       setMessages((prev) => {
         const messageExists = prev.some((msg) => msg.id === data.messageId);
         if (!messageExists) {
-          console.log('[useChat] ⚠️ Mensagem não encontrada na UI, ignorando');
           return prev;
         }
 
-        console.log('[useChat] ✅ Atualizando mensagem deletada na UI');
         return prev.map((msg) =>
           msg.id === data.messageId ? data.message : msg
         );
@@ -607,7 +802,6 @@ export function useChat() {
               }
             })
             .catch((error) => {
-              console.error('[useChat] Erro ao recarregar mensagens fixadas após deletar:', error);
             });
         }
         return prev;
@@ -615,7 +809,6 @@ export function useChat() {
     };
 
     const handleMessageEdited = (event: CustomEvent<MessageEditedEvent>) => {
-      console.log('[useChat] ✏️ Evento message_edited recebido via evento customizado:', event.detail);
       const data = event.detail;
 
       const isFromCurrentConversation =
@@ -623,18 +816,15 @@ export function useChat() {
         data.receiverId === currentChatUserIdRef.current;
 
       if (!isFromCurrentConversation) {
-        console.log('[useChat] ⚠️ Mensagem editada não é da conversa atual, ignorando');
         return;
       }
 
       setMessages((prev) => {
         const messageExists = prev.some((msg) => msg.id === data.id);
         if (!messageExists) {
-          console.log('[useChat] ⚠️ Mensagem não encontrada na UI, ignorando');
           return prev;
         }
 
-        console.log('[useChat] ✅ Atualizando mensagem editada na UI');
         return prev.map((msg) =>
           msg.id === data.id
             ? { ...msg, content: data.content, edited: true, updatedAt: data.updatedAt }
@@ -657,19 +847,16 @@ export function useChat() {
   }, [currentChatUserId]);
 
   const loadConversation = useCallback(async (friendId: string) => {
-    if (!friendId) return;
+    if (!friendId) {
+      return;
+    }
 
     try {
-      console.log('[useChat] 🔄 Carregando conversa com friendId:', friendId);
-      // Atualizar ref IMEDIATAMENTE antes de qualquer outra operação
-      // Isso garante que os listeners do socket tenham o valor correto
       currentChatUserIdRef.current = friendId;
       setCurrentChatUserId(friendId);
-      console.log('[useChat] ✅ currentChatUserIdRef atualizado para:', friendId);
       
       setMessages([]);
       setPinnedMessages([]);
-      // Limpar indicador de typing ao carregar nova conversa
       setIsTyping(false);
       setTypingUserId(null);
 
@@ -679,24 +866,36 @@ export function useChat() {
       );
       setMessages(sortedMessages);
 
-      // Carregar mensagens fixadas
       try {
         const pinnedResponse = await getPinnedMessages(friendId);
         if (pinnedResponse.success) {
           setPinnedMessages(pinnedResponse.data);
         }
       } catch (error) {
-        console.error('[useChat] Erro ao carregar mensagens fixadas:', error);
+        console.error('[useChat] Erro ao carregar mensagens fixadas', error);
       }
 
       await markMessagesAsRead(friendId);
-    } catch (error) {
-      console.error('[useChat] Erro ao carregar conversa:', error);
-    }
-  }, []);
 
-  const sendMessage = useCallback(async (receiverId: string, content: string) => {
-    if (!content.trim()) return;
+      // Re-registrar listeners após carregar conversa
+      // IMPORTANTE: Garantir que currentChatUserIdRef está atualizado antes de registrar listeners
+      if (socketRef.current?.connected) {
+        // Garantir que a ref está atualizada
+        currentChatUserIdRef.current = friendId;
+        registerDirectChatListeners(socketRef.current);
+      } else if (window.__sharedChatSocket?.connected) {
+        // Garantir que a ref está atualizada
+        currentChatUserIdRef.current = friendId;
+        socketRef.current = window.__sharedChatSocket;
+        registerDirectChatListeners(window.__sharedChatSocket);
+      }
+    } catch (error) {
+      console.error('[useChat] Erro ao carregar conversa', error);
+    }
+  }, [registerDirectChatListeners]);
+
+  const sendMessage = useCallback(async (receiverId: string, content?: string, attachments?: MessageAttachment[]) => {
+    if (!content?.trim() && (!attachments || attachments.length === 0)) return;
     
     // Obter userId do token JWT
     let senderId = '';
@@ -707,7 +906,6 @@ export function useChat() {
         senderId = payload.sub || payload.userId || payload.id || '';
       }
     } catch (e) {
-      console.error('[useChat] Erro ao decodificar token:', e);
     }
     
     // Criar mensagem otimista temporária
@@ -716,14 +914,22 @@ export function useChat() {
       id: tempId,
       senderId: senderId,
       receiverId: receiverId,
-      content: content.trim(),
+      content: content?.trim() || '',
       isRead: false,
       createdAt: new Date().toISOString(),
+      attachments: attachments?.map((att, index) => ({
+        id: `temp-attachment-${index}`,
+        fileUrl: att.fileUrl,
+        fileName: att.fileName,
+        fileType: att.fileType,
+        fileSize: att.fileSize,
+        thumbnailUrl: att.thumbnailUrl || null,
+        width: att.width || null,
+        height: att.height || null,
+        duration: att.duration || null,
+      })),
     };
     
-    console.log('[useChat] 📤 Enviando mensagem para:', receiverId);
-    console.log('[useChat] Conteúdo:', content);
-    console.log('[useChat] Adicionando mensagem otimista temporária:', optimisticMessage.id);
     
     // Adicionar mensagem otimista imediatamente
     setMessages((prev) => {
@@ -734,43 +940,59 @@ export function useChat() {
     });
     
     try {
-      const response = await sendMessageApi(receiverId, content);
-      console.log('[useChat] ✅ Resposta da API após enviar:', JSON.stringify(response, null, 2));
+      const response = await sendMessageApi(receiverId, content, attachments);
       
       // Substituir mensagem otimista pela mensagem real da API
       // O backend retorna a mensagem diretamente em data, não em data.message
       if (response && response.success && response.data) {
         const realMessage = response.data;
-        console.log('[useChat] 📝 Mensagem real retornada pela API:', realMessage);
         
         setMessages((prev) => {
+          // Encontrar a mensagem otimista para preservar seus attachments
+          const optimisticMsg = prev.find((msg) => msg.id === tempId);
+          const optimisticAttachments = optimisticMsg?.attachments || [];
+          
+          
+          // Preservar attachments da mensagem otimista se a resposta da API não tiver attachments
+          const finalAttachments = (realMessage.attachments && realMessage.attachments.length > 0)
+            ? realMessage.attachments
+            : (optimisticAttachments.length > 0 ? optimisticAttachments : []);
+          
+          
           // Verificar se a mensagem real já existe (pode ter sido adicionada pelo evento WebSocket)
           const alreadyExists = prev.some((msg) => msg.id === realMessage.id);
           
           if (alreadyExists) {
-            console.log('[useChat] ⚠️ Mensagem real já existe (provavelmente adicionada pelo WebSocket), removendo apenas otimista');
-            // Apenas remover a mensagem otimista, mantendo a real que já existe
-            return prev.filter((msg) => msg.id !== tempId);
+            // Atualizar a mensagem existente com attachments se ela não tiver
+            return prev.map((msg) => {
+              if (msg.id === realMessage.id) {
+                // Se a mensagem não tem attachments mas temos attachments preservados, adicionar
+                if ((!msg.attachments || msg.attachments.length === 0) && finalAttachments.length > 0) {
+                  return { ...msg, attachments: finalAttachments };
+                }
+                return msg;
+              }
+              // Remover mensagem otimista
+              if (msg.id === tempId) {
+                return null;
+              }
+              return msg;
+            }).filter((msg): msg is Message => msg !== null);
           }
           
-          // Remover mensagem otimista e adicionar a real
+          // Remover mensagem otimista e adicionar a real com attachments preservados
           const withoutTemp = prev.filter((msg) => msg.id !== tempId);
-          console.log('[useChat] ✅ Substituindo mensagem otimista pela real');
-          const updated = [...withoutTemp, realMessage];
+          const messageWithAttachments = {
+            ...realMessage,
+            attachments: finalAttachments,
+          };
+          const updated = [...withoutTemp, messageWithAttachments];
           return updated.sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
         });
-      } else {
-        console.error('[useChat] ❌ Resposta da API não contém mensagem. Mantendo mensagem otimista.');
-        console.error('[useChat] Estrutura da resposta:', {
-          response,
-          hasSuccess: !!response?.success,
-          hasData: !!response?.data
-        });
       }
     } catch (error) {
-      console.error('[useChat] ❌ Erro ao enviar mensagem:', error);
       // Remover mensagem otimista em caso de erro
       setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
       throw error;
@@ -778,11 +1000,37 @@ export function useChat() {
   }, [currentChatUserId]);
 
   const sendTypingIndicator = useCallback((receiverId: string, isTyping: boolean) => {
-    if (!socketRef.current || !socketRef.current.connected) return;
-    socketRef.current.emit('typing', {
-      receiverId,
-      isTyping,
-    });
+    // Usar o socket compartilhado se disponível, caso contrário usar o socket local
+    const activeSocket = window.__sharedChatSocket?.connected 
+      ? window.__sharedChatSocket 
+      : socketRef.current;
+    
+    if (!activeSocket) {
+      return;
+    }
+    
+    if (!activeSocket.connected) {
+      return;
+    }
+    
+    // Verificar se há uma conversa selecionada
+    if (!currentChatUserIdRef.current) {
+      return;
+    }
+    
+    // Verificar se o receiverId corresponde à conversa atual
+    if (receiverId !== currentChatUserIdRef.current) {
+      return;
+    }
+    
+    try {
+      activeSocket.emit('typing', {
+        receiverId,
+        isTyping,
+      });
+    } catch (error) {
+      console.error('[useChat] Erro ao emitir evento typing', error);
+    }
   }, []);
 
   const pinMessageHandler = useCallback(async (messageId: string, friendId: string): Promise<{ success: boolean; message?: string }> => {
@@ -803,7 +1051,6 @@ export function useChat() {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useChat] Erro ao fixar mensagem:', error);
       return { success: false, message: 'Erro ao fixar mensagem' };
     }
   }, [currentChatUserId]);
@@ -826,7 +1073,6 @@ export function useChat() {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useChat] Erro ao desfixar mensagem:', error);
       return { success: false, message: 'Erro ao desfixar mensagem' };
     }
   }, [currentChatUserId]);
@@ -848,7 +1094,6 @@ export function useChat() {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useChat] Erro ao editar mensagem:', error);
       return { success: false, message: 'Erro ao editar mensagem' };
     }
   }, []);
@@ -860,13 +1105,11 @@ export function useChat() {
         // Não remover a mensagem aqui - o evento WebSocket message_deleted
         // será recebido e atualizará a mensagem com "Mensagem apagada"
         // A atualização da lista de fixadas também será feita pelo evento WebSocket
-        console.log('[useChat] ✅ Mensagem deletada com sucesso, aguardando evento WebSocket');
         return { success: true };
       } else {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('[useChat] Erro ao excluir mensagem:', error);
       return { success: false, message: 'Erro ao excluir mensagem' };
     }
   }, []);
@@ -889,4 +1132,3 @@ export function useChat() {
     setMessages,
   };
 }
-

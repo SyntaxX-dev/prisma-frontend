@@ -15,14 +15,11 @@ export async function unpinMessage(
   messageId: string
 ): Promise<UnpinMessageResponse | UnpinMessageError> {
   try {
-    console.log('[unpinMessage] Desfixando mensagem:', { messageId });
     const response = await httpClient.delete<UnpinMessageResponse>(
       `/messages/${messageId}/unpin`
     );
-    console.log('[unpinMessage] ✅ Mensagem desfixada com sucesso:', response);
     return response;
   } catch (error) {
-    console.error('[unpinMessage] ❌ Erro ao desfixar mensagem:', error);
     const apiError = error as ApiError;
     return {
       success: false,

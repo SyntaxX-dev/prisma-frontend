@@ -106,19 +106,10 @@ export function CreateCommunityModal({
           formData.append('image', file);
 
           // Debug: verificar FormData
-          console.log('FormData contents:');
           for (const [key, value] of formData.entries()) {
-            console.log(key, ':', value instanceof File ? `File: ${value.name} (${value.size} bytes)` : `${value} (type: ${typeof value})`);
           }
           
           // Verificar se os valores estão corretos antes de enviar
-          console.log('Values to send:', {
-            name: communityName,
-            focus: communityFocus,
-            visibility: communityVisibility,
-            hasImage: !!file,
-            imageSize: file.size
-          });
 
           // Verificar se o FormData tem todos os campos
           const formDataEntries: Record<string, any> = {};
@@ -127,7 +118,6 @@ export function CreateCommunityModal({
               ? { type: 'File', name: value.name, size: value.size, mimeType: value.type }
               : { type: typeof value, value: String(value) };
           }
-          console.log('FormData entries structure:', formDataEntries);
 
           // Criar comunidade com FormData (inclui imagem)
           const createResponse = await createCommunityWithImage(formData);
@@ -137,7 +127,6 @@ export function CreateCommunityModal({
             onSuccess?.();
           }
         } catch (uploadError: any) {
-          console.error('Erro ao criar comunidade com imagem:', uploadError);
           
           // Tratar diferentes formatos de erro
           let errorMessage = 'Erro ao criar comunidade. Tente novamente.';
@@ -191,7 +180,6 @@ export function CreateCommunityModal({
         }
       }
     } catch (err: any) {
-      console.error('Erro ao criar comunidade:', err);
       
       // Tratar diferentes formatos de erro
       let errorMessage = 'Erro ao criar comunidade. Tente novamente.';
@@ -317,7 +305,6 @@ export function CreateCommunityModal({
       setZoom(1);
       setCroppedAreaPixels(null);
     } catch (error) {
-      console.error("Erro ao fazer crop da imagem:", error);
     }
   };
 

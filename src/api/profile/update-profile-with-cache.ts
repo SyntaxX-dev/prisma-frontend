@@ -48,7 +48,6 @@ export async function updateProfileWithCache(
     
     return response;
   } catch (error) {
-    console.error('❌ Erro ao atualizar perfil:', error);
     throw error as ApiError;
   }
 }

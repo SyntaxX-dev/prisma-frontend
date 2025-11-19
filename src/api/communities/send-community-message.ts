@@ -1,6 +1,7 @@
 import { httpClient } from '../http/client';
 import { ApiError } from '../http/client';
 import type { CommunityMessage, SendCommunityMessageRequest } from '@/types/community-chat';
+import type { MessageAttachment } from '@/types/file-upload';
 
 export interface SendCommunityMessageResponse {
   success: true;
@@ -14,18 +15,16 @@ export interface SendCommunityMessageError {
 
 export async function sendCommunityMessage(
   communityId: string,
-  content: string
+  content?: string,
+  attachments?: MessageAttachment[]
 ): Promise<SendCommunityMessageResponse | SendCommunityMessageError> {
   try {
-    console.log('[sendCommunityMessage] Enviando mensagem:', { communityId, content });
     const response = await httpClient.post<SendCommunityMessageResponse>(
       `/communities/${communityId}/messages`,
-      { content }
+      { content: content || '', attachments }
     );
-    console.log('[sendCommunityMessage] ✅ Mensagem enviada com sucesso:', response);
     return response;
   } catch (error) {
-    console.error('[sendCommunityMessage] ❌ Erro ao enviar mensagem:', error);
     const apiError = error as ApiError;
     return {
       success: false,

@@ -18,11 +18,13 @@ export function LoadingGrid({
 }: LoadingGridProps) {
   return (
     <div className={`flex items-center justify-center ${className}`} suppressHydrationWarning>
-      <Grid
-        size={size}
-        speed={speed}
-        color={color}
-      />
+      <div suppressHydrationWarning>
+        <Grid
+          size={size}
+          speed={speed}
+          color={color}
+        />
+      </div>
     </div>
   );
 }

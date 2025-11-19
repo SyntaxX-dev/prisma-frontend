@@ -84,7 +84,6 @@ export function CommunityJoinTooltip({
       onJoinSuccess();
       onClose();
     } catch (error: any) {
-      console.error('Erro ao entrar na comunidade:', error);
       showError(error.message || "Erro ao entrar na comunidade");
     } finally {
       setIsJoining(false);

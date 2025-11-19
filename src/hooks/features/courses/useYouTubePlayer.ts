@@ -31,11 +31,7 @@ export function useYouTubePlayer({
 
   // Debug: Log dos parâmetros recebidos
   useEffect(() => {
-    console.log('[YouTube Player] 🎬 Hook inicializado com:', {
-      youtubeId,
-      videoId,
-      containerId,
-    })
+    // Parâmetros recebidos
   }, [youtubeId, videoId, containerId])
 
   // Load YouTube IFrame API
@@ -66,10 +62,6 @@ export function useYouTubePlayer({
           (v) => v.videoId === youtubeId,
         )
         const startSeconds = savedProgress?.currentTimestamp || 0
-
-        console.log(
-          `[YouTube Player] Inicializando vídeo ${youtubeId} em ${startSeconds}s`,
-        )
 
         // Wait for YT API to be ready
         const waitForYT = () => {
@@ -111,7 +103,6 @@ export function useYouTubePlayer({
           },
         })
       } catch (error) {
-        console.error('[YouTube Player] Erro ao buscar progresso:', error)
       }
     }
 
@@ -129,7 +120,6 @@ export function useYouTubePlayer({
 
   // Player event handlers
   const handlePlayerReady = useCallback((event: YT.PlayerEvent) => {
-    console.log('[YouTube Player] Player pronto')
     setIsReady(true)
     setDuration(event.target.getDuration())
   }, [])
@@ -140,14 +130,12 @@ export function useYouTubePlayer({
 
       switch (state) {
         case YT.PlayerState.PLAYING:
-          console.log('[YouTube Player] ▶️ Tocando')
           setIsPlaying(true)
           startProgressTracking()
           onPlay?.()
           break
 
         case YT.PlayerState.PAUSED:
-          console.log('[YouTube Player] ⏸️ Pausado')
           setIsPlaying(false)
           stopProgressTracking()
           saveCurrentProgress()
@@ -155,14 +143,12 @@ export function useYouTubePlayer({
           break
 
         case YT.PlayerState.ENDED:
-          console.log('[YouTube Player] ✅ Finalizado')
           setIsPlaying(false)
           stopProgressTracking()
           onVideoEnd?.()
           break
 
         case YT.PlayerState.BUFFERING:
-          console.log('[YouTube Player] ⏳ Carregando')
           break
       }
     },
@@ -170,7 +156,6 @@ export function useYouTubePlayer({
   )
 
   const handleError = useCallback((event: YT.OnErrorEvent) => {
-    console.error('[YouTube Player] Erro:', event.data)
   }, [])
 
   // Progress tracking
@@ -185,30 +170,17 @@ export function useYouTubePlayer({
       saveCurrentProgress()
     }, 5000)
 
-    console.log('[YouTube Player] 🔄 Rastreamento de progresso iniciado')
   }, [])
 
   const stopProgressTracking = useCallback(() => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current)
       progressIntervalRef.current = null
-      console.log('[YouTube Player] ⏹️ Rastreamento de progresso pausado')
     }
   }, [])
 
   const saveCurrentProgress = useCallback(async () => {
-    console.log('[YouTube Player] 🔍 saveCurrentProgress chamado', {
-      hasPlayer: !!playerRef.current,
-      videoId,
-      youtubeId,
-    })
-
     if (!playerRef.current || !videoId) {
-      console.warn('[YouTube Player] ⚠️ Não pode salvar - player ou videoId ausente', {
-        hasPlayer: !!playerRef.current,
-        videoId,
-        youtubeId,
-      })
       return
     }
 
@@ -216,29 +188,15 @@ export function useYouTubePlayer({
       const currentTime = Math.floor(playerRef.current.getCurrentTime())
       const duration = Math.floor(playerRef.current.getDuration())
 
-      console.log('[YouTube Player] 📊 Dados do progresso:', {
-        currentTime,
-        duration,
-        lastSaved: lastSavedTimeRef.current,
-        diff: Math.abs(currentTime - lastSavedTimeRef.current),
-      })
-
       // Avoid saving if time hasn't changed significantly
       if (Math.abs(currentTime - lastSavedTimeRef.current) < 3) {
-        console.log('[YouTube Player] ⏭️ Pulando - tempo não mudou significativamente')
         return
       }
 
       // Don't save if at the very end (will be marked as completed instead)
       if (duration > 0 && currentTime >= duration - 2) {
-        console.log('[YouTube Player] ⏭️ Pulando - vídeo quase no fim')
         return
       }
-
-      console.log('[YouTube Player] 🚀 Salvando no backend:', {
-        videoId: youtubeId,
-        timestamp: currentTime,
-      })
 
       await saveVideoTimestamp({
         videoId: youtubeId,
@@ -247,13 +205,7 @@ export function useYouTubePlayer({
 
       lastSavedTimeRef.current = currentTime
       setCurrentTime(currentTime)
-
-      const progressPercent = ((currentTime / duration) * 100).toFixed(1)
-      console.log(
-        `[YouTube Player] 💾 Progresso salvo com sucesso: ${currentTime}s / ${duration}s (${progressPercent}%)`,
-      )
     } catch (error) {
-      console.error('[YouTube Player] ❌ Erro ao salvar progresso:', error)
     }
   }, [videoId, youtubeId])
 

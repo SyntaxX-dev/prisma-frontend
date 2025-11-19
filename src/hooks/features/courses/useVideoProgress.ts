@@ -17,7 +17,6 @@ export function useVideoProgress({ youtubeId, isPlaying }: UseVideoProgressProps
   useEffect(() => {
     if (!youtubeId) return
 
-    console.log('[Video Progress] 🎬 Inicializando para vídeo:', youtubeId)
 
     // Resetar player ref ao trocar de vídeo
     playerRef.current = null
@@ -42,19 +41,14 @@ export function useVideoProgress({ youtubeId, isPlaying }: UseVideoProgressProps
             playerRef.current = new window.YT.Player(iframeId, {
               events: {
                 onReady: (event: any) => {
-                  console.log('[Video Progress] ✅ Player pronto!')
                 },
                 onStateChange: (event: any) => {
-                  console.log('[Video Progress] 🔄 Estado mudou:', event.data)
                 }
               }
             })
-            console.log('[Video Progress] ✅ Player conectado ao iframe existente')
           } catch (error) {
-            console.error('[Video Progress] ❌ Erro ao conectar player:', error)
           }
         } else {
-          console.warn('[Video Progress] ⚠️ Iframe não encontrado')
         }
       }
     }
@@ -64,12 +58,10 @@ export function useVideoProgress({ youtubeId, isPlaying }: UseVideoProgressProps
     const maxAttempts = 5
     const interval = setInterval(() => {
       attempts++
-      console.log(`[Video Progress] 🔍 Tentativa ${attempts}/${maxAttempts}`)
 
       if (playerRef.current || attempts >= maxAttempts) {
         clearInterval(interval)
         if (!playerRef.current) {
-          console.error('[Video Progress] ❌ Falhou ao conectar após', maxAttempts, 'tentativas')
         }
       } else {
         initPlayer()
@@ -88,7 +80,6 @@ export function useVideoProgress({ youtubeId, isPlaying }: UseVideoProgressProps
       return
     }
 
-    console.log('[Video Progress] ▶️ Vídeo tocando, iniciando rastreamento')
     startProgressTracking()
 
     return () => {
@@ -107,32 +98,27 @@ export function useVideoProgress({ youtubeId, isPlaying }: UseVideoProgressProps
       saveProgress()
     }, 5000)
 
-    console.log('[Video Progress] 🔄 Rastreamento iniciado (5s)')
   }
 
   const stopProgressTracking = () => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current)
       progressIntervalRef.current = null
-      console.log('[Video Progress] ⏹️ Rastreamento pausado')
     }
   }
 
   const saveProgress = async () => {
     if (!youtubeId) {
-      console.log('[Video Progress] ⚠️ youtubeId ausente')
       return
     }
 
     if (!playerRef.current) {
-      console.log('[Video Progress] ⚠️ Player ausente')
       return
     }
 
     try {
       // Verificar se o player tem os métodos necessários
       if (typeof playerRef.current.getCurrentTime !== 'function') {
-        console.error('[Video Progress] ❌ Player não tem getCurrentTime()')
         return
       }
 
@@ -144,56 +130,35 @@ export function useVideoProgress({ youtubeId, isPlaying }: UseVideoProgressProps
         currentTime = Math.floor(playerRef.current.getCurrentTime())
         duration = Math.floor(playerRef.current.getDuration())
       } catch (e) {
-        console.error('[Video Progress] ❌ Erro ao obter tempo:', e)
         return
       }
 
-      console.log('[Video Progress] 📊 Tempo atual:', {
-        currentTime,
-        duration,
-        lastSaved: lastSavedTimeRef.current,
-        diff: Math.abs(currentTime - lastSavedTimeRef.current),
-      })
-
       // Se tempo ainda é 0, pode ser que o vídeo não tenha iniciado ainda
       if (currentTime === 0 && duration > 0) {
-        console.log('[Video Progress] ⏭️ Vídeo não iniciou ainda (tempo = 0)')
         return
       }
 
       // Verificar se mudou significativamente
       if (currentTime > 0 && Math.abs(currentTime - lastSavedTimeRef.current) < 3) {
-        console.log('[Video Progress] ⏭️ Pulando - tempo não mudou significativamente')
         return
       }
 
       // Não salvar se estiver no final
       if (duration > 0 && currentTime >= duration - 2) {
-        console.log('[Video Progress] ⏭️ Pulando - vídeo no fim')
         return
       }
 
       // Salvar no backend
-      console.log('[Video Progress] 🚀 Salvando:', {
-        videoId: youtubeId,
-        timestamp: currentTime,
-      })
-
       const response = await saveVideoTimestamp({
         videoId: youtubeId,
         timestamp: currentTime,
       })
 
-      console.log('[Video Progress] ✅ Resposta da API:', response)
 
       lastSavedTimeRef.current = currentTime
 
-      const progressPercent = duration > 0 ? ((currentTime / duration) * 100).toFixed(1) : '0'
-      console.log(
-        `[Video Progress] 💾 Salvo com sucesso: ${currentTime}s / ${duration}s (${progressPercent}%)`,
-      )
+      const progressPercent: string = duration > 0 ? ((currentTime / duration) * 100).toFixed(1) : '0'
     } catch (error) {
-      console.error('[Video Progress] ❌ Erro ao salvar:', error)
     }
   }
 

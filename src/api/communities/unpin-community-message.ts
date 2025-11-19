@@ -16,14 +16,11 @@ export async function unpinCommunityMessage(
   messageId: string
 ): Promise<UnpinCommunityMessageResponse | UnpinCommunityMessageError> {
   try {
-    console.log('[unpinCommunityMessage] Desfixando mensagem:', { communityId, messageId });
     const response = await httpClient.delete<UnpinCommunityMessageResponse>(
       `/communities/${communityId}/messages/${messageId}/unpin`
     );
-    console.log('[unpinCommunityMessage] ✅ Mensagem desfixada com sucesso:', response);
     return response;
   } catch (error) {
-    console.error('[unpinCommunityMessage] ❌ Erro ao desfixar mensagem:', error);
     const apiError = error as ApiError;
     return {
       success: false,

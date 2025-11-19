@@ -5,11 +5,15 @@ import { Message } from '@/api/messages/send-message';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Send, Pin, Trash2, Pencil, X, Smile } from 'lucide-react';
+import { Send, Pin, Trash2, Pencil, X, Smile, Paperclip, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PinnedMessage } from '@/api/messages/get-pinned-messages';
 import { motion, AnimatePresence } from 'motion/react';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { FileUploadZone } from './FileUploadZone';
+import { FilePreview } from './FilePreview';
+import { useFileUpload } from '@/hooks/features/chat/useFileUpload';
+import type { MessageAttachment } from '@/types/file-upload';
 import {
   Dialog,
   DialogContent,
@@ -30,13 +34,15 @@ interface DirectChatViewProps {
   messages: Message[];
   isConnected: boolean;
   isTyping: boolean;
-  onSend: (receiverId: string, content: string) => Promise<void>;
+  typingUserId?: string | null;
+  onSend: (receiverId: string, content?: string, attachments?: MessageAttachment[]) => Promise<void>;
   onTyping: (receiverId: string, isTyping: boolean) => void;
   onPinMessage?: (messageId: string, friendId: string) => Promise<{ success: boolean; message?: string }>;
   onUnpinMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
   pinnedMessages?: PinnedMessage[];
   onEditMessage?: (messageId: string, content: string) => Promise<{ success: boolean; message?: string }>;
   onDeleteMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
+  onStartCall?: (receiverId: string) => Promise<void>;
 }
 
 export function DirectChatView({
@@ -49,6 +55,7 @@ export function DirectChatView({
   messages,
   isConnected,
   isTyping,
+  typingUserId,
   onSend,
   onTyping,
   onPinMessage,
@@ -56,6 +63,7 @@ export function DirectChatView({
   pinnedMessages = [],
   onEditMessage,
   onDeleteMessage,
+  onStartCall,
 }: DirectChatViewProps) {
   const [message, setMessage] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -63,12 +71,22 @@ export function DirectChatView({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const { statusMap, getStatus } = useUserStatus();
   const hasLoadedFriendStatusRef = useRef<string | null>(null);
+  const hasScrolledToBottomRef = useRef<string | null>(null);
+  
+  const { uploading, uploadFiles, ErrorModal } = useFileUpload({
+    isCommunity: false,
+    onUploadComplete: (attachments) => {
+      setPendingAttachments((prev) => [...prev, ...attachments]);
+    },
+  });
 
   // Buscar status do amigo quando o componente montar ou friendId mudar
   useEffect(() => {
@@ -79,11 +97,24 @@ export function DirectChatView({
     }
   }, [friendId, getStatus]);
 
+  // Scroll para o final quando as mensagens mudarem ou quando o chat for aberto
   useEffect(() => {
-    console.log('[DirectChatView] Mensagens atualizadas:', messages.length, 'mensagens');
-    console.log('[DirectChatView] IDs das mensagens:', messages.map(m => ({ id: m.id, senderId: m.senderId, content: m.content.substring(0, 20) })));
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messages.length > 0 && messagesContainerRef.current) {
+      // Verificar se é um novo chat ou se as mensagens mudaram
+      const shouldScroll = hasScrolledToBottomRef.current !== friendId || 
+                          messagesContainerRef.current.scrollHeight > messagesContainerRef.current.clientHeight;
+      
+      if (shouldScroll) {
+        // Usar requestAnimationFrame para garantir que o DOM foi atualizado
+        requestAnimationFrame(() => {
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+            hasScrolledToBottomRef.current = friendId;
+          }
+        });
+      }
+    }
+  }, [messages, friendId]);
 
   // Escutar evento para fazer scroll até uma mensagem específica
   useEffect(() => {
@@ -144,9 +175,37 @@ export function DirectChatView({
     setIsEmojiPickerOpen(false);
   };
 
+  const handleFilesSelected = async (files: File[]) => {
+    try {
+      await uploadFiles(files);
+    } catch (error) {
+      // Erro já é tratado pelo hook e exibido no modal
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setPendingAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const prepareAttachmentsForSend = (attachments: MessageAttachment[]) => {
+    return attachments
+      .filter(
+        (attachment): attachment is MessageAttachment =>
+          Boolean(
+            attachment &&
+            attachment.fileUrl &&
+            attachment.cloudinaryPublicId &&
+            attachment.fileType
+          )
+      )
+      .map((attachment) => ({
+        ...attachment,
+        thumbnailUrl: attachment.thumbnailUrl || attachment.fileUrl,
+      }));
+  };
+
   const handleSend = async () => {
-    if (!message.trim() || !isConnected) {
-      console.log('[DirectChatView] ⚠️ Não pode enviar:', { hasMessage: !!message.trim(), isConnected });
+    if ((!message.trim() && pendingAttachments.length === 0) || !isConnected) {
       return;
     }
     
@@ -158,19 +217,23 @@ export function DirectChatView({
         setHoveredMessageId(null);
         setMessage('');
       } else {
-        console.error('Erro ao editar mensagem:', result.message);
         // TODO: Mostrar toast de erro
       }
       return;
     }
     
-    const messageToSend = message.trim();
-    console.log('[DirectChatView] 📤 Iniciando envio de mensagem:', messageToSend);
-    console.log('[DirectChatView] Estado atual de mensagens antes de enviar:', messages.length);
+    const messageToSend = message.trim() || undefined;
+    const attachmentsToSend =
+      pendingAttachments.length > 0
+        ? prepareAttachmentsForSend(pendingAttachments)
+        : undefined;
+    
+    setMessage('');
+    setPendingAttachments([]);
+    
     try {
-      await onSend(friendId, messageToSend);
-      console.log('[DirectChatView] ✅ Mensagem enviada com sucesso');
-      setMessage('');
+      await onSend(friendId, messageToSend, attachmentsToSend);
+      
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
@@ -179,16 +242,17 @@ export function DirectChatView({
       
       // Aguardar um pouco e verificar se a mensagem foi adicionada
       setTimeout(() => {
-        console.log('[DirectChatView] Estado de mensagens após envio:', messages.length);
       }, 500);
     } catch (error) {
-      console.error('[DirectChatView] ❌ Erro ao enviar mensagem:', error);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
+    const newValue = e.target.value;
+    setMessage(newValue);
 
+    // Sempre enviar indicador de digitação quando o usuário digita (mesmo que não tenha anexos)
+    // O sendTypingIndicator já verifica internamente se o socket está conectado
     if (onTyping) {
       // Limpar timeout anterior se existir
       if (typingTimeoutRef.current) {
@@ -204,6 +268,7 @@ export function DirectChatView({
         onTyping(friendId, false);
         typingTimeoutRef.current = null; // Limpar a referência após executar
       }, 2000);
+    } else {
     }
   };
 
@@ -221,7 +286,7 @@ export function DirectChatView({
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a]">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 pt-12 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 pt-12 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-400 text-sm">Nenhuma mensagem ainda. Comece a conversar!</p>
@@ -245,14 +310,11 @@ export function DirectChatView({
               if (isPinned && onUnpinMessage) {
                 const result = await onUnpinMessage(msg.id);
                 if (result.success) {
-                  console.log('Mensagem desfixada');
                 }
               } else if (!isPinned && onPinMessage) {
                 const result = await onPinMessage(msg.id, friendId);
                 if (result.success) {
-                  console.log('Mensagem fixada');
                 } else {
-                  console.error('Erro ao fixar:', result.message);
                 }
               }
             };
@@ -372,14 +434,48 @@ export function DirectChatView({
                     )}
                   </AnimatePresence>
 
-                  <div
-                    className={`rounded-lg px-4 py-2 ${
-                      isOwn
-                        ? 'bg-[#B3E240] text-black'
-                        : 'bg-[#29292E] text-white border border-[#323238]'
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{msg.content}</p>
+                  <div className="flex flex-col gap-2">
+                    {msg.content && (
+                      <div
+                        className={`rounded-lg px-4 py-2 ${
+                          isOwn
+                            ? 'bg-[#B3E240] text-black'
+                            : 'bg-[#29292E] text-white border border-[#323238]'
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{msg.content}</p>
+                      </div>
+                    )}
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        {msg.attachments.map((attachment) => {
+                          const isImage = attachment.fileType.startsWith("image/");
+                          if (isImage) {
+                            return (
+                              <div
+                                key={attachment.id}
+                                className="relative w-full max-w-lg rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => window.open(attachment.fileUrl, "_blank")}
+                              >
+                                <img
+                                  src={attachment.thumbnailUrl || attachment.fileUrl}
+                                  alt={attachment.fileName}
+                                  className="w-full h-auto object-cover"
+                                  style={{ maxHeight: '600px' }}
+                                />
+                              </div>
+                            );
+                          }
+                          return (
+                            <FilePreview
+                              key={attachment.id}
+                              attachment={attachment}
+                              size="medium"
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-400">{timeAgo}</span>
@@ -393,7 +489,10 @@ export function DirectChatView({
           })
         )}
 
-        {isTyping && (
+        {(() => {
+          const shouldShow = isTyping && typingUserId && typingUserId === friendId && typingUserId !== currentUserId;
+          return shouldShow;
+        })() && (
           <div className="flex gap-3">
             <Avatar className="w-8 h-8 shrink-0">
               <AvatarImage
@@ -406,7 +505,7 @@ export function DirectChatView({
             </Avatar>
             <div className="bg-[#29292E] border border-[#323238] rounded-lg px-4 py-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">{friendName}</span>
+                <span className="text-sm text-gray-400">{friendName} está digitando</span>
                 <div className="flex items-center gap-1">
                   <span 
                     className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
@@ -439,7 +538,38 @@ export function DirectChatView({
       </div>
 
       {/* Input */}
-      <div className="flex items-end gap-2 p-4 border-t border-white/10 bg-[#1a1a1a]">
+      <FileUploadZone
+        onFilesSelected={handleFilesSelected}
+        disabled={!isConnected || uploading}
+        className="fixed inset-0"
+      />
+      <div className="flex flex-col gap-2 p-4 border-t border-white/10 bg-[#1a1a1a]">
+        {/* Preview de arquivos pendentes */}
+        {pendingAttachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 pb-2">
+            {pendingAttachments.map((attachment, index) => (
+              <div key={index} className="relative">
+                <FilePreview
+                  attachment={{
+                    id: `pending-${index}`,
+                    fileUrl: attachment.fileUrl,
+                    fileName: attachment.fileName,
+                    fileType: attachment.fileType,
+                    fileSize: attachment.fileSize,
+                    thumbnailUrl: attachment.thumbnailUrl || null,
+                    width: attachment.width || null,
+                    height: attachment.height || null,
+                    duration: attachment.duration || null,
+                  }}
+                  onRemove={() => handleRemoveAttachment(index)}
+                  showRemove={true}
+                  size="small"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex items-end gap-2">
         <textarea
           value={message}
           onChange={handleInputChange}
@@ -458,6 +588,28 @@ export function DirectChatView({
             lineHeight: '1.25rem'
           }}
         />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = 'image/*,application/pdf';
+            input.onchange = (e) => {
+              const files = Array.from((e.target as HTMLInputElement).files || []);
+              if (files.length > 0) {
+                handleFilesSelected(files);
+              }
+            };
+            input.click();
+          }}
+          disabled={!isConnected || uploading}
+          className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer shrink-0"
+          title="Anexar arquivo"
+        >
+          <Paperclip className="w-4 h-4" />
+        </Button>
         <div className="relative shrink-0" ref={emojiPickerRef}>
           <Button
             variant="ghost"
@@ -482,14 +634,38 @@ export function DirectChatView({
             </div>
           )}
         </div>
+        {onStartCall && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={async () => {
+              try {
+                await onStartCall(friendId);
+              } catch (error) {
+                console.error('Erro ao iniciar chamada:', error);
+              }
+            }}
+            disabled={true}
+            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-not-allowed shrink-0 opacity-50"
+            title="Chamada de voz desabilitada"
+          >
+            <Phone className="w-4 h-4" />
+          </Button>
+        )}
         <Button
           onClick={handleSend}
-          disabled={!isConnected || !message.trim()}
+          disabled={!isConnected || (!message.trim() && pendingAttachments.length === 0) || uploading}
           className="bg-[#B3E240] hover:bg-[#B3E240]/80 text-black px-4 py-2 h-[32px] shrink-0"
         >
-          <Send className="w-4 h-4" />
+          {uploading ? (
+            <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
         </Button>
+        </div>
       </div>
+      {ErrorModal}
 
       {/* Modal de confirmação para deletar */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
@@ -516,9 +692,7 @@ export function DirectChatView({
                 if (messageToDelete && onDeleteMessage) {
                   const result = await onDeleteMessage(messageToDelete);
                   if (result.success) {
-                    console.log('Mensagem excluída com sucesso');
                   } else {
-                    console.error('Erro ao excluir mensagem:', result.message);
                     // TODO: Mostrar toast de erro
                   }
                 }
