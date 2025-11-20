@@ -634,7 +634,8 @@ export function DirectChatView({
             </div>
           )}
         </div>
-        {onStartCall && (
+        {/* Botão de chamada de voz temporariamente desabilitado */}
+        {/* {onStartCall && (
           <Button
             variant="ghost"
             size="icon"
@@ -651,7 +652,7 @@ export function DirectChatView({
           >
             <Phone className="w-4 h-4" />
           </Button>
-        )}
+        )} */}
         <Button
           onClick={handleSend}
           disabled={!isConnected || (!message.trim() && pendingAttachments.length === 0) || uploading}

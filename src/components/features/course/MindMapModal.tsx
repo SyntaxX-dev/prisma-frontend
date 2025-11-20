@@ -50,11 +50,11 @@ export function MindMapModal({
       let errorMessage = 'Erro ao gerar mapa mental';
 
       if (err?.message?.includes('503') || err?.message?.includes('Service Unavailable')) {
-        errorMessage = '⚠️ O serviço Gemini AI está temporariamente indisponível. Tente novamente em alguns instantes.';
+        errorMessage = '⚠️ O serviço de AI está temporariamente indisponível. Tente novamente em alguns instantes.';
       } else if (err?.message?.includes('500') || err?.message?.includes('Internal Server Error')) {
         errorMessage = '⚠️ Erro interno do servidor. Por favor, tente novamente.';
-      } else if (err?.message?.includes('401') || err?.message?.includes('API Key')) {
-        errorMessage = '🔑 Erro de autenticação com a API Gemini.';
+      } else if (err?.message?.includes('401')) {
+        errorMessage = '🔑 Erro de autenticação.';
       } else if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -119,7 +119,7 @@ export function MindMapModal({
             <div className="flex flex-col items-center justify-center py-12">
               <LoadingGrid size="80" color="#B3E240" />
               <div className="text-center mt-6 space-y-2">
-                <p className="text-white/80 text-lg font-semibold">Gerando mapa mental com IA Gemini...</p>
+                <p className="text-white/80 text-lg font-semibold">Gerando mapa mental com nossa IA...</p>
                 <p className="text-white/50 text-sm">Isso pode levar alguns segundos. Por favor, aguarde.</p>
               </div>
             </div>

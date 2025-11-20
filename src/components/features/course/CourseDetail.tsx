@@ -639,11 +639,11 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       const message = err instanceof Error ? err.message : String(err);
 
       if (message.includes('503') || message.includes('Service Unavailable')) {
-        errorMessage = '⚠️ O serviço Gemini AI está temporariamente indisponível. Tente novamente em alguns instantes.';
+        errorMessage = '⚠️ O serviço de AI está temporariamente indisponível. Tente novamente em alguns instantes.';
       } else if (message.includes('500') || message.includes('Internal Server Error')) {
         errorMessage = '⚠️ Erro interno do servidor. Por favor, tente novamente.';
       } else if (message.includes('401') || message.includes('API Key')) {
-        errorMessage = '🔑 Erro de autenticação com a API Gemini.';
+        errorMessage = '🔑 Erro de autenticação com a API.';
       } else if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -791,20 +791,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
               <div className="flex items-center gap-2">
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
-                >
-                  <Download className="w-5 h-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
-                >
-                  <Share2 className="w-5 h-5" />
-                </Button>
-                <Button
                   onClick={() => selectedVideo && handleMarkVideoComplete(selectedVideo)}
                   disabled={!selectedVideo?.videoId}
                   className={`font-semibold shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${selectedVideo?.isCompleted
@@ -826,20 +812,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
               >
                 Visão Geral
-              </TabsTrigger>
-              <TabsTrigger
-                value="notes"
-                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Anotações
-              </TabsTrigger>
-              <TabsTrigger
-                value="comments"
-                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Comentários
               </TabsTrigger>
               <TabsTrigger
                 value="mindmap"
@@ -883,16 +855,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
               </div>
             </TabsContent>
 
-            <TabsContent value="notes" className="mt-6">
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
-                <FileText className="w-12 h-12 text-white/30 mx-auto mb-3" />
-                <p className="text-white/60 mb-4">Suas anotações aparecerão aqui</p>
-                <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer">
-                  Criar primeira anotação
-                </Button>
-              </div>
-            </TabsContent>
-
             <TabsContent value="comments" className="mt-6">
               <div className="space-y-4">
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
@@ -917,11 +879,11 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
                     <Brain className="w-16 h-16 text-white/30 mx-auto mb-4" />
                     <p className="text-white/60 mb-6">
-                      Clique no botão abaixo para gerar um mapa mental inteligente deste vídeo usando IA Gemini
+                      Gera o mapa mental deste vídeo usando nossa IA
                     </p>
                     <Button
                       onClick={handleGenerateMindMap}
-                      className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all"
+                      className="bg-green-500 cursor-pointer hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all"
                     >
                       <Brain className="w-5 h-5 mr-2" />
                       Gerar Mapa Mental
@@ -932,7 +894,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 {mindMapLoading && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
                     <LoadingGrid size="60" color="#B3E240" />
-                    <p className="text-white/80 text-lg font-semibold mt-6">Gerando mapa mental com IA Gemini...</p>
+                    <p className="text-white/80 text-lg font-semibold mt-6">Gerando mapa mental com IA...</p>
                     <p className="text-white/50 text-sm mt-2">Isso pode levar alguns segundos. Por favor, aguarde.</p>
                   </div>
                 )}
@@ -1002,7 +964,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                           }}
                           variant="ghost"
                           size="sm"
-                          className="text-white/60 hover:text-white hover:bg-white/10"
+                          className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10"
                         >
                           <Download className="w-4 h-4 mr-2" />
                           Baixar
@@ -1011,7 +973,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                           onClick={handleGenerateMindMap}
                           variant="ghost"
                           size="sm"
-                          className="text-white/60 hover:text-white hover:bg-white/10"
+                          className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10"
                         >
                           <Brain className="w-4 h-4 mr-2" />
                           Gerar novamente
