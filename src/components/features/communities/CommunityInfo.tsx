@@ -9,14 +9,28 @@ import {
   ChevronDown,
   Image as ImageIcon,
   File,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { Community } from "@/types/community";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getCommunityMembers } from "@/api/communities/get-community-members";
 import type { CommunityMember } from "@/api/communities/get-community-members";
+import { removeCommunityMember } from "@/api/communities/remove-community-member";
 import type { PinnedCommunityMessage } from "@/types/community-chat";
 import { getUserProfile } from "@/api/auth/get-user-profile";
 import { useUserStatus } from "@/providers/UserStatusProvider";
@@ -52,6 +66,10 @@ export function CommunityInfo({
   const [membersError, setMembersError] = useState<string | null>(null);
   const [memberMap, setMemberMap] = useState<Map<string, { name: string; avatar?: string }>>(new Map());
   const { statusMap, getBatchStatus } = useUserStatus();
+  const [memberToRemove, setMemberToRemove] = useState<CommunityMember | null>(null);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [isCurrentUserOwner, setIsCurrentUserOwner] = useState(false);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
   
   // Ref para evitar chamadas duplicadas
   const hasLoadedMembers = useRef<string | null>(null);
@@ -105,6 +123,9 @@ export function CommunityInfo({
       if (response.success && response.data) {
         const membersList = response.data.members || [];
         setMembers(membersList);
+        
+        // Verificar se o usuário atual é o dono
+        setIsCurrentUserOwner(response.data.isCurrentUserOwner || false);
         
         // Criar mapa de membros para fácil acesso
         const newMemberMap = new Map<string, { name: string; avatar?: string }>();
@@ -284,6 +305,19 @@ export function CommunityInfo({
                         )}
                       </div>
                     </div>
+                    {isCurrentUserOwner && !member.isOwner && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMemberToRemove(member);
+                          setIsRemoveDialogOpen(true);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors text-red-400 hover:text-red-300 cursor-pointer"
+                        title="Remover membro"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 ))
               )}
@@ -291,6 +325,68 @@ export function CommunityInfo({
           </div>
         </div>
       )}
+
+      {/* Modal de confirmação para remover membro */}
+      <AlertDialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
+        <AlertDialogContent className="bg-[#1a1a1a] border border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">
+              Remover membro da comunidade
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Tem certeza que deseja remover <strong className="text-white">{memberToRemove?.name}</strong> desta comunidade? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="cursor-pointer border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (memberToRemove && community.id) {
+                  try {
+                    setIsRemovingMember(true);
+                    
+                    const response = await removeCommunityMember({
+                      communityId: community.id,
+                      memberId: memberToRemove.id,
+                    });
+                    
+                    if (response.success) {
+                      // Remover da lista localmente
+                      setMembers(prev => prev.filter(m => m.id !== memberToRemove.id));
+                      setMemberMap(prev => {
+                        const newMap = new Map(prev);
+                        newMap.delete(memberToRemove.id);
+                        return newMap;
+                      });
+                      
+                      setIsRemoveDialogOpen(false);
+                      setMemberToRemove(null);
+                      
+                      // Recarregar membros para garantir sincronização
+                      if (hasLoadedMembers.current === community.id) {
+                        loadMembers();
+                      }
+                    } else {
+                      alert('Erro ao remover membro: ' + response.message);
+                    }
+                  } catch (error: any) {
+                    console.error('Erro ao remover membro:', error);
+                    alert('Erro ao remover membro: ' + (error.message || 'Erro desconhecido'));
+                  } finally {
+                    setIsRemovingMember(false);
+                  }
+                }
+              }}
+              className={cn(buttonVariants({ variant: "destructive" }), "cursor-pointer")}
+              disabled={isRemovingMember}
+            >
+              {isRemovingMember ? 'Removendo...' : 'Remover'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Mensagens Fixadas - Ilha 2 ou 3 */}
       <div 

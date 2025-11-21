@@ -76,10 +76,6 @@ export function LearningDashboard({ userName }: { userName?: string }) {
             <h2 className="text-white text-lg font-semibold">
               {isSearching ? 'Resultados da Busca' : 'Cursos Disponíveis'}
             </h2>
-            <Button variant="ghost" className="text-white/60 hover:text-white text-sm">
-              Ver todos
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
           </div>
 
           {/* Mostra resultados da busca se houver busca ativa, senão mostra carousel */}

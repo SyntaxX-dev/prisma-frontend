@@ -590,21 +590,6 @@ export default function CourseCategoryPage() {
                       <p className="text-white/70 text-sm">
                         <span className="text-white/50">Ano:</span> {course.year}
                       </p>
-                      <div className="flex items-center gap-2 mt-3">
-                        {course.isSubscriber ? (
-                          <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">
-                            Assinante
-                          </span>
-                        ) : course.isFree ? (
-                          <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">
-                            Gratuito
-                          </span>
-                        ) : (
-                          <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded-full">
-                            Premium
-                          </span>
-                        )}
-                      </div>
                     </div>
                 </div>
                 ))

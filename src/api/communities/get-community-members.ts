@@ -17,6 +17,7 @@ export interface GetCommunityMembersResponse {
     limit: number;
     offset: number;
     hasMore: boolean;
+    isCurrentUserOwner?: boolean;
   };
 }
 
