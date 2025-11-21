@@ -9,93 +9,155 @@ import { useNotifications } from "../../../hooks/shared";
 import { usePageDataLoad } from "@/hooks/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Switch } from "../../../components/ui/switch";
-import { Slider } from "../../../components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { Separator } from "../../../components/ui/separator";
 import {
   Settings,
-  Bell,
-  Palette,
-  Shield,
-  Download,
-  Trash2,
-  Save,
-  Moon,
-  Sun,
-  Monitor
+  CreditCard,
+  AlertTriangle,
+  X,
+  ArrowRight,
+  Check,
+  MessageCircle,
+  UserPlus
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../../components/ui/dialog";
 
 function SettingsContent() {
   const [isDark, setIsDark] = useState(true);
   const { user } = useAuth();
   const { showSuccess, showError } = useNotifications();
+  const [showCancelSubscriptionDialog, setShowCancelSubscriptionDialog] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [showChangePlanDialog, setShowChangePlanDialog] = useState(false);
 
   usePageDataLoad({
     waitForData: false,
     customDelay: 0
   });
 
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    achievements: true,
-    reminders: false,
-    weeklyReport: true
-  });
-
-  const [appearance, setAppearance] = useState({
-    theme: 'dark',
-    fontSize: 14,
-    compactMode: false,
-    animations: true
-  });
-
-
-  const [privacy, setPrivacy] = useState({
-    profileVisibility: 'public',
-    dataCollection: true,
-    analytics: true
-  });
 
 
   const toggleTheme = () => {
     setIsDark(!isDark);
   };
 
-  const handleSaveSettings = () => {
-    showSuccess('Configurações salvas com sucesso!');
+
+  // Carregar informações da assinatura
+  useEffect(() => {
+    const loadSubscription = async () => {
+      try {
+        setIsLoadingSubscription(true);
+        const token = localStorage.getItem('auth_token');
+        // Aqui você faria a chamada à API para obter informações da assinatura
+        // Por enquanto, vamos simular
+        // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscription`, {
+        //   headers: { 'Authorization': `Bearer ${token}` }
+        // });
+        // const data = await response.json();
+        // setSubscriptionPlan(data.plan || null);
+        
+        // Simulação - você deve substituir pela chamada real à API
+        setSubscriptionPlan('Pro'); // ou null se não tiver assinatura
+      } catch (error) {
+        console.error('Erro ao carregar assinatura:', error);
+      } finally {
+        setIsLoadingSubscription(false);
+      }
+    };
+
+    if (user) {
+      loadSubscription();
+    }
+  }, [user]);
+
+  const handleRequestCancellation = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      // Aqui você faria a chamada à API para solicitar cancelamento
+      // await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscription/cancel`, {
+      //   method: 'POST',
+      //   headers: { 
+      //     'Authorization': `Bearer ${token}`,
+      //     'Content-Type': 'application/json'
+      //   }
+      // });
+      
+      showSuccess('Solicitação de cancelamento enviada com sucesso! Nossa equipe entrará em contato em breve.');
+      setShowCancelSubscriptionDialog(false);
+    } catch (error) {
+      showError('Erro ao solicitar cancelamento. Tente novamente mais tarde.');
+    }
   };
 
-  const handleResetSettings = () => {
-    setNotifications({
-      email: true,
-      push: true,
-      achievements: true,
-      reminders: false,
-      weeklyReport: true
-    });
-    setAppearance({
-      theme: 'dark',
-      fontSize: 14,
-      compactMode: false,
-      animations: true
-    });
-    setPrivacy({
-      profileVisibility: 'public',
-      dataCollection: true,
-      analytics: true
-    });
-    showSuccess('Configurações resetadas para o padrão!');
+  const handleChangePlan = async (newPlan: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      // Aqui você faria a chamada à API para trocar de plano
+      // await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscription/change-plan`, {
+      //   method: 'POST',
+      //   headers: { 
+      //     'Authorization': `Bearer ${token}`,
+      //     'Content-Type': 'application/json'
+      //   },
+      //   body: JSON.stringify({ plan: newPlan })
+      // });
+      
+      setSubscriptionPlan(newPlan);
+      showSuccess(`Plano alterado para ${newPlan} com sucesso!`);
+      setShowChangePlanDialog(false);
+    } catch (error) {
+      showError('Erro ao trocar de plano. Tente novamente mais tarde.');
+    }
   };
 
-  const handleExportData = () => {
-    showSuccess('Dados exportados com sucesso!');
-  };
-
-  const handleDeleteAccount = () => {
-    showError('Funcionalidade em desenvolvimento');
-  };
+  const plans = [
+    {
+      name: 'Start',
+      price: 'R$ 29,90',
+      period: '/mês',
+      features: [
+        'Acesso a todos os cursos',
+        'Comunidades ilimitadas',
+        'Suporte por email',
+        'Certificados de conclusão'
+      ],
+      popular: false
+    },
+    {
+      name: 'Pro',
+      price: 'R$ 49,90',
+      period: '/mês',
+      features: [
+        'Tudo do plano Start',
+        'Acesso prioritário a novos cursos',
+        'Suporte prioritário',
+        'Mapas mentais ilimitados',
+        'Relatórios de progresso avançados'
+      ],
+      popular: true
+    },
+    {
+      name: 'Ultra',
+      price: 'R$ 79,90',
+      period: '/mês',
+      features: [
+        'Tudo do plano Pro',
+        'Mentoria individual mensal',
+        'Acesso a conteúdo exclusivo',
+        'Sessões de coaching',
+        'Suporte 24/7'
+      ],
+      popular: false
+    }
+  ];
 
 
   return (
@@ -149,12 +211,9 @@ function SettingsContent() {
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-          <div className="p-6 ml-10 pt-6" style={{ marginTop: '80px' }}>
+          <div className="p-2 ml-10" style={{ marginTop: '80px' }}>
             <div className="mb-8">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center text-3xl">
-                  <Settings className="w-8 h-8 text-blue-400" />
-                </div>
                 <div>
                   <h1 className="text-white text-3xl font-bold">Configurações</h1>
                   <p className="text-white/60 text-lg">Personalize sua experiência na plataforma</p>
@@ -162,252 +221,363 @@ function SettingsContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="w-full space-y-6">
+              {/* Seção de Trocar de Plano - Topo, largura completa */}
               <Card className="bg-white/5 backdrop-blur-sm border-white/10">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
-                    <Bell className="w-5 h-5 text-blue-400" />
-                    Notificações
+                    Trocar de Plano
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-medium">Notificações por email</p>
-                      <p className="text-white/60 text-sm">Receba atualizações importantes</p>
-                    </div>
-                    <Switch
-                      checked={notifications.email}
-                      onCheckedChange={(checked) =>
-                        setNotifications(prev => ({ ...prev, email: checked }))
-                      }
-                    />
-                  </div>
+                <CardContent>
+                  <p className="text-white/60 text-sm mb-6">
+                    Escolha o plano que melhor se adequa às suas necessidades. Você pode trocar a qualquer momento.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {plans.map((plan) => (
+                      <div
+                        key={plan.name}
+                        className={`relative rounded-xl border-2 p-6 transition-all cursor-pointer flex flex-col h-full ${
+                          plan.popular
+                            ? 'border-[#B4FF39] bg-[#B4FF39]/10'
+                            : 'border-white/20 bg-white/5 hover:border-white/40'
+                        } ${
+                          subscriptionPlan === plan.name
+                            ? 'ring-2 ring-[#B4FF39] ring-offset-2 ring-offset-gray-900'
+                            : ''
+                        }`}
+                        onClick={() => handleChangePlan(plan.name)}
+                      >
+                        {plan.popular && (
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                            <span className="bg-[#B4FF39] text-black text-xs font-bold px-3 py-1 rounded-full">
+                              Popular
+                            </span>
+                          </div>
+                        )}
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-medium">Notificações push</p>
-                      <p className="text-white/60 text-sm">Alertas no navegador</p>
-                    </div>
-                    <Switch
-                      checked={notifications.push}
-                      onCheckedChange={(checked) =>
-                        setNotifications(prev => ({ ...prev, push: checked }))
-                      }
-                    />
-                  </div>
+                        {subscriptionPlan === plan.name && (
+                          <div className="absolute top-4 right-4">
+                            <div className="w-6 h-6 rounded-full bg-[#B4FF39] flex items-center justify-center">
+                              <Check className="w-4 h-4 text-black" />
+                            </div>
+                          </div>
+                        )}
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-medium">Conquistas</p>
-                      <p className="text-white/60 text-sm">Notificar sobre badges e streaks</p>
-                    </div>
-                    <Switch
-                      checked={notifications.achievements}
-                      onCheckedChange={(checked) =>
-                        setNotifications(prev => ({ ...prev, achievements: checked }))
-                      }
-                    />
-                  </div>
+                        <div className="text-center mb-4">
+                          <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-3xl font-bold text-[#B4FF39]">{plan.price}</span>
+                            <span className="text-white/60 text-sm">{plan.period}</span>
+                          </div>
+                        </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-medium">Lembretes de estudo</p>
-                      <p className="text-white/60 text-sm">Notificações diárias</p>
-                    </div>
-                    <Switch
-                      checked={notifications.reminders}
-                      onCheckedChange={(checked) =>
-                        setNotifications(prev => ({ ...prev, reminders: checked }))
-                      }
-                    />
+                        <ul className="space-y-2 mb-4 flex-1">
+                          {plan.features.map((feature, index) => (
+                            <li key={index} className="flex items-start gap-2 text-sm text-white/80">
+                              <Check className="w-4 h-4 text-[#B4FF39] mt-0.5 flex-shrink-0" />
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        <div className="mt-auto">
+                          <Button
+                            onClick={() => handleChangePlan(plan.name)}
+                            className={`w-full cursor-pointer ${
+                              subscriptionPlan === plan.name
+                                ? 'bg-white/20 text-white cursor-not-allowed'
+                                : plan.popular
+                                ? 'bg-[#B4FF39] hover:bg-[#B4FF39]/80 text-black'
+                                : 'bg-white/10 hover:bg-white/20 text-white'
+                            }`}
+                            disabled={subscriptionPlan === plan.name}
+                          >
+                            {subscriptionPlan === plan.name ? 'Plano Atual' : 'Selecionar Plano'}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Palette className="w-5 h-5 text-purple-400" />
-                    Aparência
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-white font-medium">Tema</p>
-                    <Select
-                      value={appearance.theme}
-                      onValueChange={(value) =>
-                        setAppearance(prev => ({ ...prev, theme: value }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="dark">
-                          <div className="flex items-center gap-2">
-                            <Moon className="w-4 h-4" />
-                            Escuro
+              {/* Cards de Ações - Grid com 3 cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Card de Sugestões via WhatsApp */}
+                <Card className="bg-white/5 backdrop-blur-sm border-white/10 flex flex-col h-full">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <MessageCircle className="w-5 h-5 text-green-400" />
+                      Sugestões
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-1 space-y-4">
+                    <div className="flex-1">
+                      <p className="text-white/60 text-sm">
+                        Tem alguma sugestão ou feedback? Entre em contato conosco via WhatsApp!
+                      </p>
+                    </div>
+                    <div className="mt-auto">
+                      <Button
+                      variant="default"
+                        onClick={() => {
+                          const phoneNumber = '5583987690902';
+                          const message = encodeURIComponent('Olá! Gostaria de dar uma sugestão sobre a plataforma.');
+                          window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+                        }}
+                        className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 cursor-pointer"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Enviar Mensagem
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Card de Produtor Exclusivo */}
+                <Card className="bg-white/5 backdrop-blur-sm border-white/10 flex flex-col h-full">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <UserPlus className="w-5 h-5 text-purple-400" />
+                      Produtor Exclusivo
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-1 space-y-4">
+                    <div className="flex-1">
+                      <p className="text-white/60 text-sm">
+                        Quer criar conteúdo exclusivo na plataforma? Torne-se um produtor e compartilhe seu conhecimento!
+                      </p>
+                    </div>
+                    <div className="mt-auto">
+                      <Button
+                      variant="default"
+                        onClick={() => {
+                          const phoneNumber = '5583987690902';
+                          const message = encodeURIComponent('Olá! Tenho interesse em me tornar um produtor exclusivo da plataforma.');
+                          window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+                        }}
+                        className="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 cursor-pointer"
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Quero Ser Produtor
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Card de Assinatura/Cancelamento */}
+                <Card className="bg-white/5 backdrop-blur-sm border-white/10 flex flex-col h-full">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-yellow-400" />
+                      Assinatura
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-1 space-y-4">
+                    {isLoadingSubscription ? (
+                      <div className="text-white/60 text-sm">Carregando informações da assinatura...</div>
+                    ) : subscriptionPlan ? (
+                      <>
+                        <div className="flex-1 space-y-4">
+                          <div className="space-y-2">
+                            <p className="text-white font-medium">Plano Atual</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[#B4FF39] font-semibold text-lg">{subscriptionPlan}</span>
+                              <span className="text-white/60 text-sm">Ativo</span>
+                            </div>
                           </div>
-                        </SelectItem>
-                        <SelectItem value="light">
-                          <div className="flex items-center gap-2">
-                            <Sun className="w-4 h-4" />
-                            Claro
+
+                          <Separator className="bg-white/10" />
+
+                          <div className="space-y-2">
+                            <p className="text-white font-medium">Próxima cobrança</p>
+                            <p className="text-white/60 text-sm">Em 15 de fevereiro de 2025</p>
                           </div>
-                        </SelectItem>
-                        <SelectItem value="system">
-                          <div className="flex items-center gap-2">
-                            <Monitor className="w-4 h-4" />
-                            Sistema
+                        </div>
+
+                        <div className="mt-auto pt-2">
+                          <Button
+                            onClick={() => setShowCancelSubscriptionDialog(true)}
+                            variant="destructive"
+                            className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 cursor-pointer"
+                          >
+                            <AlertTriangle className="w-4 h-4 mr-2" />
+                            Solicitar Cancelamento
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col flex-1 space-y-4">
+                        <div className="flex-1">
+                          <div className="text-white/60 text-sm">
+                            Você não possui uma assinatura ativa no momento.
                           </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-white font-medium">Tamanho da fonte: {appearance.fontSize}px</p>
-                    <Slider
-                      value={[appearance.fontSize]}
-                      onValueChange={([value]) =>
-                        setAppearance(prev => ({ ...prev, fontSize: value }))
-                      }
-                      min={12}
-                      max={20}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-medium">Modo compacto</p>
-                      <p className="text-white/60 text-sm">Interface mais densa</p>
-                    </div>
-                    <Switch
-                      checked={appearance.compactMode}
-                      onCheckedChange={(checked) =>
-                        setAppearance(prev => ({ ...prev, compactMode: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-medium">Animações</p>
-                      <p className="text-white/60 text-sm">Efeitos visuais</p>
-                    </div>
-                    <Switch
-                      checked={appearance.animations}
-                      onCheckedChange={(checked) =>
-                        setAppearance(prev => ({ ...prev, animations: checked }))
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-
-              <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-red-400" />
-                    Privacidade
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-white font-medium">Visibilidade do perfil</p>
-                    <Select
-                      value={privacy.profileVisibility}
-                      onValueChange={(value) =>
-                        setPrivacy(prev => ({ ...prev, profileVisibility: value }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">Público</SelectItem>
-                        <SelectItem value="friends">Apenas amigos</SelectItem>
-                        <SelectItem value="private">Privado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-medium">Coleta de dados</p>
-                      <p className="text-white/60 text-sm">Melhorar experiência</p>
-                    </div>
-                    <Switch
-                      checked={privacy.dataCollection}
-                      onCheckedChange={(checked) =>
-                        setPrivacy(prev => ({ ...prev, dataCollection: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-medium">Analytics</p>
-                      <p className="text-white/60 text-sm">Dados de uso</p>
-                    </div>
-                    <Switch
-                      checked={privacy.analytics}
-                      onCheckedChange={(checked) =>
-                        setPrivacy(prev => ({ ...prev, analytics: checked }))
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="mt-8 space-y-4">
-              <Separator className="bg-white/10" />
-
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  onClick={handleSaveSettings}
-                  className="bg-green-500 hover:bg-green-600 text-black px-6 py-3 rounded-xl font-medium"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar Configurações
-                </Button>
-
-                <Button
-                  onClick={handleResetSettings}
-                  variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10 px-6 py-3 rounded-xl"
-                >
-                  Resetar Padrões
-                </Button>
-
-                <Button
-                  onClick={handleExportData}
-                  variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10 px-6 py-3 rounded-xl"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar Dados
-                </Button>
-
-                <Button
-                  onClick={handleDeleteAccount}
-                  variant="destructive"
-                  className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Excluir Conta
-                </Button>
+                        </div>
+                        <div className="mt-auto">
+                          <Button
+                            onClick={() => setShowChangePlanDialog(true)}
+                            className="w-full bg-[#B4FF39] hover:bg-[#B4FF39]/80 text-black cursor-pointer"
+                          >
+                            Ver Planos Disponíveis
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </div>
+
           </div>
         </div>
       </div>
+
+      {/* Dialog de Confirmação de Cancelamento */}
+      <Dialog open={showCancelSubscriptionDialog} onOpenChange={setShowCancelSubscriptionDialog}>
+        <DialogContent className="bg-gray-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <AlertTriangle className="w-5 h-5" />
+              Confirmar Cancelamento de Assinatura
+            </DialogTitle>
+            <DialogDescription className="text-white/70">
+              Tem certeza que deseja solicitar o cancelamento da sua assinatura?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+              <p className="text-yellow-400 text-sm font-medium mb-2">Importante:</p>
+              <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
+                <li>Sua assinatura continuará ativa até o final do período pago</li>
+                <li>Você perderá acesso aos recursos premium após o término do período</li>
+                <li>Nossa equipe entrará em contato para confirmar o cancelamento</li>
+                <li>Você pode reativar sua assinatura a qualquer momento</li>
+              </ul>
+            </div>
+
+            <div className="bg-white/5 rounded-lg p-4">
+              <p className="text-white/60 text-sm">
+                Se você está cancelando por algum problema ou insatisfação, por favor, entre em contato conosco primeiro. 
+                Estamos sempre prontos para ajudar e melhorar sua experiência.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelSubscriptionDialog(false)}
+              className="border-white/20 text-white hover:bg-white/10 cursor-pointer"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleRequestCancellation}
+              variant="destructive"
+              className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Confirmar Solicitação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Trocar de Plano */}
+      <Dialog open={showChangePlanDialog} onOpenChange={setShowChangePlanDialog}>
+        <DialogContent className="bg-gray-900 border-white/10 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#B4FF39]">
+              <CreditCard className="w-5 h-5" />
+              Trocar de Plano
+            </DialogTitle>
+            <DialogDescription className="text-white/70">
+              Escolha o plano que melhor se adequa às suas necessidades
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
+            {plans.map((plan) => (
+              <div
+                key={plan.name}
+                className={`relative rounded-xl border-2 p-6 transition-all cursor-pointer flex flex-col h-full ${
+                  plan.popular
+                    ? 'border-[#B4FF39] bg-[#B4FF39]/10'
+                    : 'border-white/20 bg-white/5 hover:border-white/40'
+                } ${
+                  subscriptionPlan === plan.name
+                    ? 'ring-2 ring-[#B4FF39] ring-offset-2 ring-offset-gray-900'
+                    : ''
+                }`}
+                onClick={() => handleChangePlan(plan.name)}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="bg-[#B4FF39] text-black text-xs font-bold px-3 py-1 rounded-full">
+                      Popular
+                    </span>
+                  </div>
+                )}
+
+                {subscriptionPlan === plan.name && (
+                  <div className="absolute top-4 right-4">
+                    <div className="w-6 h-6 rounded-full bg-[#B4FF39] flex items-center justify-center">
+                      <Check className="w-4 h-4 text-black" />
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-3xl font-bold text-[#B4FF39]">{plan.price}</span>
+                    <span className="text-white/60 text-sm">{plan.period}</span>
+                  </div>
+                </div>
+
+                <ul className="space-y-2 mb-4 flex-1">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2 text-sm text-white/80">
+                      <Check className="w-4 h-4 text-[#B4FF39] mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-auto">
+                  <Button
+                    className={`w-full ${
+                      subscriptionPlan === plan.name
+                        ? 'bg-white/20 text-white cursor-not-allowed'
+                        : plan.popular
+                        ? 'bg-[#B4FF39] hover:bg-[#B4FF39]/80 text-black cursor-pointer'
+                        : 'bg-white/10 hover:bg-white/20 text-white cursor-pointer'
+                    }`}
+                    disabled={subscriptionPlan === plan.name}
+                  >
+                    {subscriptionPlan === plan.name ? 'Plano Atual' : 'Selecionar Plano'}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowChangePlanDialog(false)}
+              className="border-white/20 text-white hover:bg-white/10 cursor-pointer"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,9 +1,10 @@
-import { ChevronDown, Home, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain } from "lucide-react";
+import { ChevronDown, Home, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain, UserPlus } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useNavigationWithLoading } from "../hooks/shared";
 import { getAuthState } from "@/lib/auth";
+import GlareHover from "./GlareHover";
 
 interface SidebarProps {
   isDark: boolean;
@@ -13,6 +14,7 @@ interface SidebarProps {
 
 export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: SidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { navigateWithLoading } = useNavigationWithLoading();
   const [collapsedSections, setCollapsedSections] = useState({
     main: false,
@@ -113,8 +115,27 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     }
   };
 
+  const isActive = (item: string) => {
+    if (item === "Dashboard") {
+      return pathname === '/dashboard';
+    } else if (item === "Chats") {
+      return pathname === '/communities' || pathname?.startsWith('/communities');
+    } else if (item === "Vistos atualmente") {
+      return pathname === '/watching' || pathname?.startsWith('/watching');
+    } else if (item === "Meu resumo") {
+      return pathname === '/courses' || pathname?.startsWith('/courses');
+    } else if (item === "Mapas Mentais") {
+      return pathname === '/mind-maps' || pathname?.startsWith('/mind-maps');
+    } else if (item === "Perfil") {
+      return pathname === '/profile' || pathname?.startsWith('/profile');
+    } else if (item === "Configurações") {
+      return pathname === '/settings' || pathname?.startsWith('/settings');
+    }
+    return false;
+  };
+
   const mainItems = [
-    { icon: Home, label: "Dashboard", active: true },
+    { icon: Home, label: "Dashboard" },
     { icon: MessageCircle, label: "Chats" },
     { icon: Eye, label: "Vistos atualmente" },
     { icon: FileText, label: "Meu resumo" },
@@ -137,7 +158,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className="h-full w-full rounded-2xl"
+        className="h-full w-full rounded-2xl flex flex-col"
         style={{
           background: 'rgba(255, 255, 255, 0.2)',
           borderRadius: '16px',
@@ -154,21 +175,21 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
               <img
                 src="/logo-prisma.svg"
                 alt="RichPath Logo"
-                width={isExpanded ? 70 : 40}
-                height={isExpanded ? 100 : 40}
+                width={isExpanded ? 50 : 30}
+                height={isExpanded ? 70 : 30}
                 className=" transition-all duration-300 ease-in-out"
               />
             </div>
           </div>
         </div>
 
-        <div className={`flex-1 space-y-6 transition-all duration-300 ease-in-out ${isExpanded ? 'p-4' : 'p-2'}`}>
+        <div className={`flex-1 overflow-hidden space-y-3 transition-all duration-300 ease-in-out ${isExpanded ? 'px-4 pt-3 pb-2' : 'p-2'}`}>
 
           <div>
             {isExpanded && (
               <button
                 onClick={() => toggleSection('main')}
-                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
+                className="flex items-center justify-between w-full text-gray-300 font-medium mb-2 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
                 <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                   Principal
@@ -187,7 +208,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                     <Button
                       variant="ghost"
                       onClick={() => handleNavigation(item.label)}
-                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${item.active ? 'bg-[#C9FE02] text-black' : ''} ${isExpanded ? 'justify-start px-3 py-2' : 'justify-center px-2 py-2'}`}
+                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#C9FE02] text-black' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
                     >
                       <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                       {isExpanded && item.label}
@@ -205,7 +226,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             {isExpanded && (
               <button
                 onClick={() => toggleSection('features')}
-                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
+                className="flex items-center justify-between w-full text-gray-300 font-medium mb-2 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
                 <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                   Novidades
@@ -234,7 +255,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                     <Button
                       variant="ghost"
                       disabled={item.disabled}
-                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg transition-all duration-300 ease-in-out ${isExpanded ? 'justify-start px-3 py-2' : 'justify-center px-2 py-2'} ${item.disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-300' : 'cursor-pointer'}`}
+                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg transition-all duration-300 ease-in-out ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'} ${item.disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-300' : 'cursor-pointer'}`}
                     >
                       <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                       {isExpanded && item.label}
@@ -252,7 +273,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             {isExpanded && (
               <button
                 onClick={() => toggleSection('tools')}
-                className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
+                className="flex items-center justify-between w-full text-gray-300 font-medium mb-2 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
                 <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                   Ferramentas
@@ -271,7 +292,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                     <Button
                       variant="ghost"
                       onClick={() => handleNavigation(item.label)}
-                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isExpanded ? 'justify-start px-3 py-2' : 'justify-center px-2 py-2'}`}
+                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#C9FE02] text-black' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
                     >
                       <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                       {isExpanded && item.label}
@@ -287,27 +308,125 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
         </div>
 
         {isExpanded && (
-          <div className="p-4 border-t border-white/20">
-            <div
-              className="rounded-2xl p-6 relative w-full overflow-hidden"
+          <div className="pt-2 px-4 pb-2 border-t border-white/20 flex flex-col space-y-1.5 flex-1 flex-shrink-0">
+            {/* Card de Upgrade Plan */}
+            <GlareHover
+              width="100%"
+              height="100%"
+              background="rgba(201, 254, 2, 0.2)"
+              borderRadius="16px"
+              borderColor="rgba(201, 254, 2, 0.3)"
+              glareColor="#C9FE02"
+              glareOpacity={0.3}
+              glareAngle={-30}
+              glareSize={300}
+              transitionDuration={800}
+              playOnce={false}
+              className="flex-1"
               style={{
-                background: 'rgba(201, 254, 2, 0.2)',
-                borderRadius: '16px',
                 boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
                 backdropFilter: 'blur(5px)',
                 WebkitBackdropFilter: 'blur(5px)',
-                border: '1px solid rgba(201, 254, 2, 0.3)'
+                border: '1px solid rgba(201, 254, 2, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '0.75rem',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-start'
               }}
+              onClick={() => navigateWithLoading('/settings', 'Carregando Configurações...')}
             >
-              <div className={`flex items-center gap-3 mb-2 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                <PenTool className="w-5 h-5 text-[#C9FE02]" />
-                <span className="text-[#C9FE02] font-bold text-sm">Upgrade Pro!</span>
+              <div className={`flex items-center gap-2 mb-1 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                <PenTool className="w-4 h-4 text-[#C9FE02]" />
+                <span className="text-[#C9FE02] font-bold text-xs">Upgrade Pro!</span>
               </div>
 
-              <p className={`text-[#C9FE02] text-xs leading-relaxed transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+              <p className={`text-[#C9FE02] text-[10px] leading-tight transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                 Upgrade to Pro and elevate your experience today
               </p>
-            </div>
+            </GlareHover>
+
+            {/* Card de Produtor Exclusivo */}
+            <GlareHover
+              width="100%"
+              height="100%"
+              background="rgba(168, 85, 247, 0.2)"
+              borderRadius="16px"
+              borderColor="rgba(168, 85, 247, 0.3)"
+              glareColor="#a855f7"
+              glareOpacity={0.3}
+              glareAngle={-30}
+              glareSize={300}
+              transitionDuration={800}
+              playOnce={false}
+              className="flex-1"
+              style={{
+                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+                backdropFilter: 'blur(5px)',
+                WebkitBackdropFilter: 'blur(5px)',
+                border: '1px solid rgba(168, 85, 247, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '0.75rem',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-start'
+              }}
+              onClick={() => {
+                const phoneNumber = '5583987690902';
+                const message = encodeURIComponent('Olá! Tenho interesse em me tornar um produtor exclusivo da plataforma.');
+                window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+              }}
+            >
+              <div className={`flex items-center gap-2 mb-1 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                <UserPlus className="w-4 h-4 text-purple-400" />
+                <span className="text-purple-400 font-bold text-xs">Produtor Exclusivo</span>
+              </div>
+
+              <p className={`text-purple-400 text-[10px] leading-tight transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                Torne-se um produtor e compartilhe seu conhecimento
+              </p>
+            </GlareHover>
+
+            {/* Card de Sugestões */}
+            <GlareHover
+              width="100%"
+              height="100%"
+              background="rgba(34, 197, 94, 0.2)"
+              borderRadius="16px"
+              borderColor="rgba(34, 197, 94, 0.3)"
+              glareColor="#22c55e"
+              glareOpacity={0.3}
+              glareAngle={-30}
+              glareSize={300}
+              transitionDuration={800}
+              playOnce={false}
+              className="flex-1"
+              style={{
+                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+                backdropFilter: 'blur(5px)',
+                WebkitBackdropFilter: 'blur(5px)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '0.75rem',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-start'
+              }}
+              onClick={() => {
+                const phoneNumber = '5583987690902';
+                const message = encodeURIComponent('Olá! Gostaria de dar uma sugestão sobre a plataforma.');
+                window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+              }}
+            >
+              <div className={`flex items-center gap-2 mb-1 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                <MessageCircle className="w-4 h-4 text-green-400" />
+                <span className="text-green-400 font-bold text-xs">Sugestões</span>
+              </div>
+
+              <p className={`text-green-400 text-[10px] leading-tight transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                Compartilhe suas ideias e ajude a melhorar a plataforma
+              </p>
+            </GlareHover>
           </div>
         )}
       </div>
