@@ -200,16 +200,11 @@ export function CommunityInfo({
       >
         <div className="grid grid-cols-2 gap-2">
           <button 
-            onClick={onStartVoiceCall}
-            className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-[#1a1a1a] transition-colors cursor-pointer"
+            disabled={true}
+            className="flex flex-col items-center gap-2 p-2 rounded-lg transition-colors cursor-not-allowed opacity-50"
           >
-            <div 
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{
-                background: '#C9FE02',
-              }}
-            >
-              <Phone className="w-4 h-4 text-black" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgb(26, 26, 26)' }}>
+              <Phone className="w-4 h-4 text-gray-400" />
             </div>
           </button>
           <button 

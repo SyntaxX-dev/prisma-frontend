@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, Settings } from "lucide-react";
+import { Search, Settings, ChevronUp, ChevronDown } from "lucide-react";
 import { CommunityList } from "@/components/features/communities/CommunityList";
 import { CommunityChat } from "@/components/features/communities/CommunityChat";
 import { CommunityInfo } from "@/components/features/communities/CommunityInfo";
@@ -530,6 +530,17 @@ function CommunitiesPageContent() {
   const [chatUser, setChatUser] = useState<{ id: string; name: string; profileImage?: string | null } | null>(null);
   const [isLoadingChatUser, setIsLoadingChatUser] = useState(false);
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
+  // Estados para busca no chat direto
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState<string>('');
+  const [currentSearchIndex, setCurrentSearchIndex] = useState<number>(0);
+  const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
+
+  // Estados para busca no chat de comunidades
+  const [communitySearchQuery, setCommunitySearchQuery] = useState<string>('');
+  const [activeCommunitySearchQuery, setActiveCommunitySearchQuery] = useState<string>('');
+  const [currentCommunitySearchIndex, setCurrentCommunitySearchIndex] = useState<number>(0);
+  const [lastCommunitySearchQuery, setLastCommunitySearchQuery] = useState<string>('');
   
   // Estados para loading do chat da comunidade
   const [isLoadingCommunityMessages, setIsLoadingCommunityMessages] = useState(false);
@@ -576,6 +587,20 @@ function CommunitiesPageContent() {
     deleteMessage,
   } = useChat();
 
+  // Calcular mensagens que correspondem à busca (após directMessages ser definido)
+  // Usar word boundaries para match apenas de palavras completas
+  const matchingMessages = activeSearchQuery.trim()
+    ? directMessages.filter((msg) => {
+        const query = activeSearchQuery.trim().toLowerCase();
+        const content = msg.content.toLowerCase();
+        // Usar regex com word boundaries para match de palavras completas
+        const regex = new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        return regex.test(content);
+      })
+    : [];
+  
+  const hasMultipleMatches = matchingMessages.length > 1;
+
   // Hook para chamadas de voz
   const {
     callState,
@@ -602,6 +627,19 @@ function CommunitiesPageContent() {
     loadMessages: loadCommunityMessages,
     loadPinnedMessages: loadCommunityPinnedMessages,
   } = useCommunityChat(selectedCommunityId || null);
+
+  // Calcular mensagens de comunidade que correspondem à busca (após communityMessages ser definido)
+  const matchingCommunityMessages = activeCommunitySearchQuery.trim()
+    ? communityMessages.filter((msg) => {
+        const query = activeCommunitySearchQuery.trim().toLowerCase();
+        const content = msg.content.toLowerCase();
+        // Usar regex com word boundaries para match de palavras completas
+        const regex = new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        return regex.test(content);
+      })
+    : [];
+  
+  const hasMultipleCommunityMatches = matchingCommunityMessages.length > 1;
 
   // Definir loadChatUser antes dos useEffects que o usam
   const loadChatUser = useCallback(async (userId: string) => {
@@ -1199,16 +1237,114 @@ function CommunitiesPageContent() {
             {/* Search Bar + Actions */}
             <div className="flex items-center gap-4">
               {/* Search Bar */}
-              <div className="relative" style={{ width: '280px' }}>
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
-                  style={{
-                    background: 'rgb(30, 30, 30)',
-                  }}
-                />
+              <div className="relative flex items-center gap-2" style={{ width: '280px' }}>
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        const trimmedQuery = searchQuery.trim();
+                        // Ativar o highlight apenas quando pressionar Enter
+                        setActiveSearchQuery(trimmedQuery);
+                        
+                        // Calcular mensagens correspondentes temporariamente
+                        const query = trimmedQuery.toLowerCase();
+                        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const regex = new RegExp(`\\b${escapedQuery}\\b`, 'i');
+                        const tempMatchingMessages = directMessages.filter((msg) =>
+                          regex.test(msg.content)
+                        );
+                        
+                        let newIndex: number;
+                        
+                        // Se é a mesma busca da última vez, navegar para a próxima
+                        if (trimmedQuery === lastSearchQuery && tempMatchingMessages.length > 0) {
+                          // Ir para a próxima mensagem (mais antiga, índice menor)
+                          newIndex = currentSearchIndex > 0 
+                            ? currentSearchIndex - 1 
+                            : tempMatchingMessages.length - 1;
+                        } else {
+                          // Nova busca: começar na última mensagem (mais recente)
+                          newIndex = tempMatchingMessages.length > 0 
+                            ? tempMatchingMessages.length - 1 
+                            : 0;
+                        }
+                        
+                        setCurrentSearchIndex(newIndex);
+                        setLastSearchQuery(trimmedQuery);
+                        
+                        // Disparar evento customizado para fazer scroll até a mensagem
+                        const event = new CustomEvent('scrollToSearch', { 
+                          detail: { query: trimmedQuery, index: newIndex } 
+                        });
+                        window.dispatchEvent(event);
+                      }
+                    }}
+                    onBlur={() => {
+                      // Limpar highlight quando sair do campo
+                      setActiveSearchQuery('');
+                      setCurrentSearchIndex(0);
+                      setLastSearchQuery('');
+                    }}
+                    className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
+                    style={{
+                      background: 'rgb(30, 30, 30)',
+                    }}
+                  />
+                </div>
+                {/* Botões de navegação */}
+                {hasMultipleMatches && (
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevenir blur do input
+                      }}
+                      onClick={() => {
+                        // Seta para cima: vai para mensagem mais antiga (índice menor)
+                        const newIndex = currentSearchIndex > 0 
+                          ? currentSearchIndex - 1 
+                          : matchingMessages.length - 1;
+                        setCurrentSearchIndex(newIndex);
+                        const event = new CustomEvent('scrollToSearch', { 
+                          detail: { query: activeSearchQuery, index: newIndex } 
+                        });
+                        window.dispatchEvent(event);
+                      }}
+                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
+                      style={{ background: 'rgb(30, 30, 30)' }}
+                      title="Mensagem anterior (mais antiga)"
+                    >
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevenir blur do input
+                      }}
+                      onClick={() => {
+                        // Seta para baixo: vai para mensagem mais recente (índice maior)
+                        const newIndex = currentSearchIndex < matchingMessages.length - 1 
+                          ? currentSearchIndex + 1 
+                          : 0;
+                        setCurrentSearchIndex(newIndex);
+                        const event = new CustomEvent('scrollToSearch', { 
+                          detail: { query: activeSearchQuery, index: newIndex } 
+                        });
+                        window.dispatchEvent(event);
+                      }}
+                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
+                      style={{ background: 'rgb(30, 30, 30)' }}
+                      title="Próxima mensagem (mais recente)"
+                    >
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Right Actions */}
@@ -1245,6 +1381,9 @@ function CommunitiesPageContent() {
                   currentUserName={userProfile.name}
                   currentUserAvatar={userProfile.profileImage}
                   messages={directMessages}
+                  searchQuery={activeSearchQuery}
+                  currentSearchIndex={currentSearchIndex}
+                  onSearchIndexChange={setCurrentSearchIndex}
                   isConnected={isConnected}
                   isTyping={isTyping}
                   typingUserId={typingUserId}
@@ -1313,16 +1452,112 @@ function CommunitiesPageContent() {
             {/* Search Bar + Actions */}
             <div className="flex items-center gap-4">
               {/* Search Bar */}
-              <div className="relative" style={{ width: '280px' }}>
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
-                  style={{
-                    background: 'rgb(30, 30, 30)',
-                  }}
-                />
+              <div className="relative flex items-center gap-2" style={{ width: '280px' }}>
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={communitySearchQuery}
+                    onChange={(e) => setCommunitySearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && communitySearchQuery.trim()) {
+                        const trimmedQuery = communitySearchQuery.trim();
+                        // Ativar o highlight apenas quando pressionar Enter
+                        setActiveCommunitySearchQuery(trimmedQuery);
+                        
+                        // Calcular mensagens correspondentes temporariamente
+                        const query = trimmedQuery.toLowerCase();
+                        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const regex = new RegExp(`\\b${escapedQuery}\\b`, 'i');
+                        const tempMatchingMessages = communityMessages.filter((msg) =>
+                          regex.test(msg.content)
+                        );
+                        
+                        let newIndex: number;
+                        
+                        // Se é a mesma busca da última vez, navegar para a próxima
+                        if (trimmedQuery === lastCommunitySearchQuery && tempMatchingMessages.length > 0) {
+                          // Ir para a próxima mensagem (mais antiga, índice menor)
+                          newIndex = currentCommunitySearchIndex > 0 
+                            ? currentCommunitySearchIndex - 1 
+                            : tempMatchingMessages.length - 1;
+                        } else {
+                          // Nova busca: começar na última mensagem (mais recente)
+                          newIndex = tempMatchingMessages.length > 0 
+                            ? tempMatchingMessages.length - 1 
+                            : 0;
+                        }
+                        
+                        setCurrentCommunitySearchIndex(newIndex);
+                        setLastCommunitySearchQuery(trimmedQuery);
+                        
+                        // Disparar evento customizado para fazer scroll até a mensagem
+                        const event = new CustomEvent('scrollToCommunitySearch', { 
+                          detail: { query: trimmedQuery, index: newIndex } 
+                        });
+                        window.dispatchEvent(event);
+                      }
+                    }}
+                    onBlur={() => {
+                      // Limpar highlight quando sair do campo
+                      setActiveCommunitySearchQuery('');
+                      setCurrentCommunitySearchIndex(0);
+                      setLastCommunitySearchQuery('');
+                    }}
+                    className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
+                    style={{
+                      background: 'rgb(30, 30, 30)',
+                    }}
+                  />
+                </div>
+                {/* Botões de navegação */}
+                {hasMultipleCommunityMatches && (
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevenir blur do input
+                      }}
+                      onClick={() => {
+                        const newIndex = currentCommunitySearchIndex > 0 
+                          ? currentCommunitySearchIndex - 1 
+                          : matchingCommunityMessages.length - 1;
+                        setCurrentCommunitySearchIndex(newIndex);
+                        const event = new CustomEvent('scrollToCommunitySearch', { 
+                          detail: { query: activeCommunitySearchQuery, index: newIndex } 
+                        });
+                        window.dispatchEvent(event);
+                      }}
+                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
+                      style={{ background: 'rgb(30, 30, 30)' }}
+                      title="Mensagem anterior (mais antiga)"
+                    >
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevenir blur do input
+                      }}
+                      onClick={() => {
+                        const newIndex = currentCommunitySearchIndex < matchingCommunityMessages.length - 1 
+                          ? currentCommunitySearchIndex + 1 
+                          : 0;
+                        setCurrentCommunitySearchIndex(newIndex);
+                        const event = new CustomEvent('scrollToCommunitySearch', { 
+                          detail: { query: activeCommunitySearchQuery, index: newIndex } 
+                        });
+                        window.dispatchEvent(event);
+                      }}
+                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
+                      style={{ background: 'rgb(30, 30, 30)' }}
+                      title="Próxima mensagem (mais recente)"
+                    >
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Right Actions */}
@@ -1370,6 +1605,9 @@ function CommunitiesPageContent() {
                 currentUserId={userProfile?.id}
                 currentUserName={userProfile?.name}
                 currentUserAvatar={userProfile?.profileImage}
+                searchQuery={activeCommunitySearchQuery}
+                currentSearchIndex={currentCommunitySearchIndex}
+                onSearchIndexChange={setCurrentCommunitySearchIndex}
                 onSendMessage={handleSendMessage}
                 onEditMessage={editCommunityMessage}
                 onDeleteMessage={deleteCommunityMessage}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Message } from '@/api/messages/send-message';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
@@ -32,6 +32,9 @@ interface DirectChatViewProps {
   currentUserName: string;
   currentUserAvatar?: string | null;
   messages: Message[];
+  searchQuery?: string;
+  currentSearchIndex?: number;
+  onSearchIndexChange?: (index: number) => void;
   isConnected: boolean;
   isTyping: boolean;
   typingUserId?: string | null;
@@ -53,6 +56,9 @@ export function DirectChatView({
   currentUserName,
   currentUserAvatar,
   messages,
+  searchQuery = '',
+  currentSearchIndex = 0,
+  onSearchIndexChange,
   isConnected,
   isTyping,
   typingUserId,
@@ -100,23 +106,29 @@ export function DirectChatView({
   // Scroll para o final quando as mensagens mudarem ou quando o chat for aberto
   useEffect(() => {
     if (messages.length > 0 && messagesContainerRef.current) {
-      // Verificar se é um novo chat ou se as mensagens mudaram
-      const shouldScroll = hasScrolledToBottomRef.current !== friendId || 
-                          messagesContainerRef.current.scrollHeight > messagesContainerRef.current.clientHeight;
+      // Sempre fazer scroll para o final quando abrir o chat ou quando as mensagens mudarem
+      // Usar um pequeno delay para garantir que o DOM foi totalmente renderizado
+      const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      };
       
-      if (shouldScroll) {
-        // Usar requestAnimationFrame para garantir que o DOM foi atualizado
-        requestAnimationFrame(() => {
-          if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-            hasScrolledToBottomRef.current = friendId;
-          }
-        });
-      }
+      // Marcar que já rolou para este chat
+      hasScrolledToBottomRef.current = friendId;
+      
+      // Usar requestAnimationFrame para garantir que o DOM foi atualizado
+      requestAnimationFrame(() => {
+        scrollToBottom();
+        // Fazer scroll novamente após um pequeno delay para garantir que todas as mensagens foram renderizadas
+        setTimeout(scrollToBottom, 100);
+        // Fazer scroll uma terceira vez após mais um delay para garantir que imagens/anexos foram carregados
+        setTimeout(scrollToBottom, 300);
+      });
     }
   }, [messages, friendId]);
 
-  // Escutar evento para fazer scroll até uma mensagem específica
+  // Escutar evento para fazer scroll até uma mensagem específica (pinned messages)
   useEffect(() => {
     const handleScrollToMessage = (event: CustomEvent<{ messageId: string }>) => {
       const { messageId } = event.detail;
@@ -152,6 +164,53 @@ export function DirectChatView({
       window.removeEventListener('scrollToMessage', handleScrollToMessage as EventListener);
     };
   }, []);
+
+  // Escutar evento para fazer scroll até mensagem encontrada na busca
+  useEffect(() => {
+    const handleScrollToSearch = (event: CustomEvent<{ query: string; index?: number }>) => {
+      const { query, index = 0 } = event.detail;
+      if (!query.trim()) return;
+
+      // Encontrar todas as mensagens que contém o termo de busca (palavras completas)
+      const queryLower = query.trim().toLowerCase();
+      const escapedQuery = queryLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escapedQuery}\\b`, 'i');
+      const matchingMessages = messages.filter((msg) =>
+        regex.test(msg.content)
+      );
+
+      // Usar o índice fornecido ou o índice atual
+      const targetIndex = index !== undefined ? index : currentSearchIndex;
+      const foundMessage = matchingMessages[targetIndex];
+
+      if (foundMessage) {
+        const messageElement = messageRefs.current.get(foundMessage.id);
+        if (messageElement) {
+          setTimeout(() => {
+            messageElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            
+            // Adicionar um destaque temporário na mensagem
+            messageElement.style.transition = 'all 0.3s ease';
+            messageElement.style.backgroundColor = 'rgba(179, 226, 64, 0.2)';
+            messageElement.style.borderRadius = '8px';
+            
+            setTimeout(() => {
+              messageElement.style.backgroundColor = '';
+              messageElement.style.borderRadius = '';
+            }, 2000);
+          }, 100);
+        }
+      }
+    };
+
+    window.addEventListener('scrollToSearch', handleScrollToSearch as EventListener);
+    return () => {
+      window.removeEventListener('scrollToSearch', handleScrollToSearch as EventListener);
+    };
+  }, [messages, currentSearchIndex]);
 
   // Fechar emoji picker quando clicar fora
   useEffect(() => {
@@ -282,6 +341,25 @@ export function DirectChatView({
       setMessage('');
     }
   };
+
+  // Função para destacar o texto da busca (usando dangerouslySetInnerHTML para evitar re-renderizações)
+  const highlightText = useMemo(() => {
+    return (text: string, query: string) => {
+      if (!query.trim()) {
+        // Escapar HTML para segurança
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      
+      // Escapar HTML do texto primeiro
+      const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Usar word boundaries para destacar apenas palavras completas
+      const regex = new RegExp(`\\b(${escapedQuery})\\b`, 'gi');
+      // Usar span com display: inline-block e line-height: inherit para não alterar layout
+      const highlighted = escapedText.replace(regex, '<span style="background-color: #B3E240; color: black; display: inline; line-height: inherit; padding: 0; border-radius: 2px; box-decoration-break: clone;">$1</span>');
+      return highlighted;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a]">
@@ -443,7 +521,13 @@ export function DirectChatView({
                             : 'bg-[#29292E] text-white border border-[#323238]'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{msg.content}</p>
+                        <p 
+                          className="text-sm whitespace-pre-wrap break-words" 
+                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                          dangerouslySetInnerHTML={{ 
+                            __html: highlightText(msg.content, searchQuery)
+                          }}
+                        />
                       </div>
                     )}
                     {msg.attachments && msg.attachments.length > 0 && (

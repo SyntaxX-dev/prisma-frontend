@@ -1,8 +1,9 @@
-import { ChevronDown, Home, BookOpen, Users, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain } from "lucide-react";
+import { ChevronDown, Home, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useNavigationWithLoading } from "../hooks/shared";
+import { getAuthState } from "@/lib/auth";
 
 interface SidebarProps {
   isDark: boolean;
@@ -90,12 +91,8 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
   const handleNavigation = (item: string) => {
     if (item === "Dashboard") {
       navigateWithLoading('/dashboard', 'Carregando Dashboard...');
-    } else if (item === "Cursos") {
-      navigateWithLoading('/courses', 'Carregando Cursos...');
-    } else if (item === "Comunidades") {
-      navigateWithLoading('/communities', 'Carregando Comunidades...');
     } else if (item === "Chats") {
-      navigateWithLoading('/courses', 'Carregando Chats...');
+      navigateWithLoading('/communities', 'Carregando Chats...');
     } else if (item === "Vistos atualmente") {
       navigateWithLoading('/watching', 'Carregando Vistos atualmente...');
     } else if (item === "Meu resumo") {
@@ -103,7 +100,14 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     } else if (item === "Mapas Mentais") {
       navigateWithLoading('/mind-maps', 'Carregando Mapas Mentais...');
     } else if (item === "Perfil") {
-      navigateWithLoading('/profile', 'Carregando Perfil...');
+      // Obter ID do usuário logado e redirecionar para o perfil
+      const authState = getAuthState();
+      const userId = authState.user?.id;
+      if (userId) {
+        router.push(`/profile?userId=${userId}`);
+      } else {
+        router.push('/profile');
+      }
     } else if (item === "Configurações") {
       navigateWithLoading('/settings', 'Carregando Configurações...');
     }
@@ -111,8 +115,6 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
 
   const mainItems = [
     { icon: Home, label: "Dashboard", active: true },
-    { icon: BookOpen, label: "Cursos" },
-    { icon: Users, label: "Comunidades" },
     { icon: MessageCircle, label: "Chats" },
     { icon: Eye, label: "Vistos atualmente" },
     { icon: FileText, label: "Meu resumo" },
@@ -121,7 +123,6 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
 
   const featuresItems = [
     { icon: FolderOpen, label: "Questões", disabled: true },
-    { icon: Zap, label: "IA study", disabled: true }
   ];
 
   const toolsItems = [
@@ -170,7 +171,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                 className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
                 <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                  MAIN
+                  Principal
                 </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ease-in-out ${collapsedSections.main ? 'rotate-180' : ''}`} />
               </button>
@@ -207,7 +208,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                 className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
                 <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                  FEATURES
+                  Novidades
                 </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ease-in-out ${collapsedSections.features ? 'rotate-180' : ''}`} />
               </button>
@@ -254,7 +255,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                 className="flex items-center justify-between w-full text-gray-300 font-medium mb-3 hover:text-gray-100 transition-colors cursor-pointer overflow-hidden"
               >
                 <span className={`transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                  TOOLS
+                  Ferramentas
                 </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ease-in-out ${collapsedSections.tools ? 'rotate-180' : ''}`} />
               </button>
@@ -269,6 +270,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                   <div key={index} className="relative">
                     <Button
                       variant="ghost"
+                      onClick={() => handleNavigation(item.label)}
                       className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isExpanded ? 'justify-start px-3 py-2' : 'justify-center px-2 py-2'}`}
                     >
                       <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
