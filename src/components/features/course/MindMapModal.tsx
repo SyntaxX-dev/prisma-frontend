@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Brain, Download, Network, FileText } from "lucide-react";
-import { generateMindMap } from "@/api/mind-map/generate-mind-map";
+import { generateMindMap, getGenerationLimits, AllLimitsInfo, GenerationType } from "@/api/mind-map/generate-mind-map";
 import { LoadingGrid } from "../../ui/loading-grid";
 import InteractiveMindMap from "./InteractiveMindMap";
 import ReactMarkdown from 'react-markdown';
@@ -29,9 +29,24 @@ export function MindMapModal({
   const [mindMap, setMindMap] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'interactive' | 'markdown'>('interactive');
+  const [limitsInfo, setLimitsInfo] = useState<AllLimitsInfo | null>(null);
+  const [generatedType, setGeneratedType] = useState<GenerationType | null>(null);
 
-  const handleGenerateMindMap = async () => {
+  // Buscar informações dos limites quando o modal abre
+  useEffect(() => {
+    if (open) {
+      getGenerationLimits()
+        .then((response) => {
+          setLimitsInfo(response.data);
+        })
+        .catch(() => {
+          // Silently fail - user can still try to generate
+        });
+    }
+  }, [open]);
+
+
+  const handleGenerate = async (type: GenerationType) => {
     setLoading(true);
     setError(null);
 
@@ -42,19 +57,41 @@ export function MindMapModal({
         videoTitle,
         videoDescription: videoDescription || "Sem descrição disponível",
         videoUrl: url,
+        generationType: type,
       });
 
       setMindMap(response.data.content);
-    } catch (err: any) {
-      // Melhorar mensagem de erro
-      let errorMessage = 'Erro ao gerar mapa mental';
+      setGeneratedType(type);
 
-      if (err?.message?.includes('503') || err?.message?.includes('Service Unavailable')) {
-        errorMessage = '⚠️ O serviço de AI está temporariamente indisponível. Tente novamente em alguns instantes.';
-      } else if (err?.message?.includes('500') || err?.message?.includes('Internal Server Error')) {
-        errorMessage = '⚠️ Erro interno do servidor. Por favor, tente novamente.';
-      } else if (err?.message?.includes('401')) {
-        errorMessage = '🔑 Erro de autenticação.';
+      // Atualizar limites após geração bem-sucedida
+      if (response.data.remainingGenerations !== undefined) {
+        setLimitsInfo(prev => prev ? {
+          ...prev,
+          [type]: {
+            ...prev[type],
+            remainingGenerations: response.data.remainingGenerations!,
+            generationsToday: prev[type].generationsToday + 1,
+            canGenerate: response.data.remainingGenerations! > 0
+          }
+        } : null);
+      }
+    } catch (err: unknown) {
+      const typeLabel = type === 'mindmap' ? 'mapa mental' : 'texto';
+      let errorMessage = `Erro ao gerar ${typeLabel}`;
+
+      const errorObj = err as { response?: { data?: { code?: string; message?: string } }; message?: string };
+
+      // Verificar se é erro de limite excedido
+      if (errorObj?.response?.data?.code === 'MIND_MAP_LIMIT_EXCEEDED' ||
+          errorObj?.response?.data?.code === 'TEXT_LIMIT_EXCEEDED' ||
+          errorObj?.message?.includes('Limite diário')) {
+        errorMessage = errorObj?.response?.data?.message || errorObj?.message || `Você atingiu o limite diário de gerações de ${typeLabel}.`;
+      } else if (errorObj?.message?.includes('503') || errorObj?.message?.includes('Service Unavailable')) {
+        errorMessage = 'O serviço de AI está temporariamente indisponível. Tente novamente em alguns instantes.';
+      } else if (errorObj?.message?.includes('500') || errorObj?.message?.includes('Internal Server Error')) {
+        errorMessage = 'Erro interno do servidor. Por favor, tente novamente.';
+      } else if (errorObj?.message?.includes('401')) {
+        errorMessage = 'Erro de autenticação.';
       } else if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -99,19 +136,75 @@ export function MindMapModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto">
+          {/* Mostrar informações dos limites */}
+          {limitsInfo && !mindMap && (
+            <div className="mb-4 flex gap-4">
+              {/* Limite Mapa Mental */}
+              <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                !limitsInfo.mindmap.canGenerate
+                  ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                  : 'bg-white/5 border border-white/10 text-white/60'
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Network className="w-4 h-4" />
+                  <span className="font-medium">Mapa Mental</span>
+                </div>
+                <span>
+                  {!limitsInfo.mindmap.canGenerate
+                    ? `Limite atingido (${limitsInfo.mindmap.generationsToday}/${limitsInfo.mindmap.dailyLimit})`
+                    : `Restantes: ${limitsInfo.mindmap.remainingGenerations}/${limitsInfo.mindmap.dailyLimit}`
+                  }
+                </span>
+              </div>
+              {/* Limite Texto */}
+              <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                !limitsInfo.text.canGenerate
+                  ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                  : 'bg-white/5 border border-white/10 text-white/60'
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <FileText className="w-4 h-4" />
+                  <span className="font-medium">Texto</span>
+                </div>
+                <span>
+                  {!limitsInfo.text.canGenerate
+                    ? `Limite atingido (${limitsInfo.text.generationsToday}/${limitsInfo.text.dailyLimit})`
+                    : `Restantes: ${limitsInfo.text.remainingGenerations}/${limitsInfo.text.dailyLimit}`
+                  }
+                </span>
+              </div>
+            </div>
+          )}
+
           {!mindMap && !loading && !error && (
             <div className="flex flex-col items-center justify-center py-12">
               <Brain className="w-16 h-16 text-white/30 mb-4" />
-              <p className="text-white/60 mb-6 text-center">
-                Clique no botão abaixo para gerar um mapa mental inteligente deste vídeo usando IA
+              <p className="text-white/60 mb-6 text-center max-w-lg">
+                Escolha o tipo de conteúdo que deseja gerar para este vídeo usando IA
               </p>
-              <Button
-                onClick={handleGenerateMindMap}
-                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all"
-              >
-                <Brain className="w-5 h-5 mr-2" />
-                Gerar Mapa Mental
-              </Button>
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => handleGenerate('mindmap')}
+                  disabled={limitsInfo ? !limitsInfo.mindmap.canGenerate : false}
+                  className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Network className="w-5 h-5 mr-2" />
+                  Gerar Mapa Mental
+                </Button>
+                <Button
+                  onClick={() => handleGenerate('text')}
+                  disabled={limitsInfo ? !limitsInfo.text.canGenerate : false}
+                  className="bg-[#1e88e5] hover:bg-[#1976d2] text-white font-semibold shadow-lg hover:shadow-[#1e88e5]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileText className="w-5 h-5 mr-2" />
+                  Gerar Texto
+                </Button>
+              </div>
+              {limitsInfo && !limitsInfo.mindmap.canGenerate && !limitsInfo.text.canGenerate && (
+                <p className="text-red-400 mt-4 text-sm">
+                  Você atingiu o limite diário de ambos os tipos. Tente novamente amanhã.
+                </p>
+              )}
             </div>
           )}
 
@@ -119,7 +212,7 @@ export function MindMapModal({
             <div className="flex flex-col items-center justify-center py-12">
               <LoadingGrid size="80" color="#bd18b4" />
               <div className="text-center mt-6 space-y-2">
-                <p className="text-white/80 text-lg font-semibold">Gerando mapa mental com nossa IA...</p>
+                <p className="text-white/80 text-lg font-semibold">Gerando conteúdo com nossa IA...</p>
                 <p className="text-white/50 text-sm">Isso pode levar alguns segundos. Por favor, aguarde.</p>
               </div>
             </div>
@@ -130,15 +223,15 @@ export function MindMapModal({
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 text-3xl">⚠️</div>
                 <div className="flex-1">
-                  <p className="font-semibold text-lg mb-2">Erro ao gerar mapa mental</p>
+                  <p className="font-semibold text-lg mb-2">Erro ao gerar conteúdo</p>
                   <p className="text-sm text-red-300 leading-relaxed mb-4">{error}</p>
                   <div className="flex gap-2">
                     <Button
-                      onClick={handleGenerateMindMap}
+                      onClick={() => setError(null)}
                       className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30"
                     >
                       <Brain className="w-4 h-4 mr-2" />
-                      Tentar novamente
+                      Voltar
                     </Button>
                     <Button
                       onClick={handleClose}
@@ -156,29 +249,19 @@ export function MindMapModal({
           {mindMap && (
             <div className="space-y-4 h-[calc(96vh-160px)]">
               <div className="flex justify-between items-center gap-2">
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setViewMode('interactive')}
-                    variant={viewMode === 'interactive' ? 'default' : 'ghost'}
-                    className={viewMode === 'interactive'
-                      ? 'bg-[#bd18b4] hover:bg-[#aa22c5] text-black'
-                      : 'text-white/60 hover:text-white hover:bg-white/10'
-                    }
-                  >
-                    <Network className="w-4 h-4 mr-2" />
-                    Mapa Mental
-                  </Button>
-                  <Button
-                    onClick={() => setViewMode('markdown')}
-                    variant={viewMode === 'markdown' ? 'default' : 'ghost'}
-                    className={viewMode === 'markdown'
-                      ? 'bg-[#bd18b4] hover:bg-[#aa22c5] text-black'
-                      : 'text-white/60 hover:text-white hover:bg-white/10'
-                    }
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Texto
-                  </Button>
+                <div className="flex gap-2 items-center">
+                  {generatedType === 'mindmap' && (
+                    <span className="text-white/60 flex items-center gap-2">
+                      <Network className="w-4 h-4" />
+                      Mapa Mental Interativo
+                    </span>
+                  )}
+                  {generatedType === 'text' && (
+                    <span className="text-white/60 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Resumo em Texto
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -191,17 +274,20 @@ export function MindMapModal({
                     Baixar
                   </Button>
                   <Button
-                    onClick={handleGenerateMindMap}
+                    onClick={() => {
+                      setMindMap(null);
+                      setGeneratedType(null);
+                    }}
                     variant="ghost"
                     className="text-white/60 hover:text-white hover:bg-white/10"
                   >
                     <Brain className="w-4 h-4 mr-2" />
-                    Gerar novamente
+                    Gerar outro
                   </Button>
                 </div>
               </div>
 
-              {viewMode === 'interactive' ? (
+              {generatedType === 'mindmap' ? (
                 <div className="h-full border border-white/10 rounded-lg overflow-hidden">
                   <InteractiveMindMap markdown={mindMap} />
                 </div>

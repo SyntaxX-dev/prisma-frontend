@@ -16,7 +16,7 @@ import { useCacheInvalidation } from "@/hooks/shared";
 import { saveVideoTimestamp } from "@/api/progress/save-video-timestamp";
 import { getInProgressVideos } from "@/api/progress/get-in-progress-videos";
 import InteractiveMindMap from "./InteractiveMindMap";
-import { generateMindMap, getMindMapByVideo } from "@/api/mind-map/generate-mind-map";
+import { generateMindMap, getMindMapByVideo, getGenerationLimits, AllLimitsInfo, GenerationType } from "@/api/mind-map/generate-mind-map";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -108,7 +108,8 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [mindMap, setMindMap] = useState<string | null>(null);
   const [mindMapLoading, setMindMapLoading] = useState(false);
   const [mindMapError, setMindMapError] = useState<string | null>(null);
-  const [mindMapViewMode, setMindMapViewMode] = useState<'interactive' | 'text'>('interactive');
+  const [limitsInfo, setLimitsInfo] = useState<AllLimitsInfo | null>(null);
+  const [generatedType, setGeneratedType] = useState<GenerationType | null>(null);
   const fetchingRef = useRef(false);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -605,11 +606,18 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const fetchExistingMindMap = useCallback(async () => {
     if (!selectedVideo?.id) return;
 
+    // Resetar estado do mapa mental quando muda de vídeo
+    setMindMap(null);
+    setMindMapError(null);
+    setGeneratedType(null);
+
     try {
       const response = await getMindMapByVideo(selectedVideo.id);
 
       if (response.success && response.data) {
         setMindMap(response.data.content);
+        // Usar o tipo de geração salvo ou padrão para 'mindmap' para compatibilidade
+        setGeneratedType(response.data.generationType || 'mindmap');
       }
     } catch {
       // Silenciosamente falha - não há mapa mental existente
@@ -617,7 +625,22 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     }
   }, [selectedVideo?.id]);
 
-  const handleGenerateMindMap = async () => {
+  // Buscar limite de mapas mentais
+  const fetchLimitsInfo = useCallback(async () => {
+    try {
+      const response = await getGenerationLimits();
+      setLimitsInfo(response.data);
+    } catch {
+      // Silently fail
+    }
+  }, []);
+
+  // Buscar limite quando componente monta
+  useEffect(() => {
+    fetchLimitsInfo();
+  }, [fetchLimitsInfo]);
+
+  const handleGenerate = async (type: GenerationType) => {
     if (!selectedVideo) return;
 
     setMindMapLoading(true);
@@ -630,20 +653,39 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         videoTitle: selectedVideo.title,
         videoDescription: selectedVideo.description || "Sem descrição disponível",
         videoUrl: url,
+        generationType: type,
       });
 
       setMindMap(response.data.content);
+      setGeneratedType(type);
+
+      // Atualizar limites após geração bem-sucedida
+      if (response.data.remainingGenerations !== undefined) {
+        setLimitsInfo(prev => prev ? {
+          ...prev,
+          [type]: {
+            ...prev[type],
+            remainingGenerations: response.data.remainingGenerations!,
+            generationsToday: prev[type].generationsToday + 1,
+            canGenerate: response.data.remainingGenerations! > 0
+          }
+        } : null);
+      }
     } catch (err: unknown) {
-      let errorMessage = 'Erro ao gerar mapa mental';
+      const typeLabel = type === 'mindmap' ? 'mapa mental' : 'texto';
+      let errorMessage = `Erro ao gerar ${typeLabel}`;
 
       const message = err instanceof Error ? err.message : String(err);
 
-      if (message.includes('503') || message.includes('Service Unavailable')) {
-        errorMessage = '⚠️ O serviço de AI está temporariamente indisponível. Tente novamente em alguns instantes.';
+      // Verificar se é erro de limite excedido
+      if (message.includes('Limite diário') || message.includes('LIMIT_EXCEEDED')) {
+        errorMessage = message || `Você atingiu o limite diário de gerações de ${typeLabel}.`;
+      } else if (message.includes('503') || message.includes('Service Unavailable')) {
+        errorMessage = 'O serviço de AI está temporariamente indisponível. Tente novamente em alguns instantes.';
       } else if (message.includes('500') || message.includes('Internal Server Error')) {
-        errorMessage = '⚠️ Erro interno do servidor. Por favor, tente novamente.';
+        errorMessage = 'Erro interno do servidor. Por favor, tente novamente.';
       } else if (message.includes('401') || message.includes('API Key')) {
-        errorMessage = '🔑 Erro de autenticação com a API.';
+        errorMessage = 'Erro de autenticação com a API.';
       } else if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -875,26 +917,82 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
             <TabsContent value="mindmap" className="mt-6">
               <div className="space-y-4">
-                {!mindMap && !mindMapLoading && (
+                {/* Mostrar informações dos limites */}
+                {limitsInfo && !mindMap && (
+                  <div className="flex gap-4">
+                    {/* Limite Mapa Mental */}
+                    <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                      !limitsInfo.mindmap.canGenerate
+                        ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                        : 'bg-white/5 border border-white/10 text-white/60'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Brain className="w-4 h-4" />
+                        <span className="font-medium">Mapa Mental</span>
+                      </div>
+                      <span>
+                        {!limitsInfo.mindmap.canGenerate
+                          ? `Limite atingido (${limitsInfo.mindmap.generationsToday}/${limitsInfo.mindmap.dailyLimit})`
+                          : `Restantes: ${limitsInfo.mindmap.remainingGenerations}/${limitsInfo.mindmap.dailyLimit}`
+                        }
+                      </span>
+                    </div>
+                    {/* Limite Texto */}
+                    <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                      !limitsInfo.text.canGenerate
+                        ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                        : 'bg-white/5 border border-white/10 text-white/60'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="w-4 h-4" />
+                        <span className="font-medium">Texto</span>
+                      </div>
+                      <span>
+                        {!limitsInfo.text.canGenerate
+                          ? `Limite atingido (${limitsInfo.text.generationsToday}/${limitsInfo.text.dailyLimit})`
+                          : `Restantes: ${limitsInfo.text.remainingGenerations}/${limitsInfo.text.dailyLimit}`
+                        }
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {!mindMap && !mindMapLoading && !mindMapError && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
                     <Brain className="w-16 h-16 text-white/30 mx-auto mb-4" />
                     <p className="text-white/60 mb-6">
-                      Gera o mapa mental deste vídeo usando nossa IA
+                      Escolha o tipo de conteúdo que deseja gerar para este vídeo usando IA
                     </p>
-                    <Button
-                      onClick={handleGenerateMindMap}
-                      className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all"
-                    >
-                      <Brain className="w-5 h-5 mr-2" />
-                      Gerar Mapa Mental
-                    </Button>
+                    <div className="flex gap-4 justify-center">
+                      <Button
+                        onClick={() => handleGenerate('mindmap')}
+                        disabled={limitsInfo ? !limitsInfo.mindmap.canGenerate : false}
+                        className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Brain className="w-5 h-5 mr-2" />
+                        Gerar Mapa Mental
+                      </Button>
+                      <Button
+                        onClick={() => handleGenerate('text')}
+                        disabled={limitsInfo ? !limitsInfo.text.canGenerate : false}
+                        className="bg-[#1e88e5] cursor-pointer hover:bg-[#1976d2] text-white font-semibold shadow-lg hover:shadow-[#1e88e5]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FileText className="w-5 h-5 mr-2" />
+                        Gerar Texto
+                      </Button>
+                    </div>
+                    {limitsInfo && !limitsInfo.mindmap.canGenerate && !limitsInfo.text.canGenerate && (
+                      <p className="text-red-400 mt-4 text-sm">
+                        Você atingiu o limite diário de ambos os tipos. Tente novamente amanhã.
+                      </p>
+                    )}
                   </div>
                 )}
 
                 {mindMapLoading && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
                     <LoadingGrid size="60" color="#bd18b4" />
-                    <p className="text-white/80 text-lg font-semibold mt-6">Gerando mapa mental com IA...</p>
+                    <p className="text-white/80 text-lg font-semibold mt-6">Gerando conteúdo com IA...</p>
                     <p className="text-white/50 text-sm mt-2">Isso pode levar alguns segundos. Por favor, aguarde.</p>
                   </div>
                 )}
@@ -904,14 +1002,14 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 text-3xl">⚠️</div>
                       <div className="flex-1">
-                        <p className="font-semibold text-lg mb-2">Erro ao gerar mapa mental</p>
+                        <p className="font-semibold text-lg mb-2">Erro ao gerar conteúdo</p>
                         <p className="text-sm text-red-300 leading-relaxed mb-4">{mindMapError}</p>
                         <Button
-                          onClick={handleGenerateMindMap}
+                          onClick={() => setMindMapError(null)}
                           className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30"
                         >
                           <Brain className="w-4 h-4 mr-2" />
-                          Tentar novamente
+                          Voltar
                         </Button>
                       </div>
                     </div>
@@ -921,33 +1019,19 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 {mindMap && (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center gap-2">
-                      <div className="flex gap-1 bg-white/5 backdrop-blur-sm rounded-lg p-1 border border-white/10">
-                        <Button
-                          onClick={() => setMindMapViewMode('interactive')}
-                          variant="ghost"
-                          size="sm"
-                          className={`${
-                            mindMapViewMode === 'interactive'
-                              ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
-                              : 'text-white/60 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <Brain className="w-4 h-4 mr-2" />
-                          Mapa Mental
-                        </Button>
-                        <Button
-                          onClick={() => setMindMapViewMode('text')}
-                          variant="ghost"
-                          size="sm"
-                          className={`${
-                            mindMapViewMode === 'text'
-                              ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
-                              : 'text-white/60 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <FileText className="w-4 h-4 mr-2" />
-                          Texto
-                        </Button>
+                      <div className="flex gap-2 items-center">
+                        {generatedType === 'mindmap' && (
+                          <span className="text-white/60 flex items-center gap-2">
+                            <Brain className="w-4 h-4" />
+                            Mapa Mental Interativo
+                          </span>
+                        )}
+                        {generatedType === 'text' && (
+                          <span className="text-white/60 flex items-center gap-2">
+                            <FileText className="w-4 h-4" />
+                            Resumo em Texto
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -956,7 +1040,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `mapa-mental-${selectedVideo?.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.md`;
+                            a.download = `${generatedType === 'mindmap' ? 'mapa-mental' : 'resumo'}-${selectedVideo?.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.md`;
                             document.body.appendChild(a);
                             a.click();
                             document.body.removeChild(a);
@@ -970,18 +1054,21 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                           Baixar
                         </Button>
                         <Button
-                          onClick={handleGenerateMindMap}
+                          onClick={() => {
+                            setMindMap(null);
+                            setGeneratedType(null);
+                          }}
                           variant="ghost"
                           size="sm"
                           className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10"
                         >
                           <Brain className="w-4 h-4 mr-2" />
-                          Gerar novamente
+                          Gerar outro
                         </Button>
                       </div>
                     </div>
 
-                    {mindMapViewMode === 'interactive' ? (
+                    {generatedType === 'mindmap' ? (
                       <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden" style={{ height: '600px' }}>
                         <InteractiveMindMap markdown={mindMap} />
                       </div>
