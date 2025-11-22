@@ -1,22 +1,23 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { Brain, Calendar, Loader2 } from 'lucide-react';
+import { Calendar, FileText, Loader2 } from 'lucide-react';
 import { listUserMindMaps, MindMapData } from '@/api/mind-map/generate-mind-map';
 import { Button } from '@/components/ui/button';
-import InteractiveMindMap from '@/components/features/course/InteractiveMindMap';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Navbar } from '@/components/layout';
 import { Sidebar } from '@/components/Sidebar';
 import DotGrid from '@/components/shared/DotGrid';
 import { LoadingGrid } from '@/components/ui/loading-grid';
 import { usePageDataLoad } from '@/hooks/shared';
 
-function MindMapsContent() {
+function MySummariesContent() {
   const [isDark, setIsDark] = useState(true);
-  const [mindMaps, setMindMaps] = useState<MindMapData[]>([]);
+  const [summaries, setSummaries] = useState<MindMapData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMindMap, setSelectedMindMap] = useState<MindMapData | null>(null);
+  const [selectedSummary, setSelectedSummary] = useState<MindMapData | null>(null);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -28,28 +29,28 @@ function MindMapsContent() {
   });
 
   useEffect(() => {
-    const fetchMindMaps = async () => {
+    const fetchSummaries = async () => {
       try {
         const response = await listUserMindMaps();
         if (response.success && response.data && Array.isArray(response.data.mindMaps)) {
-          // Filter only mind maps (not text summaries)
-          const onlyMindMaps = response.data.mindMaps.filter(
-            (map) => (map.generationType || 'mindmap') === 'mindmap'
+          // Filter only text summaries
+          const textSummaries = response.data.mindMaps.filter(
+            (map) => map.generationType === 'text'
           );
-          setMindMaps(onlyMindMaps);
+          setSummaries(textSummaries);
         } else {
-          setMindMaps([]);
+          setSummaries([]);
         }
       } catch (err) {
-        setError('Erro ao carregar mapas mentais');
-        console.error('Error fetching mind maps:', err);
-        setMindMaps([]);
+        setError('Erro ao carregar resumos');
+        console.error('Error fetching summaries:', err);
+        setSummaries([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMindMaps();
+    fetchSummaries();
   }, []);
 
   const formatDate = (dateString: string) => {
@@ -84,7 +85,7 @@ function MindMapsContent() {
             <div style={{ marginTop: '80px' }} className="flex items-center justify-center min-h-[calc(100vh-80px)]">
               <div className="text-center">
                 <Loader2 className="w-12 h-12 text-[#bd18b4] animate-spin mx-auto mb-4" />
-                <p className="text-white/70">Carregando mapas mentais...</p>
+                <p className="text-white/70">Carregando resumos...</p>
               </div>
             </div>
           </div>
@@ -150,45 +151,45 @@ function MindMapsContent() {
               {/* Header */}
               <div className="mb-8">
                 <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                  <Brain className="w-10 h-10 text-[#bd18b4]" />
-                  Meus Mapas Mentais
+                  <FileText className="w-10 h-10 text-[#bd18b4]" />
+                  Meus Resumos
                 </h1>
                 <p className="text-white/70">
-                  {mindMaps.length === 0
-                    ? 'Você ainda não gerou nenhum mapa mental'
-                    : `${mindMaps.length} ${mindMaps.length === 1 ? 'mapa mental gerado' : 'mapas mentais gerados'}`}
+                  {summaries.length === 0
+                    ? 'Você ainda não gerou nenhum resumo'
+                    : `${summaries.length} ${summaries.length === 1 ? 'resumo gerado' : 'resumos gerados'}`}
                 </p>
               </div>
 
-              {/* Mind Maps Grid */}
-              {mindMaps.length === 0 ? (
+              {/* Summaries Grid */}
+              {summaries.length === 0 ? (
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-12 text-center border border-white/10">
-                  <Brain className="w-20 h-20 text-white/30 mx-auto mb-4" />
-                  <h2 className="text-2xl font-semibold text-white mb-2">Nenhum mapa mental encontrado</h2>
+                  <FileText className="w-20 h-20 text-white/30 mx-auto mb-4" />
+                  <h2 className="text-2xl font-semibold text-white mb-2">Nenhum resumo encontrado</h2>
                   <p className="text-white/60">
-                    Vá para uma aula e gere seu primeiro mapa mental para estudo do ENEM!
+                    Vá para uma aula e gere seu primeiro resumo para estudo do ENEM!
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {mindMaps.map((mindMap) => (
+                  {summaries.map((summary) => (
                     <div
-                      key={mindMap.id}
+                      key={summary.id}
                       className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-[#bd18b4]/50 transition-all cursor-pointer group flex flex-col h-full min-h-[200px]"
-                      onClick={() => setSelectedMindMap(mindMap)}
+                      onClick={() => setSelectedSummary(summary)}
                     >
                       <div className="flex items-start gap-3 mb-4">
-                        <Brain className="w-6 h-6 text-[#bd18b4] flex-shrink-0 mt-1" />
+                        <FileText className="w-6 h-6 text-[#bd18b4] flex-shrink-0 mt-1" />
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2 group-hover:text-[#c532e2] transition-colors">
-                            {mindMap.videoTitle}
+                            {summary.videoTitle}
                           </h3>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 text-white/50 text-sm">
                         <Calendar className="w-4 h-4" />
-                        <span>{formatDate(mindMap.createdAt)}</span>
+                        <span>{formatDate(summary.createdAt)}</span>
                       </div>
 
                       <div className="flex-1" />
@@ -197,11 +198,11 @@ function MindMapsContent() {
                         className="w-full mt-4 bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedMindMap(mindMap);
+                          setSelectedSummary(summary);
                         }}
                       >
-                        <Brain className="w-4 h-4 mr-2" />
-                        Visualizar Mapa
+                        <FileText className="w-4 h-4 mr-2" />
+                        Visualizar Resumo
                       </Button>
                     </div>
                   ))}
@@ -209,27 +210,27 @@ function MindMapsContent() {
               )}
 
               {/* Modal */}
-              {selectedMindMap && (
+              {selectedSummary && (
                 <div
                   className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                  onClick={() => setSelectedMindMap(null)}
+                  onClick={() => setSelectedSummary(null)}
                 >
                   <div
-                    className="bg-gray-900 rounded-xl max-w-7xl w-full max-h-[90vh] overflow-hidden border border-white/10"
+                    className="bg-gray-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-white/10"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* Modal Header */}
                     <div className="p-6 border-b border-white/10">
-                      <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <h2 className="text-2xl font-bold text-white mb-2">{selectedMindMap.videoTitle}</h2>
+                          <h2 className="text-2xl font-bold text-white mb-2">{selectedSummary.videoTitle}</h2>
                           <div className="flex items-center gap-2 text-white/50 text-sm">
                             <Calendar className="w-4 h-4" />
-                            <span>{formatDate(selectedMindMap.createdAt)}</span>
+                            <span>{formatDate(selectedSummary.createdAt)}</span>
                           </div>
                         </div>
                         <Button
-                          onClick={() => setSelectedMindMap(null)}
+                          onClick={() => setSelectedSummary(null)}
                           variant="ghost"
                           className="text-white/70 hover:text-[#bd18b4] hover:bg-[#bd18b4]/20 cursor-pointer"
                         >
@@ -238,10 +239,26 @@ function MindMapsContent() {
                       </div>
                     </div>
 
-                    {/* Modal Content - Apenas Mapa Mental */}
+                    {/* Modal Content */}
                     <div className="p-6 overflow-auto" style={{ height: 'calc(90vh - 150px)' }}>
-                      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden h-full">
-                        <InteractiveMindMap markdown={selectedMindMap.content} />
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 h-full overflow-auto">
+                        <div className="prose prose-invert max-w-none text-white">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              h1: ({ ...props }) => <h1 className="text-white text-3xl font-bold mb-4" {...props} />,
+                              h2: ({ ...props }) => <h2 className="text-white text-2xl font-semibold mb-3 mt-6" {...props} />,
+                              h3: ({ ...props }) => <h3 className="text-white text-xl font-semibold mb-2 mt-4" {...props} />,
+                              p: ({ ...props }) => <p className="text-white/80 mb-3" {...props} />,
+                              li: ({ ...props }) => <li className="text-white/80" {...props} />,
+                              ul: ({ ...props }) => <ul className="text-white/80 list-disc pl-6 mb-3" {...props} />,
+                              ol: ({ ...props }) => <ol className="text-white/80 list-decimal pl-6 mb-3" {...props} />,
+                              strong: ({ ...props }) => <strong className="text-white font-bold" {...props} />,
+                            }}
+                          >
+                            {selectedSummary.content}
+                          </ReactMarkdown>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -255,14 +272,14 @@ function MindMapsContent() {
   );
 }
 
-export default function MindMapsPage() {
+export default function MySummariesPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-black">
         <LoadingGrid size="60" color="#bd18b4" />
       </div>
     }>
-      <MindMapsContent />
+      <MySummariesContent />
     </Suspense>
   );
 }

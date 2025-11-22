@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../ui/dialog";
 import { Button } from "../../ui/button";
-import { Brain, Download, Network, FileText } from "lucide-react";
+import { Brain, Download, Network, FileText, Loader2 } from "lucide-react";
 import { generateMindMap, getGenerationLimits, AllLimitsInfo, GenerationType } from "@/api/mind-map/generate-mind-map";
 import { LoadingGrid } from "../../ui/loading-grid";
 import InteractiveMindMap from "./InteractiveMindMap";
@@ -31,6 +31,7 @@ export function MindMapModal({
   const [error, setError] = useState<string | null>(null);
   const [limitsInfo, setLimitsInfo] = useState<AllLimitsInfo | null>(null);
   const [generatedType, setGeneratedType] = useState<GenerationType | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   // Buscar informações dos limites quando o modal abre
   useEffect(() => {
@@ -102,18 +103,219 @@ export function MindMapModal({
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!mindMap) return;
 
-    const blob = new Blob([mindMap], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `mapa-mental-${videoTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setDownloading(true);
+
+    try {
+      // Importar jsPDF diretamente (evita html2canvas e o erro oklch)
+      const { jsPDF } = await import('jspdf');
+
+      const fileName = generatedType === 'mindmap'
+        ? `mapa-mental-${videoTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`
+        : `resumo-${videoTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`;
+
+      // Função para normalizar texto (remover emojis e caracteres especiais problemáticos)
+      const normalizeText = (text: string): string => {
+        return text
+          // Remover emojis e símbolos especiais
+          .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Emoticons
+          .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Símbolos diversos
+          .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Transporte e mapas
+          .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Bandeiras
+          .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Símbolos diversos
+          .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+          .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation selectors
+          .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // Símbolos suplementares
+          .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '') // Símbolos de xadrez
+          .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '') // Símbolos estendidos
+          .replace(/[\u{231A}-\u{231B}]/gu, '')   // Watch, hourglass
+          .replace(/[\u{23E9}-\u{23F3}]/gu, '')   // Outros símbolos de mídia
+          .replace(/[\u{23F8}-\u{23FA}]/gu, '')   // Controles de mídia
+          .replace(/[\u{25AA}-\u{25AB}]/gu, '')   // Quadrados
+          .replace(/[\u{25B6}]/gu, '')            // Play
+          .replace(/[\u{25C0}]/gu, '')            // Reverse
+          .replace(/[\u{25FB}-\u{25FE}]/gu, '')   // Quadrados médios
+          .replace(/[\u{2614}-\u{2615}]/gu, '')   // Guarda-chuva e café
+          .replace(/[\u{2648}-\u{2653}]/gu, '')   // Signos do zodíaco
+          .replace(/[\u{267F}]/gu, '')            // Cadeira de rodas
+          .replace(/[\u{2693}]/gu, '')            // Âncora
+          .replace(/[\u{26A1}]/gu, '')            // Raio
+          .replace(/[\u{26AA}-\u{26AB}]/gu, '')   // Círculos
+          .replace(/[\u{26BD}-\u{26BE}]/gu, '')   // Bolas de esporte
+          .replace(/[\u{26C4}-\u{26C5}]/gu, '')   // Boneco de neve e sol
+          .replace(/[\u{26CE}]/gu, '')            // Ofiúco
+          .replace(/[\u{26D4}]/gu, '')            // Proibido
+          .replace(/[\u{26EA}]/gu, '')            // Igreja
+          .replace(/[\u{26F2}-\u{26F3}]/gu, '')   // Fonte e golfe
+          .replace(/[\u{26F5}]/gu, '')            // Veleiro
+          .replace(/[\u{26FA}]/gu, '')            // Barraca
+          .replace(/[\u{26FD}]/gu, '')            // Posto de gasolina
+          .replace(/[\u{2702}]/gu, '')            // Tesoura
+          .replace(/[\u{2705}]/gu, '')            // Check verde
+          .replace(/[\u{2708}-\u{270D}]/gu, '')   // Avião e outros
+          .replace(/[\u{270F}]/gu, '')            // Lápis
+          .replace(/[\u{2712}]/gu, '')            // Caneta preta
+          .replace(/[\u{2714}]/gu, '')            // Check pesado
+          .replace(/[\u{2716}]/gu, '')            // X pesado
+          .replace(/[\u{271D}]/gu, '')            // Cruz latina
+          .replace(/[\u{2721}]/gu, '')            // Estrela de Davi
+          .replace(/[\u{2728}]/gu, '')            // Brilhos
+          .replace(/[\u{2733}-\u{2734}]/gu, '')   // Asteriscos
+          .replace(/[\u{2744}]/gu, '')            // Floco de neve
+          .replace(/[\u{2747}]/gu, '')            // Sparkle
+          .replace(/[\u{274C}]/gu, '')            // X vermelho
+          .replace(/[\u{274E}]/gu, '')            // X verde
+          .replace(/[\u{2753}-\u{2755}]/gu, '')   // Interrogações
+          .replace(/[\u{2757}]/gu, '')            // Exclamação
+          .replace(/[\u{2763}-\u{2764}]/gu, '')   // Corações
+          .replace(/[\u{2795}-\u{2797}]/gu, '')   // Matemática
+          .replace(/[\u{27A1}]/gu, '')            // Seta direita
+          .replace(/[\u{27B0}]/gu, '')            // Loop
+          .replace(/[\u{27BF}]/gu, '')            // Loop duplo
+          .replace(/[\u{2934}-\u{2935}]/gu, '')   // Setas curvas
+          .replace(/[\u{2B05}-\u{2B07}]/gu, '')   // Setas
+          .replace(/[\u{2B1B}-\u{2B1C}]/gu, '')   // Quadrados grandes
+          .replace(/[\u{2B50}]/gu, '')            // Estrela
+          .replace(/[\u{2B55}]/gu, '')            // Círculo vermelho
+          .replace(/[\u{3030}]/gu, '')            // Linha ondulada
+          .replace(/[\u{303D}]/gu, '')            // Part alternation mark
+          .replace(/[\u{3297}]/gu, '')            // Circled Ideograph Congratulation
+          .replace(/[\u{3299}]/gu, '')            // Circled Ideograph Secret
+          .replace(/[^\x00-\x7F\u00C0-\u00FF\u0100-\u017F]/g, '') // Manter apenas ASCII e Latin Extended
+          .trim();
+      };
+
+      // Criar documento PDF
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const maxWidth = pageWidth - (margin * 2);
+      let yPosition = margin;
+
+      // Função para adicionar nova página se necessário
+      const checkNewPage = (height: number) => {
+        if (yPosition + height > pageHeight - margin) {
+          doc.addPage();
+          yPosition = margin;
+        }
+      };
+
+      // Título do documento
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(197, 50, 226); // #c532e2
+      const titleLines = doc.splitTextToSize(normalizeText(videoTitle), maxWidth);
+      checkNewPage(titleLines.length * 8);
+      doc.text(titleLines, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += titleLines.length * 8 + 5;
+
+      // Linha decorativa
+      doc.setDrawColor(197, 50, 226);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 10;
+
+      // Processar o markdown linha por linha
+      const lines = mindMap.split('\n');
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) {
+          yPosition += 3;
+          continue;
+        }
+
+        // Headers
+        if (trimmedLine.startsWith('# ')) {
+          checkNewPage(12);
+          doc.setFontSize(16);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(197, 50, 226);
+          const text = normalizeText(trimmedLine.replace('# ', ''));
+          const splitText = doc.splitTextToSize(text, maxWidth);
+          doc.text(splitText, margin, yPosition);
+          yPosition += splitText.length * 7 + 5;
+        } else if (trimmedLine.startsWith('## ')) {
+          checkNewPage(10);
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(80, 80, 80);
+          const text = normalizeText(trimmedLine.replace('## ', ''));
+          const splitText = doc.splitTextToSize(text, maxWidth);
+          doc.text(splitText, margin, yPosition);
+          yPosition += splitText.length * 6 + 4;
+        } else if (trimmedLine.startsWith('### ')) {
+          checkNewPage(8);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(100, 100, 100);
+          const text = normalizeText(trimmedLine.replace('### ', ''));
+          const splitText = doc.splitTextToSize(text, maxWidth);
+          doc.text(splitText, margin, yPosition);
+          yPosition += splitText.length * 5 + 3;
+        }
+        // Lista com bullet
+        else if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+          checkNewPage(6);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
+          const text = trimmedLine.replace(/^[-*] /, '');
+          const cleanText = normalizeText(text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'));
+          const splitText = doc.splitTextToSize(`- ${cleanText}`, maxWidth - 5);
+          doc.text(splitText, margin + 5, yPosition);
+          yPosition += splitText.length * 5 + 2;
+        }
+        // Lista numerada
+        else if (/^\d+\.\s/.test(trimmedLine)) {
+          checkNewPage(6);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
+          const cleanText = normalizeText(trimmedLine.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'));
+          const splitText = doc.splitTextToSize(cleanText, maxWidth - 5);
+          doc.text(splitText, margin + 5, yPosition);
+          yPosition += splitText.length * 5 + 2;
+        }
+        // Texto normal
+        else {
+          checkNewPage(6);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
+          const cleanText = normalizeText(trimmedLine.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'));
+          const splitText = doc.splitTextToSize(cleanText, maxWidth);
+          doc.text(splitText, margin, yPosition);
+          yPosition += splitText.length * 5 + 2;
+        }
+      }
+
+      // Rodapé
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(150, 150, 150);
+        doc.text('Gerado por Prisma Study Platform', pageWidth / 2, pageHeight - 10, { align: 'center' });
+        doc.text(`Pagina ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+      }
+
+      // Salvar PDF
+      doc.save(fileName);
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleClose = () => {
@@ -267,11 +469,16 @@ export function MindMapModal({
                 <div className="flex gap-2">
                   <Button
                     onClick={handleDownload}
+                    disabled={downloading}
                     variant="ghost"
-                    className="text-white/60 hover:text-white hover:bg-white/10"
+                    className="text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-50"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Baixar
+                    {downloading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    {downloading ? 'Gerando PDF...' : 'Baixar PDF'}
                   </Button>
                   <Button
                     onClick={() => {

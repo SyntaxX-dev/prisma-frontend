@@ -98,7 +98,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     } else if (item === "Vistos atualmente") {
       navigateWithLoading('/watching', 'Carregando Vistos atualmente...');
     } else if (item === "Meu resumo") {
-      navigateWithLoading('/courses', 'Carregando Meu resumo...');
+      navigateWithLoading('/my-summaries', 'Carregando Meus Resumos...');
     } else if (item === "Mapas Mentais") {
       navigateWithLoading('/mind-maps', 'Carregando Mapas Mentais...');
     } else if (item === "Perfil") {
@@ -123,7 +123,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
     } else if (item === "Vistos atualmente") {
       return pathname === '/watching' || pathname?.startsWith('/watching');
     } else if (item === "Meu resumo") {
-      return pathname === '/courses' || pathname?.startsWith('/courses');
+      return pathname === '/my-summaries' || pathname?.startsWith('/my-summaries');
     } else if (item === "Mapas Mentais") {
       return pathname === '/mind-maps' || pathname?.startsWith('/mind-maps');
     } else if (item === "Perfil") {
