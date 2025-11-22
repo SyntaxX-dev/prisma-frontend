@@ -82,7 +82,7 @@ function SearchPageContent() {
                       onClick={() => updateSearchParams({ technology: tech })}
                       className={`${
                         searchParams.technology === tech
-                          ? 'bg-[#B3E240] text-black border-[#B3E240]'
+                          ? 'bg-[#bd18b4] text-black border-[#bd18b4]'
                           : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
                       }`}
                     >
@@ -98,7 +98,7 @@ function SearchPageContent() {
                       onClick={() => updateSearchParams({ level: level as any })}
                       className={`${
                         searchParams.level === level
-                          ? 'bg-[#B3E240] text-black border-[#B3E240]'
+                          ? 'bg-[#bd18b4] text-black border-[#bd18b4]'
                           : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
                       }`}
                     >
@@ -196,7 +196,7 @@ export default function SearchPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <LoadingGrid size="60" color="#B3E240" />
+        <LoadingGrid size="60" color="#bd18b4" />
       </div>
     }>
       <SearchPageContent />

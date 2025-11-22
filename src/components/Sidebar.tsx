@@ -208,7 +208,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                     <Button
                       variant="ghost"
                       onClick={() => handleNavigation(item.label)}
-                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#C9FE02] text-black' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
+                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#bd18b4] text-white' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
                     >
                       <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                       {isExpanded && item.label}
@@ -292,7 +292,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                     <Button
                       variant="ghost"
                       onClick={() => handleNavigation(item.label)}
-                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#C9FE02] text-black' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
+                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#bd18b4] text-white' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
                     >
                       <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                       {isExpanded && item.label}
@@ -308,41 +308,44 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
         </div>
 
         {isExpanded && (
-          <div className="pt-2 px-4 pb-2 border-t border-white/20 flex flex-col space-y-1.5 flex-1 flex-shrink-0">
+          <div className="pt-3 px-4 pb-3 border-t border-white/20 flex flex-col space-y-3 flex-1 flex-shrink-0">
             {/* Card de Upgrade Plan */}
             <GlareHover
               width="100%"
               height="100%"
-              background="rgba(201, 254, 2, 0.2)"
+              background="#202024"
               borderRadius="16px"
-              borderColor="rgba(201, 254, 2, 0.3)"
-              glareColor="#C9FE02"
-              glareOpacity={0.3}
+              borderColor="rgba(201, 254, 2, 0.4)"
+              glareColor="#bd18b4"
+              glareOpacity={0.4}
               glareAngle={-30}
               glareSize={300}
               transitionDuration={800}
               playOnce={false}
-              className="flex-1"
+              className="flex-1 cursor-pointer group"
               style={{
-                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-                backdropFilter: 'blur(5px)',
-                WebkitBackdropFilter: 'blur(5px)',
-                border: '1px solid rgba(201, 254, 2, 0.3)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(201, 254, 2, 0.1)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                border: '1px solid rgba(201, 254, 2, 0.4)',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '0.75rem',
+                padding: '1rem',
                 alignItems: 'flex-start',
-                justifyContent: 'flex-start'
+                justifyContent: 'flex-start',
+                transition: 'all 0.3s ease',
               }}
               onClick={() => navigateWithLoading('/settings', 'Carregando Configurações...')}
             >
-              <div className={`flex items-center gap-2 mb-1 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                <PenTool className="w-4 h-4 text-[#C9FE02]" />
-                <span className="text-[#C9FE02] font-bold text-xs">Upgrade Pro!</span>
+              <div className={`flex items-center gap-2.5 mb-2 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                <div className="p-1.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
+                  <PenTool className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white font-bold text-sm">Upgrade Pro!</span>
               </div>
 
-              <p className={`text-[#C9FE02] text-[10px] leading-tight transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                Upgrade to Pro and elevate your experience today
+              <p className={`text-white/80 text-xs leading-relaxed transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                Faça upgrade para Pro e eleve sua experiência hoje
               </p>
             </GlareHover>
 
@@ -350,26 +353,27 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             <GlareHover
               width="100%"
               height="100%"
-              background="rgba(168, 85, 247, 0.2)"
+              background="#202024"
               borderRadius="16px"
-              borderColor="rgba(168, 85, 247, 0.3)"
+              borderColor="rgba(168, 85, 247, 0.4)"
               glareColor="#a855f7"
-              glareOpacity={0.3}
+              glareOpacity={0.4}
               glareAngle={-30}
               glareSize={300}
               transitionDuration={800}
               playOnce={false}
-              className="flex-1"
+              className="flex-1 cursor-pointer group"
               style={{
-                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-                backdropFilter: 'blur(5px)',
-                WebkitBackdropFilter: 'blur(5px)',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(168, 85, 247, 0.1)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                border: '1px solid rgba(168, 85, 247, 0.4)',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '0.75rem',
+                padding: '1rem',
                 alignItems: 'flex-start',
-                justifyContent: 'flex-start'
+                justifyContent: 'flex-start',
+                transition: 'all 0.3s ease',
               }}
               onClick={() => {
                 const phoneNumber = '5583987690902';
@@ -377,12 +381,14 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                 window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
               }}
             >
-              <div className={`flex items-center gap-2 mb-1 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                <UserPlus className="w-4 h-4 text-purple-400" />
-                <span className="text-purple-400 font-bold text-xs">Produtor Exclusivo</span>
+              <div className={`flex items-center gap-2.5 mb-2 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                <div className="p-1.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
+                  <UserPlus className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white font-bold text-sm">Produtor Exclusivo</span>
               </div>
 
-              <p className={`text-purple-400 text-[10px] leading-tight transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+              <p className={`text-white/80 text-xs leading-relaxed transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                 Torne-se um produtor e compartilhe seu conhecimento
               </p>
             </GlareHover>
@@ -391,26 +397,27 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             <GlareHover
               width="100%"
               height="100%"
-              background="rgba(34, 197, 94, 0.2)"
+              background="#202024"
               borderRadius="16px"
-              borderColor="rgba(34, 197, 94, 0.3)"
-              glareColor="#22c55e"
-              glareOpacity={0.3}
+              borderColor="rgba(34, 197, 94, 0.4)"
+              glareColor="#bd18b4"
+              glareOpacity={0.4}
               glareAngle={-30}
               glareSize={300}
               transitionDuration={800}
               playOnce={false}
-              className="flex-1"
+              className="flex-1 cursor-pointer group"
               style={{
-                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-                backdropFilter: 'blur(5px)',
-                WebkitBackdropFilter: 'blur(5px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(34, 197, 94, 0.1)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                border: '1px solid rgba(34, 197, 94, 0.4)',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '0.75rem',
+                padding: '1rem',
                 alignItems: 'flex-start',
-                justifyContent: 'flex-start'
+                justifyContent: 'flex-start',
+                transition: 'all 0.3s ease',
               }}
               onClick={() => {
                 const phoneNumber = '5583987690902';
@@ -418,12 +425,14 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                 window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
               }}
             >
-              <div className={`flex items-center gap-2 mb-1 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                <MessageCircle className="w-4 h-4 text-green-400" />
-                <span className="text-green-400 font-bold text-xs">Sugestões</span>
+              <div className={`flex items-center gap-2.5 mb-2 transition-all duration-500 ease-in-out ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                <div className="p-1.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
+                  <MessageCircle className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white font-bold text-sm">Sugestões</span>
               </div>
 
-              <p className={`text-green-400 text-[10px] leading-tight transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+              <p className={`text-white/80 text-xs leading-relaxed transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
                 Compartilhe suas ideias e ajude a melhorar a plataforma
               </p>
             </GlareHover>
@@ -446,14 +455,14 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
           }}
         >
           <div
-            className="px-4 py-2 text-white text-sm"
+            className="px-4 py-2 text-white text-sm whitespace-nowrap"
             style={{
-              background: 'rgba(179, 226, 64, 0.14)',
+              background: 'rgba(189, 24, 180, 0.14)',
               borderRadius: '16px',
               boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
               backdropFilter: 'blur(6.3px)',
               WebkitBackdropFilter: 'blur(6.3px)',
-              border: '1px solid rgba(179, 226, 64, 0.07)'
+              border: '1px solid rgba(189, 24, 180, 0.07)'
             }}
           >
             <span className="font-medium">Em breve</span>

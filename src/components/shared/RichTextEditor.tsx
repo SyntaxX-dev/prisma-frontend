@@ -125,7 +125,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
             <div className="flex items-center gap-1 p-3 border-b border-[#323238]">
                 <div className="flex items-center gap-1">
                     <select
-                        className="bg-[#202024] border border-[#323238] text-white text-sm px-3 py-1 rounded cursor-pointer hover:bg-[#29292E] focus:outline-none focus:ring-2 focus:ring-[#B3E240]/20"
+                        className="bg-[#202024] border border-[#323238] text-white text-sm px-3 py-1 rounded cursor-pointer hover:bg-[#29292E] focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20"
                         onChange={(e) => {
                             const value = e.target.value;
                             if (value === 'paragraph') {
@@ -268,7 +268,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
                             <Button
                                 type="button"
                                 onClick={setLink}
-                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer transition-colors"
+                                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer transition-colors"
                             >
                                 Adicionar
                             </Button>

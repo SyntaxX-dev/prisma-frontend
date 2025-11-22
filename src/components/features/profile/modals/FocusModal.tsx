@@ -46,8 +46,8 @@ export function FocusModal({
                                 variant={selectedFocus === 'ENEM' ? 'default' : 'outline'}
                                 onClick={() => onFocusSelect('ENEM')}
                                 className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'ENEM'
-                                    ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
-                                    : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                    ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
+                                    : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
                                     }`}
                             >
                                 ENEM
@@ -56,8 +56,8 @@ export function FocusModal({
                                 variant={selectedFocus === 'CONCURSO' ? 'default' : 'outline'}
                                 onClick={() => onFocusSelect('CONCURSO')}
                                 className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'CONCURSO'
-                                    ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
-                                    : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                    ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
+                                    : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
                                     }`}
                             >
                                 Concurso
@@ -66,8 +66,8 @@ export function FocusModal({
                                 variant={selectedFocus === 'FACULDADE' ? 'default' : 'outline'}
                                 onClick={() => onFocusSelect('FACULDADE')}
                                 className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'FACULDADE'
-                                    ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
-                                    : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                    ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
+                                    : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
                                     }`}
                             >
                                 Faculdade
@@ -76,8 +76,8 @@ export function FocusModal({
                                 variant={selectedFocus === 'ENSINO_MEDIO' ? 'default' : 'outline'}
                                 onClick={() => onFocusSelect('ENSINO_MEDIO')}
                                 className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'ENSINO_MEDIO'
-                                    ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
-                                    : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                    ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
+                                    : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
                                     }`}
                             >
                                 Ensino Médio
@@ -167,7 +167,7 @@ export function FocusModal({
                         <Button
                             type="button"
                             onClick={onSubmit}
-                            className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                            className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer"
                             disabled={!selectedFocus || (selectedFocus === 'FACULDADE' && !selectedCourse) || (selectedFocus === 'CONCURSO' && !selectedContest)}
                         >
                             Salvar

@@ -10,25 +10,25 @@ const getCareerIcon = (momentCareer: string) => {
   const momentLower = momentCareer.toLowerCase();
   
   if (momentLower.includes('iniciante') || momentLower.includes('começando') || momentLower.includes('estudante')) {
-    return <Target className="w-5 h-5 text-[#B3E240]" />;
+    return <Target className="w-5 h-5 text-[#bd18b4]" />;
   }
   if (momentLower.includes('júnior') || momentLower.includes('junior') || momentLower.includes('desenvolvedor')) {
-    return <TrendingUp className="w-5 h-5 text-[#B3E240]" />;
+    return <TrendingUp className="w-5 h-5 text-[#bd18b4]" />;
   }
   if (momentLower.includes('pleno') || momentLower.includes('sênior') || momentLower.includes('senior') || momentLower.includes('especialista')) {
-    return <Briefcase className="w-5 h-5 text-[#B3E240]" />;
+    return <Briefcase className="w-5 h-5 text-[#bd18b4]" />;
   }
   if (momentLower.includes('líder') || momentLower.includes('lider') || momentLower.includes('coordenador') || momentLower.includes('gerente')) {
-    return <Users className="w-5 h-5 text-[#B3E240]" />;
+    return <Users className="w-5 h-5 text-[#bd18b4]" />;
   }
   if (momentLower.includes('empreendedor') || momentLower.includes('fundador') || momentLower.includes('ceo') || momentLower.includes('diretor')) {
-    return <Rocket className="w-5 h-5 text-[#B3E240]" />;
+    return <Rocket className="w-5 h-5 text-[#bd18b4]" />;
   }
   if (momentLower.includes('freelancer') || momentLower.includes('consultor') || momentLower.includes('mentor')) {
-    return <Lightbulb className="w-5 h-5 text-[#B3E240]" />;
+    return <Lightbulb className="w-5 h-5 text-[#bd18b4]" />;
   }
   
-  return <Briefcase className="w-5 h-5 text-[#B3E240]" />; // Ícone padrão
+  return <Briefcase className="w-5 h-5 text-[#bd18b4]" />; // Ícone padrão
 };
 
 // Função para obter cor baseada no momento de carreira
@@ -36,7 +36,7 @@ const getCareerColor = (momentCareer: string) => {
   const momentLower = momentCareer.toLowerCase();
   
   if (momentLower.includes('iniciante') || momentLower.includes('começando') || momentLower.includes('estudante')) {
-    return 'bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-full px-3 py-1 text-center';
+    return 'bg-[#bd18b4]/20 backdrop-blur-md border border-[#c532e2]/30 rounded-full px-3 py-1 text-center';
   }
   if (momentLower.includes('júnior') || momentLower.includes('junior') || momentLower.includes('desenvolvedor')) {
     return 'bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-full px-3 py-1 text-center';
@@ -97,7 +97,7 @@ export function CareerMomentCard({ userProfile, isPublicView, onEditClick }: Car
   }
 
   return (
-    <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+    <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-white font-semibold flex items-center gap-2">

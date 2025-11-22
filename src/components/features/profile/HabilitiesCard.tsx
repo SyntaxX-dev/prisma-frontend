@@ -9,7 +9,7 @@ import { Edit3, Plus, Star } from 'lucide-react';
 // Array de cores para as habilidades
 const habilityColors = [
   { bg: 'bg-blue-500/20', border: 'border-blue-400/30', text: 'text-blue-300' },
-  { bg: 'bg-green-500/20', border: 'border-green-400/30', text: 'text-green-300' },
+  { bg: 'bg-[#bd18b4]/20', border: 'border-[#c532e2]/30', text: 'text-[#c532e2]' },
   { bg: 'bg-purple-500/20', border: 'border-purple-400/30', text: 'text-purple-300' },
   { bg: 'bg-yellow-500/20', border: 'border-yellow-400/30', text: 'text-yellow-300' },
   { bg: 'bg-pink-500/20', border: 'border-pink-400/30', text: 'text-pink-300' },
@@ -46,11 +46,11 @@ export function HabilitiesCard({ userProfile, isPublicView, onEditClick }: Habil
     : [];
 
   return (
-    <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+    <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-white font-semibold flex items-center gap-2">
-            <Star className="w-5 h-5 text-[#B3E240]" />
+            <Star className="w-5 h-5 text-[#bd18b4]" />
             Habilidades
           </CardTitle>
           {!isPublicView && (
@@ -94,7 +94,7 @@ export function HabilitiesCard({ userProfile, isPublicView, onEditClick }: Habil
             </p>
             {!isPublicView && (
               <Button 
-                className="bg-[#B3E240] hover:bg-[#A3D030] text-black px-4 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer"
+                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-4 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer"
                 onClick={onEditClick}
               >
                 <Plus className="w-4 h-4" />

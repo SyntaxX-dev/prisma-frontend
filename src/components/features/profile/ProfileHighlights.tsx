@@ -6,7 +6,7 @@ import { ProfileHighlightsProps } from '@/types/ui/features/profile';
 
 export function ProfileHighlights({ onAddHighlight }: ProfileHighlightsProps) {
     return (
-        <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+        <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold text-white">Destaques</h3>
                 <Button
@@ -25,7 +25,7 @@ export function ProfileHighlights({ onAddHighlight }: ProfileHighlightsProps) {
                     Compartilhe o link dos seus melhores projetos para se destacar e conquistar oportunidades
                 </p>
                 <Button
-                    className="bg-[#B3E240] hover:bg-[#A3D030] text-black px-6 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer"
+                    className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-6 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer"
                     onClick={onAddHighlight}
                 >
                     <Plus className="w-4 h-4" />

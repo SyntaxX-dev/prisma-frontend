@@ -36,7 +36,8 @@ export type EducationLevel =
   | 'DOUTORADO';
 
 export interface AuthResponse {
-  token: string;
+  accessToken?: string;
+  token?: string;
   user: UserProfile;
 }
 

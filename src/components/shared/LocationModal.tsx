@@ -126,8 +126,8 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
               onClick={() => setSearchType('cep')}
               className={`cursor-pointer transition-colors ${
                 searchType === 'cep' 
-                  ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]' 
-                  : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                  ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]' 
+                  : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
               }`}
             >
               <Search className="w-4 h-4 mr-1" />
@@ -140,8 +140,8 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
               onClick={() => setSearchType('city')}
               className={`cursor-pointer transition-colors ${
                 searchType === 'city' 
-                  ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]' 
-                  : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                  ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]' 
+                  : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
               }`}
             >
               <MapPin className="w-4 h-4 mr-1" />
@@ -158,16 +158,16 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
                   value={cep}
                   onChange={(e) => setCep(e.target.value)}
                   placeholder="Digite o CEP (apenas números)"
-                  className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none cursor-pointer"
+                  className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none cursor-pointer"
                   maxLength={9}
                 />
                 <Button
                   type="button"
                   onClick={() => searchByCep(cep)}
                   disabled={isLoading || cep.length < 8}
-                  className="bg-[#B3E240] hover:bg-[#A3D030] text-black disabled:opacity-50 cursor-pointer transition-colors"
+                  className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black disabled:opacity-50 cursor-pointer transition-colors"
                 >
-                  {isLoading ? <LoadingGrid size="16" color="#B3E240" /> : <Search className="w-4 h-4" />}
+                  {isLoading ? <LoadingGrid size="16" color="#bd18b4" /> : <Search className="w-4 h-4" />}
                 </Button>
               </div>
               {addressData && (
@@ -190,14 +190,14 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Cidade"
-                  className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none cursor-pointer"
+                  className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none cursor-pointer"
                 />
                 <Input
                   type="text"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
                   placeholder="Estado (UF)"
-                  className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none cursor-pointer"
+                  className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none cursor-pointer"
                   maxLength={2}
                 />
               </div>
@@ -205,9 +205,9 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
                 type="button"
                 onClick={searchByCity}
                 disabled={isLoading || !city || !state}
-                className="w-full bg-[#B3E240] hover:bg-[#A3D030] text-black disabled:opacity-50 cursor-pointer transition-colors"
+                className="w-full bg-[#bd18b4] hover:bg-[#aa22c5] text-black disabled:opacity-50 cursor-pointer transition-colors"
               >
-                {isLoading ? <LoadingGrid size="16" color="#B3E240" className="mr-2" /> : <Search className="w-4 h-4 mr-2" />}
+                {isLoading ? <LoadingGrid size="16" color="#bd18b4" className="mr-2" /> : <Search className="w-4 h-4 mr-2" />}
                 Buscar Localização
               </Button>
             </div>
@@ -223,7 +223,7 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
               value={finalLocation}
               onChange={(e) => setFinalLocation(e.target.value)}
               placeholder="Digite sua localização completa"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none cursor-pointer"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none cursor-pointer"
             />
           </div>
 
@@ -240,7 +240,7 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
             <Button
               type="button"
               onClick={handleSave}
-              className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer transition-colors"
+              className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer transition-colors"
             >
               Salvar
             </Button>

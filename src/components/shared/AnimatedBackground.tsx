@@ -21,7 +21,7 @@ export function AnimatedBackground() {
       {Array.from({ length: 20 }).map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-1 h-1 bg-[#B3E240] rounded-full shadow-[0_0_10px_#B3E240]"
+          className="absolute w-1 h-1 bg-[#bd18b4] rounded-full shadow-[0_0_10px_#bd18b4]"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
@@ -39,7 +39,7 @@ export function AnimatedBackground() {
       ))}
       
       <motion.div
-        className="absolute top-20 left-20 w-32 h-32 border border-[#B3E240] opacity-20"
+        className="absolute top-20 left-20 w-32 h-32 border border-[#bd18b4] opacity-20"
         animate={{
           rotate: [0, 360],
         }}
@@ -54,7 +54,7 @@ export function AnimatedBackground() {
       />
       
       <motion.div
-        className="absolute top-40 right-32 w-24 h-24 border border-[#B3E240] opacity-20"
+        className="absolute top-40 right-32 w-24 h-24 border border-[#bd18b4] opacity-20"
         animate={{
           rotate: [360, 0],
         }}
@@ -66,10 +66,10 @@ export function AnimatedBackground() {
       />
       
       <motion.div
-        className="absolute top-1/4 left-1/4 w-4 h-4 bg-[#B3E240] rounded-full"
+        className="absolute top-1/4 left-1/4 w-4 h-4 bg-[#bd18b4] rounded-full"
         style={{
           filter: 'blur(10px)',
-          boxShadow: '0 0 30px #B3E240',
+          boxShadow: '0 0 30px #bd18b4',
         }}
         animate={{
           x: [0, 100, -50, 0],
@@ -83,10 +83,10 @@ export function AnimatedBackground() {
       />
       
       <motion.div
-        className="absolute bottom-1/3 right-1/4 w-6 h-6 bg-[#B3E240] rounded-full"
+        className="absolute bottom-1/3 right-1/4 w-6 h-6 bg-[#bd18b4] rounded-full"
         style={{
           filter: 'blur(8px)',
-          boxShadow: '0 0 25px #B3E240',
+          boxShadow: '0 0 25px #bd18b4',
         }}
         animate={{
           x: [0, -120, 80, 0],

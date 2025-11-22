@@ -6,7 +6,7 @@ import { ProfileAboutProps } from '@/types/ui/features/profile';
 
 export function ProfileAbout({ aboutText, onEditAbout }: ProfileAboutProps) {
     return (
-        <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+        <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-white">Sobre</h3>
                 <Button

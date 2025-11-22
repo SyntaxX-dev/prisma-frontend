@@ -281,7 +281,7 @@ export function CommunityInfo({
                         <AvatarFallback 
                           className="text-xs font-medium"
                           style={{
-                            background: '#C9FE02',
+                            background: '#bd18b4',
                             color: '#000',
                           }}
                         >
@@ -292,7 +292,7 @@ export function CommunityInfo({
                       <div 
                         className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors`}
                         style={{ 
-                          background: (statusMap.get(member.id) === 'online' || (currentUserId && member.id === currentUserId && statusMap.get(currentUserId) === 'online')) ? '#C9FE02' : '#666',
+                          background: (statusMap.get(member.id) === 'online' || (currentUserId && member.id === currentUserId && statusMap.get(currentUserId) === 'online')) ? '#bd18b4' : '#666',
                           borderColor: 'rgb(30, 30, 30)' 
                         }} 
                       />
@@ -301,7 +301,7 @@ export function CommunityInfo({
                       <div className="flex items-center gap-2">
                         <p className="text-sm text-white truncate">{member.name}</p>
                         {member.isOwner && (
-                          <span className="text-xs text-[#C9FE02] font-medium">👑</span>
+                          <span className="text-xs text-[#bd18b4] font-medium">👑</span>
                         )}
                       </div>
                     </div>
@@ -440,7 +440,7 @@ export function CommunityInfo({
                       <AvatarFallback 
                         className="text-xs font-medium"
                         style={{
-                          background: '#C9FE02',
+                          background: '#bd18b4',
                           color: '#000',
                         }}
                       >

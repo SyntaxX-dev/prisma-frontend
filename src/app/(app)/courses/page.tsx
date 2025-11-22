@@ -138,7 +138,7 @@ function CoursesContent() {
 
             {coursesLoading ? (
               <div className="flex items-center justify-center py-12">
-                <LoadingGrid size="60" color="#B3E240" />
+                <LoadingGrid size="60" color="#bd18b4" />
               </div>
             ) : error ? (
               <div className="flex items-center justify-center py-12">
@@ -157,14 +157,14 @@ function CoursesContent() {
                         <div className="text-2xl">📚</div>
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">
+                        <h3 className="text-white text-lg font-semibold group-hover:text-[#c532e2] transition-colors">
                           {course.name}
                         </h3>
                         <p className="text-white/60 text-sm">
                           Curso disponível
                         </p>
                       </div>
-                      <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-green-400 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-[#c532e2] group-hover:translate-x-1 transition-all" />
                     </div>
                     <p className="text-white/70 text-sm leading-relaxed">
                       {course.description}
@@ -184,7 +184,7 @@ export default function CoursesPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <LoadingGrid size="60" color="#B3E240" />
+        <LoadingGrid size="60" color="#bd18b4" />
       </div>
     }>
       <CoursesContent />

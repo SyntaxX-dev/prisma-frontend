@@ -90,7 +90,7 @@ export function VerifyCodeScreen() {
                     />
 
                     <div className="flex min-h-[500px] relative">
-                        <div className="absolute left-[45%] top-0 bottom-0 w-px bg-[#B3E240]/30 z-10" />
+                        <div className="absolute left-[45%] top-0 bottom-0 w-px bg-[#bd18b4]/30 z-10" />
 
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
@@ -108,19 +108,19 @@ export function VerifyCodeScreen() {
                                     priority
                                 />
                             </div>
-                            <h2 className="text-3xl font-bold text-[#B3E240] mb-4" style={{ fontFamily: 'monospace' }}>
+                            <h2 className="text-3xl font-bold text-[#bd18b4] mb-4" style={{ fontFamily: 'monospace' }}>
                                 VERIFICAÇÃO
                             </h2>
                             <h3 className="text-xl text-white mb-6">Código de Segurança</h3>
                             <p className="text-gray-400 text-sm mb-8">
                                 Digite o código de 6 dígitos enviado para seu email
                             </p>
-                            <div className="flex items-center justify-center space-x-2 text-[#B3E240] mb-4">
+                            <div className="flex items-center justify-center space-x-2 text-[#bd18b4] mb-4">
                                 <Clock className="w-5 h-5" />
                                 <span className="text-sm">Código válido por 15 minutos</span>
                             </div>
                             <Link href="/auth/forgot-password">
-                                <Button className="bg-transparent cursor-pointer border-2 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240] hover:text-black transition-all duration-300 px-8 py-2 rounded-lg">
+                                <Button className="bg-transparent cursor-pointer border-2 border-[#bd18b4] text-[#bd18b4] hover:bg-[#bd18b4] hover:text-black transition-all duration-300 px-8 py-2 rounded-lg">
                                     Voltar
                                 </Button>
                             </Link>
@@ -138,25 +138,25 @@ export function VerifyCodeScreen() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="p-2 cursor-pointer text-[#B3E240] hover:bg-[#B3E240]/10 rounded-lg mr-4"
+                                                className="p-2 cursor-pointer text-[#bd18b4] hover:bg-[#bd18b4]/10 rounded-lg mr-4"
                                             >
                                                 <ArrowLeft className="w-5 h-5" />
                                             </Button>
                                         </Link>
-                                        <h2 className="text-2xl font-bold text-[#B3E240]" style={{ fontFamily: 'monospace' }}>
+                                        <h2 className="text-2xl font-bold text-[#bd18b4]" style={{ fontFamily: 'monospace' }}>
                                             VERIFICAR CÓDIGO
                                         </h2>
                                     </div>
 
                                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                         <div className="relative mb-6">
-                                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
+                                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#bd18b4]" />
                                             <Input
                                                 type="text"
                                                 placeholder="000000"
                                                 maxLength={6}
                                                 {...form.register('code')}
-                                                className={`pl-10 text-center text-2xl font-mono tracking-widest bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-300 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${form.formState.errors.code ? 'border-red-500' : ''
+                                                className={`pl-10 text-center text-2xl font-mono tracking-widest bg-white/10 backdrop-blur-sm border-[#bd18b4]/30 text-white placeholder-gray-300 focus:border-[#bd18b4] focus:ring-[#bd18b4]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${form.formState.errors.code ? 'border-red-500' : ''
                                                     }`}
                                             />
                                             {form.formState.errors.code && (
@@ -173,7 +173,7 @@ export function VerifyCodeScreen() {
                                             <Button
                                                 type="button"
                                                 variant="ghost"
-                                                className="cursor-pointer text-[#B3E240] hover:bg-[#B3E240]/10 transition-colors"
+                                                className="cursor-pointer text-[#bd18b4] hover:bg-[#bd18b4]/10 transition-colors"
                                             >
                                                 Reenviar código
                                             </Button>
@@ -186,7 +186,7 @@ export function VerifyCodeScreen() {
                                             <Button
                                                 type="submit"
                                                 disabled={isLoading}
-                                                className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#bd18b4] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <motion.span
                                                     initial={false}
@@ -207,7 +207,7 @@ export function VerifyCodeScreen() {
                 </Card>
 
                 <motion.div
-                    className="absolute -top-10 -right-10 w-20 h-20 border border-[#B3E240]/20 rounded-full"
+                    className="absolute -top-10 -right-10 w-20 h-20 border border-[#bd18b4]/20 rounded-full"
                     animate={{
                         rotate: [0, 360],
                         scale: [1, 1.1, 1],
@@ -218,7 +218,7 @@ export function VerifyCodeScreen() {
                     }}
                 />
                 <motion.div
-                    className="absolute -bottom-10 -left-10 w-16 h-16 border border-[#B3E240]/20"
+                    className="absolute -bottom-10 -left-10 w-16 h-16 border border-[#bd18b4]/20"
                     animate={{
                         rotate: [0, -360],
                     }}

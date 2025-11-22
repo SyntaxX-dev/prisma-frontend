@@ -66,7 +66,7 @@ export function VideoPlayer({ selectedVideo, isVideoPlaying, onPlayToggle, onPau
                             className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-3xl cursor-pointer z-10 hover:bg-black/30 transition-all duration-300"
                             onClick={togglePlay}
                         >
-                            <div className="bg-green-500 hover:bg-green-600 rounded-full w-24 h-24 flex items-center justify-center shadow-2xl hover:shadow-green-500/25 transition-all">
+                            <div className="bg-[#bd18b4] hover:bg-[#aa22c5] rounded-full w-24 h-24 flex items-center justify-center shadow-2xl hover:shadow-[#bd18b4]/25 transition-all">
                                 <Play className="w-10 h-10 text-black ml-1" fill="black" />
                             </div>
                         </div>
@@ -100,7 +100,7 @@ export function VideoPlayer({ selectedVideo, isVideoPlaying, onPlayToggle, onPau
                     {/* Loading indicator */}
                     {!isReady && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-3xl z-5">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#bd18b4]"></div>
                         </div>
                     )}
 
@@ -115,7 +115,7 @@ export function VideoPlayer({ selectedVideo, isVideoPlaying, onPlayToggle, onPau
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black rounded-3xl">
                     <Button
                         size="lg"
-                        className="bg-green-500 hover:bg-green-600 rounded-full w-20 h-20 p-0 shadow-2xl hover:shadow-green-500/25 transition-all"
+                        className="bg-[#bd18b4] hover:bg-[#aa22c5] rounded-full w-20 h-20 p-0 shadow-2xl hover:shadow-[#bd18b4]/25 transition-all"
                         onClick={() => {}}
                     >
                         <Play className="w-10 h-10 text-black ml-1" fill="black" />

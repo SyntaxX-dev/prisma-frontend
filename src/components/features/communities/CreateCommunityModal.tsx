@@ -371,7 +371,7 @@ export function CreateCommunityModal({
                 <AvatarFallback 
                   className="font-semibold"
                   style={{
-                    background: '#C9FE02',
+                    background: '#bd18b4',
                     color: '#000',
                     borderRadius: '0.75rem',
                     fontSize: '1.125rem',
@@ -509,7 +509,7 @@ export function CreateCommunityModal({
                 className="flex-1 flex items-center justify-center font-medium transition-all cursor-pointer border border-white/10"
                 style={{
                   background: access === 'private' ? 'rgba(34, 197, 94, 0.1)' : 'rgb(14, 14, 14)',
-                  color: access === 'private' ? '#22c55e' : 'rgb(156, 163, 175)',
+                  color: access === 'private' ? '#bd18b4' : 'rgb(156, 163, 175)',
                   height: '2.75rem',
                   borderRadius: '1rem',
                   gap: '0.5rem',
@@ -524,7 +524,7 @@ export function CreateCommunityModal({
                 className="flex-1 flex items-center justify-center font-medium transition-all cursor-pointer border border-white/10"
                 style={{
                   background: access === 'shared' ? 'rgba(34, 197, 94, 0.1)' : 'rgb(14, 14, 14)',
-                  color: access === 'shared' ? '#22c55e' : 'rgb(156, 163, 175)',
+                  color: access === 'shared' ? '#bd18b4' : 'rgb(156, 163, 175)',
                   height: '2.75rem',
                   borderRadius: '1rem',
                   gap: '0.5rem',
@@ -594,7 +594,7 @@ export function CreateCommunityModal({
               className="flex-1 font-medium cursor-pointer border border-white/10"
               style={{
                 background: name.trim() ? 'rgba(34, 197, 94, 0.1)' : 'rgb(14, 14, 14)',
-                color: name.trim() ? '#22c55e' : '#666',
+                color: name.trim() ? '#bd18b4' : '#666',
                 height: '2.75rem',
                 borderRadius: '1rem',
               }}
@@ -660,7 +660,7 @@ export function CreateCommunityModal({
               className="flex-1 font-medium cursor-pointer border border-white/10"
               style={{
                 background: 'rgba(34, 197, 94, 0.1)',
-                color: '#22c55e',
+                color: '#bd18b4',
                 height: '2.75rem',
                 borderRadius: '1rem',
               }}

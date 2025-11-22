@@ -90,7 +90,7 @@ export function MindMapModal({
       <DialogContent className="!max-w-[96vw] !w-[96vw] !h-[96vh] !max-h-[96vh] !p-6 overflow-hidden bg-gradient-to-br from-gray-900 to-black border-white/10">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
-            <Brain className="w-6 h-6 text-green-400" />
+            <Brain className="w-6 h-6 text-[#c532e2]" />
             Mapa Mental Interativo
           </DialogTitle>
           <DialogDescription className="text-white/60">
@@ -107,7 +107,7 @@ export function MindMapModal({
               </p>
               <Button
                 onClick={handleGenerateMindMap}
-                className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all"
+                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all"
               >
                 <Brain className="w-5 h-5 mr-2" />
                 Gerar Mapa Mental
@@ -117,7 +117,7 @@ export function MindMapModal({
 
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
-              <LoadingGrid size="80" color="#B3E240" />
+              <LoadingGrid size="80" color="#bd18b4" />
               <div className="text-center mt-6 space-y-2">
                 <p className="text-white/80 text-lg font-semibold">Gerando mapa mental com nossa IA...</p>
                 <p className="text-white/50 text-sm">Isso pode levar alguns segundos. Por favor, aguarde.</p>
@@ -161,7 +161,7 @@ export function MindMapModal({
                     onClick={() => setViewMode('interactive')}
                     variant={viewMode === 'interactive' ? 'default' : 'ghost'}
                     className={viewMode === 'interactive'
-                      ? 'bg-green-500 hover:bg-green-600 text-black'
+                      ? 'bg-[#bd18b4] hover:bg-[#aa22c5] text-black'
                       : 'text-white/60 hover:text-white hover:bg-white/10'
                     }
                   >
@@ -172,7 +172,7 @@ export function MindMapModal({
                     onClick={() => setViewMode('markdown')}
                     variant={viewMode === 'markdown' ? 'default' : 'ghost'}
                     className={viewMode === 'markdown'
-                      ? 'bg-green-500 hover:bg-green-600 text-black'
+                      ? 'bg-[#bd18b4] hover:bg-[#aa22c5] text-black'
                       : 'text-white/60 hover:text-white hover:bg-white/10'
                     }
                   >
@@ -210,7 +210,7 @@ export function MindMapModal({
                   <ReactMarkdown
                     components={{
                       h1: ({ children }) => (
-                        <h1 className="text-3xl font-bold text-green-400 mb-4 text-center">{children}</h1>
+                        <h1 className="text-3xl font-bold text-[#c532e2] mb-4 text-center">{children}</h1>
                       ),
                       h2: ({ children }) => (
                         <h2 className="text-2xl font-semibold text-white mt-6 mb-3">{children}</h2>

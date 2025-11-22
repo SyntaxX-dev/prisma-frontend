@@ -138,7 +138,7 @@ export function BasicInfoModal({
                         </Button>
                         <Button
                             type="submit"
-                            className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                            className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer"
                         >
                             Salvar
                         </Button>

@@ -105,10 +105,10 @@ export function FileUploadZone({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-[#1a1a1a] border-2 border-dashed border-[#C9FE02]"
+              className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-[#1a1a1a] border-2 border-dashed border-[#bd18b4]"
             >
-              <div className="w-20 h-20 rounded-full bg-[#C9FE02]/20 flex items-center justify-center">
-                <ImageIcon className="w-10 h-10 text-[#C9FE02]" />
+              <div className="w-20 h-20 rounded-full bg-[#bd18b4]/20 flex items-center justify-center">
+                <ImageIcon className="w-10 h-10 text-[#bd18b4]" />
               </div>
               <p className="text-white text-lg font-medium">Solte seu arquivo aqui</p>
               <p className="text-gray-400 text-sm">Arraste e solte para fazer upload</p>

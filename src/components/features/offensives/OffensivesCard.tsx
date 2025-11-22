@@ -66,16 +66,16 @@ export function OffensivesCard() {
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+      <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
         <CardHeader>
           <CardTitle className="text-white font-semibold flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-[#B3E240]" />
+            <Trophy className="w-5 h-5 text-[#bd18b4]" />
             Ofensivas
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <LoadingGrid size="32" color="#B3E240" />
+            <LoadingGrid size="32" color="#bd18b4" />
           </div>
         </CardContent>
       </Card>
@@ -84,10 +84,10 @@ export function OffensivesCard() {
 
   if (error) {
     return (
-      <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+      <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
         <CardHeader>
           <CardTitle className="text-white font-semibold flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-[#B3E240]" />
+            <Trophy className="w-5 h-5 text-[#bd18b4]" />
             Ofensivas
           </CardTitle>
         </CardHeader>
@@ -109,10 +109,10 @@ export function OffensivesCard() {
   // Verificar se currentOffensive existe
   if (!currentOffensive) {
     return (
-      <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+      <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
         <CardHeader>
           <CardTitle className="text-white font-semibold flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-[#B3E240]" />
+            <Trophy className="w-5 h-5 text-[#bd18b4]" />
             Ofensivas
           </CardTitle>
         </CardHeader>
@@ -126,10 +126,10 @@ export function OffensivesCard() {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+    <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
       <CardHeader>
         <CardTitle className="text-white font-semibold flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-[#B3E240]" />
+          <Trophy className="w-5 h-5 text-[#bd18b4]" />
           Ofensivas
         </CardTitle>
       </CardHeader>
@@ -147,7 +147,7 @@ export function OffensivesCard() {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-[#B3E240]">
+              <div className="text-2xl font-bold text-[#bd18b4]">
                 {stats.totalOffensives}
               </div>
               <div className="text-xs text-gray-400">Total de ofensivas</div>
@@ -164,7 +164,7 @@ export function OffensivesCard() {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#29292E] border border-[#323238] rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 bg-[#B3E240] rounded-full"></div>
+              <div className="w-2 h-2 bg-[#bd18b4] rounded-full"></div>
               <div className="text-lg font-bold text-white">
                 {stats.currentStreak}
               </div>
@@ -191,7 +191,7 @@ export function OffensivesCard() {
           </div>
           <div className="w-full bg-[#323238] rounded-full h-2">
             <div 
-              className="bg-gradient-to-r from-[#B3E240] to-[#8BC34A] h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-[#bd18b4] to-[#aa22c5] h-2 rounded-full transition-all duration-300"
               style={{ width: `${Math.min((currentOffensive.consecutiveDays / 30) * 100, 100)}%` }}
             ></div>
           </div>

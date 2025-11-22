@@ -13,7 +13,7 @@ interface LoadingGridProps {
 export function LoadingGrid({ 
   size = "60", 
   speed = "1.5", 
-  color = "#B3E240",
+  color = "#bd18b4",
   className = ""
 }: LoadingGridProps) {
   return (

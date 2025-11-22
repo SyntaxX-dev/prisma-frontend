@@ -11,7 +11,7 @@ export function ProfileCompletion({
     onTaskClick
 }: ProfileCompletionProps) {
     return (
-        <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+        <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
             <h2 className="text-xl font-bold text-white mb-2">Complete seu perfil</h2>
             <p className="text-gray-400 text-sm mb-6">Perfis completos atraem mais oportunidades!</p>
 

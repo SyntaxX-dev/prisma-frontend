@@ -54,7 +54,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
 
       {coursesLoading ? (
         <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingGrid size="60" color="#B3E240" />
+          <LoadingGrid size="60" color="#bd18b4" />
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-12">
@@ -105,6 +105,10 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                       thumbnailUrl={course.thumbnailUrl}
                       courseId={course.courseId}
                       category={course.category}
+                      instructor={course.instructor}
+                      duration={course.duration}
+                      year={course.year}
+                      level={course.level}
                     />
                   ))}
                 </div>
@@ -142,6 +146,10 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                             iconColor={course.iconColor}
                             courseId={course.courseId}
                             category={course.category}
+                            instructor={course.instructor}
+                            duration={course.duration}
+                            year={course.year}
+                            level={course.level}
                           />
                         </CarouselItem>
                       ))}

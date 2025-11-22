@@ -126,7 +126,7 @@ export function CommunityJoinTooltip({
                   <AvatarFallback 
                     className="font-semibold text-lg rounded-xl"
                     style={{
-                      background: '#C9FE02',
+                      background: '#bd18b4',
                       color: '#000',
                     }}
                   >
@@ -181,7 +181,7 @@ export function CommunityJoinTooltip({
                 disabled={isJoining}
                 className="w-full rounded-xl font-semibold transition-all hover:scale-[1.02] cursor-pointer"
                 style={{
-                  background: '#C9FE02',
+                  background: '#bd18b4',
                   color: '#000',
                 }}
               >

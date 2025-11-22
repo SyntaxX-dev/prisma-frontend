@@ -45,7 +45,7 @@ export function DashboardContent() {
     <div className="flex-1 p-8 ml-20">
       {loading && (
         <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingGrid size="60" color="#B3E240" />
+          <LoadingGrid size="60" color="#bd18b4" />
         </div>
       )}
 

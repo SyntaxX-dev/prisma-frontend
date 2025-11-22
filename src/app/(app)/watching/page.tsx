@@ -60,7 +60,7 @@ function WatchingContent() {
           dotSize={1}
           gap={24}
           baseColor="rgba(255,255,255,0.25)"
-          activeColor="#B3E240"
+          activeColor="#bd18b4"
           proximity={120}
           shockRadius={250}
           shockStrength={5}
@@ -87,7 +87,7 @@ function WatchingContent() {
             {/* Loading State */}
             {isLoading && (
               <div className="flex flex-col items-center justify-center py-20">
-                <LoadingGrid size="60" color="#B3E240" />
+                <LoadingGrid size="60" color="#bd18b4" />
                 <p className="text-white/60 mt-4">Carregando vídeos...</p>
               </div>
             )}
@@ -118,7 +118,7 @@ function WatchingContent() {
                 </p>
                 <a
                   href="/courses"
-                  className="inline-block bg-green-500 hover:bg-green-600 text-black font-medium px-6 py-3 rounded-full transition-colors"
+                  className="inline-block bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-medium px-6 py-3 rounded-full transition-colors"
                 >
                   Explorar Cursos
                 </a>
@@ -145,7 +145,7 @@ export default function WatchingPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <LoadingGrid size="60" color="#B3E240" />
+          <LoadingGrid size="60" color="#bd18b4" />
         </div>
       }
     >

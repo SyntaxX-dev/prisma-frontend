@@ -201,7 +201,7 @@ export function Pricing() {
                       >
                         {feature === "Acesso a IA de resumos para cada curso" ? (
                           <GradientText
-                            colors={["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ef4444"]}
+                            colors={["#ef4444", "#f97316", "#eab308", "#bd18b4", "#3b82f6", "#8b5cf6", "#ef4444"]}
                             animationSpeed={3}
                             showBorder={false}
                           >

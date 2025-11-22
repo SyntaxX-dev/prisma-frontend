@@ -451,7 +451,7 @@ export default function CourseCategoryPage() {
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-white text-2xl font-bold mb-4">Categoria não encontrada</h1>
-          <Button onClick={() => router.push('/dashboard')} className="bg-green-500 hover:bg-green-600 text-black">
+          <Button onClick={() => router.push('/dashboard')} className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black">
             Voltar ao Dashboard
           </Button>
         </div>
@@ -532,7 +532,7 @@ export default function CourseCategoryPage() {
                       placeholder={`Pesquisar em ${currentCategory.title}...`}
                       value={searchInput}
                       onChange={handleInputChange}
-                      className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-4 py-3 text-sm outline-none border border-white/20 focus:border-green-400 transition-colors pr-10"
+                      className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-4 py-3 text-sm outline-none border border-white/20 focus:border-[#c532e2] transition-colors pr-10"
                     />
                     {searchInput && (
                       <Button
@@ -548,7 +548,7 @@ export default function CourseCategoryPage() {
                   <Button
                     onClick={() => {
                     }}
-                    className="bg-green-500 hover:bg-green-600 text-black px-6 py-[1.4rem] rounded-[1rem] font-medium"
+                    className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-6 py-[1.4rem] rounded-[1rem] font-medium"
                   >
                     Buscar
                   </Button>
@@ -571,14 +571,14 @@ export default function CourseCategoryPage() {
                         {course.icon}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">
+                        <h3 className="text-white text-lg font-semibold group-hover:text-[#c532e2] transition-colors">
                           {course.title}
                         </h3>
                         <p className="text-white/60 text-sm">
                           {course.duration} • {course.level}
                         </p>
                       </div>
-                      <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-green-400 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-[#c532e2] group-hover:translate-x-1 transition-all" />
                     </div>
                     <div className="space-y-2">
                       <p className="text-white/70 text-sm">
@@ -602,7 +602,7 @@ export default function CourseCategoryPage() {
                   </p>
                   <Button
                     onClick={handleClearSearch}
-                    className="bg-green-500 hover:bg-green-600 text-black"
+                    className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black"
                   >
                     Limpar busca
                   </Button>

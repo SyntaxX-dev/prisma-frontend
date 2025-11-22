@@ -132,7 +132,7 @@ export function HabilitiesModal({
                     <div className="flex items-center justify-between">
                         <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
                             <span>Suas Habilidades</span>
-                            <Badge variant="secondary" className="bg-[#B3E240]/20 text-[#B3E240] border-[#B3E240]/30">
+                            <Badge variant="secondary" className="bg-[#bd18b4]/20 text-[#bd18b4] border-[#bd18b4]/30">
                                 {habilities.length}/20
                             </Badge>
                         </DialogTitle>
@@ -178,14 +178,14 @@ export function HabilitiesModal({
                                 onChange={(e) => setNewHability(e.target.value)}
                                 onKeyPress={handleKeyPress}
                                 placeholder="Ex: JavaScript, React, Node.js..."
-                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:border-[#bd18b4] focus:ring-[#bd18b4]"
                                 disabled={isLoading}
                             />
                             <Button
                                 type="button"
                                 onClick={addHability}
                                 disabled={!newHability.trim() || isLoading || habilities.length >= 20}
-                                className="bg-[#B3E240] hover:bg-[#B3E240]/90 text-black font-medium px-3"
+                                className="bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black font-medium px-3"
                             >
                                 <Plus className="h-4 w-4" />
                             </Button>
@@ -216,14 +216,14 @@ export function HabilitiesModal({
                                         <Badge
                                             key={index}
                                             variant="secondary"
-                                            className="bg-[#B3E240]/20 text-[#B3E240] border-[#B3E240]/30 hover:bg-[#B3E240]/30 transition-colors group"
+                                            className="bg-[#bd18b4]/20 text-[#bd18b4] border-[#bd18b4]/30 hover:bg-[#bd18b4]/30 transition-colors group"
                                         >
                                             <span className="pr-1">{hability}</span>
                                             <button
                                                 type="button"
                                                 onClick={() => removeHability(index)}
                                                 disabled={isLoading}
-                                                className="ml-1 hover:bg-[#B3E240]/20 rounded-full p-0.5 transition-colors"
+                                                className="ml-1 hover:bg-[#bd18b4]/20 rounded-full p-0.5 transition-colors"
                                             >
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -261,7 +261,7 @@ export function HabilitiesModal({
                             type="button"
                             onClick={handleSave}
                             disabled={isLoading}
-                            className="bg-[#B3E240] hover:bg-[#B3E240]/90 text-black font-medium"
+                            className="bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black font-medium"
                         >
                             {isLoading ? 'Salvando...' : 'Salvar Habilidades'}
                         </Button>

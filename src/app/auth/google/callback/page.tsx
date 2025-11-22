@@ -44,7 +44,7 @@ export default function GoogleCallbackPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
             <div className="text-center">
-                <LoadingGrid size="60" color="#B3E240" />
+                <LoadingGrid size="60" color="#bd18b4" />
                 <p className="text-white text-lg mt-4">Processando login com Google...</p>
             </div>
         </div>

@@ -12,7 +12,7 @@ export function ProfileHeader({
     getInitials
 }: ProfileHeaderProps) {
     return (
-        <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+        <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
             <div className="text-center mb-6">
                 <div className="relative inline-block group mb-4">
                     <Avatar
@@ -20,7 +20,7 @@ export function ProfileHeader({
                         onClick={() => document.getElementById('avatar-upload')?.click()}
                     >
                         <AvatarImage src={avatarImage || "/api/placeholder/96/96"} className="object-cover" />
-                        <AvatarFallback className="text-xl font-bold bg-[#B3E240] text-black">
+                        <AvatarFallback className="text-xl font-bold bg-[#bd18b4] text-black">
                             {getInitials(user)}
                         </AvatarFallback>
                     </Avatar>
@@ -56,7 +56,7 @@ export function ProfileHeader({
                     Localização
                 </Button>
                 <Button
-                    className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
+                    className="w-full bg-transparent hover:bg-white/5 text-[#bd18b4] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
                     onClick={() => {}}
                 >
                     <Plus className="w-4 h-4 mr-2" />

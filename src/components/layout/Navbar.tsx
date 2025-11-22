@@ -137,8 +137,8 @@ export function Navbar({}: NavbarProps) {
                 key={item}
                 onClick={() => handleNavClick(item)}
                 className={`transition-colors cursor-pointer ${isActive(item)
-                  ? 'text-[#B3E240]'
-                  : 'text-white/80 hover:text-[#B3E240]'
+                  ? 'text-[#bd18b4]'
+                  : 'text-white/80 hover:text-[#bd18b4]'
                   }`}
               >
                 {item}
@@ -164,12 +164,12 @@ export function Navbar({}: NavbarProps) {
                           updateSearch(searchQuery);
                         }
                       }}
-                      className="bg-white/20 text-white placeholder-white/60 rounded-full px-3 py-1 pr-8 text-sm outline-none border border-white/20 focus:border-[#B3E240] transition-colors w-full"
+                      className="bg-white/20 text-white placeholder-white/60 rounded-full px-3 py-1 pr-8 text-sm outline-none border border-white/20 focus:border-[#bd18b4] transition-colors w-full"
                       autoFocus
                     />
                     {isLoading && (
                       <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                        <LoadingGrid size="16" color="#B3E240" />
+                        <LoadingGrid size="16" color="#bd18b4" />
                       </div>
                     )}
                   </div>
@@ -177,7 +177,7 @@ export function Navbar({}: NavbarProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer flex-shrink-0"
+                    className="text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer flex-shrink-0"
                     onClick={() => updateSearch(searchQuery)}
                     title="Pesquisar"
                   >
@@ -187,7 +187,7 @@ export function Navbar({}: NavbarProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer flex-shrink-0"
+                    className="text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer flex-shrink-0"
                     onClick={() => {
                       clearSearch();
                       setSearchExpanded(false);
@@ -201,7 +201,7 @@ export function Navbar({}: NavbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer"
+                  className="text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer"
                   onClick={() => setSearchExpanded(true)}
                   title="Abrir pesquisa"
                 >
@@ -235,14 +235,14 @@ export function Navbar({}: NavbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 relative cursor-pointer transition-all duration-300"
+                  className="text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-8 h-8 p-0 relative cursor-pointer transition-all duration-300"
                 >
                   <Bell className="w-6 h-6 transition-all duration-300" />
                   {hasNotification && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full animate-ping"></span>
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#bd18b4] rounded-full animate-ping"></span>
                   )}
                   {hasNotification && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full"></span>
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#bd18b4] rounded-full"></span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -284,7 +284,7 @@ export function Navbar({}: NavbarProps) {
                               setNotificationOpen(false);
                               setProfileModalOpen(true);
                             }}
-                            className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black text-sm"
+                            className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black text-sm"
                           >
                             Completar Perfil
                           </Button>
@@ -303,7 +303,7 @@ export function Navbar({}: NavbarProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="text-white/80 hover:text-[#B3E240] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer"
+              className="text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer"
             >
               <HelpCircle className="w-4 h-4" />
             </Button>
@@ -320,7 +320,7 @@ export function Navbar({}: NavbarProps) {
                     className="object-cover"
                     alt="Foto do perfil"
                   />
-                  <AvatarFallback className="bg-[#B3E240] text-black">
+                  <AvatarFallback className="bg-[#bd18b4] text-black">
                     {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -357,14 +357,14 @@ export function Navbar({}: NavbarProps) {
               onClick={() => navigateWithLoading('/profile', 'Carregando Perfil...')}
               className="text-gray-300 hover:text-gray-100 rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-white/30"
             >
-              <User className="mr-3 h-4 w-4 text-[#B3E240]" />
+              <User className="mr-3 h-4 w-4 text-[#bd18b4]" />
               <span>Perfil</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => navigateWithLoading('/settings', 'Carregando Configurações...')}
               className="text-gray-300 hover:text-gray-100 rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-white/30"
             >
-              <Settings className="mr-3 h-4 w-4 text-[#B3E240]" />
+              <Settings className="mr-3 h-4 w-4 text-[#bd18b4]" />
               <span>Configurações</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/20" />
@@ -372,7 +372,7 @@ export function Navbar({}: NavbarProps) {
               onClick={handleLogout}
               className="text-red-400 hover:text-white rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-red-500/20 data-[highlighted]:!text-white"
             >
-              <LogOut className="mr-3 h-4 w-4 text-[#B3E240]" />
+              <LogOut className="mr-3 h-4 w-4 text-[#bd18b4]" />
               <span>Sair</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

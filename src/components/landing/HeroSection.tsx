@@ -13,7 +13,7 @@ export function HeroSection() {
       </div>
       
       {/* Gradient rainbow bar at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-r from-red-500 via-orange-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 z-20" />
+      <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-r from-red-500 via-orange-500 via-yellow-500 via-[#bd18b4] via-blue-500 via-indigo-500 to-purple-500 z-20" />
 
       {/* Content */}
       <div className="container mx-auto px-4 sm:px-8 md:px-16 relative z-10">

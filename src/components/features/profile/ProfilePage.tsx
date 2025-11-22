@@ -292,10 +292,10 @@ export function ProfilePage() {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="aspect-square bg-[#29292E] border-2 border-[#323238] rounded-lg flex items-center justify-center hover:border-[#B3E240] transition-colors cursor-pointer group"
+                            className="aspect-square bg-[#29292E] border-2 border-[#323238] rounded-lg flex items-center justify-center hover:border-[#bd18b4] transition-colors cursor-pointer group"
                             title={link.label}
                         >
-                            <IconComponent className="w-6 h-6 text-[#B3E240] group-hover:scale-110 transition-transform" />
+                            <IconComponent className="w-6 h-6 text-[#bd18b4] group-hover:scale-110 transition-transform" />
                         </a>
                     );
                 })}
@@ -495,7 +495,7 @@ export function ProfilePage() {
     if (isLoading || (userId && isLoadingOtherProfile)) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
-                <LoadingGrid size="60" color="#B3E240" />
+                <LoadingGrid size="60" color="#bd18b4" />
             </div>
         );
     }
@@ -506,7 +506,7 @@ export function ProfilePage() {
             <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-red-400 mb-4">{error}</p>
-                    <Button onClick={loadUserProfile} className="bg-[#B3E240] text-black hover:bg-[#B3E240]/80">
+                    <Button onClick={loadUserProfile} className="bg-[#bd18b4] text-black hover:bg-[#bd18b4]/80">
                         Tentar novamente
                     </Button>
                 </div>
@@ -558,7 +558,7 @@ export function ProfilePage() {
                     dotSize={1}
                     gap={24}
                     baseColor="rgba(255,255,255,0.25)"
-                    activeColor="#B3E240"
+                    activeColor="#bd18b4"
                     proximity={120}
                     shockRadius={250}
                     shockStrength={5}
@@ -584,7 +584,7 @@ export function ProfilePage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-1">
                             <div className="space-y-6">
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
 
 
                                     <div className="text-center mb-6">
@@ -602,7 +602,7 @@ export function ProfilePage() {
                                                     className="object-cover transition-all duration-300" 
                                                     alt="Foto do perfil"
                                                 />
-                                                <AvatarFallback className="text-xl font-bold bg-[#B3E240] text-black">
+                                                <AvatarFallback className="text-xl font-bold bg-[#bd18b4] text-black">
                                                     {getInitials(user)}
                                                 </AvatarFallback>
                                             </Avatar>
@@ -624,7 +624,7 @@ export function ProfilePage() {
                                             {/* Indicador de loading durante upload */}
                                             {isUploadingImage && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                                                    <LoadingGrid size="24" color="#B3E240" />
+                                                    <LoadingGrid size="24" color="#bd18b4" />
                                                 </div>
                                             )}
                                             
@@ -674,7 +674,7 @@ export function ProfilePage() {
                                                             onClick={() => {
                                                                 router.push(`/communities?chat=${userId}`);
                                                             }}
-                                                            className="w-full bg-[#B3E240] hover:bg-[#B3E240]/80 text-black px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
+                                                            className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/80 text-black px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
                                                         >
                                                             <MessageCircle className="w-4 h-4" />
                                                             Conversar
@@ -689,7 +689,7 @@ export function ProfilePage() {
                                                     variant="outline"
                                                     className={`w-full px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
                                                         isPublicView 
-                                                            ? 'bg-[#B3E240]/10 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240]/20' 
+                                                            ? 'bg-[#bd18b4]/10 border-[#bd18b4] text-[#bd18b4] hover:bg-[#bd18b4]/20' 
                                                             : 'bg-transparent hover:bg-white/5 border-[#323238] text-gray-300 hover:text-white'
                                                     }`}
                                                     onClick={() => setIsPublicView(!isPublicView)}
@@ -705,7 +705,7 @@ export function ProfilePage() {
                                         {basicInfoData.cidade ? (
                                             <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
                                                 <div className="flex items-center">
-                                                    <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                    <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-4 flex-shrink-0"></div>
                                                     <span className="text-white text-sm font-medium">
                                                         {basicInfoData.cidade}
                                                     </span>
@@ -724,7 +724,7 @@ export function ProfilePage() {
                                         ) : (
                                             !isPublicView && (
                                                 <Button
-                                                    className="w-full bg-transparent hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer transition-colors"
+                                                    className="w-full bg-transparent hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2] text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer transition-colors"
                                                     onClick={() => setIsLocationModalOpen(true)}
                                                 >
                                                     <Plus className="w-4 h-4 mr-2" />
@@ -735,7 +735,7 @@ export function ProfilePage() {
                                         {selectedFocus ? (
                                             <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
                                                 <div className="flex items-center">
-                                                    <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-3"></div>
+                                                    <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-3"></div>
                                                     <span className="text-white text-sm font-medium">
                                                         {getFocusLabel(selectedFocus, selectedCourse)}
                                                     </span>
@@ -754,7 +754,7 @@ export function ProfilePage() {
                                         ) : (
                                             !isPublicView && (
                                                 <Button
-                                                    className="w-full bg-transparent hover:bg-white/5 text-[#B3E240] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
+                                                    className="w-full bg-transparent hover:bg-white/5 text-[#bd18b4] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
                                                     onClick={() => setIsFocusModalOpen(true)}
                                                 >
                                                     <Plus className="w-4 h-4 mr-2" />
@@ -766,7 +766,7 @@ export function ProfilePage() {
                                         {/* Idade */}
                                         {user?.age && (
                                             <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
-                                                <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-4 flex-shrink-0"></div>
                                                 <span className="text-white text-sm font-medium">
                                                     {user.age} anos
                                                 </span>
@@ -790,7 +790,7 @@ export function ProfilePage() {
                                             
                                             return (
                                                 <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
-                                                    <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                    <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-4 flex-shrink-0"></div>
                                                     <span className="text-white text-sm font-medium">
                                                         {label}
                                                     </span>
@@ -801,7 +801,7 @@ export function ProfilePage() {
                                         {/* Curso */}
                                         {user?.collegeCourse && (
                                             <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
-                                                <div className="w-2 h-2 bg-[#B3E240] rounded-full mr-4 flex-shrink-0"></div>
+                                                <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-4 flex-shrink-0"></div>
                                                 <span className="text-white text-sm font-medium">
                                                     {COLLEGE_COURSE_LABELS[user.collegeCourse as keyof typeof COLLEGE_COURSE_LABELS] || user.collegeCourse}
                                                 </span>
@@ -830,16 +830,16 @@ export function ProfilePage() {
 
                                 {/* Insígnias - Apenas na visualização privada */}
                                 {!isPublicView && (
-                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
                                         <h3 className="text-white font-semibold mb-4">Insígnias • 3</h3>
                                         <div className="flex space-x-3">
-                                            <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                            <div className="w-12 h-12 bg-[#bd18b4] rounded-full flex items-center justify-center cursor-pointer">
                                                 <span className="text-black text-xs font-bold">R</span>
                                             </div>
                                             <div className="w-12 h-12 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
                                                 <span className="text-white text-xs font-bold">G</span>
                                             </div>
-                                            <div className="w-12 h-12 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                            <div className="w-12 h-12 bg-[#bd18b4] rounded-full flex items-center justify-center cursor-pointer">
                                                 <span className="text-black text-xs font-bold">N</span>
                                             </div>
                                         </div>
@@ -851,7 +851,7 @@ export function ProfilePage() {
                         <div className="lg:col-span-2 space-y-6">
                             {/* Seção "Complete seu perfil" - apenas na visualização privada */}
                             {!isPublicView && (
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
                                     <h2 className="text-xl font-bold text-white mb-2">Complete seu perfil</h2>
                                     <p className="text-gray-400 text-sm mb-6">Perfis completos atraem mais oportunidades!</p>
 
@@ -895,7 +895,7 @@ export function ProfilePage() {
                             {/* Links e Insígnias - Sempre visível acima do Sobre */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 {/* Links */}
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
                                     <div className="flex items-center justify-between mb-3">
                                         <h3 className="text-white font-semibold text-sm">Links</h3>
                                         {isOwnProfile && !isPublicView && (
@@ -912,23 +912,23 @@ export function ProfilePage() {
                                 </div>
 
                                 {/* Insígnias */}
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
                                     <h3 className="text-white font-semibold mb-3 text-sm">Insígnias • 3</h3>
                                     <div className="flex space-x-2">
-                                        <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                        <div className="w-10 h-10 bg-[#bd18b4] rounded-full flex items-center justify-center cursor-pointer">
                                             <span className="text-black text-xs font-bold">R</span>
                                         </div>
                                         <div className="w-10 h-10 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
                                             <span className="text-white text-xs font-bold">G</span>
                                         </div>
-                                        <div className="w-10 h-10 bg-[#B3E240] rounded-full flex items-center justify-center cursor-pointer">
+                                        <div className="w-10 h-10 bg-[#bd18b4] rounded-full flex items-center justify-center cursor-pointer">
                                             <span className="text-black text-xs font-bold">N</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                            <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-semibold text-white">Sobre</h3>
                                     {!isPublicView && (
@@ -953,7 +953,7 @@ export function ProfilePage() {
                                 </div>
                             </div>
 
-                            {/* <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#B3E240]/5 before:to-transparent before:pointer-events-none">
+                            {/* <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-lg font-semibold text-white">Destaques</h3>
                                     <Button
@@ -971,7 +971,7 @@ export function ProfilePage() {
                                     <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
                                         Compartilhe o link dos seus melhores projetos para se destacar e conquistar oportunidades
                                     </p>
-                                    <Button className="bg-[#B3E240] hover:bg-[#A3D030] text-black px-6 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer">
+                                    <Button className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-6 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer">
                                         <Plus className="w-4 h-4" />
                                         <span>Adicionar destaques</span>
                                     </Button>
@@ -1001,7 +1001,7 @@ export function ProfilePage() {
                                     <Textarea
                                         value={formData[field.key] || ''}
                                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                        className="bg-[#29292E] cursor-pointer border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
+                                        className="bg-[#29292E] cursor-pointer border-[#323238] text-white placeholder-gray-400 focus:border-[#bd18b4] focus:ring-[#bd18b4]"
                                         placeholder={`Digite ${field.label.toLowerCase()}...`}
                                         rows={3}
                                     />
@@ -1009,14 +1009,14 @@ export function ProfilePage() {
                                     <Input
                                         type="file"
                                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                        className="bg-[#29292E] h-12 border-[#323238] p-2 text-white file:bg-[#B3E240] file:text-black file:border-0 file:px-2 cursor-pointer file:mr-4 file:min-w-[120px] file:rounded-md focus:!border-[#323238] focus:!ring-0 focus:!outline-none"
+                                        className="bg-[#29292E] h-12 border-[#323238] p-2 text-white file:bg-[#bd18b4] file:text-black file:border-0 file:px-2 cursor-pointer file:mr-4 file:min-w-[120px] file:rounded-md focus:!border-[#323238] focus:!ring-0 focus:!outline-none"
                                     />
                                 ) : (
                                     <Input
                                         type={field.type}
                                         value={formData[field.key] || ''}
                                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:border-[#B3E240] focus:ring-[#B3E240]"
+                                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:border-[#bd18b4] focus:ring-[#bd18b4]"
                                         placeholder={`Digite ${field.label.toLowerCase()}...`}
                                     />
                                 )}
@@ -1034,7 +1034,7 @@ export function ProfilePage() {
                             </Button>
                             <Button
                                 type="submit"
-                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer"
                             >
                                 Salvar
                             </Button>
@@ -1159,7 +1159,7 @@ export function ProfilePage() {
                             </Button>
                             <Button
                                 type="submit"
-                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer"
                             >
                                 Salvar
                             </Button>
@@ -1186,8 +1186,8 @@ export function ProfilePage() {
                                     variant={selectedFocus === 'ENEM' ? 'default' : 'outline'}
                                     onClick={() => handleFocusSelect('ENEM')}
                                     className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'ENEM'
-                                        ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
-                                        : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                        ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
+                                        : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
                                         }`}
                                 >
                                     ENEM
@@ -1196,8 +1196,8 @@ export function ProfilePage() {
                                     variant={selectedFocus === 'CONCURSO' ? 'default' : 'outline'}
                                     onClick={() => handleFocusSelect('CONCURSO')}
                                     className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'CONCURSO'
-                                        ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
-                                        : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                        ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
+                                        : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
                                         }`}
                                 >
                                     Concurso
@@ -1206,8 +1206,8 @@ export function ProfilePage() {
                                     variant={selectedFocus === 'FACULDADE' ? 'default' : 'outline'}
                                     onClick={() => handleFocusSelect('FACULDADE')}
                                     className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'FACULDADE'
-                                        ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
-                                        : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                        ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
+                                        : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
                                         }`}
                                 >
                                     Faculdade
@@ -1216,8 +1216,8 @@ export function ProfilePage() {
                                     variant={selectedFocus === 'ENSINO_MEDIO' ? 'default' : 'outline'}
                                     onClick={() => handleFocusSelect('ENSINO_MEDIO')}
                                     className={`h-12 text-sm cursor-pointer transition-colors ${selectedFocus === 'ENSINO_MEDIO'
-                                        ? 'bg-[#B3E240] text-black hover:bg-[#A3D030]'
-                                        : 'border-[#323238] text-gray-300 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'
+                                        ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
+                                        : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
                                         }`}
                                 >
                                     Ensino Médio
@@ -1307,7 +1307,7 @@ export function ProfilePage() {
                             <Button
                                 type="button"
                                 onClick={handleFocusSubmit}
-                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer"
                                 disabled={!selectedFocus || (selectedFocus === 'FACULDADE' && !selectedCourse) || (selectedFocus === 'CONCURSO' && !selectedContest)}
                             >
                                 Salvar
@@ -1362,7 +1362,7 @@ export function ProfilePage() {
                             </Button>
                             <Button
                                 type="submit"
-                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer transition-colors"
+                                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer transition-colors"
                             >
                                 Salvar
                             </Button>
@@ -1400,7 +1400,7 @@ export function ProfilePage() {
                         <Button
                             type="button"
                             onClick={handleAboutSubmit}
-                            className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer transition-colors"
+                            className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer transition-colors"
                         >
                             Salvar
                         </Button>
@@ -1482,7 +1482,7 @@ export function ProfilePage() {
                             </Button>
                             <Button
                                 type="submit"
-                                className="bg-[#B3E240] hover:bg-[#A3D030] text-black cursor-pointer"
+                                className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black cursor-pointer"
                             >
                                 Salvar
                             </Button>

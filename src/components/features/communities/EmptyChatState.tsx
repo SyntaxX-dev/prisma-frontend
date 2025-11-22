@@ -30,11 +30,11 @@ export function EmptyChatState() {
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
             }}
           >
-            <MessageCircle className="w-16 h-16 text-[#B3E240]" strokeWidth={1.5} />
+            <MessageCircle className="w-16 h-16 text-[#bd18b4]" strokeWidth={1.5} />
             
             {/* Floating Sparkle */}
             <Sparkles 
-              className="w-6 h-6 text-[#B3E240] absolute -top-2 -right-2 animate-pulse"
+              className="w-6 h-6 text-[#bd18b4] absolute -top-2 -right-2 animate-pulse"
             />
           </div>
         </div>
@@ -52,7 +52,7 @@ export function EmptyChatState() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="w-2 h-2 rounded-full bg-[#B3E240]"
+              className="w-2 h-2 rounded-full bg-[#bd18b4]"
               style={{
                 opacity: 0.3 + (i * 0.2),
                 animation: `pulse 2s ease-in-out infinite`,

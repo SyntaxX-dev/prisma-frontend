@@ -48,7 +48,7 @@ export function FileUploadModal({
         <DialogFooter>
           <Button
             onClick={handleConfirm}
-            className="bg-[#C9FE02] text-black hover:bg-[#B3E240]"
+            className="bg-[#bd18b4] text-white hover:bg-[#aa22c5]"
           >
             Entendi
           </Button>

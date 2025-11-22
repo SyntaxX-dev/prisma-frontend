@@ -133,7 +133,7 @@ export function ProfileCompletionModal({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl bg-white/10 backdrop-blur-xl border border-white/30 text-white">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-[#B3E240] flex items-center gap-2">
+                    <DialogTitle className="text-2xl font-bold text-[#bd18b4] flex items-center gap-2">
                         <Award className="w-6 h-6" />
                         Complete seu Perfil
                     </DialogTitle>
@@ -232,12 +232,12 @@ export function ProfileCompletionModal({
                         )}
 
                         {getBadgePreview() && (
-                            <div className="bg-[#B3E240]/10 border border-[#B3E240]/30 rounded-lg p-4">
-                                <div className="flex items-center gap-2 text-[#B3E240]">
+                            <div className="bg-[#bd18b4]/10 border border-[#bd18b4]/30 rounded-lg p-4">
+                                <div className="flex items-center gap-2 text-[#bd18b4]">
                                     <CheckCircle className="w-5 h-5" />
                                     <span className="font-medium">Badge que será atribuído:</span>
                                 </div>
-                                <Badge className="mt-2 bg-[#B3E240] text-black">
+                                <Badge className="mt-2 bg-[#bd18b4] text-black">
                                     {getBadgePreview()}
                                 </Badge>
                             </div>
@@ -248,7 +248,7 @@ export function ProfileCompletionModal({
                         <Button
                             onClick={handleSubmit}
                             disabled={isLoading || !userFocus}
-                            className="flex-1 bg-[#B3E240] hover:bg-[#B3E240]/90 text-black"
+                            className="flex-1 bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black"
                         >
                             {isLoading ? 'Salvando...' : 'Completar Perfil'}
                         </Button>

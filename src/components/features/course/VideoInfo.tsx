@@ -18,7 +18,7 @@ export function VideoInfo({ selectedVideo, onMarkComplete }: VideoInfoProps) {
                     </div>
                     <Badge
                         className={`${selectedVideo?.isCompleted
-                            ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                            ? 'bg-[#bd18b4]/20 text-[#c532e2] border-[#bd18b4]/30'
                             : 'bg-white/10 text-white/60 border-white/20'
                             } backdrop-blur-sm`}
                     >
@@ -52,7 +52,7 @@ export function VideoInfo({ selectedVideo, onMarkComplete }: VideoInfoProps) {
                         onClick={() => selectedVideo && onMarkComplete(selectedVideo)}
                         disabled={!selectedVideo?.videoId}
                         className={`font-semibold shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${selectedVideo?.isCompleted
-                            ? 'bg-green-500 hover:bg-green-600 text-black hover:shadow-green-500/25'
+                            ? 'bg-[#bd18b4] hover:bg-[#aa22c5] text-black hover:shadow-[#bd18b4]/25'
                             : 'bg-white/20 hover:bg-white/30 text-white/70 hover:text-white'
                             }`}
                     >

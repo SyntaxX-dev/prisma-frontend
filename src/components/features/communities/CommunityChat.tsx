@@ -227,7 +227,7 @@ export function CommunityChat({
       // Usar word boundaries para destacar apenas palavras completas
       const regex = new RegExp(`\\b(${escapedQuery})\\b`, 'gi');
       // Usar span com display: inline-block e line-height: inherit para não alterar layout
-      const highlighted = escapedText.replace(regex, '<span style="background-color: #B3E240; color: black; display: inline; line-height: inherit; padding: 0; border-radius: 2px; box-decoration-break: clone;">$1</span>');
+      const highlighted = escapedText.replace(regex, '<span style="background-color: #bd18b4; color: black; display: inline; line-height: inherit; padding: 0; border-radius: 2px; box-decoration-break: clone;">$1</span>');
       return highlighted;
     };
   }, []);
@@ -571,7 +571,7 @@ export function CommunityChat({
                         <AvatarFallback 
                           className="text-xs font-medium"
                           style={{
-                            background: '#C9FE02',
+                            background: '#bd18b4',
                             color: '#000',
                           }}
                         >
@@ -609,7 +609,7 @@ export function CommunityChat({
                               className={`absolute ${messageIsOwn ? 'right-0' : 'left-0'} -top-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E] transition-colors z-10 shadow-lg cursor-pointer`}
                               title={isPinned ? 'Desfixar mensagem' : 'Fixar mensagem'}
                             >
-                              <Pin className={`w-4 h-4 ${isPinned ? 'text-[#B3E240] fill-[#B3E240]' : 'text-gray-400'}`} />
+                              <Pin className={`w-4 h-4 ${isPinned ? 'text-[#bd18b4] fill-[#bd18b4]' : 'text-gray-400'}`} />
                             </motion.button>
                           )}
 
@@ -669,7 +669,7 @@ export function CommunityChat({
                           <div
                             className={`px-3 py-2 rounded-lg ${
                               messageIsOwn
-                                ? "rounded-tr-sm bg-[#B3E240] text-black"
+                                ? "rounded-tr-sm bg-[#bd18b4] text-black"
                                 : "rounded-tl-sm bg-[#29292E] text-white border border-[#323238]"
                             }`}
                           >
@@ -736,7 +736,7 @@ export function CommunityChat({
                     src={avatarSrc}
                     alt={typingMember?.name || "Usuário"}
                   />
-                  <AvatarFallback className="bg-[#B3E240] text-black text-xs">
+                  <AvatarFallback className="bg-[#bd18b4] text-black text-xs">
                     {(typingMember?.name || "U").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -843,7 +843,7 @@ export function CommunityChat({
             onKeyDown={handleKeyDown}
             placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
             disabled={!isConnected}
-            className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240] focus:outline-none focus:ring-0 rounded-md px-3 py-1.5 text-sm flex-1 overflow-y-auto overflow-x-hidden"
+            className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-3 py-1.5 text-sm flex-1 overflow-y-auto overflow-x-hidden"
             rows={1}
             style={{
               wordBreak: 'break-word', 
@@ -887,7 +887,7 @@ export function CommunityChat({
             size="icon"
             className="rounded-lg w-9 h-9 cursor-pointer"
             style={{
-              background: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#C9FE02' : 'rgb(26, 26, 26)',
+              background: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#bd18b4' : 'rgb(26, 26, 26)',
               color: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#000' : '#666',
             }}
           >

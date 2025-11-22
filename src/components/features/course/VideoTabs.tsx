@@ -68,7 +68,7 @@ export function VideoTabs({ selectedVideo }: VideoTabsProps) {
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
                     <FileText className="w-12 h-12 text-white/30 mx-auto mb-3" />
                     <p className="text-white/60 mb-4">Suas anotações aparecerão aqui</p>
-                    <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer">
+                    <Button className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all cursor-pointer">
                         Criar primeira anotação
                     </Button>
                 </div>
@@ -83,7 +83,7 @@ export function VideoTabs({ selectedVideo }: VideoTabsProps) {
                             rows={3}
                         />
                         <div className="flex justify-end mt-3">
-                            <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer">
+                            <Button className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all cursor-pointer">
                                 Comentar
                             </Button>
                         </div>

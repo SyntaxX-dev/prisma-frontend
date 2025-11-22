@@ -19,7 +19,7 @@ export function ModuleItem({
                 className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
             >
                 <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-semibold text-green-400 border border-green-500/20">
+                    <div className="bg-gradient-to-br from-[#bd18b4]/20 to-[#aa22c5]/20 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-semibold text-[#c532e2] border border-[#bd18b4]/20">
                         {module.id}
                     </div>
                     <div className="text-left">

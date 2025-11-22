@@ -103,15 +103,15 @@ export function VoiceCallModal({
             <>
               {/* Avatar com animação de pulso quando tocando */}
               <div className="relative">
-                <Avatar className="w-24 h-24 border-4 border-[#C9FE02]">
+                <Avatar className="w-24 h-24 border-4 border-[#bd18b4]">
                   <AvatarImage src={displayAvatar || undefined} alt={displayName} />
-                  <AvatarFallback className="bg-[#C9FE02] text-black text-2xl">
+                  <AvatarFallback className="bg-[#bd18b4] text-black text-2xl">
                     {displayName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 {isRinging && (
                   <motion.div
-                    className="absolute inset-0 rounded-full border-4 border-[#C9FE02]"
+                    className="absolute inset-0 rounded-full border-4 border-[#bd18b4]"
                     animate={{
                       scale: [1, 1.3, 1],
                       opacity: [0.8, 0, 0.8],
@@ -173,7 +173,7 @@ export function VoiceCallModal({
                       onAccept(callState.roomId);
                     }
                   }}
-                  className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 p-0"
+                  className="bg-[#bd18b4] hover:bg-[#aa22c5] text-white rounded-full w-14 h-14 p-0"
                 >
                   <Phone className="w-6 h-6" />
                 </Button>

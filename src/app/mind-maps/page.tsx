@@ -69,7 +69,7 @@ function MindMapsContent() {
             dotSize={1}
             gap={24}
             baseColor="rgba(255,255,255,0.25)"
-            activeColor="#B3E240"
+            activeColor="#bd18b4"
             proximity={120}
             shockRadius={250}
             shockStrength={5}
@@ -84,7 +84,7 @@ function MindMapsContent() {
             <Navbar isDark={isDark} toggleTheme={toggleTheme} />
             <div style={{ marginTop: '80px' }} className="flex items-center justify-center min-h-[calc(100vh-80px)]">
               <div className="text-center">
-                <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
+                <Loader2 className="w-12 h-12 text-[#bd18b4] animate-spin mx-auto mb-4" />
                 <p className="text-white/70">Carregando mapas mentais...</p>
               </div>
             </div>
@@ -103,7 +103,7 @@ function MindMapsContent() {
             dotSize={1}
             gap={24}
             baseColor="rgba(255,255,255,0.25)"
-            activeColor="#B3E240"
+            activeColor="#bd18b4"
             proximity={120}
             shockRadius={250}
             shockStrength={5}
@@ -135,7 +135,7 @@ function MindMapsContent() {
           dotSize={1}
           gap={24}
           baseColor="rgba(255,255,255,0.25)"
-          activeColor="#B3E240"
+          activeColor="#bd18b4"
           proximity={120}
           shockRadius={250}
           shockStrength={5}
@@ -153,7 +153,7 @@ function MindMapsContent() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-            <Brain className="w-10 h-10 text-green-500" />
+            <Brain className="w-10 h-10 text-[#bd18b4]" />
             Meus Mapas Mentais
           </h1>
           <p className="text-white/70">
@@ -177,13 +177,13 @@ function MindMapsContent() {
             {mindMaps.map((mindMap) => (
               <div
                 key={mindMap.id}
-                className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-green-500/50 transition-all cursor-pointer group"
+                className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-[#bd18b4]/50 transition-all cursor-pointer group"
                 onClick={() => setSelectedMindMap(mindMap)}
               >
                 <div className="flex items-start gap-3 mb-4">
-                  <Brain className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
+                  <Brain className="w-6 h-6 text-[#bd18b4] flex-shrink-0 mt-1" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2 group-hover:text-green-400 transition-colors">
+                    <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2 group-hover:text-[#c532e2] transition-colors">
                       {mindMap.videoTitle}
                     </h3>
                   </div>
@@ -195,7 +195,7 @@ function MindMapsContent() {
                 </div>
 
                 <Button
-                  className="w-full mt-4 bg-green-500 hover:bg-green-600 text-black font-semibold"
+                  className="w-full mt-4 bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedMindMap(mindMap);
@@ -245,7 +245,7 @@ function MindMapsContent() {
                     size="sm"
                     className={
                       viewMode === 'interactive'
-                        ? 'bg-green-500 text-black hover:bg-green-600'
+                        ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
                         : 'bg-transparent text-white/70 hover:text-white hover:bg-white/10'
                     }
                   >
@@ -257,7 +257,7 @@ function MindMapsContent() {
                     size="sm"
                     className={
                       viewMode === 'text'
-                        ? 'bg-green-500 text-black hover:bg-green-600'
+                        ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
                         : 'bg-transparent text-white/70 hover:text-white hover:bg-white/10'
                     }
                   >
@@ -310,7 +310,7 @@ export default function MindMapsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-black">
-        <LoadingGrid size="60" color="#B3E240" />
+        <LoadingGrid size="60" color="#bd18b4" />
       </div>
     }>
       <MindMapsContent />

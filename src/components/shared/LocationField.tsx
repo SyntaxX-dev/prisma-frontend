@@ -120,7 +120,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
           variant={searchType === 'cep' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSearchType('cep')}
-          className={searchType === 'cep' ? 'bg-[#B3E240] text-black' : 'border-[#323238] text-gray-300'}
+          className={searchType === 'cep' ? 'bg-[#bd18b4] text-black' : 'border-[#323238] text-gray-300'}
         >
           <Search className="w-4 h-4 mr-1" />
           CEP
@@ -130,7 +130,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
           variant={searchType === 'address' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSearchType('address')}
-          className={searchType === 'address' ? 'bg-[#B3E240] text-black' : 'border-[#323238] text-gray-300'}
+          className={searchType === 'address' ? 'bg-[#bd18b4] text-black' : 'border-[#323238] text-gray-300'}
         >
           <MapPin className="w-4 h-4 mr-1" />
           Endereço
@@ -140,7 +140,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
           variant={searchType === 'manual' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSearchType('manual')}
-          className={searchType === 'manual' ? 'bg-[#B3E240] text-black' : 'border-[#323238] text-gray-300'}
+          className={searchType === 'manual' ? 'bg-[#bd18b4] text-black' : 'border-[#323238] text-gray-300'}
         >
           <MapPin className="w-4 h-4 mr-1" />
           Manual
@@ -156,16 +156,16 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
               value={cep}
               onChange={(e) => setCep(e.target.value)}
               placeholder="Digite o CEP (apenas números)"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
               maxLength={9}
             />
             <Button
               type="button"
               onClick={() => searchByCep(cep)}
               disabled={isLoading || cep.length < 8}
-              className="bg-[#B3E240] hover:bg-[#A3D030] text-black disabled:opacity-50"
+              className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black disabled:opacity-50"
             >
-              {isLoading ? <LoadingGrid size="16" color="#B3E240" /> : <Search className="w-4 h-4" />}
+              {isLoading ? <LoadingGrid size="16" color="#bd18b4" /> : <Search className="w-4 h-4" />}
             </Button>
           </div>
           {addressData && (
@@ -188,14 +188,14 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
               value={manualAddress.cidade}
               onChange={(e) => setManualAddress(prev => ({ ...prev, cidade: e.target.value }))}
               placeholder="Cidade"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
             />
             <Input
               type="text"
               value={manualAddress.estado}
               onChange={(e) => setManualAddress(prev => ({ ...prev, estado: e.target.value }))}
               placeholder="Estado (UF)"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
               maxLength={2}
             />
           </div>
@@ -203,9 +203,9 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
             type="button"
             onClick={searchByAddress}
             disabled={isLoading || !manualAddress.cidade || !manualAddress.estado}
-            className="w-full bg-[#B3E240] hover:bg-[#A3D030] text-black disabled:opacity-50"
+            className="w-full bg-[#bd18b4] hover:bg-[#aa22c5] text-black disabled:opacity-50"
           >
-            {isLoading ? <LoadingGrid size="16" color="#B3E240" className="mr-2" /> : <Search className="w-4 h-4 mr-2" />}
+            {isLoading ? <LoadingGrid size="16" color="#bd18b4" className="mr-2" /> : <Search className="w-4 h-4 mr-2" />}
             Buscar Localização
           </Button>
         </div>
@@ -220,14 +220,14 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
               value={manualAddress.rua}
               onChange={(e) => setManualAddress(prev => ({ ...prev, rua: e.target.value }))}
               placeholder="Rua/Avenida"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
             />
             <Input
               type="text"
               value={manualAddress.numero}
               onChange={(e) => setManualAddress(prev => ({ ...prev, numero: e.target.value }))}
               placeholder="Número"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
             />
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -236,21 +236,21 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
               value={manualAddress.bairro}
               onChange={(e) => setManualAddress(prev => ({ ...prev, bairro: e.target.value }))}
               placeholder="Bairro"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
             />
             <Input
               type="text"
               value={manualAddress.cidade}
               onChange={(e) => setManualAddress(prev => ({ ...prev, cidade: e.target.value }))}
               placeholder="Cidade"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
             />
             <Input
               type="text"
               value={manualAddress.estado}
               onChange={(e) => setManualAddress(prev => ({ ...prev, estado: e.target.value }))}
               placeholder="Estado (UF)"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none"
+              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
               maxLength={2}
             />
           </div>
@@ -267,7 +267,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#B3E240] focus:!ring-0 focus:!outline-none ${className}`}
+          className={`bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none ${className}`}
         />
       </div>
     </div>

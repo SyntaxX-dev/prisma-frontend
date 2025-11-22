@@ -53,7 +53,7 @@ export default function CourseDetailPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <LoadingGrid size="60" color="#B3E240" />
+        <LoadingGrid size="60" color="#bd18b4" />
       </div>
     );
   }
@@ -62,7 +62,7 @@ export default function CourseDetailPage() {
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <LoadingGrid size="60" color="#B3E240" />
+        <LoadingGrid size="60" color="#bd18b4" />
       </div>
     );
   }

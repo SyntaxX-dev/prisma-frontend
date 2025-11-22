@@ -81,7 +81,7 @@ export function ForgotPasswordScreen() {
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                                className="inline-flex items-center justify-center w-20 h-20 mb-6 bg-[#B3E240] rounded-full"
+                                className="inline-flex items-center justify-center w-20 h-20 mb-6 bg-[#bd18b4] rounded-full"
                             >
                                 <CheckCircle className="w-12 h-12 text-black" />
                             </motion.div>
@@ -90,7 +90,7 @@ export function ForgotPasswordScreen() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 }}
-                                className="text-3xl font-bold text-[#B3E240] mb-4"
+                                className="text-3xl font-bold text-[#bd18b4] mb-4"
                                 style={{ fontFamily: 'monospace' }}
                             >
                                 EMAIL ENVIADO!
@@ -122,13 +122,13 @@ export function ForgotPasswordScreen() {
                             >
                                 <div className='gap-4'>
                                     <Link href="/auth/login">
-                                        <Button className="w-full cursor-pointer bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg">
+                                        <Button className="w-full cursor-pointer bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#bd18b4] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg">
                                             Voltar para o Login
                                         </Button>
                                     </Link>
 
                                     <Link href="/auth/reset-password/verify-code">
-                                        <Button className="w-full mt-4 cursor-pointer bg-transparent border-2 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240] hover:text-black transition-all duration-300 rounded-lg">
+                                        <Button className="w-full mt-4 cursor-pointer bg-transparent border-2 border-[#bd18b4] text-[#bd18b4] hover:bg-[#bd18b4] hover:text-black transition-all duration-300 rounded-lg">
                                             Verificar Código
                                         </Button>
                                     </Link>
@@ -166,7 +166,7 @@ export function ForgotPasswordScreen() {
                     />
 
                     <div className="flex min-h-[500px] relative">
-                        <div className="absolute left-[45%] top-0 bottom-0 w-px bg-[#B3E240]/30 z-10" />
+                        <div className="absolute left-[45%] top-0 bottom-0 w-px bg-[#bd18b4]/30 z-10" />
 
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
@@ -184,7 +184,7 @@ export function ForgotPasswordScreen() {
                                     priority
                                 />
                             </div>
-                            <h2 className="text-3xl font-bold text-[#B3E240] mb-4" style={{ fontFamily: 'monospace' }}>
+                            <h2 className="text-3xl font-bold text-[#bd18b4] mb-4" style={{ fontFamily: 'monospace' }}>
                                 ESQUECEU A SENHA?
                             </h2>
                             <h3 className="text-xl text-white mb-6">Não se preocupe!</h3>
@@ -192,7 +192,7 @@ export function ForgotPasswordScreen() {
                                 Digite seu email e enviaremos instruções para redefinir sua senha.
                             </p>
                             <Link href="/auth/login" className='cursor-pointer'>
-                                <Button className="bg-transparent cursor-pointer border-2 border-[#B3E240] text-[#B3E240] hover:bg-[#B3E240] hover:text-black transition-all duration-300 px-8 py-2 rounded-lg">
+                                <Button className="bg-transparent cursor-pointer border-2 border-[#bd18b4] text-[#bd18b4] hover:bg-[#bd18b4] hover:text-black transition-all duration-300 px-8 py-2 rounded-lg">
                                     Voltar ao Login
                                 </Button>
                             </Link>
@@ -210,24 +210,24 @@ export function ForgotPasswordScreen() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="p-2 cursor-pointer text-[#B3E240] hover:bg-[#B3E240]/10 rounded-lg mr-4"
+                                                className="p-2 cursor-pointer text-[#bd18b4] hover:bg-[#bd18b4]/10 rounded-lg mr-4"
                                             >
                                                 <ArrowLeft className="w-5 h-5" />
                                             </Button>
                                         </Link>
-                                        <h2 className="text-2xl font-bold text-[#B3E240]" style={{ fontFamily: 'monospace' }}>
+                                        <h2 className="text-2xl font-bold text-[#bd18b4]" style={{ fontFamily: 'monospace' }}>
                                             REDEFINIR SENHA
                                         </h2>
                                     </div>
 
                                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                         <div className="relative mb-6">
-                                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#B3E240]" />
+                                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#bd18b4]" />
                                             <Input
                                                 type="email"
                                                 placeholder="Digite seu email"
                                                 {...form.register('email')}
-                                                className={`pl-10 bg-white/10 backdrop-blur-sm border-[#B3E240]/30 text-white placeholder-gray-300 focus:border-[#B3E240] focus:ring-[#B3E240]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${form.formState.errors.email ? 'border-red-500' : ''
+                                                className={`pl-10 bg-white/10 backdrop-blur-sm border-[#bd18b4]/30 text-white placeholder-gray-300 focus:border-[#bd18b4] focus:ring-[#bd18b4]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${form.formState.errors.email ? 'border-red-500' : ''
                                                     }`}
                                             />
                                             {form.formState.errors.email && (
@@ -244,7 +244,7 @@ export function ForgotPasswordScreen() {
                                             <Button
                                                 type="submit"
                                                 disabled={isLoading}
-                                                className="w-full bg-[#B3E240] hover:bg-[#B3E240]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#B3E240] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#bd18b4] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <motion.span
                                                     initial={false}
@@ -263,7 +263,7 @@ export function ForgotPasswordScreen() {
                                                 Lembrou sua senha?{' '}
                                                 <Link
                                                     href="/auth/login"
-                                                    className="text-[#B3E240] hover:underline font-medium transition-colors"
+                                                    className="text-[#bd18b4] hover:underline font-medium transition-colors"
                                                 >
                                                     Faça login aqui
                                                 </Link>
@@ -277,7 +277,7 @@ export function ForgotPasswordScreen() {
                 </Card>
 
                 <motion.div
-                    className="absolute -top-10 -right-10 w-20 h-20 border border-[#B3E240]/20 rounded-full"
+                    className="absolute -top-10 -right-10 w-20 h-20 border border-[#bd18b4]/20 rounded-full"
                     animate={{
                         rotate: [0, 360],
                         scale: [1, 1.1, 1],
@@ -288,7 +288,7 @@ export function ForgotPasswordScreen() {
                     }}
                 />
                 <motion.div
-                    className="absolute -bottom-10 -left-10 w-16 h-16 border border-[#B3E240]/20"
+                    className="absolute -bottom-10 -left-10 w-16 h-16 border border-[#bd18b4]/20"
                     animate={{
                         rotate: [0, -360],
                     }}

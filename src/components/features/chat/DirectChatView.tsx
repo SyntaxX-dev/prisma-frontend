@@ -356,7 +356,7 @@ export function DirectChatView({
       // Usar word boundaries para destacar apenas palavras completas
       const regex = new RegExp(`\\b(${escapedQuery})\\b`, 'gi');
       // Usar span com display: inline-block e line-height: inherit para não alterar layout
-      const highlighted = escapedText.replace(regex, '<span style="background-color: #B3E240; color: black; display: inline; line-height: inherit; padding: 0; border-radius: 2px; box-decoration-break: clone;">$1</span>');
+      const highlighted = escapedText.replace(regex, '<span style="background-color: #bd18b4; color: black; display: inline; line-height: inherit; padding: 0; border-radius: 2px; box-decoration-break: clone;">$1</span>');
       return highlighted;
     };
   }, []);
@@ -436,7 +436,7 @@ export function DirectChatView({
                       src={isOwn ? (currentUserAvatar || undefined) : (friendAvatar || undefined)}
                       alt={isOwn ? currentUserName : friendName}
                     />
-                    <AvatarFallback className="bg-[#B3E240] text-black text-xs">
+                    <AvatarFallback className="bg-[#bd18b4] text-black text-xs">
                       {(isOwn ? currentUserName : friendName).charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -461,7 +461,7 @@ export function DirectChatView({
                           className={`absolute ${isOwn ? 'right-0' : 'left-0'} -top-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 hover:bg-[#29292E] transition-colors z-10 shadow-lg cursor-pointer`}
                           title={isPinned ? 'Desfixar mensagem' : 'Fixar mensagem'}
                         >
-                          <Pin className={`w-4 h-4 ${isPinned ? 'text-[#B3E240] fill-[#B3E240]' : 'text-gray-400'}`} />
+                          <Pin className={`w-4 h-4 ${isPinned ? 'text-[#bd18b4] fill-[#bd18b4]' : 'text-gray-400'}`} />
                         </motion.button>
                         
                         {/* Bolinha 2 - Editar/Cancelar */}
@@ -517,7 +517,7 @@ export function DirectChatView({
                       <div
                         className={`rounded-lg px-4 py-2 ${
                           isOwn
-                            ? 'bg-[#B3E240] text-black'
+                            ? 'bg-[#bd18b4] text-black'
                             : 'bg-[#29292E] text-white border border-[#323238]'
                         }`}
                       >
@@ -583,7 +583,7 @@ export function DirectChatView({
                 src={friendAvatar || undefined}
                 alt={friendName}
               />
-              <AvatarFallback className="bg-[#B3E240] text-black text-xs">
+              <AvatarFallback className="bg-[#bd18b4] text-black text-xs">
                 {friendName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -660,7 +660,7 @@ export function DirectChatView({
           onKeyDown={handleKeyDown}
           placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
           disabled={!isConnected}
-          className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#B3E240] focus:outline-none focus:ring-0 rounded-md px-3 py-1.5 text-sm flex-1 overflow-y-auto overflow-x-hidden"
+          className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-3 py-1.5 text-sm flex-1 overflow-y-auto overflow-x-hidden"
           rows={1}
           style={{ 
             wordBreak: 'break-word', 
@@ -740,7 +740,7 @@ export function DirectChatView({
         <Button
           onClick={handleSend}
           disabled={!isConnected || (!message.trim() && pendingAttachments.length === 0) || uploading}
-          className="bg-[#B3E240] hover:bg-[#B3E240]/80 text-black px-4 py-2 h-[32px] shrink-0"
+          className="bg-[#bd18b4] hover:bg-[#bd18b4]/80 text-black px-4 py-2 h-[32px] shrink-0"
         >
           {uploading ? (
             <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />

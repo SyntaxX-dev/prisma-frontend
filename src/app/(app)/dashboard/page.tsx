@@ -56,7 +56,7 @@ function DashboardContent() {
 					dotSize={1}
 					gap={24}
 					baseColor="rgba(255,255,255,0.25)"
-					activeColor="#B3E240"
+					activeColor="#bd18b4"
 					proximity={120}
 					shockRadius={250}
 					shockStrength={5}
@@ -82,7 +82,7 @@ export default function DashboardPage() {
 	return (
 		<Suspense fallback={
 			<div className="min-h-screen flex items-center justify-center">
-				<LoadingGrid size="60" color="#B3E240" />
+				<LoadingGrid size="60" color="#bd18b4" />
 			</div>
 		}>
 			<DashboardContent />

@@ -186,7 +186,7 @@ function StreakContent() {
 
                 <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
                   <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-green-500" />
+                    <Calendar className="w-5 h-5 text-[#bd18b4]" />
                     Meta Atual
                   </h3>
                   
@@ -254,7 +254,7 @@ export default function StreakPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <LoadingGrid size="60" color="#B3E240" />
+        <LoadingGrid size="60" color="#bd18b4" />
       </div>
     }>
       <StreakContent />

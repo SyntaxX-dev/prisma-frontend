@@ -1129,7 +1129,7 @@ function CommunitiesPageContent() {
         }}
         suppressHydrationWarning
       >
-        <LoadingGrid size="60" color="#C9FE02" />
+        <LoadingGrid size="60" color="#bd18b4" />
       </div>
     );
   }
@@ -1163,7 +1163,7 @@ function CommunitiesPageContent() {
           dotSize={1}
           gap={24}
           baseColor="rgba(255,255,255,0.25)"
-          activeColor="#B3E240"
+          activeColor="#bd18b4"
           proximity={120}
           shockRadius={250}
           shockStrength={5}
@@ -1359,7 +1359,7 @@ function CommunitiesPageContent() {
                     alt="User Avatar"
                     className="w-full h-full rounded-full object-cover"
                   />
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9FE02] rounded-full border-2 border-[#040404]" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#bd18b4] rounded-full border-2 border-[#040404]" />
                 </div>
               </div>
             </div>
@@ -1573,7 +1573,7 @@ function CommunitiesPageContent() {
                       alt={userProfile?.name || 'User'} 
                     />
                     <AvatarFallback 
-                      className="bg-[#C9FE02] text-black text-sm font-semibold"
+                      className="bg-[#bd18b4] text-black text-sm font-semibold"
                     >
                       {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
                     </AvatarFallback>
@@ -1582,7 +1582,7 @@ function CommunitiesPageContent() {
                   <div 
                     className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#040404] transition-colors"
                     style={{ 
-                      background: userProfile?.id && statusMap.get(userProfile.id) === 'online' ? '#C9FE02' : '#666'
+                      background: userProfile?.id && statusMap.get(userProfile.id) === 'online' ? '#bd18b4' : '#666'
                     }} 
                   />
                 </div>

@@ -309,7 +309,7 @@ function SettingsContent() {
                 <Card className="bg-white/5 backdrop-blur-sm border-white/10 flex flex-col h-full">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                      <MessageCircle className="w-5 h-5 text-green-400" />
+                      <MessageCircle className="w-5 h-5 text-[#c532e2]" />
                       Sugestões
                     </CardTitle>
                   </CardHeader>
@@ -327,7 +327,7 @@ function SettingsContent() {
                           const message = encodeURIComponent('Olá! Gostaria de dar uma sugestão sobre a plataforma.');
                           window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
                         }}
-                        className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 cursor-pointer"
+                        className="w-full bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] border border-[#bd18b4]/30 cursor-pointer"
                       >
                         <MessageCircle className="w-4 h-4 mr-2" />
                         Enviar Mensagem
@@ -586,7 +586,7 @@ export default function SettingsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <LoadingGrid size="60" color="#B3E240" />
+        <LoadingGrid size="60" color="#bd18b4" />
       </div>
     }>
       <SettingsContent />

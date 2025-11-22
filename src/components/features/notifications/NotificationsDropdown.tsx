@@ -192,7 +192,7 @@ export function NotificationsDropdown() {
       case 'FRIEND_REQUEST':
         return <UserPlus className="w-4 h-4 text-blue-400" />;
       case 'FRIEND_ACCEPTED':
-        return <Check className="w-4 h-4 text-green-400" />;
+        return <Check className="w-4 h-4 text-[#c532e2]" />;
       case 'FRIEND_REQUEST_REJECTED':
         return <XCircle className="w-4 h-4 text-red-400" />;
       default:
@@ -216,8 +216,8 @@ export function NotificationsDropdown() {
         {/* Bolinha verde animada quando há pedidos de amizade */}
         {friendRequests.length > 0 && (
           <>
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full animate-ping"></span>
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#B3E240] rounded-full"></span>
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#bd18b4] rounded-full animate-ping"></span>
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#bd18b4] rounded-full"></span>
           </>
         )}
       </button>
@@ -247,7 +247,7 @@ export function NotificationsDropdown() {
             {/* Loading state */}
             {isLoadingRequests && (
               <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C9FE02] mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#bd18b4] mx-auto"></div>
                 <p className="text-gray-400 text-sm mt-2">Carregando pedidos...</p>
               </div>
             )}
@@ -270,7 +270,7 @@ export function NotificationsDropdown() {
                             src={request.requesterProfileImage || undefined}
                             alt={request.requesterName}
                           />
-                          <AvatarFallback className="bg-[#C9FE02] text-black text-xs">
+                          <AvatarFallback className="bg-[#bd18b4] text-black text-xs">
                             {request.requesterName.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -284,7 +284,7 @@ export function NotificationsDropdown() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleAcceptFriendRequest(request.id)}
-                              className="flex-1 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                              className="flex-1 px-3 py-1.5 bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
                             >
                               <Check className="w-3 h-3" />
                               Aceitar
@@ -337,14 +337,14 @@ export function NotificationsDropdown() {
                             }
                             alt={notification.requester?.name || notification.receiver?.name || 'User'}
                           />
-                          <AvatarFallback className="bg-[#C9FE02] text-black text-xs">
+                          <AvatarFallback className="bg-[#bd18b4] text-black text-xs">
                             {(notification.requester?.name || notification.receiver?.name || 'U')
                               .charAt(0)
                               .toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-[#C9FE02] flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-[#bd18b4] flex items-center justify-center shrink-0">
                           {getNotificationIcon(notification.type)}
                         </div>
                       )}
@@ -376,7 +376,7 @@ export function NotificationsDropdown() {
                           <div className="flex gap-2 mt-3">
                             <button
                               onClick={() => handleAcceptFromNotification(notification)}
-                              className="flex-1 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                              className="flex-1 px-3 py-1.5 bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
                             >
                               <Check className="w-3 h-3" />
                               Aceitar

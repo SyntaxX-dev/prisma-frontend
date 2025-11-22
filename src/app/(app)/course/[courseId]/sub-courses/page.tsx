@@ -122,7 +122,7 @@ export default function CoursePage() {
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-white text-2xl font-bold mb-4">{error}</h1>
-          <Button onClick={() => router.push('/courses')} className="bg-green-500 hover:bg-green-600 text-black">
+          <Button onClick={() => router.push('/courses')} className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black">
             Voltar aos Cursos
           </Button>
         </div>
@@ -207,7 +207,7 @@ export default function CoursePage() {
                     placeholder="Pesquisar subcursos..."
                     value={searchInput}
                     onChange={handleInputChange}
-                    className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-4 py-3 text-sm outline-none border border-white/20 focus:border-green-400 transition-colors pr-10"
+                    className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-4 py-3 text-sm outline-none border border-white/20 focus:border-[#c532e2] transition-colors pr-10"
                   />
                   {searchInput && (
                     <Button
@@ -222,7 +222,7 @@ export default function CoursePage() {
                 </div>
                 <Button
                   onClick={() => {}}
-                  className="bg-green-500 hover:bg-green-600 text-black px-6 py-[1.4rem] rounded-[1rem] font-medium"
+                  className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-6 py-[1.4rem] rounded-[1rem] font-medium"
                 >
                   Buscar
                 </Button>
@@ -232,7 +232,7 @@ export default function CoursePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {isDataLoading ? (
                 <div className="col-span-full flex items-center justify-center py-12">
-                  <LoadingGrid size="60" color="#B3E240" />
+                  <LoadingGrid size="60" color="#bd18b4" />
                 </div>
               ) : filteredSubCourses.length > 0 ? (
                 filteredSubCourses.map((subCourse) => (
@@ -260,18 +260,18 @@ export default function CoursePage() {
                         </div>
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">
+                        <h3 className="text-white text-lg font-semibold group-hover:text-[#c532e2] transition-colors">
                           {subCourse.name}
                         </h3>
                       </div>
-                      <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-green-400 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-[#c532e2] group-hover:translate-x-1 transition-all" />
                     </div>
                     <div className="space-y-2">
                       <p className="text-white/70 text-sm leading-relaxed">
                         {subCourse.description}
                       </p>
                       <div className="flex items-center gap-2 mt-3">
-                        <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">
+                        <span className="bg-[#bd18b4]/20 text-[#c532e2] text-xs px-2 py-1 rounded-full">
                           Disponível
                         </span>
                       </div>
@@ -291,7 +291,7 @@ export default function CoursePage() {
                   {searchInput && (
                     <Button
                       onClick={handleClearSearch}
-                      className="bg-green-500 hover:bg-green-600 text-black"
+                      className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black"
                     >
                       Limpar busca
                     </Button>

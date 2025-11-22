@@ -188,7 +188,7 @@ export function FriendRequestButton({ userId, isFriend: initialIsFriend }: Frien
   if (isChecking) {
     return (
       <Button 
-        className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#B3E240] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+        className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#bd18b4] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
         disabled
       >
         <ShinyText 
@@ -238,7 +238,7 @@ export function FriendRequestButton({ userId, isFriend: initialIsFriend }: Frien
     <Button 
       onClick={handleSendRequest}
       disabled={isLoading}
-      className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#B3E240] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+      className="w-full bg-[#29292E] hover:bg-[#323238] border border-[#bd18b4] px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
     >
       <ShinyText 
         text={isLoading ? "Enviando..." : "Solicitar amizade"} 

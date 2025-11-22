@@ -48,7 +48,7 @@ const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
       transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.15) }}
       className="w-14 h-14 rounded-xl overflow-hidden transition-all hover:scale-105 cursor-pointer shrink-0"
       style={{
-        border: item.active ? '2px solid #C9FE02' : 'none',
+        border: item.active ? '2px solid #bd18b4' : 'none',
       }}
     >
       <Avatar className="w-full h-full rounded-xl">
@@ -56,7 +56,7 @@ const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
         <AvatarFallback 
           className="text-xs font-medium rounded-xl"
           style={{
-            background: '#C9FE02',
+            background: '#bd18b4',
             color: '#000',
           }}
         >
@@ -133,7 +133,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
               <AvatarFallback 
                 className="font-semibold text-sm rounded-xl"
                 style={{
-                  background: '#C9FE02',
+                  background: '#bd18b4',
                   color: '#000',
                 }}
               >
@@ -145,7 +145,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
               <div 
                 className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a] transition-colors"
                 style={{ 
-                  background: statusMap.get(userId) === 'online' ? '#C9FE02' : '#666'
+                  background: statusMap.get(userId) === 'online' ? '#bd18b4' : '#666'
                 }} 
               />
             )}
@@ -302,7 +302,7 @@ export function CommunityList({
           className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 cursor-pointer"
           style={{
             background: 'rgb(30, 30, 30)',
-            color: '#C9FE02',
+            color: '#bd18b4',
           }}
           title="Voltar ao Dashboard"
         >
@@ -345,7 +345,7 @@ export function CommunityList({
             onClick={onCreateCommunity}
             className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 cursor-pointer"
             style={{
-              background: '#C9FE02',
+              background: '#bd18b4',
               color: '#000',
             }}
           >

@@ -662,7 +662,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <LoadingGrid size="80" color="#B3E240" />
+        <LoadingGrid size="80" color="#bd18b4" />
       </div>
     );
   }
@@ -715,7 +715,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     }
                   }}
                 >
-                  <div className="bg-green-500 hover:bg-green-600 rounded-full w-24 h-24 flex items-center justify-center shadow-2xl hover:shadow-green-500/25 transition-all">
+                  <div className="bg-[#bd18b4] hover:bg-[#aa22c5] rounded-full w-24 h-24 flex items-center justify-center shadow-2xl hover:shadow-[#bd18b4]/25 transition-all">
                     <Play className="w-10 h-10 text-black ml-1" fill="black" />
                   </div>
                 </div>
@@ -752,7 +752,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
               <Button
                 size="lg"
-                className="bg-green-500 hover:bg-green-600 rounded-full w-20 h-20 p-0 shadow-2xl hover:shadow-green-500/25 transition-all"
+                className="bg-[#bd18b4] hover:bg-[#aa22c5] rounded-full w-20 h-20 p-0 shadow-2xl hover:shadow-[#bd18b4]/25 transition-all"
                 onClick={() => {}}
               >
                 <Play className="w-10 h-10 text-black ml-1" fill="black" />
@@ -774,7 +774,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 </div>
                 <Badge
                   className={`${selectedVideo?.isCompleted
-                    ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                    ? 'bg-[#bd18b4]/20 text-[#c532e2] border-[#bd18b4]/30'
                     : 'bg-white/10 text-white/60 border-white/20'
                     } backdrop-blur-sm`}
                 >
@@ -794,7 +794,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                   onClick={() => selectedVideo && handleMarkVideoComplete(selectedVideo)}
                   disabled={!selectedVideo?.videoId}
                   className={`font-semibold shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${selectedVideo?.isCompleted
-                    ? 'bg-green-500 hover:bg-green-600 text-black hover:shadow-green-500/25'
+                    ? 'bg-[#bd18b4] hover:bg-[#aa22c5] text-black hover:shadow-[#bd18b4]/25'
                     : 'bg-white/20 hover:bg-white/30 text-white/70 hover:text-white'
                     }`}
                 >
@@ -864,7 +864,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     rows={3}
                   />
                   <div className="flex justify-end mt-3">
-                    <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all cursor-pointer">
+                    <Button className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all cursor-pointer">
                       Comentar
                     </Button>
                   </div>
@@ -883,7 +883,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     </p>
                     <Button
                       onClick={handleGenerateMindMap}
-                      className="bg-green-500 cursor-pointer hover:bg-green-600 text-black font-semibold shadow-lg hover:shadow-green-500/25 transition-all"
+                      className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all"
                     >
                       <Brain className="w-5 h-5 mr-2" />
                       Gerar Mapa Mental
@@ -893,7 +893,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
                 {mindMapLoading && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
-                    <LoadingGrid size="60" color="#B3E240" />
+                    <LoadingGrid size="60" color="#bd18b4" />
                     <p className="text-white/80 text-lg font-semibold mt-6">Gerando mapa mental com IA...</p>
                     <p className="text-white/50 text-sm mt-2">Isso pode levar alguns segundos. Por favor, aguarde.</p>
                   </div>
@@ -928,7 +928,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                           size="sm"
                           className={`${
                             mindMapViewMode === 'interactive'
-                              ? 'bg-green-500 text-black hover:bg-green-600'
+                              ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
                               : 'text-white/60 hover:text-white hover:bg-white/10'
                           }`}
                         >
@@ -941,7 +941,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                           size="sm"
                           className={`${
                             mindMapViewMode === 'text'
-                              ? 'bg-green-500 text-black hover:bg-green-600'
+                              ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
                               : 'text-white/60 hover:text-white hover:bg-white/10'
                           }`}
                         >
@@ -1000,7 +1000,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                               li: ({...props}) => <li className="text-white/80" {...props} />,
                               strong: ({...props}) => <strong className="text-white font-semibold" {...props} />,
                               em: ({...props}) => <em className="text-white/90 italic" {...props} />,
-                              code: ({...props}) => <code className="text-green-400 bg-white/10 px-1 py-0.5 rounded" {...props} />,
+                              code: ({...props}) => <code className="text-[#c532e2] bg-white/10 px-1 py-0.5 rounded" {...props} />,
                             }}
                           >
                             {mindMap}
@@ -1021,13 +1021,13 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
           <h2 className="text-white font-semibold mb-2">Conteúdo</h2>
           <div className="flex items-center justify-between text-sm">
             <span className="text-white/60">Progresso do curso</span>
-            <span className="text-green-400 font-medium">
+            <span className="text-[#c532e2] font-medium">
               {courseProgress ? `${courseProgress.progressPercentage}%` : '0%'}
             </span>
           </div>
           <div className="w-full bg-white/10 rounded-full h-2 mt-2 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-500 shadow-lg shadow-green-500/30"
+              className="bg-gradient-to-r from-[#bd18b4] to-[#c532e2] h-2 rounded-full transition-all duration-500 shadow-lg shadow-[#bd18b4]/30"
               style={{ width: `${courseProgress?.progressPercentage || 0}%` }}
             />
           </div>
@@ -1049,7 +1049,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                   className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-semibold text-green-400 border border-green-500/20">
+                    <div className="bg-gradient-to-br from-[#bd18b4]/20 to-[#aa22c5]/20 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-semibold text-[#c532e2] border border-[#bd18b4]/20">
                       {moduleIndex + 1}
                     </div>
                     <div className="text-left">
@@ -1074,7 +1074,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                         disabled={video.locked}
                         className={`w-full px-3 py-2.5 flex items-center gap-3 hover:bg-white/5 transition-all ${video.locked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                           } ${selectedVideo?.id === video.id
-                            ? 'bg-green-500/10 border-l-2 border-green-500 hover:bg-green-500/15'
+                            ? 'bg-[#bd18b4]/10 border-l-2 border-[#bd18b4] hover:bg-[#bd18b4]/15'
                             : ''
                           }`}
                       >
@@ -1084,8 +1084,8 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                               <Lock className="w-3.5 h-3.5 text-white/40" />
                             </div>
                           ) : video.isCompleted ? (
-                            <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center">
-                              <CheckCircle className="w-4 h-4 text-green-400" />
+                            <div className="w-7 h-7 rounded-full bg-[#bd18b4]/20 flex items-center justify-center">
+                              <CheckCircle className="w-4 h-4 text-[#c532e2]" />
                             </div>
                           ) : (
                             <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
@@ -1095,7 +1095,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                         </div>
                         <div className="flex-1 text-left">
                           <p className={`text-sm ${selectedVideo?.id === video.id
-                            ? 'text-green-400 font-medium'
+                            ? 'text-[#c532e2] font-medium'
                             : 'text-white/80'
                             } line-clamp-1`}>
                             {video.title}

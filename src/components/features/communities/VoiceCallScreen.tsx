@@ -75,14 +75,14 @@ export function VoiceCallScreen({
           <div 
             className="w-8 h-8 rounded-full flex items-center justify-center"
             style={{
-              background: 'linear-gradient(135deg, #B3E240 0%, #8BC34A 100%)',
+              background: 'linear-gradient(135deg, #bd18b4 0%, #aa22c5 100%)',
             }}
           >
             <Phone className="w-4 h-4 text-black" />
           </div>
           <div>
             <h2 className="text-white font-semibold text-sm">{communityName}</h2>
-            <p className="text-xs text-[#B3E240]">{callDuration}</p>
+            <p className="text-xs text-[#bd18b4]">{callDuration}</p>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ export function VoiceCallScreen({
               >
                 <Avatar className="w-full h-full">
                   <AvatarImage src={participants[0]?.avatarUrl} />
-                  <AvatarFallback className="bg-gradient-to-br from-[#B3E240] to-[#8BC34A] text-black text-5xl font-bold">
+                  <AvatarFallback className="bg-gradient-to-br from-[#bd18b4] to-[#aa22c5] text-black text-5xl font-bold">
                     {getInitials(participants[0]?.name || "User")}
                   </AvatarFallback>
                 </Avatar>
@@ -132,14 +132,14 @@ export function VoiceCallScreen({
                     <div 
                       className="absolute inset-0 rounded-full"
                       style={{
-                        border: '3px solid #B3E240',
+                        border: '3px solid #bd18b4',
                         animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                       }}
                     />
                     <div 
                       className="absolute inset-0 rounded-full"
                       style={{
-                        border: '3px solid #B3E240',
+                        border: '3px solid #bd18b4',
                         animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         animationDelay: '1s',
                       }}
@@ -184,7 +184,7 @@ export function VoiceCallScreen({
                     style={{
                       background: 'rgba(30, 30, 38, 0.6)',
                       border: participant.isSpeaking 
-                        ? '2px solid #B3E240' 
+                        ? '2px solid #bd18b4' 
                         : '2px solid rgba(255, 255, 255, 0.1)',
                       transition: 'all 0.3s ease',
                     }}
@@ -214,7 +214,7 @@ export function VoiceCallScreen({
                       <div 
                         className="absolute inset-0 rounded-full"
                         style={{
-                          border: '2px solid #B3E240',
+                          border: '2px solid #bd18b4',
                           animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         }}
                       />
@@ -239,7 +239,7 @@ export function VoiceCallScreen({
                 border: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
-              <Users className="w-4 h-4 text-[#B3E240]" />
+              <Users className="w-4 h-4 text-[#bd18b4]" />
               <span className="text-sm text-gray-300 font-medium">
                 {participants.length} na chamada
               </span>
@@ -273,7 +273,7 @@ export function VoiceCallScreen({
             className={`rounded-full w-16 h-16 ${
               isMuted
                 ? 'bg-red-500 hover:bg-red-600 text-white'
-                : 'bg-[#B3E240] hover:bg-[#9FCC3A] text-black'
+                : 'bg-[#bd18b4] hover:bg-[#9FCC3A] text-black'
             }`}
           >
             {isMuted ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
