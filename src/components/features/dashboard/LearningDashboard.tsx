@@ -91,25 +91,26 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 justify-items-center">
                   {courses.map((course) => (
-                    <CourseCard
-                      key={course.courseId}
-                      title={course.title}
-                      description={course.description}
-                      technology={course.technology}
-                      icon={course.icon}
-                      iconColor={course.iconColor}
-                      isSubscriber={course.isSubscriber}
-                      isFree={course.isFree}
-                      thumbnailUrl={course.thumbnailUrl}
-                      courseId={course.courseId}
-                      category={course.category}
-                      instructor={course.instructor}
-                      duration={course.duration}
-                      year={course.year}
-                      level={course.level}
-                    />
+                    <div key={course.courseId} className="w-[280px] h-[320px]">
+                      <CourseCard
+                        title={course.title}
+                        description={course.description}
+                        technology={course.technology}
+                        icon={course.icon}
+                        iconColor={course.iconColor}
+                        isSubscriber={course.isSubscriber}
+                        isFree={course.isFree}
+                        thumbnailUrl={course.thumbnailUrl}
+                        courseId={course.courseId}
+                        category={course.category}
+                        instructor={course.instructor}
+                        duration={course.duration}
+                        year={course.year}
+                        level={course.level}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
@@ -134,23 +135,25 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                   >
                     <CarouselContent className="-ml-3">
                       {rowCourses.map((course) => (
-                        <CarouselItem key={course.courseId} className="pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-                          <CourseCard
-                            title={course.title}
-                            description={course.description}
-                            technology={course.technology}
-                            icon={course.icon}
-                            isSubscriber={course.isSubscriber}
-                            isFree={course.isFree}
-                            thumbnailUrl={course.thumbnailUrl}
-                            iconColor={course.iconColor}
-                            courseId={course.courseId}
-                            category={course.category}
-                            instructor={course.instructor}
-                            duration={course.duration}
-                            year={course.year}
-                            level={course.level}
-                          />
+                        <CarouselItem key={course.courseId} className="pl-3 basis-auto flex-shrink-0">
+                          <div className="w-[280px] h-[320px]">
+                            <CourseCard
+                              title={course.title}
+                              description={course.description}
+                              technology={course.technology}
+                              icon={course.icon}
+                              isSubscriber={course.isSubscriber}
+                              isFree={course.isFree}
+                              thumbnailUrl={course.thumbnailUrl}
+                              iconColor={course.iconColor}
+                              courseId={course.courseId}
+                              category={course.category}
+                              instructor={course.instructor}
+                              duration={course.duration}
+                              year={course.year}
+                              level={course.level}
+                            />
+                          </div>
                         </CarouselItem>
                       ))}
                     </CarouselContent>
