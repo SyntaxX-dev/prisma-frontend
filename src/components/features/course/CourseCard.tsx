@@ -102,8 +102,8 @@ export function CourseCard({
   const displayYear = year || new Date().getFullYear().toString();
 
   return (
-    <button onClick={handleClick} className="block w-full h-full text-left">
-      <Card className="bg-[#202024] border border-[#323238] hover:border-[#bd18b4]/30 transition-all duration-300 cursor-pointer h-full flex flex-col group rounded-xl overflow-hidden">
+    <button onClick={handleClick} className="block text-left w-[280px] h-[320px]">
+      <Card className="bg-[#202024] border border-[#323238] hover:border-[#bd18b4]/30 transition-all duration-300 cursor-pointer h-full flex flex-col group rounded-xl overflow-hidden w-full">
         <CardHeader className="p-0 flex-shrink-0 relative">
           {/* Background com gradiente */}
           <div className="relative w-full h-40 bg-gradient-to-br from-[#29292E] via-[#1e1f23] to-[#1a1b1e] overflow-hidden rounded-t-xl">
