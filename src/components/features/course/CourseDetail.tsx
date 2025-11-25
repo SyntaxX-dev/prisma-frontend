@@ -1,4 +1,4 @@
-import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, ChevronDown, ArrowLeft, Brain } from "lucide-react";
+import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, ChevronDown, ArrowLeft, Brain, Loader2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Badge } from "../../ui/badge";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -16,7 +16,7 @@ import { useCacheInvalidation } from "@/hooks/shared";
 import { saveVideoTimestamp } from "@/api/progress/save-video-timestamp";
 import { getInProgressVideos } from "@/api/progress/get-in-progress-videos";
 import InteractiveMindMap from "./InteractiveMindMap";
-import { generateMindMap, getMindMapByVideo } from "@/api/mind-map/generate-mind-map";
+import { generateMindMap, getMindMapByVideo, getGenerationLimits, AllLimitsInfo, GenerationType } from "@/api/mind-map/generate-mind-map";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -108,7 +108,9 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [mindMap, setMindMap] = useState<string | null>(null);
   const [mindMapLoading, setMindMapLoading] = useState(false);
   const [mindMapError, setMindMapError] = useState<string | null>(null);
-  const [mindMapViewMode, setMindMapViewMode] = useState<'interactive' | 'text'>('interactive');
+  const [limitsInfo, setLimitsInfo] = useState<AllLimitsInfo | null>(null);
+  const [generatedType, setGeneratedType] = useState<GenerationType | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const fetchingRef = useRef(false);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -605,11 +607,18 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const fetchExistingMindMap = useCallback(async () => {
     if (!selectedVideo?.id) return;
 
+    // Resetar estado do mapa mental quando muda de vídeo
+    setMindMap(null);
+    setMindMapError(null);
+    setGeneratedType(null);
+
     try {
       const response = await getMindMapByVideo(selectedVideo.id);
 
       if (response.success && response.data) {
         setMindMap(response.data.content);
+        // Usar o tipo de geração salvo ou padrão para 'mindmap' para compatibilidade
+        setGeneratedType(response.data.generationType || 'mindmap');
       }
     } catch {
       // Silenciosamente falha - não há mapa mental existente
@@ -617,7 +626,22 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     }
   }, [selectedVideo?.id]);
 
-  const handleGenerateMindMap = async () => {
+  // Buscar limite de mapas mentais
+  const fetchLimitsInfo = useCallback(async () => {
+    try {
+      const response = await getGenerationLimits();
+      setLimitsInfo(response.data);
+    } catch {
+      // Silently fail
+    }
+  }, []);
+
+  // Buscar limite quando componente monta
+  useEffect(() => {
+    fetchLimitsInfo();
+  }, [fetchLimitsInfo]);
+
+  const handleGenerate = async (type: GenerationType) => {
     if (!selectedVideo) return;
 
     setMindMapLoading(true);
@@ -630,20 +654,39 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         videoTitle: selectedVideo.title,
         videoDescription: selectedVideo.description || "Sem descrição disponível",
         videoUrl: url,
+        generationType: type,
       });
 
       setMindMap(response.data.content);
+      setGeneratedType(type);
+
+      // Atualizar limites após geração bem-sucedida
+      if (response.data.remainingGenerations !== undefined) {
+        setLimitsInfo(prev => prev ? {
+          ...prev,
+          [type]: {
+            ...prev[type],
+            remainingGenerations: response.data.remainingGenerations!,
+            generationsToday: prev[type].generationsToday + 1,
+            canGenerate: response.data.remainingGenerations! > 0
+          }
+        } : null);
+      }
     } catch (err: unknown) {
-      let errorMessage = 'Erro ao gerar mapa mental';
+      const typeLabel = type === 'mindmap' ? 'mapa mental' : 'texto';
+      let errorMessage = `Erro ao gerar ${typeLabel}`;
 
       const message = err instanceof Error ? err.message : String(err);
 
-      if (message.includes('503') || message.includes('Service Unavailable')) {
-        errorMessage = '⚠️ O serviço de AI está temporariamente indisponível. Tente novamente em alguns instantes.';
+      // Verificar se é erro de limite excedido
+      if (message.includes('Limite diário') || message.includes('LIMIT_EXCEEDED')) {
+        errorMessage = message || `Você atingiu o limite diário de gerações de ${typeLabel}.`;
+      } else if (message.includes('503') || message.includes('Service Unavailable')) {
+        errorMessage = 'O serviço de AI está temporariamente indisponível. Tente novamente em alguns instantes.';
       } else if (message.includes('500') || message.includes('Internal Server Error')) {
-        errorMessage = '⚠️ Erro interno do servidor. Por favor, tente novamente.';
+        errorMessage = 'Erro interno do servidor. Por favor, tente novamente.';
       } else if (message.includes('401') || message.includes('API Key')) {
-        errorMessage = '🔑 Erro de autenticação com a API.';
+        errorMessage = 'Erro de autenticação com a API.';
       } else if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -658,6 +701,221 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   useEffect(() => {
     fetchExistingMindMap();
   }, [fetchExistingMindMap]);
+
+  const handleDownloadPdf = async () => {
+    if (!mindMap || !selectedVideo) return;
+
+    setDownloading(true);
+
+    try {
+      // Importar jsPDF diretamente (evita html2canvas e o erro oklch)
+      const { jsPDF } = await import('jspdf');
+
+      const fileName = generatedType === 'mindmap'
+        ? `mapa-mental-${selectedVideo.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`
+        : `resumo-${selectedVideo.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`;
+
+      // Função para normalizar texto (remover emojis e caracteres especiais problemáticos)
+      const normalizeText = (text: string): string => {
+        return text
+          // Remover emojis e símbolos especiais
+          .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Emoticons
+          .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Símbolos diversos
+          .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Transporte e mapas
+          .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Bandeiras
+          .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Símbolos diversos
+          .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+          .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation selectors
+          .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // Símbolos suplementares
+          .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '') // Símbolos de xadrez
+          .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '') // Símbolos estendidos
+          .replace(/[\u{231A}-\u{231B}]/gu, '')   // Watch, hourglass
+          .replace(/[\u{23E9}-\u{23F3}]/gu, '')   // Outros símbolos de mídia
+          .replace(/[\u{23F8}-\u{23FA}]/gu, '')   // Controles de mídia
+          .replace(/[\u{25AA}-\u{25AB}]/gu, '')   // Quadrados
+          .replace(/[\u{25B6}]/gu, '')            // Play
+          .replace(/[\u{25C0}]/gu, '')            // Reverse
+          .replace(/[\u{25FB}-\u{25FE}]/gu, '')   // Quadrados médios
+          .replace(/[\u{2614}-\u{2615}]/gu, '')   // Guarda-chuva e café
+          .replace(/[\u{2648}-\u{2653}]/gu, '')   // Signos do zodíaco
+          .replace(/[\u{267F}]/gu, '')            // Cadeira de rodas
+          .replace(/[\u{2693}]/gu, '')            // Âncora
+          .replace(/[\u{26A1}]/gu, '')            // Raio
+          .replace(/[\u{26AA}-\u{26AB}]/gu, '')   // Círculos
+          .replace(/[\u{26BD}-\u{26BE}]/gu, '')   // Bolas de esporte
+          .replace(/[\u{26C4}-\u{26C5}]/gu, '')   // Boneco de neve e sol
+          .replace(/[\u{26CE}]/gu, '')            // Ofiúco
+          .replace(/[\u{26D4}]/gu, '')            // Proibido
+          .replace(/[\u{26EA}]/gu, '')            // Igreja
+          .replace(/[\u{26F2}-\u{26F3}]/gu, '')   // Fonte e golfe
+          .replace(/[\u{26F5}]/gu, '')            // Veleiro
+          .replace(/[\u{26FA}]/gu, '')            // Barraca
+          .replace(/[\u{26FD}]/gu, '')            // Posto de gasolina
+          .replace(/[\u{2702}]/gu, '')            // Tesoura
+          .replace(/[\u{2705}]/gu, '')            // Check verde
+          .replace(/[\u{2708}-\u{270D}]/gu, '')   // Avião e outros
+          .replace(/[\u{270F}]/gu, '')            // Lápis
+          .replace(/[\u{2712}]/gu, '')            // Caneta preta
+          .replace(/[\u{2714}]/gu, '')            // Check pesado
+          .replace(/[\u{2716}]/gu, '')            // X pesado
+          .replace(/[\u{271D}]/gu, '')            // Cruz latina
+          .replace(/[\u{2721}]/gu, '')            // Estrela de Davi
+          .replace(/[\u{2728}]/gu, '')            // Brilhos
+          .replace(/[\u{2733}-\u{2734}]/gu, '')   // Asteriscos
+          .replace(/[\u{2744}]/gu, '')            // Floco de neve
+          .replace(/[\u{2747}]/gu, '')            // Sparkle
+          .replace(/[\u{274C}]/gu, '')            // X vermelho
+          .replace(/[\u{274E}]/gu, '')            // X verde
+          .replace(/[\u{2753}-\u{2755}]/gu, '')   // Interrogações
+          .replace(/[\u{2757}]/gu, '')            // Exclamação
+          .replace(/[\u{2763}-\u{2764}]/gu, '')   // Corações
+          .replace(/[\u{2795}-\u{2797}]/gu, '')   // Matemática
+          .replace(/[\u{27A1}]/gu, '')            // Seta direita
+          .replace(/[\u{27B0}]/gu, '')            // Loop
+          .replace(/[\u{27BF}]/gu, '')            // Loop duplo
+          .replace(/[\u{2934}-\u{2935}]/gu, '')   // Setas curvas
+          .replace(/[\u{2B05}-\u{2B07}]/gu, '')   // Setas
+          .replace(/[\u{2B1B}-\u{2B1C}]/gu, '')   // Quadrados grandes
+          .replace(/[\u{2B50}]/gu, '')            // Estrela
+          .replace(/[\u{2B55}]/gu, '')            // Círculo vermelho
+          .replace(/[\u{3030}]/gu, '')            // Linha ondulada
+          .replace(/[\u{303D}]/gu, '')            // Part alternation mark
+          .replace(/[\u{3297}]/gu, '')            // Circled Ideograph Congratulation
+          .replace(/[\u{3299}]/gu, '')            // Circled Ideograph Secret
+          .replace(/[^\x00-\x7F\u00C0-\u00FF\u0100-\u017F]/g, '') // Manter apenas ASCII e Latin Extended
+          .trim();
+      };
+
+      // Criar documento PDF
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const maxWidth = pageWidth - (margin * 2);
+      let yPosition = margin;
+
+      // Função para adicionar nova página se necessário
+      const checkNewPage = (height: number) => {
+        if (yPosition + height > pageHeight - margin) {
+          doc.addPage();
+          yPosition = margin;
+        }
+      };
+
+      // Título do documento
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(197, 50, 226); // #c532e2
+      const titleLines = doc.splitTextToSize(normalizeText(selectedVideo.title), maxWidth);
+      checkNewPage(titleLines.length * 8);
+      doc.text(titleLines, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += titleLines.length * 8 + 5;
+
+      // Linha decorativa
+      doc.setDrawColor(197, 50, 226);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 10;
+
+      // Processar o markdown linha por linha
+      const lines = mindMap.split('\n');
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) {
+          yPosition += 3;
+          continue;
+        }
+
+        // Headers
+        if (trimmedLine.startsWith('# ')) {
+          checkNewPage(12);
+          doc.setFontSize(16);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(197, 50, 226);
+          const text = normalizeText(trimmedLine.replace('# ', ''));
+          const splitText = doc.splitTextToSize(text, maxWidth);
+          doc.text(splitText, margin, yPosition);
+          yPosition += splitText.length * 7 + 5;
+        } else if (trimmedLine.startsWith('## ')) {
+          checkNewPage(10);
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(80, 80, 80);
+          const text = normalizeText(trimmedLine.replace('## ', ''));
+          const splitText = doc.splitTextToSize(text, maxWidth);
+          doc.text(splitText, margin, yPosition);
+          yPosition += splitText.length * 6 + 4;
+        } else if (trimmedLine.startsWith('### ')) {
+          checkNewPage(8);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(100, 100, 100);
+          const text = normalizeText(trimmedLine.replace('### ', ''));
+          const splitText = doc.splitTextToSize(text, maxWidth);
+          doc.text(splitText, margin, yPosition);
+          yPosition += splitText.length * 5 + 3;
+        }
+        // Lista com bullet
+        else if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+          checkNewPage(6);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
+          const text = trimmedLine.replace(/^[-*] /, '');
+          const cleanText = normalizeText(text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'));
+          const splitText = doc.splitTextToSize(`- ${cleanText}`, maxWidth - 5);
+          doc.text(splitText, margin + 5, yPosition);
+          yPosition += splitText.length * 5 + 2;
+        }
+        // Lista numerada
+        else if (/^\d+\.\s/.test(trimmedLine)) {
+          checkNewPage(6);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
+          const cleanText = normalizeText(trimmedLine.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'));
+          const splitText = doc.splitTextToSize(cleanText, maxWidth - 5);
+          doc.text(splitText, margin + 5, yPosition);
+          yPosition += splitText.length * 5 + 2;
+        }
+        // Texto normal
+        else {
+          checkNewPage(6);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60, 60, 60);
+          const cleanText = normalizeText(trimmedLine.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1'));
+          const splitText = doc.splitTextToSize(cleanText, maxWidth);
+          doc.text(splitText, margin, yPosition);
+          yPosition += splitText.length * 5 + 2;
+        }
+      }
+
+      // Rodapé
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(150, 150, 150);
+        doc.text('Gerado por Prisma Study Platform', pageWidth / 2, pageHeight - 10, { align: 'center' });
+        doc.text(`Pagina ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+      }
+
+      // Salvar PDF
+      doc.save(fileName);
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -806,19 +1064,19 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
           </div>
 
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="bg-white/5 backdrop-blur-sm border-b border-white/10 w-full justify-start h-12 px-1 py-1 rounded-3xl">
+            <TabsList className="bg-white/5 backdrop-blur-sm border border-white/20 w-full justify-start h-16 px-2 py-2 gap-2 rounded-2xl">
               <TabsTrigger
                 value="overview"
-                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
+                className="text-white/40 hover:text-white/60 bg-transparent data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#bd18b4] data-[state=active]:to-[#9c14a3] data-[state=active]:shadow-[0_0_20px_rgba(189,24,180,0.5)] rounded-xl cursor-pointer transition-all duration-300 px-6 py-2.5 font-semibold border border-transparent data-[state=active]:border-[#bd18b4] active:scale-95"
               >
-                Visão Geral
+                Visao Geral
               </TabsTrigger>
               <TabsTrigger
                 value="mindmap"
-                className="text-white/70 data-[state=active]:text-white data-[state=active]:bg-transparent rounded-3xl cursor-pointer"
+                className="text-white/40 hover:text-white/60 bg-transparent data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#bd18b4] data-[state=active]:to-[#9c14a3] data-[state=active]:shadow-[0_0_20px_rgba(189,24,180,0.5)] rounded-xl cursor-pointer transition-all duration-300 px-6 py-2.5 font-semibold border border-transparent data-[state=active]:border-[#bd18b4] flex items-center active:scale-95"
               >
-                <Brain className="w-4 h-4 mr-2" />
-                Mapa Mental
+                <Brain className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span>Mapa Mental</span>
               </TabsTrigger>
             </TabsList>
 
@@ -847,9 +1105,30 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     </div>
                   )}
 
-                  <p className="text-white/70 leading-relaxed">
-                    {selectedVideo?.description || "Descrição não disponível para esta aula."}
-                  </p>
+                  <div className="text-white/70 leading-relaxed whitespace-pre-wrap break-words">
+                    {selectedVideo?.description ? (
+                      selectedVideo.description.split(/(\s+)/).map((part, index) => {
+                        // Detecta URLs e transforma em links clicáveis
+                        const urlRegex = /(https?:\/\/[^\s]+)/g;
+                        if (urlRegex.test(part)) {
+                          return (
+                            <a
+                              key={index}
+                              href={part}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#c532e2] hover:text-[#bd18b4] hover:underline transition-colors"
+                            >
+                              {part}
+                            </a>
+                          );
+                        }
+                        return part;
+                      })
+                    ) : (
+                      "Descrição não disponível para esta aula."
+                    )}
+                  </div>
                 </div>
 
               </div>
@@ -875,26 +1154,82 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
             <TabsContent value="mindmap" className="mt-6">
               <div className="space-y-4">
-                {!mindMap && !mindMapLoading && (
+                {/* Mostrar informações dos limites */}
+                {limitsInfo && !mindMap && (
+                  <div className="flex gap-4">
+                    {/* Limite Mapa Mental */}
+                    <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                      !limitsInfo.mindmap.canGenerate
+                        ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                        : 'bg-white/5 border border-white/10 text-white/60'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Brain className="w-4 h-4" />
+                        <span className="font-medium">Mapa Mental</span>
+                      </div>
+                      <span>
+                        {!limitsInfo.mindmap.canGenerate
+                          ? `Limite atingido (${limitsInfo.mindmap.generationsToday}/${limitsInfo.mindmap.dailyLimit})`
+                          : `Restantes: ${limitsInfo.mindmap.remainingGenerations}/${limitsInfo.mindmap.dailyLimit}`
+                        }
+                      </span>
+                    </div>
+                    {/* Limite Texto */}
+                    <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                      !limitsInfo.text.canGenerate
+                        ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                        : 'bg-white/5 border border-white/10 text-white/60'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="w-4 h-4" />
+                        <span className="font-medium">Texto</span>
+                      </div>
+                      <span>
+                        {!limitsInfo.text.canGenerate
+                          ? `Limite atingido (${limitsInfo.text.generationsToday}/${limitsInfo.text.dailyLimit})`
+                          : `Restantes: ${limitsInfo.text.remainingGenerations}/${limitsInfo.text.dailyLimit}`
+                        }
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {!mindMap && !mindMapLoading && !mindMapError && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
                     <Brain className="w-16 h-16 text-white/30 mx-auto mb-4" />
                     <p className="text-white/60 mb-6">
-                      Gera o mapa mental deste vídeo usando nossa IA
+                      Escolha o tipo de conteúdo que deseja gerar para este vídeo usando IA
                     </p>
-                    <Button
-                      onClick={handleGenerateMindMap}
-                      className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all"
-                    >
-                      <Brain className="w-5 h-5 mr-2" />
-                      Gerar Mapa Mental
-                    </Button>
+                    <div className="flex gap-4 justify-center">
+                      <Button
+                        onClick={() => handleGenerate('mindmap')}
+                        disabled={limitsInfo ? !limitsInfo.mindmap.canGenerate : false}
+                        className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Brain className="w-5 h-5 mr-2" />
+                        Gerar Mapa Mental
+                      </Button>
+                      <Button
+                        onClick={() => handleGenerate('text')}
+                        disabled={limitsInfo ? !limitsInfo.text.canGenerate : false}
+                        className="bg-[#1e88e5] cursor-pointer hover:bg-[#1976d2] text-white font-semibold shadow-lg hover:shadow-[#1e88e5]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FileText className="w-5 h-5 mr-2" />
+                        Gerar Texto
+                      </Button>
+                    </div>
+                    {limitsInfo && !limitsInfo.mindmap.canGenerate && !limitsInfo.text.canGenerate && (
+                      <p className="text-red-400 mt-4 text-sm">
+                        Você atingiu o limite diário de ambos os tipos. Tente novamente amanhã.
+                      </p>
+                    )}
                   </div>
                 )}
 
                 {mindMapLoading && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
                     <LoadingGrid size="60" color="#bd18b4" />
-                    <p className="text-white/80 text-lg font-semibold mt-6">Gerando mapa mental com IA...</p>
+                    <p className="text-white/80 text-lg font-semibold mt-6">Gerando conteúdo com IA...</p>
                     <p className="text-white/50 text-sm mt-2">Isso pode levar alguns segundos. Por favor, aguarde.</p>
                   </div>
                 )}
@@ -904,14 +1239,14 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 text-3xl">⚠️</div>
                       <div className="flex-1">
-                        <p className="font-semibold text-lg mb-2">Erro ao gerar mapa mental</p>
+                        <p className="font-semibold text-lg mb-2">Erro ao gerar conteúdo</p>
                         <p className="text-sm text-red-300 leading-relaxed mb-4">{mindMapError}</p>
                         <Button
-                          onClick={handleGenerateMindMap}
+                          onClick={() => setMindMapError(null)}
                           className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30"
                         >
                           <Brain className="w-4 h-4 mr-2" />
-                          Tentar novamente
+                          Voltar
                         </Button>
                       </div>
                     </div>
@@ -921,67 +1256,51 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 {mindMap && (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center gap-2">
-                      <div className="flex gap-1 bg-white/5 backdrop-blur-sm rounded-lg p-1 border border-white/10">
-                        <Button
-                          onClick={() => setMindMapViewMode('interactive')}
-                          variant="ghost"
-                          size="sm"
-                          className={`${
-                            mindMapViewMode === 'interactive'
-                              ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
-                              : 'text-white/60 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <Brain className="w-4 h-4 mr-2" />
-                          Mapa Mental
-                        </Button>
-                        <Button
-                          onClick={() => setMindMapViewMode('text')}
-                          variant="ghost"
-                          size="sm"
-                          className={`${
-                            mindMapViewMode === 'text'
-                              ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]'
-                              : 'text-white/60 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <FileText className="w-4 h-4 mr-2" />
-                          Texto
-                        </Button>
+                      <div className="flex gap-2 items-center">
+                        {generatedType === 'mindmap' && (
+                          <span className="text-white/60 flex items-center gap-2">
+                            <Brain className="w-4 h-4" />
+                            Mapa Mental Interativo
+                          </span>
+                        )}
+                        {generatedType === 'text' && (
+                          <span className="text-white/60 flex items-center gap-2">
+                            <FileText className="w-4 h-4" />
+                            Resumo em Texto
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <Button
+                          onClick={handleDownloadPdf}
+                          disabled={downloading}
+                          variant="ghost"
+                          size="sm"
+                          className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10 disabled:opacity-50"
+                        >
+                          {downloading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4 mr-2" />
+                          )}
+                          {downloading ? 'Gerando PDF...' : 'Baixar PDF'}
+                        </Button>
+                        <Button
                           onClick={() => {
-                            const blob = new Blob([mindMap], { type: 'text/markdown' });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `mapa-mental-${selectedVideo?.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.md`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            URL.revokeObjectURL(url);
+                            setMindMap(null);
+                            setGeneratedType(null);
                           }}
                           variant="ghost"
                           size="sm"
                           className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10"
                         >
-                          <Download className="w-4 h-4 mr-2" />
-                          Baixar
-                        </Button>
-                        <Button
-                          onClick={handleGenerateMindMap}
-                          variant="ghost"
-                          size="sm"
-                          className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10"
-                        >
                           <Brain className="w-4 h-4 mr-2" />
-                          Gerar novamente
+                          Gerar outro
                         </Button>
                       </div>
                     </div>
 
-                    {mindMapViewMode === 'interactive' ? (
+                    {generatedType === 'mindmap' ? (
                       <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden" style={{ height: '600px' }}>
                         <InteractiveMindMap markdown={mindMap} />
                       </div>

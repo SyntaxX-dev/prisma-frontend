@@ -5,7 +5,9 @@
       "Bash(bun run build:*)",
       "Bash(npm run db:generate:*)",
       "Bash(npm run:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
