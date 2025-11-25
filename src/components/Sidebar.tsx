@@ -101,6 +101,8 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
       navigateWithLoading('/my-summaries', 'Carregando Meus Resumos...');
     } else if (item === "Mapas Mentais") {
       navigateWithLoading('/mind-maps', 'Carregando Mapas Mentais...');
+    } else if (item === "Questões") {
+      navigateWithLoading('/questions', 'Carregando Questões...');
     } else if (item === "Perfil") {
       // Obter ID do usuário logado e redirecionar para o perfil
       const authState = getAuthState();
@@ -126,6 +128,8 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
       return pathname === '/my-summaries' || pathname?.startsWith('/my-summaries');
     } else if (item === "Mapas Mentais") {
       return pathname === '/mind-maps' || pathname?.startsWith('/mind-maps');
+    } else if (item === "Questões") {
+      return pathname === '/questions' || pathname?.startsWith('/questions');
     } else if (item === "Perfil") {
       return pathname === '/profile' || pathname?.startsWith('/profile');
     } else if (item === "Configurações") {
@@ -143,7 +147,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
   ];
 
   const featuresItems = [
-    { icon: FolderOpen, label: "Questões", disabled: true },
+    { icon: FolderOpen, label: "Questões", disabled: false },
   ];
 
   const toolsItems = [
@@ -254,8 +258,9 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                   >
                     <Button
                       variant="ghost"
+                      onClick={() => !item.disabled && handleNavigation(item.label)}
                       disabled={item.disabled}
-                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg transition-all duration-300 ease-in-out ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'} ${item.disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-300' : 'cursor-pointer'}`}
+                      className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#bd18b4] text-white' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'} ${item.disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-300' : 'cursor-pointer'}`}
                     >
                       <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                       {isExpanded && item.label}
