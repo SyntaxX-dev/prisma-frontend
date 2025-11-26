@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { UserProfile } from '@/types/auth-api';
 import { 
   BasicInfoData, 
@@ -118,13 +118,32 @@ export function useProfile() {
           github: profile.github || ''
         });
 
-        // Atualizar ordem dos links se disponível
-        if (profile.socialLinksOrder && profile.socialLinksOrder.length > 0) {
-          const orderedFields = profile.socialLinksOrder.map(fieldName => {
+        // Atualizar ordem dos links - usar ordem do backend ou ordem padrão
+        const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
+        const order = profile.socialLinksOrder || defaultOrder;
+        
+        if (order && order.length > 0) {
+          // Mapear campos do backend para frontend com ícones e labels corretos
+          const fieldMap: Record<string, { label: string; icon: any; placeholder: string }> = {
+            'sitePessoal': { label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
+            'portfolio': { label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
+            'linkedin': { label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/seuusuario' },
+            'github': { label: 'GitHub', icon: Github, placeholder: 'https://github.com/seuusuario' },
+            'instagram': { label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/seuusuario' },
+            'twitter': { label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' }
+          };
+          
+          const orderedFields = order.map(fieldName => {
             // Mapear portfolio do backend para sitePessoal no frontend
             const frontendFieldName = fieldName === 'portfolio' ? 'sitePessoal' : fieldName;
-            const field = linkFieldsOrder.find(f => f.field === frontendFieldName);
-            return field || { id: frontendFieldName, field: frontendFieldName, label: frontendFieldName, icon: Globe, placeholder: '' };
+            const fieldInfo = fieldMap[frontendFieldName] || { label: frontendFieldName, icon: Globe, placeholder: '' };
+            return {
+              id: frontendFieldName,
+              field: frontendFieldName,
+              label: fieldInfo.label,
+              icon: fieldInfo.icon,
+              placeholder: fieldInfo.placeholder
+            };
           });
           setLinkFieldsOrder(orderedFields);
         }
@@ -155,6 +174,44 @@ export function useProfile() {
       setIsLoading(false);
     }
   }, [isClient]);
+
+  // Atualizar linkFieldsOrder quando userProfile.socialLinksOrder mudar
+  useEffect(() => {
+    // Ordem padrão conforme o guia
+    const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
+    const order = userProfile?.socialLinksOrder || defaultOrder;
+    
+    // Usar JSON.stringify para criar uma chave única baseada na ordem
+    const orderKey = JSON.stringify(order);
+    
+    if (order && order.length > 0) {
+      // Mapear campos do backend para frontend com ícones e labels corretos
+      const fieldMap: Record<string, { label: string; icon: any; placeholder: string }> = {
+        'sitePessoal': { label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
+        'portfolio': { label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
+        'linkedin': { label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/seuusuario' },
+        'github': { label: 'GitHub', icon: Github, placeholder: 'https://github.com/seuusuario' },
+        'instagram': { label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/seuusuario' },
+        'twitter': { label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' }
+      };
+      
+      const orderedFields = order.map(fieldName => {
+        // Mapear portfolio do backend para sitePessoal no frontend
+        const frontendFieldName = fieldName === 'portfolio' ? 'sitePessoal' : fieldName;
+        const fieldInfo = fieldMap[frontendFieldName] || { label: frontendFieldName, icon: Globe, placeholder: '' };
+        return {
+          id: frontendFieldName,
+          field: frontendFieldName,
+          label: fieldInfo.label,
+          icon: fieldInfo.icon,
+          placeholder: fieldInfo.placeholder
+        };
+      });
+      
+      // Sempre atualizar para garantir que a UI seja atualizada
+      setLinkFieldsOrder(orderedFields);
+    }
+  }, [JSON.stringify(userProfile?.socialLinksOrder), userProfile?.id]); // Usar JSON.stringify para detectar mudanças no array
 
   // Função para atualizar o perfil local sem recarregar
   const updateLocalProfile = useCallback((updates: Partial<UserProfile>) => {
@@ -728,7 +785,10 @@ export function useProfile() {
       const currentOrder = linkFieldsOrder.map(field => {
         return field.field === 'sitePessoal' ? 'portfolio' : field.field;
       });
-      const backendOrder = userProfile?.socialLinksOrder || ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
+      
+      // Ordem padrão conforme o guia
+      const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
+      const backendOrder = userProfile?.socialLinksOrder || defaultOrder;
       const hasOrderChange = JSON.stringify(currentOrder) !== JSON.stringify(backendOrder);
 
       // Fazer chamadas apenas se houver mudanças
@@ -749,20 +809,127 @@ export function useProfile() {
       }
 
       if (hasOrderChange) {
-        // Garantir que todos os 5 campos estejam presentes
-        const allFields = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
-        const completeOrder = allFields.filter(field => currentOrder.includes(field));
-        const missingFields = allFields.filter(field => !currentOrder.includes(field));
-        const finalOrder = [...completeOrder, ...missingFields];
+        // Validar a ordem conforme o guia
+        const validLinks = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
         
-        await updateSocialLinksOrder(finalOrder);
+        // Preservar a ordem atual do drag and drop
+        // Apenas garantir que todos os 5 campos estejam presentes
+        const completeOrder = currentOrder.filter(field => validLinks.includes(field));
+        const missingFields = validLinks.filter(field => !completeOrder.includes(field));
+        
+        // Se faltar algum campo, adicionar no final, mas preservar a ordem original
+        const finalOrder = completeOrder.length === 5 
+          ? completeOrder  // Se já tem todos os 5, usar a ordem como está
+          : [...completeOrder, ...missingFields]; // Se faltar algum, adicionar no final
+        
+        console.log('🔍 Debug - Ordem dos Links:');
+        console.log('  - currentOrder (do drag):', currentOrder);
+        console.log('  - completeOrder (filtrado):', completeOrder);
+        console.log('  - missingFields:', missingFields);
+        console.log('  - finalOrder (enviando):', finalOrder);
+        
+        // Validação: deve conter exatamente 5 links
+        if (finalOrder.length !== 5) {
+          throw new Error('A ordem deve conter exatamente 5 links');
+        }
+        
+        // Validação: deve conter todos os links válidos
+        const hasAllLinks = validLinks.every((link) => finalOrder.includes(link));
+        if (!hasAllLinks) {
+          throw new Error('A ordem deve conter todos os links: linkedin, github, portfolio, instagram, twitter');
+        }
+        
+        // Validação: não pode ter links inválidos
+        const hasOnlyValidLinks = finalOrder.every((link) => validLinks.includes(link));
+        if (!hasOnlyValidLinks) {
+          throw new Error('A ordem contém links inválidos');
+        }
+        
+        // Validação: não pode ter duplicatas
+        const uniqueLinks = new Set(finalOrder);
+        if (uniqueLinks.size !== finalOrder.length) {
+          throw new Error('A ordem não pode ter links duplicados');
+        }
+        
+        // OPTIMISTIC UPDATE: Atualizar o estado local IMEDIATAMENTE antes da chamada da API
+        const previousOrder = userProfile?.socialLinksOrder ? [...userProfile.socialLinksOrder] : null;
+        
+        if (userProfile) {
+          setUserProfile(prev => {
+            if (!prev) return null;
+            // Criar uma nova referência do array para garantir que o React detecte a mudança
+            return {
+              ...prev,
+              socialLinksOrder: [...finalOrder] // Nova referência do array
+            };
+          });
+        }
+        
+        try {
+          console.log('📤 Enviando ordem para o backend:', finalOrder);
+          const response = await updateSocialLinksOrder(finalOrder);
+          console.log('📥 Resposta do backend:', response);
+          
+          // Se chegou aqui, a API foi bem-sucedida, então manter o estado atualizado
+          // Recarregar o perfil do backend em background para garantir sincronização
+          refreshProfile().catch(console.error);
+        } catch (error) {
+          // Se a API falhar, reverter para a ordem anterior
+          console.error('❌ Erro ao salvar ordem, revertendo...', error);
+          if (userProfile && previousOrder) {
+            setUserProfile(prev => {
+              if (!prev) return null;
+              return {
+                ...prev,
+                socialLinksOrder: previousOrder
+              };
+            });
+          }
+          // Re-lançar o erro para que seja tratado no catch externo
+          throw error;
+        }
       }
       
       // Só atualizar notificações se todos os campos foram preenchidos
       if (allFieldsComplete) {
         await updateNotificationsAfterChange();
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Tratamento de erros conforme o guia
+      if (error?.response?.status === 400) {
+        setError(error?.response?.data?.message || 'Ordem inválida. Verifique se todos os links estão presentes.');
+      } else if (error?.response?.status === 401) {
+        setError('Sessão expirada. Faça login novamente.');
+      } else if (error?.message) {
+        setError(error.message);
+      } else {
+        setError('Erro ao salvar ordem dos links. Tente novamente.');
+      }
+      // Reverter para ordem anterior em caso de erro
+      if (userProfile?.socialLinksOrder) {
+        const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
+        const order = userProfile.socialLinksOrder || defaultOrder;
+        const fieldMap: Record<string, { label: string; icon: any; placeholder: string }> = {
+          'sitePessoal': { label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
+          'portfolio': { label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
+          'linkedin': { label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/seuusuario' },
+          'github': { label: 'GitHub', icon: Github, placeholder: 'https://github.com/seuusuario' },
+          'instagram': { label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/seuusuario' },
+          'twitter': { label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' }
+        };
+        const orderedFields = order.map(fieldName => {
+          const frontendFieldName = fieldName === 'portfolio' ? 'sitePessoal' : fieldName;
+          const fieldInfo = fieldMap[frontendFieldName] || { label: frontendFieldName, icon: Globe, placeholder: '' };
+          return {
+            id: frontendFieldName,
+            field: frontendFieldName,
+            label: fieldInfo.label,
+            icon: fieldInfo.icon,
+            placeholder: fieldInfo.placeholder
+          };
+        });
+        setLinkFieldsOrder(orderedFields);
+      }
     } finally {
       setIsLinksModalOpen(false);
     }

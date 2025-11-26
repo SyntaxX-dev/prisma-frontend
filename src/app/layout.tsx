@@ -8,6 +8,7 @@ import { NotificationProvider as ToastNotificationProvider } from "@/components/
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { UserStatusProvider } from "@/providers/UserStatusProvider";
+import { WhatsAppFloatButton } from "@/components/shared/WhatsAppFloatButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,9 +32,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
         suppressHydrationWarning={true}
       >
         <QueryProvider>
@@ -44,6 +45,7 @@ export default function RootLayout({
                 {children}
               </LoadingWrapper>
               <ToastNotificationProvider />
+              <WhatsAppFloatButton />
             </NotificationsProvider>
             </UserStatusProvider>
           </LoadingProvider>

@@ -9,7 +9,6 @@ import { Navbar } from '@/components/layout/Navbar';
 import DotGrid from '@/components/shared/DotGrid';
 import { Sparkles, Check, X, Download, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/features/auth';
-import jsPDF from 'jspdf';
 
 type ViewState = 'input' | 'quiz' | 'result';
 
@@ -130,9 +129,10 @@ export default function QuestionsPage() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!finalResult) return;
 
+    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();

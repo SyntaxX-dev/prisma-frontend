@@ -44,6 +44,7 @@ interface CommunityInfoProps {
   isFromSidebar?: boolean; // Indica se a comunidade vem da sidebar (API) ou é uma conversa mockada
   pinnedMessages?: PinnedCommunityMessage[];
   currentUserId?: string;
+  currentUserAvatar?: string | null;
   friendName?: string;
   friendAvatar?: string | null;
   onUnpinMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
@@ -56,6 +57,7 @@ export function CommunityInfo({
   isFromSidebar = false,
   pinnedMessages = [],
   currentUserId,
+  currentUserAvatar,
   friendName,
   friendAvatar,
   onUnpinMessage,
@@ -411,7 +413,7 @@ export function CommunityInfo({
                   ? 'Você' 
                   : (member?.name || friendName || 'Usuário');
                 const senderAvatar = isFromCurrentUser 
-                  ? undefined 
+                  ? (currentUserAvatar || undefined)
                   : (member?.avatar || friendAvatar || undefined);
                 
                 const handleUnpin = async (e: React.MouseEvent) => {

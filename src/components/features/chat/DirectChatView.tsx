@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Send, Pin, Trash2, Pencil, X, Smile, Paperclip, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PinnedMessage } from '@/api/messages/get-pinned-messages';
 import { motion, AnimatePresence } from 'motion/react';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
@@ -46,6 +47,7 @@ interface DirectChatViewProps {
   onEditMessage?: (messageId: string, content: string) => Promise<{ success: boolean; message?: string }>;
   onDeleteMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
   onStartCall?: (receiverId: string) => Promise<void>;
+  isLoadingMessages?: boolean;
 }
 
 export function DirectChatView({
@@ -70,6 +72,7 @@ export function DirectChatView({
   onEditMessage,
   onDeleteMessage,
   onStartCall,
+  isLoadingMessages = false,
 }: DirectChatViewProps) {
   const [message, setMessage] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -365,9 +368,53 @@ export function DirectChatView({
     <div className="flex flex-col h-full bg-[#0a0a0a]">
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 pt-12 space-y-4">
-        {messages.length === 0 ? (
+        {isLoadingMessages ? (
+          <div className="flex flex-col gap-4">
+            {[
+              { width: '120px' },
+              { width: '180px' },
+              { width: '150px' },
+            ].map((size, i) => (
+              <div key={`left-${i}`} className="flex gap-3">
+                <Skeleton className="w-8 h-8 rounded-full bg-[#29292E] shrink-0" />
+                <div className="flex flex-col items-start max-w-[70%]">
+                  <Skeleton 
+                    className="rounded-2xl px-4 py-2.5 bg-[#29292E] border border-[#323238]"
+                    style={{ width: size.width, height: '32px' }}
+                  />
+                  <Skeleton className="h-3 w-16 mt-1 bg-[#29292E]" />
+                </div>
+              </div>
+            ))}
+            {[
+              { width: '100px' },
+              { width: '160px' },
+            ].map((size, i) => (
+              <div key={`right-${i}`} className="flex gap-3 flex-row-reverse">
+                <Skeleton className="w-8 h-8 rounded-full bg-[#29292E] shrink-0" />
+                <div className="flex flex-col items-end max-w-[70%]">
+                  <Skeleton 
+                    className="rounded-2xl px-4 py-2.5 bg-[#29292E]"
+                    style={{ width: size.width, height: '32px' }}
+                  />
+                  <div className="flex items-center gap-2 mt-1">
+                    <Skeleton className="h-3 w-16 bg-[#29292E]" />
+                    <Skeleton className="h-3 w-4 bg-[#29292E]" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400 text-sm">Nenhuma mensagem ainda. Comece a conversar!</p>
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgb(26, 26, 26)' }}>
+                <Smile className="w-8 h-8 text-gray-600" />
+              </div>
+              <p className="text-gray-500 text-sm">
+                Nenhuma mensagem ainda. Comece a conversar!
+              </p>
+            </div>
           </div>
         ) : (
           messages.map((msg: Message) => {

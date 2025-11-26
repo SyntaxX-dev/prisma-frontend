@@ -49,13 +49,13 @@ function DashboardContent() {
 	}, [login]);
 
 	return (
-		<div className="min-h-screen  text-white relative">
+		<div className="h-screen text-white relative overflow-hidden">
 			{/* DotGrid Background */}
 			<div className="fixed inset-0 z-0">
 				<DotGrid
 					dotSize={1}
 					gap={24}
-					baseColor="rgba(255,255,255,0.25)"
+					baseColor="rgba(255,255,255,0.7)"
 					activeColor="#bd18b4"
 					proximity={120}
 					shockRadius={250}
@@ -65,11 +65,11 @@ function DashboardContent() {
 				/>
 			</div>
 
-			<div className="relative z-10 flex">
+			<div className="relative z-10 flex h-full overflow-x-hidden">
 				<Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-				<div className="flex-1">
+				<div className="flex-1 flex flex-col overflow-hidden">
 					<Navbar isDark={isDark} toggleTheme={toggleTheme} />
-					<div style={{ marginTop: '80px' }}>
+					<div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ marginTop: '80px' }}>
 						<LearningDashboard userName={user?.name} />
 					</div>
 				</div>

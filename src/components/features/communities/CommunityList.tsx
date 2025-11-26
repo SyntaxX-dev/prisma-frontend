@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from 'react';
-import { Plus, Settings, Home } from "lucide-react";
+import { Plus, Home } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Community } from "@/types/community";
 import { motion, useInView } from 'motion/react';
@@ -351,16 +351,6 @@ export function CommunityList({
           >
             <Plus className="w-5 h-5" />
           </button>
-        {/* Settings */}
-        <button 
-          className="w-14 h-14 rounded-xl flex items-center justify-center text-gray-400 transition-all hover:scale-105 shrink-0 cursor-pointer"
-          style={{
-            background: 'rgb(30, 30, 30)',
-          }}
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-
       </div>
 
       {/* Lista de Chats - Ilhas com AnimatedList */}

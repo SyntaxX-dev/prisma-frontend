@@ -954,7 +954,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
             </Button>
           </div>
         </div>
-        <div className="relative bg-black aspect-video shadow-2xl rounded-4xl">
+        <div className="relative bg-black aspect-video shadow-2xl rounded-4xl w-full max-h-[800px]">
           {selectedVideo?.youtubeId ? (
             <>
               {/* Container onde o YouTube Player API criará o iframe */}

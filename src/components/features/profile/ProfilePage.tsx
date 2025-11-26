@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useProfile } from '@/hooks/features/profile';
 import { getUserProfile } from '@/api/auth/get-user-profile';
@@ -218,101 +218,6 @@ export function ProfilePage() {
             return 'No Prisma desde 30/03/2020';
         }
     };
-
-    // Função para renderizar os links do usuário
-    const renderUserLinks = () => {
-        // Usar a ordem definida no linkFieldsOrder ou socialLinksOrder do usuário
-        const order = user?.socialLinksOrder || linkFieldsOrder.map(f => {
-            // Mapear campos do linkFieldsOrder para socialLinksOrder
-            const mapping: Record<string, string> = {
-                'sitePessoal': 'portfolio',
-                'linkedin': 'linkedin',
-                'github': 'github',
-                'instagram': 'instagram',
-                'twitter': 'twitter'
-            };
-            return mapping[f.field] || f.field;
-        });
-        
-        const links = order.map((fieldName: string) => {
-            let url = '';
-            let icon = Globe;
-            let label = '';
-            
-            // Mapear os campos para as URLs corretas
-            switch (fieldName) {
-                case 'portfolio':
-                    url = user?.portfolio || '';
-                    icon = Globe;
-                    label = 'Portfolio';
-                    break;
-                case 'linkedin':
-                    url = user?.linkedin || '';
-                    icon = Linkedin;
-                    label = 'LinkedIn';
-                    break;
-                case 'github':
-                    url = user?.github || '';
-                    icon = Github;
-                    label = 'GitHub';
-                    break;
-                case 'instagram':
-                    url = user?.instagram || '';
-                    icon = Instagram;
-                    label = 'Instagram';
-                    break;
-                case 'twitter':
-                    url = user?.twitter || '';
-                    icon = Twitter;
-                    label = 'Twitter';
-                    break;
-                default:
-                    url = '';
-            }
-            
-            return {
-                key: fieldName,
-                url,
-                icon,
-                label
-            };
-        });
-
-        const filledLinks = links.filter(link => link.url && link.url.trim() !== '');
-        const emptySlots = 5 - filledLinks.length;
-
-        return (
-            <div className="grid grid-cols-5 gap-3">
-                {/* Links preenchidos */}
-                {filledLinks.map((link, index) => {
-                    const IconComponent = link.icon;
-                    return (
-                        <a
-                            key={link.key}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="aspect-square bg-[#29292E] border-2 border-[#323238] rounded-lg flex items-center justify-center hover:border-[#bd18b4] transition-colors cursor-pointer group"
-                            title={link.label}
-                        >
-                            <IconComponent className="w-6 h-6 text-[#bd18b4] group-hover:scale-110 transition-transform" />
-                        </a>
-                    );
-                })}
-                
-                {/* Slots vazios - apenas para o próprio perfil */}
-                {isOwnProfile && !isPublicView && Array.from({ length: emptySlots }).map((_, index) => (
-                    <div
-                        key={`empty-${index}`}
-                        className="aspect-square bg-transparent border-2 border-dashed border-[#323238] rounded-lg flex items-center justify-center hover:border-gray-600 transition-colors cursor-pointer"
-                        onClick={() => setIsLinksModalOpen(true)}
-                    >
-                        <Plus className="w-5 h-5 text-gray-600" />
-                    </div>
-                ))}
-            </div>
-        );
-    };
     
     const {
         userProfile,
@@ -491,6 +396,29 @@ export function ProfilePage() {
         })
     );
 
+    // TODOS OS HOOKS DEVEM SER CHAMADOS ANTES DE QUALQUER EARLY RETURN
+    // Usar dados do hook useProfile - sem dados mockados
+    // Se estiver visualizando perfil de outro usuário, usar otherUserProfile
+    // Usar useMemo para garantir que o user seja atualizado quando userProfile mudar
+    const user = useMemo(() => {
+        return userId && otherUserProfile ? otherUserProfile : userProfile;
+    }, [userId, otherUserProfile, userProfile]);
+    
+    // Criar uma chave baseada na ordem dos links para forçar re-render quando a ordem mudar
+    // Usar useState para evitar problemas de hidratação
+    // Não usar user aqui porque ainda não está definido - usar userProfile ou otherUserProfile diretamente
+    // Inicializar com string vazia para evitar diferenças entre servidor e cliente
+    const [linksOrderKey, setLinksOrderKey] = useState('');
+    
+    // Atualizar a chave quando a ordem mudar (apenas no cliente)
+    useEffect(() => {
+        const profile = userId && otherUserProfile ? otherUserProfile : userProfile;
+        const newKey = JSON.stringify(profile?.socialLinksOrder || []);
+        if (newKey !== linksOrderKey) {
+            setLinksOrderKey(newKey);
+        }
+    }, [userProfile?.socialLinksOrder, otherUserProfile?.socialLinksOrder, userId, linksOrderKey]);
+
     // Mostrar loading se os dados estão sendo carregados
     if (isLoading || (userId && isLoadingOtherProfile)) {
         return (
@@ -514,14 +442,98 @@ export function ProfilePage() {
         );
     }
 
-    // Usar dados do hook useProfile - sem dados mockados
-    // Se estiver visualizando perfil de outro usuário, usar otherUserProfile
-    const user = userId && otherUserProfile ? otherUserProfile : userProfile;
-
     // Se não há dados do usuário, não renderizar nada (já foi tratado no loading/error)
     if (!user) {
         return null;
     }
+
+    // Função para renderizar os links do usuário - função normal (não hook) para evitar problemas com ordem de hooks
+    const renderUserLinks = () => {
+        // Ordem padrão conforme o guia
+        const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
+        
+        // Usar a ordem do backend se disponível, senão usar a ordem padrão
+        const order = user?.socialLinksOrder || defaultOrder;
+        
+        const links = order.map((fieldName: string) => {
+            let url = '';
+            let icon = Globe;
+            let label = '';
+            
+            // Mapear os campos para as URLs corretas
+            switch (fieldName) {
+                case 'portfolio':
+                    url = user?.portfolio || '';
+                    icon = Globe;
+                    label = 'Portfolio';
+                    break;
+                case 'linkedin':
+                    url = user?.linkedin || '';
+                    icon = Linkedin;
+                    label = 'LinkedIn';
+                    break;
+                case 'github':
+                    url = user?.github || '';
+                    icon = Github;
+                    label = 'GitHub';
+                    break;
+                case 'instagram':
+                    url = user?.instagram || '';
+                    icon = Instagram;
+                    label = 'Instagram';
+                    break;
+                case 'twitter':
+                    url = user?.twitter || '';
+                    icon = Twitter;
+                    label = 'Twitter';
+                    break;
+                default:
+                    url = '';
+            }
+            
+            return {
+                key: fieldName,
+                url,
+                icon,
+                label
+            };
+        });
+
+        const filledLinks = links.filter(link => link.url && link.url.trim() !== '');
+        const emptySlots = 5 - filledLinks.length;
+
+        return (
+            <div className="grid grid-cols-5 gap-3" key={linksOrderKey} suppressHydrationWarning>
+                {/* Links preenchidos */}
+                {filledLinks.map((link, index) => {
+                    const IconComponent = link.icon;
+                    return (
+                        <a
+                            key={`${link.key}-${linksOrderKey}`}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="aspect-square bg-[#29292E] border-2 border-[#323238] rounded-lg flex items-center justify-center hover:border-[#bd18b4] transition-colors cursor-pointer group"
+                            title={link.label}
+                        >
+                            <IconComponent className="w-6 h-6 text-[#bd18b4] group-hover:scale-110 transition-transform" />
+                        </a>
+                    );
+                })}
+                
+                {/* Slots vazios - apenas para o próprio perfil */}
+                {isOwnProfile && !isPublicView && Array.from({ length: emptySlots }).map((_, index) => (
+                    <div
+                        key={`empty-${index}`}
+                        className="aspect-square bg-transparent border-2 border-dashed border-[#323238] rounded-lg flex items-center justify-center hover:border-gray-600 transition-colors cursor-pointer"
+                        onClick={() => setIsLinksModalOpen(true)}
+                    >
+                        <Plus className="w-5 h-5 text-gray-600" />
+                    </div>
+                ))}
+            </div>
+        );
+    };
 
     // profileTasks, completedTasks, totalTasks e completionPercentage já estão disponíveis no hook useProfile
 
@@ -537,7 +549,9 @@ export function ProfilePage() {
                 const oldIndex = items.findIndex((item) => item.id === active.id);
                 const newIndex = items.findIndex((item) => item.id === over.id);
 
-                return arrayMove(items, oldIndex, newIndex);
+                const newOrder = arrayMove(items, oldIndex, newIndex);
+                console.log('🔄 Drag and Drop - Nova ordem:', newOrder.map(item => item.field));
+                return newOrder;
             });
         }
     };
@@ -828,23 +842,23 @@ export function ProfilePage() {
                                     onEditClick={() => setIsHabilitiesModalOpen(true)}
                                 />
 
-                                {/* Insígnias - Apenas na visualização privada */}
-                                {!isPublicView && (
-                                    <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
-                                        <h3 className="text-white font-semibold mb-4">Insígnias • 3</h3>
-                                        <div className="flex space-x-3">
-                                            <div className="w-12 h-12 bg-[#bd18b4] rounded-full flex items-center justify-center cursor-pointer">
-                                                <span className="text-black text-xs font-bold">R</span>
-                                            </div>
-                                            <div className="w-12 h-12 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
-                                                <span className="text-white text-xs font-bold">G</span>
-                                            </div>
-                                            <div className="w-12 h-12 bg-[#bd18b4] rounded-full flex items-center justify-center cursor-pointer">
-                                                <span className="text-black text-xs font-bold">N</span>
-                                            </div>
-                                        </div>
+                                {/* Links - Agora abaixo de Habilidades */}
+                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-white font-semibold text-sm">Links</h3>
+                                        {isOwnProfile && !isPublicView && (
+                                            <Button
+                                                className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
+                                                size="sm"
+                                                onClick={() => setIsLinksModalOpen(true)}
+                                            >
+                                                <Edit3 className="w-4 h-4" />
+                                            </Button>
+                                        )}
                                     </div>
-                                )}
+                                    {renderUserLinks()}
+                                </div>
+
                             </div>
                         </div>
 
@@ -892,42 +906,7 @@ export function ProfilePage() {
                             {/* Card de Ofensivas - Agora acima do Sobre */}
                             <OffensivesCard />
 
-                            {/* Links e Insígnias - Sempre visível acima do Sobre */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {/* Links */}
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-white font-semibold text-sm">Links</h3>
-                                        {isOwnProfile && !isPublicView && (
-                                            <Button
-                                                className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
-                                                size="sm"
-                                                onClick={() => setIsLinksModalOpen(true)}
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                    {renderUserLinks()}
-                                </div>
-
-                                {/* Insígnias */}
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
-                                    <h3 className="text-white font-semibold mb-3 text-sm">Insígnias • 3</h3>
-                                    <div className="flex space-x-2">
-                                        <div className="w-10 h-10 bg-[#bd18b4] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-black text-xs font-bold">R</span>
-                                        </div>
-                                        <div className="w-10 h-10 bg-[#F59E0B] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-white text-xs font-bold">G</span>
-                                        </div>
-                                        <div className="w-10 h-10 bg-[#bd18b4] rounded-full flex items-center justify-center cursor-pointer">
-                                            <span className="text-black text-xs font-bold">N</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
+                            {/* Sobre - Agora acima dos Links */}
                             <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-semibold text-white">Sobre</h3>

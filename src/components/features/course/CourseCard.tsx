@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "../../ui/card";
 import { useNavigationWithLoading } from "@/hooks/shared";
-import { Calendar } from "lucide-react";
+import { Calendar, Sparkles } from "lucide-react";
 import { useId } from "react";
 
 interface CourseCardProps {
@@ -20,6 +20,7 @@ interface CourseCardProps {
   year?: string;
   level?: 'Iniciante' | 'Intermediário' | 'Avançado';
   courseType?: 'CURSO' | 'FORMAÇÃO';
+  isSponsored?: boolean;
 }
 
 export function CourseCard({
@@ -38,7 +39,8 @@ export function CourseCard({
   duration = 'N/A',
   year,
   level,
-  courseType = 'CURSO'
+  courseType = 'CURSO',
+  isSponsored = false
 }: CourseCardProps) {
   const { navigateWithLoading } = useNavigationWithLoading();
   const patternId = useId();
@@ -102,11 +104,24 @@ export function CourseCard({
   const displayYear = year || new Date().getFullYear().toString();
 
   return (
-    <button onClick={handleClick} className="block text-left w-[280px] h-[320px]">
-      <Card className="bg-[#202024] border border-[#323238] hover:border-[#bd18b4]/30 transition-all duration-300 cursor-pointer h-full flex flex-col group rounded-xl overflow-hidden w-full">
+    <button onClick={handleClick} className="block text-left w-full h-[320px] pointer-events-auto">
+      <Card className={`bg-[#202024] border transition-all duration-300 cursor-pointer h-full flex flex-col group rounded-xl overflow-hidden w-full relative ${
+        isSponsored 
+          ? 'border-[#FFD700]/50 hover:border-[#FFD700] shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:shadow-[0_0_30px_rgba(255,215,0,0.5)]' 
+          : 'border-[#323238] hover:border-[#bd18b4]/30'
+      }`}>
+        {/* Badge Patrocinado */}
+        {isSponsored && (
+          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+            <Sparkles className="w-3 h-3" />
+            <span>PATROCINADO</span>
+          </div>
+        )}
         <CardHeader className="p-0 flex-shrink-0 relative">
           {/* Background com gradiente */}
-          <div className="relative w-full h-40 bg-gradient-to-br from-[#29292E] via-[#1e1f23] to-[#1a1b1e] overflow-hidden rounded-t-xl">
+          <div className={`relative w-full h-40 bg-gradient-to-br from-[#29292E] via-[#1e1f23] to-[#1a1b1e] overflow-hidden rounded-t-xl ${
+            isSponsored ? 'ring-1 ring-[#FFD700]/30' : ''
+          }`}>
             {/* Padrão de pontinhos com gradiente que desaparece da esquerda para direita e de cima para baixo */}
             <svg
               className="absolute inset-0 w-full h-full pointer-events-none"
@@ -144,11 +159,15 @@ export function CourseCard({
             {/* Ícone no canto superior esquerdo com sombra */}
             <div className="absolute top-3 left-3 z-10">
               <div
-                className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl relative"
+                className={`w-16 h-16 rounded-xl flex items-center justify-center text-3xl relative ${
+                  isSponsored ? 'ring-2 ring-[#FFD700]/50' : ''
+                }`}
                 style={{ 
                   backgroundColor: iconColor || '#29292E',
                   backgroundImage: `linear-gradient(135deg, ${iconColor || '#29292E'}, ${iconColor || '#1a1b1e'})`,
-                  boxShadow: `0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 60px ${iconColor ? `${iconColor}40` : 'rgba(189, 24, 180, 0.2)'}`
+                  boxShadow: isSponsored 
+                    ? `0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 60px ${iconColor ? `${iconColor}40` : 'rgba(189, 24, 180, 0.2)'}, 0 0 20px rgba(255, 215, 0, 0.4)`
+                    : `0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 60px ${iconColor ? `${iconColor}40` : 'rgba(189, 24, 180, 0.2)'}`
                 }}
               >
                 {/* Sombra atrás do background do ícone */}
@@ -171,7 +190,11 @@ export function CourseCard({
         <CardContent className="p-4 flex-1 flex flex-col justify-between bg-[#202024] rounded-b-xl">
           {/* Título */}
           <div className="mb-4">
-            <h3 className="text-white font-bold text-base mb-3 line-clamp-2 leading-tight group-hover:text-[#c532e2] transition-colors">
+            <h3 className={`font-bold text-base mb-3 line-clamp-2 leading-tight transition-colors ${
+              isSponsored 
+                ? 'text-white group-hover:text-[#FFD700]' 
+                : 'text-white group-hover:text-[#c532e2]'
+            }`}>
               {title}
             </h3>
 

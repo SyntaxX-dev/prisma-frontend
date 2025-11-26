@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, Settings, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, ChevronUp, ChevronDown } from "lucide-react";
 import { CommunityList } from "@/components/features/communities/CommunityList";
 import { CommunityChat } from "@/components/features/communities/CommunityChat";
 import { CommunityInfo } from "@/components/features/communities/CommunityInfo";
@@ -847,33 +847,35 @@ function CommunitiesPageContent() {
     }
   };
 
+  // Ref para rastrear se as mensagens foram carregadas para a comunidade atual
+  const loadingCommunityIdRef = useRef<string | null>(null);
+
   // Load messages when community is selected
   useEffect(() => {
     if (selectedCommunityId) {
       setIsLoadingCommunityMessages(true);
       setIsLoadingCommunityPinnedMessages(true);
+      loadingCommunityIdRef.current = selectedCommunityId;
       // Mock delay para visualizar skeletons (2 segundos)
-      const loadTimer = setTimeout(() => {
-        loadCommunityMessages(50, 0);
-        loadCommunityPinnedMessages();
+      const loadTimer = setTimeout(async () => {
+        await loadCommunityMessages(50, 0);
+        await loadCommunityPinnedMessages();
+        // Aguardar um pouco após as mensagens serem carregadas para garantir que tudo foi renderizado
+        setTimeout(() => {
+          // Só desativar o loading se ainda estamos na mesma comunidade
+          if (loadingCommunityIdRef.current === selectedCommunityId) {
+            setIsLoadingCommunityMessages(false);
+            setIsLoadingCommunityPinnedMessages(false);
+          }
+        }, 300);
       }, 2000);
       return () => clearTimeout(loadTimer);
     } else {
       setIsLoadingCommunityMessages(false);
       setIsLoadingCommunityPinnedMessages(false);
+      loadingCommunityIdRef.current = null;
     }
   }, [selectedCommunityId, loadCommunityMessages, loadCommunityPinnedMessages]);
-
-  // Detectar quando as mensagens da comunidade foram carregadas
-  useEffect(() => {
-    if (selectedCommunityId && communityMessages.length >= 0 && isLoadingCommunityMessages) {
-      // Aguardar um pouco após as mensagens serem carregadas para garantir que tudo foi renderizado
-      const timer = setTimeout(() => {
-        setIsLoadingCommunityMessages(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedCommunityId, communityMessages.length, isLoadingCommunityMessages]);
 
   // Detectar quando as mensagens fixadas da comunidade foram carregadas
   useEffect(() => {
@@ -1229,10 +1231,21 @@ function CommunitiesPageContent() {
             <ChatHeaderSkeleton />
           ) : (
           <div className="flex items-center justify-between gap-4">
-            {/* Nome do Usuário */}
+            {/* Nome do Usuário com Avatar */}
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10">
+                <AvatarImage 
+                  src={chatUser.profileImage || undefined} 
+                  alt={chatUser.name}
+                />
+                <AvatarFallback className="bg-[#bd18b4] text-black">
+                  {chatUser.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <h1 className="text-white font-semibold text-2xl">
                 {chatUser.name}
               </h1>
+            </div>
             
             {/* Search Bar + Actions */}
             <div className="flex items-center gap-4">
@@ -1349,16 +1362,18 @@ function CommunitiesPageContent() {
 
               {/* Right Actions */}
               <div className="flex items-center gap-3">
-                <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
-                  <Settings className="w-5 h-5 text-gray-400" />
-                </button>
                 <NotificationsDropdown />
                 <div className="w-12 h-12 rounded-full relative">
-                  <img 
-                    src="https://i.pravatar.cc/150?img=68" 
-                    alt="User Avatar"
-                    className="w-full h-full rounded-full object-cover"
-                  />
+                  <Avatar className="w-full h-full">
+                    <AvatarImage 
+                      src={userProfile?.profileImage || undefined} 
+                      alt={userProfile?.name || 'User'}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-[#bd18b4] text-black">
+                      {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#bd18b4] rounded-full border-2 border-[#040404]" />
                 </div>
               </div>
@@ -1370,7 +1385,7 @@ function CommunitiesPageContent() {
           <div className="flex-1 flex gap-3 overflow-hidden pt-2">
             {/* Área do Chat Direto - Ilha */}
             <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
-              {isLoadingChatUser || !chatUser || isLoadingConversation ? (
+              {isLoadingChatUser || !chatUser ? (
                 <ChatSkeleton />
               ) : (
                 <DirectChatView
@@ -1403,6 +1418,7 @@ function CommunitiesPageContent() {
                       console.error('Erro ao iniciar chamada:', error);
                     }
                   }}
+                  isLoadingMessages={isLoadingConversation}
                 />
               )}
             </div>
@@ -1434,6 +1450,7 @@ function CommunitiesPageContent() {
               isFromSidebar={false}
                   pinnedMessages={pinnedMessages}
                   currentUserId={userProfile.id}
+                  currentUserAvatar={userProfile.profileImage}
                   friendName={chatUser.name}
                   friendAvatar={chatUser.profileImage}
                   onUnpinMessage={unpinMessage}
@@ -1562,9 +1579,6 @@ function CommunitiesPageContent() {
 
               {/* Right Actions */}
               <div className="flex items-center gap-3">
-                <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-[#3a3a3a] cursor-pointer" style={{ background: 'rgb(30, 30, 30)' }}>
-                  <Settings className="w-5 h-5 text-gray-400" />
-                </button>
                 <NotificationsDropdown />
                 <div className="w-12 h-12 rounded-full relative">
                   <Avatar className="w-12 h-12">
@@ -1619,6 +1633,7 @@ function CommunitiesPageContent() {
                 isTyping={isCommunityTyping}
                 typingUserId={communityTypingUserId}
                 onTyping={sendCommunityTypingIndicator}
+                isLoadingMessages={isLoadingCommunityMessages}
               />
             )}
             
@@ -1633,6 +1648,7 @@ function CommunitiesPageContent() {
                 isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
                 pinnedMessages={communityPinnedMessages}
                 currentUserId={userProfile?.id}
+                currentUserAvatar={userProfile?.profileImage}
                 onUnpinMessage={unpinCommunityMessage}
               />
             )}

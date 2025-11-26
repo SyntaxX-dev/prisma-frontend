@@ -27,6 +27,7 @@ import { StreakIcon } from "../features/offensives/StreakIcon";
 import { StreakCalendar } from "../features/offensives/StreakCalendar";
 import { ProfileCompletionModal } from "../features/profile/modals/ProfileCompletionModal";
 import { getEmailValue } from "@/lib/utils/email";
+import { getAuthState } from "@/lib/auth";
 
 interface NavbarProps {
   isDark?: boolean;
@@ -35,7 +36,7 @@ interface NavbarProps {
 
 export function Navbar({}: NavbarProps) {
 
-  const navItems = ["Dashboard", "Vistos Atualmente", "Cursos", "Trilhas", "Certificados", "Minha Conta", "Suporte"];
+  const navItems = ["Dashboard", "Chats", "Vistos Atualmente", "Meu resumo", "Mapas Mentais", "Questões", "Perfil", "Configurações"];
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -92,28 +93,46 @@ export function Navbar({}: NavbarProps) {
   const handleNavClick = (item: string) => {
     if (item === "Dashboard") {
       navigateWithLoading('/dashboard', 'Carregando Dashboard...');
+    } else if (item === "Chats") {
+      navigateWithLoading('/communities', 'Carregando Chats...');
     } else if (item === "Vistos Atualmente") {
-      navigateWithLoading('/watching', 'Carregando vídeos...');
-    } else if (item === "Cursos") {
-      navigateWithLoading('/courses', 'Carregando Cursos...');
-    } else if (item === "Trilhas") {
-      navigateWithLoading('/courses', 'Carregando Trilhas...');
-    } else if (item === "Certificados") {
-      navigateWithLoading('/courses', 'Carregando Certificados...');
-    } else if (item === "Minha Conta") {
-      navigateWithLoading('/profile', 'Carregando Perfil...');
-    } else if (item === "Suporte") {
-      navigateWithLoading('/settings', 'Carregando Suporte...');
+      navigateWithLoading('/watching', 'Carregando Vistos atualmente...');
+    } else if (item === "Meu resumo") {
+      navigateWithLoading('/my-summaries', 'Carregando Meus Resumos...');
+    } else if (item === "Mapas Mentais") {
+      navigateWithLoading('/mind-maps', 'Carregando Mapas Mentais...');
+    } else if (item === "Questões") {
+      navigateWithLoading('/questions', 'Carregando Questões...');
+    } else if (item === "Perfil") {
+      const authState = getAuthState();
+      const userId = authState.user?.id;
+      if (userId) {
+        router.push(`/profile?userId=${userId}`);
+      } else {
+        navigateWithLoading('/profile', 'Carregando Perfil...');
+      }
+    } else if (item === "Configurações") {
+      navigateWithLoading('/settings', 'Carregando Configurações...');
     }
   };
 
   const isActive = (item: string) => {
     if (item === "Dashboard") {
       return pathname === '/dashboard';
+    } else if (item === "Chats") {
+      return pathname === '/communities' || pathname?.startsWith('/communities');
     } else if (item === "Vistos Atualmente") {
-      return pathname === '/watching';
-    } else if (item === "Cursos") {
-      return pathname.startsWith('/courses');
+      return pathname === '/watching' || pathname?.startsWith('/watching');
+    } else if (item === "Meu resumo") {
+      return pathname === '/my-summaries' || pathname?.startsWith('/my-summaries');
+    } else if (item === "Mapas Mentais") {
+      return pathname === '/mind-maps' || pathname?.startsWith('/mind-maps');
+    } else if (item === "Questões") {
+      return pathname === '/questions' || pathname?.startsWith('/questions');
+    } else if (item === "Perfil") {
+      return pathname === '/profile' || pathname?.startsWith('/profile');
+    } else if (item === "Configurações") {
+      return pathname === '/settings' || pathname?.startsWith('/settings');
     }
     return false;
   };
@@ -300,13 +319,6 @@ export function Navbar({}: NavbarProps) {
                 </div>
               </PopoverContent>
             </Popover>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer"
-            >
-              <HelpCircle className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 

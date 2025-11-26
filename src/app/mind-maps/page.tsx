@@ -146,7 +146,7 @@ function MindMapsContent() {
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
           <div style={{ marginTop: '80px' }}>
-            <div className="container mx-auto px-4 py-8">
+            <div className="flex-1 p-6 ml-[280px] pt-10">
               {/* Header */}
               <div className="mb-8">
                 <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
@@ -170,7 +170,7 @@ function MindMapsContent() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl">
                   {mindMaps.map((mindMap) => (
                     <div
                       key={mindMap.id}
