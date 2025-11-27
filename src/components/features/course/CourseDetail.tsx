@@ -1,4 +1,5 @@
 import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, ChevronDown, ArrowLeft, Brain, Loader2 } from "lucide-react";
+import { formatResetTime } from "@/lib/utils/time";
 import { Button } from "../../ui/button";
 import { Badge } from "../../ui/badge";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -1158,7 +1159,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 {limitsInfo && !mindMap && (
                   <div className="flex gap-4">
                     {/* Limite Mapa Mental */}
-                    <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                    <div className={`flex-1 px-4 py-3 rounded-lg text-sm ${
                       !limitsInfo.mindmap.canGenerate
                         ? 'bg-red-500/10 border border-red-500/30 text-red-400'
                         : 'bg-white/5 border border-white/10 text-white/60'
@@ -1167,15 +1168,23 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                         <Brain className="w-4 h-4" />
                         <span className="font-medium">Mapa Mental</span>
                       </div>
-                      <span>
-                        {!limitsInfo.mindmap.canGenerate
-                          ? `Limite atingido (${limitsInfo.mindmap.generationsToday}/${limitsInfo.mindmap.dailyLimit})`
-                          : `Restantes: ${limitsInfo.mindmap.remainingGenerations}/${limitsInfo.mindmap.dailyLimit}`
-                        }
-                      </span>
+                      <div className="space-y-1">
+                        <div>
+                          {!limitsInfo.mindmap.canGenerate
+                            ? `Limite atingido (${limitsInfo.mindmap.generationsToday}/${limitsInfo.mindmap.dailyLimit})`
+                            : `Restantes: ${limitsInfo.mindmap.remainingGenerations}/${limitsInfo.mindmap.dailyLimit}`
+                          }
+                        </div>
+                        {limitsInfo.mindmap.canGenerate === false && (
+                          <div className="flex items-center gap-1 text-xs text-red-300 mt-1">
+                            <Clock className="w-3 h-3" />
+                            <span>Reseta {formatResetTime(limitsInfo.mindmap.resetTime)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Limite Texto */}
-                    <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                    <div className={`flex-1 px-4 py-3 rounded-lg text-sm ${
                       !limitsInfo.text.canGenerate
                         ? 'bg-red-500/10 border border-red-500/30 text-red-400'
                         : 'bg-white/5 border border-white/10 text-white/60'
@@ -1184,12 +1193,20 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                         <FileText className="w-4 h-4" />
                         <span className="font-medium">Texto</span>
                       </div>
-                      <span>
-                        {!limitsInfo.text.canGenerate
-                          ? `Limite atingido (${limitsInfo.text.generationsToday}/${limitsInfo.text.dailyLimit})`
-                          : `Restantes: ${limitsInfo.text.remainingGenerations}/${limitsInfo.text.dailyLimit}`
-                        }
-                      </span>
+                      <div className="space-y-1">
+                        <div>
+                          {!limitsInfo.text.canGenerate
+                            ? `Limite atingido (${limitsInfo.text.generationsToday}/${limitsInfo.text.dailyLimit})`
+                            : `Restantes: ${limitsInfo.text.remainingGenerations}/${limitsInfo.text.dailyLimit}`
+                          }
+                        </div>
+                        {limitsInfo.text.canGenerate === false && (
+                          <div className="flex items-center gap-1 text-xs text-red-300 mt-1">
+                            <Clock className="w-3 h-3" />
+                            <span>Reseta {formatResetTime(limitsInfo.text.resetTime)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1219,9 +1236,15 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                       </Button>
                     </div>
                     {limitsInfo && !limitsInfo.mindmap.canGenerate && !limitsInfo.text.canGenerate && (
-                      <p className="text-red-400 mt-4 text-sm">
-                        Você atingiu o limite diário de ambos os tipos. Tente novamente amanhã.
-                      </p>
+                      <div className="text-center mt-4">
+                        <p className="text-red-400 text-sm mb-1">
+                          Você atingiu o limite diário de ambos os tipos.
+                        </p>
+                        <p className="text-red-300 text-xs flex items-center justify-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Limite reseta {formatResetTime(limitsInfo.mindmap.resetTime || limitsInfo.text.resetTime)}
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}

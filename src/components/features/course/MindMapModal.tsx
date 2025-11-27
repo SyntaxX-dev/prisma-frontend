@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../ui/dialog";
 import { Button } from "../../ui/button";
-import { Brain, Download, Network, FileText, Loader2 } from "lucide-react";
+import { Brain, Download, Network, FileText, Loader2, Clock } from "lucide-react";
 import { generateMindMap, getGenerationLimits, AllLimitsInfo, GenerationType } from "@/api/mind-map/generate-mind-map";
 import { LoadingGrid } from "../../ui/loading-grid";
 import InteractiveMindMap from "./InteractiveMindMap";
 import ReactMarkdown from 'react-markdown';
+import { formatResetTime } from "@/lib/utils/time";
 
 interface MindMapModalProps {
   open: boolean;
@@ -38,6 +39,11 @@ export function MindMapModal({
     if (open) {
       getGenerationLimits()
         .then((response) => {
+          console.log('Generation Limits Response:', response.data);
+          console.log('Mindmap canGenerate:', response.data.mindmap.canGenerate);
+          console.log('Text canGenerate:', response.data.text.canGenerate);
+          console.log('Mindmap resetTime:', response.data.mindmap.resetTime);
+          console.log('Text resetTime:', response.data.text.resetTime);
           setLimitsInfo(response.data);
         })
         .catch(() => {
@@ -342,7 +348,7 @@ export function MindMapModal({
           {limitsInfo && !mindMap && (
             <div className="mb-4 flex gap-4">
               {/* Limite Mapa Mental */}
-              <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+              <div className={`flex-1 px-4 py-3 rounded-lg text-sm ${
                 !limitsInfo.mindmap.canGenerate
                   ? 'bg-red-500/10 border border-red-500/30 text-red-400'
                   : 'bg-white/5 border border-white/10 text-white/60'
@@ -351,15 +357,23 @@ export function MindMapModal({
                   <Network className="w-4 h-4" />
                   <span className="font-medium">Mapa Mental</span>
                 </div>
-                <span>
-                  {!limitsInfo.mindmap.canGenerate
-                    ? `Limite atingido (${limitsInfo.mindmap.generationsToday}/${limitsInfo.mindmap.dailyLimit})`
-                    : `Restantes: ${limitsInfo.mindmap.remainingGenerations}/${limitsInfo.mindmap.dailyLimit}`
-                  }
-                </span>
+                <div className="space-y-1">
+                  <div>
+                    {!limitsInfo.mindmap.canGenerate
+                      ? `Limite atingido (${limitsInfo.mindmap.generationsToday}/${limitsInfo.mindmap.dailyLimit})`
+                      : `Restantes: ${limitsInfo.mindmap.remainingGenerations}/${limitsInfo.mindmap.dailyLimit}`
+                    }
+                  </div>
+                  {limitsInfo.mindmap.canGenerate === false && (
+                    <div className="flex items-center gap-1 text-xs text-red-300 mt-1">
+                      <Clock className="w-3 h-3" />
+                      <span>Reseta {formatResetTime(limitsInfo.mindmap.resetTime)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
               {/* Limite Texto */}
-              <div className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+              <div className={`flex-1 px-4 py-3 rounded-lg text-sm ${
                 !limitsInfo.text.canGenerate
                   ? 'bg-red-500/10 border border-red-500/30 text-red-400'
                   : 'bg-white/5 border border-white/10 text-white/60'
@@ -368,12 +382,20 @@ export function MindMapModal({
                   <FileText className="w-4 h-4" />
                   <span className="font-medium">Texto</span>
                 </div>
-                <span>
-                  {!limitsInfo.text.canGenerate
-                    ? `Limite atingido (${limitsInfo.text.generationsToday}/${limitsInfo.text.dailyLimit})`
-                    : `Restantes: ${limitsInfo.text.remainingGenerations}/${limitsInfo.text.dailyLimit}`
-                  }
-                </span>
+                <div className="space-y-1">
+                  <div>
+                    {!limitsInfo.text.canGenerate
+                      ? `Limite atingido (${limitsInfo.text.generationsToday}/${limitsInfo.text.dailyLimit})`
+                      : `Restantes: ${limitsInfo.text.remainingGenerations}/${limitsInfo.text.dailyLimit}`
+                    }
+                  </div>
+                  {limitsInfo.text.canGenerate === false && (
+                    <div className="flex items-center gap-1 text-xs text-red-300 mt-1">
+                      <Clock className="w-3 h-3" />
+                      <span>Reseta {formatResetTime(limitsInfo.text.resetTime)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -403,9 +425,15 @@ export function MindMapModal({
                 </Button>
               </div>
               {limitsInfo && !limitsInfo.mindmap.canGenerate && !limitsInfo.text.canGenerate && (
-                <p className="text-red-400 mt-4 text-sm">
-                  Você atingiu o limite diário de ambos os tipos. Tente novamente amanhã.
-                </p>
+                <div className="text-center mt-4">
+                  <p className="text-red-400 text-sm mb-1">
+                    Você atingiu o limite diário de ambos os tipos.
+                  </p>
+                  <p className="text-red-300 text-xs flex items-center justify-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Limite reseta {formatResetTime(limitsInfo.mindmap.resetTime || limitsInfo.text.resetTime)}
+                  </p>
+                </div>
               )}
             </div>
           )}

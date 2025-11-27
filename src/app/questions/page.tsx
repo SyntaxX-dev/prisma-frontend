@@ -121,6 +121,10 @@ export default function QuestionsPage() {
     try {
       const response = await getResult(sessionId);
       setFinalResult(response.data);
+
+      // Store result in localStorage for PDF generation
+      localStorage.setItem(`quiz_result_${sessionId}`, JSON.stringify(response.data));
+
       setViewState('result');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao obter resultado');
@@ -132,61 +136,127 @@ export default function QuestionsPage() {
   const handleDownloadPDF = async () => {
     if (!finalResult) return;
 
+    // Get stored result from localStorage
+    const storedResult = localStorage.getItem(`quiz_result_${sessionId}`);
+    const quizData = storedResult ? JSON.parse(storedResult) : finalResult;
+
     const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    let y = margin;
+    const leftMargin = 15;
+    const rightMargin = 15;
+    const bottomMargin = 20;
+    const maxWidth = pageWidth - leftMargin - rightMargin;
+    let y = 20;
+
+    // Manual text wrapping function with proper width calculation
+    const wrapText = (text: string, maxWidthMM: number, fontSize: number, fontStyle: 'normal' | 'bold' | 'italic' = 'normal'): string[] => {
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', fontStyle);
+
+      // Use splitTextToSize from jsPDF which handles word wrapping correctly
+      const lines = doc.splitTextToSize(text, maxWidthMM);
+
+      // Return as array of strings
+      return Array.isArray(lines) ? lines : [lines];
+    };
+
+    // Check if need new page
+    const checkAddPage = (spaceNeeded: number) => {
+      if (y + spaceNeeded > pageHeight - bottomMargin) {
+        doc.addPage();
+        y = 20;
+        return true;
+      }
+      return false;
+    };
 
     // Title
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setTextColor(189, 24, 180);
     doc.text('Gabarito do Quiz', pageWidth / 2, y, { align: 'center' });
-    y += 15;
+    y += 12;
 
     // Topic and Score
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Tema: ${topic}`, margin, y);
-    y += 10;
-    doc.text(`Pontuação: ${finalResult.score}/${finalResult.totalQuestions}`, margin, y);
-    y += 15;
+    doc.text(`Tema: ${topic}`, leftMargin, y);
+    y += 7;
+    doc.text(`Pontuacao: ${finalResult.score}/${finalResult.totalQuestions}`, leftMargin, y);
+    y += 12;
 
-    // Questions
-    finalResult.questions.forEach((q, index) => {
-      if (y > pageHeight - 60) {
-        doc.addPage();
-        y = margin;
-      }
+    // Process each question
+    quizData.questions.forEach((q: QuestionResult, qIndex: number) => {
+      checkAddPage(20);
 
-      doc.setFontSize(12);
+      // Question number and text
+      const questionText = `${qIndex + 1}. ${q.questionText}`;
+      const questionLines = wrapText(questionText, maxWidth, 10, 'bold');
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text(`${index + 1}. ${q.questionText}`, margin, y, { maxWidth: pageWidth - 2 * margin });
-      y += 10;
 
+      questionLines.forEach((line: string) => {
+        checkAddPage(6);
+        doc.text(line, leftMargin, y);
+        y += 5;
+      });
+
+      y += 3;
+
+      // Process options
       q.options.forEach((opt) => {
         const isCorrect = opt.optionNumber === q.correctOption;
         const isSelected = opt.optionNumber === q.selectedOption;
 
+        const optionText = `${opt.optionNumber}. ${opt.optionText}`;
+        const optionLines = wrapText(optionText, maxWidth - 10, 10, 'normal');
+
         if (isCorrect) {
-          doc.setTextColor(0, 128, 0);
-          doc.text(`   ✓ ${opt.optionNumber}. ${opt.optionText}`, margin, y, { maxWidth: pageWidth - 2 * margin });
+          doc.setTextColor(0, 150, 0); // Green
         } else if (isSelected) {
-          doc.setTextColor(255, 0, 0);
-          doc.text(`   ✗ ${opt.optionNumber}. ${opt.optionText}`, margin, y, { maxWidth: pageWidth - 2 * margin });
+          doc.setTextColor(220, 0, 0); // Red
         } else {
-          doc.setTextColor(100, 100, 100);
-          doc.text(`     ${opt.optionNumber}. ${opt.optionText}`, margin, y, { maxWidth: pageWidth - 2 * margin });
+          doc.setTextColor(100, 100, 100); // Gray
         }
-        y += 7;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+
+        optionLines.forEach((line: string) => {
+          checkAddPage(6);
+          doc.text(line, leftMargin + 5, y);
+          y += 5;
+        });
       });
 
-      y += 5;
-      doc.setTextColor(0, 0, 0);
+      y += 3;
+
+      // Explanation
+      const explanationText = `Explicacao: ${q.explanation}`;
+      const explanationLines = wrapText(explanationText, maxWidth - 10, 10, 'italic');
+
       doc.setFontSize(10);
-      doc.text(`Explicação: ${q.explanation}`, margin, y, { maxWidth: pageWidth - 2 * margin });
-      y += 15;
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 100, 100);
+
+      explanationLines.forEach((line: string) => {
+        checkAddPage(6);
+        doc.text(line, leftMargin + 5, y);
+        y += 5;
+      });
+
+      y += 6;
+
+      // Separator line
+      if (qIndex < quizData.questions.length - 1) {
+        checkAddPage(3);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(leftMargin, y, pageWidth - rightMargin, y);
+        y += 6;
+      }
     });
 
     doc.save(`gabarito-${topic.replace(/\s+/g, '-').toLowerCase()}.pdf`);
@@ -224,27 +294,27 @@ export default function QuestionsPage() {
         />
       </div>
 
-      <div className="relative z-10 flex">
+      <div className="relative z-10">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-        <div className="flex-1">
+        <div className="ml-72">
           <Suspense fallback={<div className="h-20" />}>
             <Navbar isDark={isDark} toggleTheme={toggleTheme} />
           </Suspense>
 
           {/* Main Content */}
-          <div className="flex items-center justify-center min-h-screen px-8 py-24">
-            <div className="w-full max-w-4xl">
+          <div className="min-h-screen px-8 py-24">
+            <div className="w-full max-w-7xl mx-auto">
               {/* INPUT VIEW */}
               {viewState === 'input' && (
                 <>
-                  {/* Header com estilo Gemini */}
+                  {/* Header */}
                   <div className="text-center mb-12">
                     <h1 className="text-6xl font-light mb-4 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                       Olá, {user?.name || 'Estudante'}
                     </h1>
                   </div>
 
-                  {/* Input principal estilo Gemini */}
+                  {/* Input principal */}
                   <div className="relative">
                     <div
                       className="rounded-[32px] p-1 transition-all duration-300"
@@ -262,7 +332,7 @@ export default function QuestionsPage() {
                             type="text"
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
-                            placeholder="Peça ao Gemini"
+                            placeholder="Digite o tema do quiz..."
                             className="flex-1 bg-transparent text-white placeholder-white/50 text-lg outline-none"
                             disabled={loading}
                           />
@@ -589,82 +659,82 @@ export default function QuestionsPage() {
                   </div>
 
                   {/* Gabarito */}
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-light text-white mb-4">Gabarito Completo</h3>
+                  <div>
+                    <h3 className="text-2xl font-light text-white mb-6">Gabarito Completo</h3>
 
-                    {finalResult.questions.map((question, index) => (
-                      <div
-                        key={index}
-                        className="rounded-2xl p-6"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          backdropFilter: 'blur(10px)',
-                          WebkitBackdropFilter: 'blur(10px)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                        }}
-                      >
-                        <div className="flex items-start gap-3 mb-4">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{
-                              background: question.isCorrect
-                                ? 'rgba(34, 197, 94, 0.2)'
-                                : 'rgba(239, 68, 68, 0.2)',
-                            }}
-                          >
-                            {question.isCorrect ? (
-                              <Check className="w-5 h-5 text-green-400" />
-                            ) : (
-                              <X className="w-5 h-5 text-red-400" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-lg text-white mb-4">
-                              {index + 1}. {question.questionText}
-                            </h4>
-
-                            <div className="space-y-2 mb-4">
-                              {question.options.map((option) => {
-                                const isCorrect = option.optionNumber === question.correctOption;
-                                const isSelected = option.optionNumber === question.selectedOption;
-
-                                return (
-                                  <div
-                                    key={option.optionNumber}
-                                    className="flex items-center gap-3 px-4 py-2 rounded-lg"
-                                    style={{
-                                      background: isCorrect
-                                        ? 'rgba(34, 197, 94, 0.1)'
-                                        : isSelected
-                                        ? 'rgba(239, 68, 68, 0.1)'
-                                        : 'transparent',
-                                    }}
-                                  >
-                                    {isCorrect && <Check className="w-4 h-4 text-green-400" />}
-                                    {isSelected && !isCorrect && <X className="w-4 h-4 text-red-400" />}
-                                    <span className={`text-sm ${isCorrect ? 'text-green-400' : isSelected ? 'text-red-400' : 'text-white/60'}`}>
-                                      {option.optionNumber}. {option.optionText}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {finalResult.questions.map((question, index) => (
+                        <div
+                          key={index}
+                          className="rounded-2xl p-6 flex flex-col"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            backdropFilter: 'blur(10px)',
+                            WebkitBackdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                          }}
+                        >
+                          <div className="flex items-start gap-3 mb-5">
                             <div
-                              className="p-4 rounded-lg"
+                              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                               style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                background: question.isCorrect
+                                  ? 'rgba(34, 197, 94, 0.2)'
+                                  : 'rgba(239, 68, 68, 0.2)',
                               }}
                             >
-                              <p className="text-white/60 text-sm">
-                                <span className="text-white/80 font-medium">Explicação:</span> {question.explanation}
-                              </p>
+                              {question.isCorrect ? (
+                                <Check className="w-5 h-5 text-green-400" />
+                              ) : (
+                                <X className="w-5 h-5 text-red-400" />
+                              )}
                             </div>
+                            <h4 className="text-base font-medium text-white flex-1 leading-snug">
+                              {index + 1}. {question.questionText}
+                            </h4>
+                          </div>
+
+                          <div className="space-y-2.5 mb-5 ml-11 flex-grow">
+                            {question.options.map((option) => {
+                              const isCorrect = option.optionNumber === question.correctOption;
+                              const isSelected = option.optionNumber === question.selectedOption;
+
+                              return (
+                                <div
+                                  key={option.optionNumber}
+                                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg"
+                                  style={{
+                                    background: isCorrect
+                                      ? 'rgba(34, 197, 94, 0.1)'
+                                      : isSelected
+                                      ? 'rgba(239, 68, 68, 0.1)'
+                                      : 'transparent',
+                                  }}
+                                >
+                                  {isCorrect && <Check className="w-4 h-4 text-green-400 flex-shrink-0" />}
+                                  {isSelected && !isCorrect && <X className="w-4 h-4 text-red-400 flex-shrink-0" />}
+                                  <span className={`text-sm leading-relaxed ${isCorrect ? 'text-green-400' : isSelected ? 'text-red-400' : 'text-white/60'}`}>
+                                    {option.optionNumber}. {option.optionText}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div
+                            className="p-4 rounded-lg ml-11 mt-auto"
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                            }}
+                          >
+                            <p className="text-white/60 text-sm leading-relaxed">
+                              <span className="text-white/80 font-medium">Explicação:</span> {question.explanation}
+                            </p>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
