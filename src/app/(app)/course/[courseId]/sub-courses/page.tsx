@@ -107,8 +107,11 @@ export default function CoursePage() {
     setIsDark(!isDark);
   };
 
+  const defaultThumbnail = "/defaultwithoutcourses.png";
+
   const filteredSubCourses = useMemo(() => {
     if (!searchInput.trim()) return subCourses;
+
 
     const query = searchInput.toLowerCase().trim();
     return subCourses.filter(subCourse =>
@@ -140,12 +143,12 @@ export default function CoursePage() {
         style={{
           backgroundImage: isDark
             ? `
-        radial-gradient(circle at 25% 25%, rgba(179, 226, 64, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 75% 75%, rgba(179, 226, 64, 0.04) 0%, transparent 50%)
+        radial-gradient(circle at 25% 25%, rgba(189, 24, 180, 0.08) 0%, transparent 55%),
+        radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.05) 0%, transparent 55%)
       `
             : `
-        radial-gradient(circle at 25% 25%, rgba(179, 226, 64, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 75% 75%, rgba(179, 226, 64, 0.05) 0%, transparent 50%)
+        radial-gradient(circle at 25% 25%, rgba(189, 24, 180, 0.1) 0%, transparent 55%),
+        radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.06) 0%, transparent 55%)
       `
         }}
       />
@@ -155,8 +158,8 @@ export default function CoursePage() {
         aria-hidden="true"
         style={{
           backgroundImage: `
-            radial-gradient(circle at 15% 10%, rgba(201, 254, 2, 0.06), transparent 20%),
-            radial-gradient(circle at 85% 90%, rgba(201, 254, 2, 0.04), transparent 20%)
+            radial-gradient(circle at 15% 10%, rgba(197, 50, 226, 0.05), transparent 20%),
+            radial-gradient(circle at 85% 90%, rgba(129, 140, 248, 0.04), transparent 20%)
           `
         }}
       />
@@ -222,7 +225,7 @@ export default function CoursePage() {
                 </div>
                 <Button
                   onClick={() => {}}
-                  className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-6 py-[1.4rem] rounded-[1rem] font-medium"
+                  className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black px-6 py-[1.4rem] rounded-[1rem] font-medium"
                 >
                   Buscar
                 </Button>
@@ -242,22 +245,15 @@ export default function CoursePage() {
                     className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 cursor-pointer hover:bg-white/10 transition-all duration-300 group"
                   >
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center bg-blue-500/20">
-                        {subCourse.channelThumbnailUrl ? (
-                          <img
-                            src={subCourse.channelThumbnailUrl}
-                            alt={`Canal de ${subCourse.name}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-full h-full flex items-center justify-center text-2xl ${subCourse.channelThumbnailUrl ? 'hidden' : ''}`}>
-                          📚
-                        </div>
+                      <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center bg-white/5 ring-1 ring-white/10">
+                        <img
+                          src={subCourse.channelThumbnailUrl?.trim() ? subCourse.channelThumbnailUrl : defaultThumbnail}
+                          alt={`Miniatura de ${subCourse.name}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                        />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-white text-lg font-semibold group-hover:text-[#c532e2] transition-colors">

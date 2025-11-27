@@ -45,8 +45,17 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.0.101'],
   // Configurar variáveis de ambiente para desenvolvimento
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://prisma-backend-production-4c22.up.railway.app',
-    API_URL: process.env.API_URL || 'https://prisma-backend-production-4c22.up.railway.app',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
+    API_URL: process.env.API_URL || '/api',
+  },
+  async rewrites() {
+    // Proxy reverso para esconder o domínio do backend no Railway
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://prisma-backend-production-4c22.up.railway.app/:path*',
+      },
+    ];
   },
   webpack: (config, { isServer }) => {
     // Resolver problema do canvas no build

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { CACHE_TAGS } from '@/lib/cache/invalidate-tags';
+import { env } from '@/lib/env';
 
 // Tipos baseados na API real
 export interface ApiCourse {
@@ -33,6 +34,8 @@ export interface Course {
   thumbnailUrl: string;
   courseId: string;
   category: string;
+  courseType?: 'CURSO' | 'FORMAÇÃO' | 'PRODUTOR';
+  isSponsored?: boolean;
 }
 
 // Cache global para todos os cursos (evita múltiplas requisições)
@@ -61,7 +64,7 @@ const fetchCoursesFromAPI = async (): Promise<ApiCourse[]> => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch('https://prisma-backend-production-4c22.up.railway.app/courses', {
+    const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/courses`, {
       method: 'GET',
       headers,
     });

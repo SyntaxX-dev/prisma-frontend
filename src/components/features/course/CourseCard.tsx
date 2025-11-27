@@ -19,7 +19,7 @@ interface CourseCardProps {
   duration?: string;
   year?: string;
   level?: 'Iniciante' | 'Intermediário' | 'Avançado';
-  courseType?: 'CURSO' | 'FORMAÇÃO';
+  courseType?: 'CURSO' | 'FORMAÇÃO' | 'PRODUTOR';
   isSponsored?: boolean;
 }
 

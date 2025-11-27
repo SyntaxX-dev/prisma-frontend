@@ -1,4 +1,4 @@
 export const env = {
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://prisma-backend-production-4c22.up.railway.app',
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
   NODE_ENV: process.env.NODE_ENV || 'development',
 }; 

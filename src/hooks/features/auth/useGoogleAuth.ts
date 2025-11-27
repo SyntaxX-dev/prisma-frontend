@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './useAuth';
 import { getProfile } from '@/api/auth/get-profile';
+import { env } from '@/lib/env';
 
 export function useGoogleAuth() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export function useGoogleAuth() {
 
   const handleGoogleLogin = () => {
     hasProcessed.current = false;
-    window.location.href = 'https://prisma-backend-production-4c22.up.railway.app/auth/google';
+    window.location.href = `${env.NEXT_PUBLIC_API_URL}/auth/google`;
   };
 
   return {

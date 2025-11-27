@@ -15,7 +15,7 @@ interface Course {
   thumbnailUrl: string;
   courseId?: string;
   category?: string;
-  courseType?: 'CURSO' | 'FORMAÇÃO';
+  courseType?: 'CURSO' | 'FORMAÇÃO' | 'PRODUTOR';
   description?: string;
   isSponsored?: boolean;
 }
