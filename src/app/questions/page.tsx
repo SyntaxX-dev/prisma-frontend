@@ -302,7 +302,7 @@ export default function QuestionsPage() {
           </Suspense>
 
           {/* Main Content */}
-          <div className="min-h-screen px-8 py-24">
+          <div className="min-h-screen px-8 py-24 flex items-center justify-center">
             <div className="w-full max-w-7xl mx-auto">
               {/* INPUT VIEW */}
               {viewState === 'input' && (
@@ -315,7 +315,7 @@ export default function QuestionsPage() {
                   </div>
 
                   {/* Input principal */}
-                  <div className="relative">
+                  <div className="relative max-w-4xl mx-auto">
                     <div
                       className="rounded-[32px] p-1 transition-all duration-300"
                       style={{
@@ -382,7 +382,7 @@ export default function QuestionsPage() {
                   </div>
 
                   {/* Sugestões */}
-                  <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
                     {[
                       'Questões sobre Física - Cinemática',
                       'História do Brasil - Era Vargas',
@@ -436,7 +436,7 @@ export default function QuestionsPage() {
 
               {/* QUIZ VIEW */}
               {viewState === 'quiz' && currentQuestion && (
-                <div className="space-y-8">
+                <div className="space-y-8 max-w-4xl mx-auto">
                   {/* Progress */}
                   <div className="text-center">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
@@ -564,7 +564,7 @@ export default function QuestionsPage() {
                     )}
 
                     {/* Action Button */}
-                    <div className="mt-8 flex justify-end">
+                    <div className="mt-8 flex justify-center">
                       {!answerFeedback ? (
                         <button
                           onClick={handleSubmitAnswer}
@@ -602,10 +602,10 @@ export default function QuestionsPage() {
 
               {/* RESULT VIEW */}
               {viewState === 'result' && finalResult && (
-                <div className="space-y-8">
+                <div className="space-y-8 max-w-7xl mx-auto">
                   {/* Score Card */}
                   <div
-                    className="rounded-3xl p-8 text-center"
+                    className="rounded-3xl p-8 text-center max-w-2xl mx-auto"
                     style={{
                       background: 'rgba(255, 255, 255, 0.05)',
                       backdropFilter: 'blur(10px)',
