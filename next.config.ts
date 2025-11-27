@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+const RAILWAY_BACKEND_URL =
+  process.env.RAILWAY_BACKEND_URL || process.env.BACKEND_URL;
+
 const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -50,10 +53,16 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     // Proxy reverso para esconder o domínio do backend no Railway
+    if (!RAILWAY_BACKEND_URL) {
+      throw new Error(
+        'BACKEND_URL não definido.'
+      );
+    }
+
     return [
       {
         source: '/api/:path*',
-        destination: 'https://prisma-backend-production-4c22.up.railway.app/:path*',
+        destination: `${RAILWAY_BACKEND_URL}/:path*`,
       },
     ];
   },
