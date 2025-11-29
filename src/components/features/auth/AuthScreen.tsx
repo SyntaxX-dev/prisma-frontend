@@ -49,24 +49,30 @@ function AuthScreenContent() {
 
       // A API retorna accessToken, não token
       const token = (response as any).accessToken || response.token;
-      
+
       if (!token) {
         throw new Error('Token não recebido da API');
       }
 
-      // Salvar o token no localStorage ANTES de chamar getProfile
+      // Salvar o token temporariamente no localStorage ANTES de chamar getProfile
       // porque o httpClient precisa do token para fazer a requisição
       localStorage.setItem('auth_token', token);
 
       // Obter o perfil do usuário (agora com o token salvo)
       const userProfile = await getProfile();
 
-      // Fazer login usando o hook useAuth
+      // Fazer login usando o hook useAuth (isso vai salvar token nos cookies também)
       login(token, userProfile, false);
+
+      // Pequeno delay para garantir que os cookies foram setados
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Redirecionar para a página original ou dashboard
       const redirectTo = searchParams.get('redirect_to') || '/dashboard';
-      router.push(redirectTo);
+      console.log('[AuthScreen] Redirecionando para:', redirectTo);
+
+      // Usar window.location.href para garantir redirecionamento completo
+      window.location.href = redirectTo;
     } catch (error: any) {
       let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';
       
@@ -108,25 +114,29 @@ function AuthScreenContent() {
 
       // A API retorna accessToken, não token
       const token = (response as any).accessToken || response.token;
-      
+
       if (!token) {
         throw new Error('Token não recebido da API');
       }
 
-      // Salvar o token no localStorage ANTES de chamar getProfile
+      // Salvar o token temporariamente no localStorage ANTES de chamar getProfile
       // porque o httpClient precisa do token para fazer a requisição
       localStorage.setItem('auth_token', token);
 
       // Obter o perfil do usuário (agora com o token salvo)
       const userProfile = await getProfile();
 
-      // Fazer login usando o hook useAuth
+      // Fazer login usando o hook useAuth (isso vai salvar token nos cookies também)
       login(token, userProfile, false);
 
       showSuccess('Conta criada com sucesso!');
-      
+
+      // Pequeno delay para garantir que os cookies foram setados
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Redirecionar para o dashboard
-      router.push('/dashboard');
+      console.log('[AuthScreen] Registro bem-sucedido, redirecionando para dashboard');
+      window.location.href = '/dashboard';
     } catch (error: any) {
       let errorMessage = 'Erro ao criar conta. Tente novamente.';
       
