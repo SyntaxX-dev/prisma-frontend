@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginUser } from '@/api/auth/login';
@@ -10,8 +10,9 @@ import { getProfile } from '@/api/auth/get-profile';
 import { useAuth } from '@/hooks/features/auth';
 import { useNotifications } from '@/hooks/shared';
 
-export function AuthScreen() {
+function AuthScreenContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const { showError, showSuccess } = useNotifications();
   const [isLogin, setIsLogin] = useState(true);
@@ -63,8 +64,9 @@ export function AuthScreen() {
       // Fazer login usando o hook useAuth
       login(token, userProfile, false);
 
-      // Redirecionar para o dashboard
-      router.push('/dashboard');
+      // Redirecionar para a página original ou dashboard
+      const redirectTo = searchParams.get('redirect_to') || '/dashboard';
+      router.push(redirectTo);
     } catch (error: any) {
       let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';
       
@@ -413,5 +415,17 @@ export function AuthScreen() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function AuthScreen() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#1a1b1e] flex items-center justify-center">
+        <div className="text-white">Carregando...</div>
+      </div>
+    }>
+      <AuthScreenContent />
+    </Suspense>
   );
 }
