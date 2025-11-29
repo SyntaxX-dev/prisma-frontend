@@ -64,14 +64,16 @@ function AuthScreenContent() {
       // Fazer login usando o hook useAuth (isso vai salvar token nos cookies também)
       login(token, userProfile, false);
 
-      // Pequeno delay para garantir que os cookies foram setados
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Delay para garantir que os cookies foram setados antes do redirecionamento
+      // O cookie precisa estar disponível para o middleware verificar
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Redirecionar para a página original ou dashboard
       const redirectTo = searchParams.get('redirect_to') || '/dashboard';
       console.log('[AuthScreen] Redirecionando para:', redirectTo);
 
       // Usar window.location.href para garantir redirecionamento completo
+      // e que o middleware possa verificar o cookie
       window.location.href = redirectTo;
     } catch (error: any) {
       let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';

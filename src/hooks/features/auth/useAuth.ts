@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AuthState, getAuthState, clearAuthState } from '@/lib/auth';
+import { AuthState, getAuthState, clearAuthState, setAuthState as setAuthCookie } from '@/lib/auth';
 import { UserProfile } from '@/types/auth-api';
 import { getProfile } from '@/api/auth/get-profile';
 import { useNotifications } from '../../shared';
@@ -50,8 +50,10 @@ export function useAuth() {
   const login = (token: string, user: UserProfile, rememberMe: boolean = false) => {
     setAuthState({ isAuthenticated: true, user, token });
     
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('user_profile', JSON.stringify(user));
+    // Usar a função setAuthCookie do lib/auth.ts que também seta o cookie
+    // necessário para o middleware verificar a autenticação
+    setAuthCookie(token, user);
+    
     localStorage.setItem('remember_me', rememberMe.toString());
     
     if (rememberMe) {
