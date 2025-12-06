@@ -4,10 +4,6 @@ const RAILWAY_BACKEND_URL =
   process.env.RAILWAY_BACKEND_URL || process.env.BACKEND_URL;
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Configuração de imagens para permitir domínios externos
   images: {
     remotePatterns: [
@@ -85,6 +81,7 @@ const nextConfig: NextConfig = {
 
     return config;
   },
+  turbopack: {},
 };
 
 export default nextConfig;
