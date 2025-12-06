@@ -35,6 +35,9 @@ export function clearAuthState(): void {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_profile');
     localStorage.removeItem('reset_email');
+
+    // Remover também o cookie
+    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
   }
 }
 
@@ -42,6 +45,12 @@ export function setAuthState(token: string, user: UserProfile): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem('auth_token', token);
     localStorage.setItem('user_profile', JSON.stringify(user));
+
+    // Salvar também nos cookies para o middleware poder acessar
+    // Expira em 7 dias
+    const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 dias em milissegundos
+    const expiresDate = new Date(Date.now() + expiresIn);
+    document.cookie = `auth_token=${token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`;
   }
 }
 

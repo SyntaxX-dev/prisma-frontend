@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginUser } from '@/api/auth/login';
@@ -10,8 +10,9 @@ import { getProfile } from '@/api/auth/get-profile';
 import { useAuth } from '@/hooks/features/auth';
 import { useNotifications } from '@/hooks/shared';
 
-export function AuthScreen() {
+function AuthScreenContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const { showError, showSuccess } = useNotifications();
   const [isLogin, setIsLogin] = useState(true);
@@ -48,23 +49,32 @@ export function AuthScreen() {
 
       // A API retorna accessToken, não token
       const token = (response as any).accessToken || response.token;
-      
+
       if (!token) {
         throw new Error('Token não recebido da API');
       }
 
-      // Salvar o token no localStorage ANTES de chamar getProfile
+      // Salvar o token temporariamente no localStorage ANTES de chamar getProfile
       // porque o httpClient precisa do token para fazer a requisição
       localStorage.setItem('auth_token', token);
 
       // Obter o perfil do usuário (agora com o token salvo)
       const userProfile = await getProfile();
 
-      // Fazer login usando o hook useAuth
+      // Fazer login usando o hook useAuth (isso vai salvar token nos cookies também)
       login(token, userProfile, false);
 
-      // Redirecionar para o dashboard
-      router.push('/dashboard');
+      // Delay para garantir que os cookies foram setados antes do redirecionamento
+      // O cookie precisa estar disponível para o middleware verificar
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Redirecionar para a página original ou dashboard
+      const redirectTo = searchParams.get('redirect_to') || '/dashboard';
+      console.log('[AuthScreen] Redirecionando para:', redirectTo);
+
+      // Usar window.location.href para garantir redirecionamento completo
+      // e que o middleware possa verificar o cookie
+      window.location.href = redirectTo;
     } catch (error: any) {
       let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';
       
@@ -106,25 +116,29 @@ export function AuthScreen() {
 
       // A API retorna accessToken, não token
       const token = (response as any).accessToken || response.token;
-      
+
       if (!token) {
         throw new Error('Token não recebido da API');
       }
 
-      // Salvar o token no localStorage ANTES de chamar getProfile
+      // Salvar o token temporariamente no localStorage ANTES de chamar getProfile
       // porque o httpClient precisa do token para fazer a requisição
       localStorage.setItem('auth_token', token);
 
       // Obter o perfil do usuário (agora com o token salvo)
       const userProfile = await getProfile();
 
-      // Fazer login usando o hook useAuth
+      // Fazer login usando o hook useAuth (isso vai salvar token nos cookies também)
       login(token, userProfile, false);
 
       showSuccess('Conta criada com sucesso!');
-      
+
+      // Pequeno delay para garantir que os cookies foram setados
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Redirecionar para o dashboard
-      router.push('/dashboard');
+      console.log('[AuthScreen] Registro bem-sucedido, redirecionando para dashboard');
+      window.location.href = '/dashboard';
     } catch (error: any) {
       let errorMessage = 'Erro ao criar conta. Tente novamente.';
       
@@ -413,5 +427,17 @@ export function AuthScreen() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function AuthScreen() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#1a1b1e] flex items-center justify-center">
+        <div className="text-white">Carregando...</div>
+      </div>
+    }>
+      <AuthScreenContent />
+    </Suspense>
   );
 }
