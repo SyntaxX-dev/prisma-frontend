@@ -148,7 +148,7 @@ export function Navbar({}: NavbarProps) {
         willChange: 'transform'
       }}
     >
-      <div className="flex items-center justify-between gap-2 md:gap-4 relative w-full">
+      <div className="flex items-center gap-2 md:justify-between relative w-full">
 
         {/* Desktop Navigation */}
         <div className="hidden md:block bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
@@ -168,7 +168,7 @@ export function Navbar({}: NavbarProps) {
           </nav>
         </div>
 
-        <div className="bg-white/15 backdrop-blur-md rounded-full px-3 md:px-4 py-2 md:py-3 border border-white/20 ml-auto">
+        <div className="bg-white/15 backdrop-blur-md rounded-full px-3 md:px-4 py-2 md:py-3 border border-white/20 mx-auto md:mx-0">
           <div className="flex items-center gap-2 md:gap-3">
             <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-48 md:w-64' : 'w-8'
               }`}>
@@ -324,28 +324,26 @@ export function Navbar({}: NavbarProps) {
           </div>
         </div>
 
-        {/* Desktop Profile Dropdown */}
+        {/* Profile Dropdown - Desktop and Mobile */}
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <div className="hidden md:flex bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage
-                    src={user?.profileImage || "/api/placeholder/32/32"}
-                    className="object-cover"
-                    alt="Foto do perfil"
-                  />
-                  <AvatarFallback className="bg-[#bd18b4] text-black">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-white">
-                  <div className="text-sm font-medium">
-                    {user?.name || 'Usuário'}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {getEmailValue(user) || 'usuario@email.com'}
-                  </div>
+            <div className="bg-white/15 backdrop-blur-md rounded-full px-2 md:px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors flex items-center gap-2 md:gap-3 absolute right-2 md:relative md:right-0">
+              <Avatar className="w-8 h-8">
+                <AvatarImage
+                  src={user?.profileImage || "/api/placeholder/32/32"}
+                  className="object-cover"
+                  alt="Foto do perfil"
+                />
+                <AvatarFallback className="bg-[#bd18b4] text-black">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-white hidden md:block">
+                <div className="text-sm font-medium">
+                  {user?.name || 'Usuário'}
+                </div>
+                <div className="text-xs text-white/60">
+                  {getEmailValue(user) || 'usuario@email.com'}
                 </div>
               </div>
             </div>
