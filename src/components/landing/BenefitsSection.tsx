@@ -37,7 +37,7 @@ export function BenefitsSection() {
       {/* Aurora Background */}
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
         <Aurora 
-          colorStops={['#ef4444', '#fb923c', '#a855f7']}
+          colorStops={['#8b5cf6', '#3b82f6', '#7c3aed']}
           amplitude={1.0}
           blend={0.5}
         />

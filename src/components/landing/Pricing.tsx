@@ -20,7 +20,7 @@ const plans = [
       "Suporte 24/7",
     ],
     cta: "Assinar Start",
-    trial: "7 dias grátis",
+    trial: "",
   },
   {
     name: "Pro",
@@ -38,7 +38,7 @@ const plans = [
       "Acesso as trilhas de aprendizado e PDF's",
     ],
     cta: "Assinar PRO",
-    trial: "Plano gratuito não disponível",
+    trial: "",
   },
   {
     name: "Ultra",
@@ -57,7 +57,7 @@ const plans = [
       "Acesso a IA de resumos para cada curso"
     ],
     cta: "Assinar Ultra",
-    trial: "Plano gratuito não disponível",
+    trial: "",
   },
 ];
 
@@ -116,8 +116,8 @@ export function Pricing() {
               <div className={`
                 absolute inset-0 rounded-3xl blur-xl opacity-60
                 ${plan.popular 
-                  ? 'bg-gradient-to-br from-[#B4FF39]/20 via-[#B4FF39]/10 to-transparent' 
-                  : 'bg-gradient-to-br from-white/5 via-white/2 to-transparent'
+                  ? 'bg-gradient-to-br from-[#8b5cf6]/25 via-[#a855f7]/15 to-transparent' 
+                  : 'bg-gradient-to-br from-[#8b5cf6]/15 via-[#a855f7]/8 to-transparent'
                 }
               `} />
 
@@ -127,13 +127,13 @@ export function Pricing() {
                   relative rounded-3xl p-8 h-full flex flex-col cursor-pointer
                   backdrop-blur-2xl
                   ${plan.popular 
-                    ? 'bg-gradient-to-br from-white/[0.08] via-[#B4FF39]/[0.05] to-white/[0.03] border-2 border-[#B4FF39]/60 shadow-[0_0_40px_rgba(180,255,57,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]' 
-                    : 'bg-gradient-to-br from-white/[0.05] via-white/[0.02] to-white/[0.01] border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                    ? 'bg-gradient-to-br from-white/[0.08] via-[#8b5cf6]/[0.06] to-white/[0.03] border-2 border-[#8b5cf6]/70 shadow-[0_0_40px_rgba(139,92,246,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)]' 
+                    : 'bg-gradient-to-br from-[#8b5cf6]/[0.06] via-[#a855f7]/[0.03] to-white/[0.01] border border-[#8b5cf6]/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                   }
                   transition-all duration-300
-                  ${plan.popular ? 'hover:shadow-[0_0_60px_rgba(180,255,57,0.35),inset_0_1px_1px_rgba(255,255,255,0.15)]' : 'hover:border-white/20 hover:bg-gradient-to-br hover:from-white/[0.07] hover:via-white/[0.03] hover:to-white/[0.02]'}
+                  ${plan.popular ? 'hover:shadow-[0_0_60px_rgba(139,92,246,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)]' : 'hover:border-[#8b5cf6]/40 hover:bg-gradient-to-br hover:from-[#8b5cf6]/[0.08] hover:via-[#a855f7]/[0.04] hover:to-white/[0.02]'}
                   before:absolute before:inset-0 before:rounded-3xl before:p-[1px] 
-                  ${plan.popular ? 'before:bg-gradient-to-br before:from-[#B4FF39]/30 before:via-transparent before:to-[#B4FF39]/10' : 'before:bg-gradient-to-br before:from-white/5 before:via-transparent before:to-white/5'}
+                  ${plan.popular ? 'before:bg-gradient-to-br before:from-[#8b5cf6]/35 before:via-transparent before:to-[#8b5cf6]/12' : 'before:bg-gradient-to-br before:from-[#8b5cf6]/12 before:via-transparent before:to-[#a855f7]/12'}
                   before:-z-10
                 `}
               >
@@ -158,7 +158,7 @@ export function Pricing() {
                 {/* Badge */}
                 {plan.popular && (
                   <div 
-                    className="absolute -top-3 right-6 bg-[#B4FF39] text-black px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg shadow-[#B4FF39]/50 backdrop-blur-sm"
+                    className="absolute -top-3 right-6 bg-[#8b5cf6] text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg shadow-[#8b5cf6]/60 backdrop-blur-sm"
                     style={{ fontFamily: 'Metropolis, sans-serif' }}
                   >
                     Mais Popular
@@ -193,7 +193,7 @@ export function Pricing() {
                       className="flex items-start gap-3"
                     >
                       <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="w-4 h-4 text-[#B4FF39]" strokeWidth={3} />
+                        <Check className="w-4 h-4 text-[#8b5cf6]" strokeWidth={3} />
                       </div>
                       <span 
                         className="text-gray-300 text-sm leading-relaxed"
@@ -245,7 +245,7 @@ export function Pricing() {
                         transition-all duration-300
                         ${plan.popular
                           ? "bg-white text-black hover:bg-gray-100 hover:scale-[1.02]"
-                          : "bg-[#B4FF39] text-black hover:bg-[#a3e830] hover:scale-[1.02]"
+                          : "bg-[#8b5cf6] text-white hover:bg-[#7c3aed] hover:scale-[1.02]"
                         }
                       `}
                       onClick={() => window.location.href = '/auth/register'}
@@ -262,13 +262,11 @@ export function Pricing() {
                 </div>
               </div>
 
-              {/* Subtle glow for popular card */}
-              {plan.popular && (
-                <>
-                  <div className="absolute inset-0 bg-[#B4FF39]/10 rounded-3xl blur-2xl -z-10 opacity-70" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#B4FF39]/5 to-transparent rounded-3xl -z-10" />
-                </>
-              )}
+              {/* Subtle glow for all cards */}
+              <>
+                <div className={`absolute inset-0 ${plan.popular ? 'bg-[#8b5cf6]/12' : 'bg-[#8b5cf6]/6'} rounded-3xl blur-2xl -z-10 opacity-70`} />
+                <div className={`absolute inset-0 bg-gradient-to-t ${plan.popular ? 'from-[#8b5cf6]/6' : 'from-[#a855f7]/4'} to-transparent rounded-3xl -z-10`} />
+              </>
             </motion.div>
           ))}
         </div>

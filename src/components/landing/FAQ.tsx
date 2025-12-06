@@ -47,7 +47,7 @@ export function FAQ() {
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0, transform: 'translateZ(0)' }}>
         <LightRays 
           raysOrigin="top-center"
-          raysColor="#B4FF39"
+          raysColor="#8b5cf6"
           raysSpeed={1.5}
           lightSpread={0.8}
           rayLength={1.2}
@@ -60,8 +60,8 @@ export function FAQ() {
       </div>
       
       {/* Background elements */}
-      <div className="absolute top-1/4 left-0 w-96 h-96 bg-[#B4FF39] opacity-5 blur-3xl rounded-full z-10" />
-      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-purple-500 opacity-5 blur-3xl rounded-full z-10" />
+      <div className="absolute top-1/4 left-0 w-96 h-96 bg-[#8b5cf6] opacity-5 blur-3xl rounded-full z-10" />
+      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[#a855f7] opacity-5 blur-3xl rounded-full z-10" />
 
       <div className="container mx-auto px-4 relative z-20">
         <motion.div
@@ -75,7 +75,7 @@ export function FAQ() {
             className="text-4xl md:text-6xl text-white mb-6"
             style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 700 }}
           >
-            Perguntas <span className="text-[#B4FF39]">Frequentes</span>
+            Perguntas <span className="text-[#8b5cf6]">Frequentes</span>
           </h2>
           <p 
             className="text-xl text-gray-400 max-w-3xl mx-auto"
@@ -97,7 +97,7 @@ export function FAQ() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full bg-gradient-to-br from-gray-900/80 to-gray-800/40 border border-gray-700 rounded-2xl p-6 hover:border-[#B4FF39] transition-all duration-300 text-left"
+                className="w-full bg-gradient-to-br from-gray-900/80 to-gray-800/40 border border-gray-700 rounded-2xl p-6 hover:border-[#8b5cf6] transition-all duration-300 text-left cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-4">
                   <h3 
@@ -106,11 +106,11 @@ export function FAQ() {
                   >
                     {faq.question}
                   </h3>
-                  <div className="flex-shrink-0 w-8 h-8 bg-[#B4FF39]/10 rounded-lg flex items-center justify-center">
+                  <div className="flex-shrink-0 w-8 h-8 bg-[#8b5cf6]/10 rounded-lg flex items-center justify-center">
                     {openIndex === index ? (
-                      <Minus className="w-5 h-5 text-[#B4FF39]" />
+                      <Minus className="w-5 h-5 text-[#8b5cf6]" />
                     ) : (
-                      <Plus className="w-5 h-5 text-[#B4FF39]" />
+                      <Plus className="w-5 h-5 text-[#8b5cf6]" />
                     )}
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export function FAQ() {
             Ainda tem dúvidas?
           </p>
           <button 
-            className="text-[#B4FF39] hover:underline text-lg"
+            className="text-[#8b5cf6] hover:underline text-lg cursor-pointer"
             style={{ fontFamily: 'Metropolis, sans-serif' }}
           >
             Entre em contato com nosso suporte →

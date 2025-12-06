@@ -33,21 +33,21 @@ export function Navbar() {
       <div className="container mx-auto px-4 mt-8">
         <div className={`transition-all duration-300 ${
           isScrolled
-            ? "bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mx-4"
-            : "bg-transparent"
+            ? "md:bg-white/10 md:backdrop-blur-md md:border md:border-white/20 md:rounded-2xl md:mx-4"
+            : ""
         }`}>
-        <div className="flex items-center justify-center md:justify-between h-20 px-8">
+        <div className="flex items-center justify-between h-20 px-8">
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link, index) => (
               <a
                 key={index}
                 href={link.href}
-                className="text-white hover:text-[#B4FF39] transition-all duration-300 hover:scale-110 relative group cursor-pointer"
+                className="text-white hover:text-white transition-all duration-300 hover:scale-110 relative group cursor-pointer"
                 style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
               >
                 {link.name}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#B4FF39] transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
               </a>
             ))}
           </div>
@@ -56,14 +56,14 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             <Button
               variant="ghost"
-              className="text-white hover:text-[#B4FF39] hover:bg-[#B4FF39]/10 hover:scale-105 transition-all duration-300 border border-transparent hover:border-[#B4FF39]/30 cursor-pointer"
+              className="text-white hover:text-white hover:bg-[#8b5cf6]/10 hover:scale-105 transition-all duration-300 border border-transparent hover:border-[#8b5cf6]/30 cursor-pointer"
               onClick={() => window.location.href = '/auth/login'}
               style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
             >
               Login
             </Button>
             <Button 
-              className="bg-[#B4FF39] text-black hover:bg-[#a3e830] hover:scale-105 hover:shadow-[0_0_20px_rgba(180,255,57,0.5)] transition-all duration-300 cursor-pointer"
+              className="bg-[#8b5cf6] text-white hover:bg-[#7c3aed] hover:scale-105 hover:shadow-[0_0_20px_rgba(139,92,246,0.5)] transition-all duration-300 cursor-pointer"
               onClick={() => window.location.href = '/auth/register'}
               style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
             >
@@ -73,7 +73,7 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-white hover:text-[#B4FF39] transition-colors cursor-pointer"
+            className="md:hidden text-white hover:text-[#8b5cf6] transition-colors cursor-pointer"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -86,14 +86,15 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden py-4 border-t border-gray-800"
+            className="md:hidden py-4 border-t border-gray-800 bg-black/80 backdrop-blur-md"
           >
-            <div className="flex flex-col space-y-4">
+            <div className="flex flex-col space-y-4 px-8">
               {navLinks.map((link, index) => (
                 <a
                   key={index}
                   href={link.href}
-                  className="text-white hover:text-[#B4FF39] transition-colors cursor-pointer"
+                  className="text-white hover:text-[#8b5cf6] transition-colors cursor-pointer"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.name}
                 </a>
@@ -101,15 +102,22 @@ export function Navbar() {
               <div className="flex flex-col space-y-2 pt-4">
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-[#B4FF39] hover:bg-[#B4FF39]/10 justify-start transition-all duration-300 border border-transparent hover:border-[#B4FF39]/30 cursor-pointer"
-                  onClick={() => window.location.href = '/auth/login'}
+                  className="text-white hover:text-white hover:bg-[#8b5cf6]/10 justify-start transition-all duration-300 border border-transparent hover:border-[#8b5cf6]/30 cursor-pointer"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    window.location.href = '/auth/login';
+                  }}
                   style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
                 >
                   Login
                 </Button>
                 <Button 
-                  className="bg-[#B4FF39] text-black hover:bg-[#a3e830] hover:shadow-[0_0_20px_rgba(180,255,57,0.5)] justify-start transition-all duration-300 cursor-pointer"
-                  onClick={() => window.location.href = '/auth/register'}
+                  variant="ghost"
+                  className="text-white hover:text-white hover:bg-[#8b5cf6]/10 justify-start transition-all duration-300 border border-transparent hover:border-[#8b5cf6]/30 cursor-pointer"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    window.location.href = '/auth/register';
+                  }}
                   style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
                 >
                   Cadastre-se

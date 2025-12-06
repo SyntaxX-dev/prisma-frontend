@@ -24,30 +24,30 @@ const integrations = [
   {
     icon: BookOpen,
     name: "Udemy",
-    description: "Em desenvolvimento",
+    description: "Em breve",
     color: "#A435F0",
-    badge: "Planejado",
+    badge: "Em breve",
   },
   {
     icon: GraduationCap,
     name: "Coursera",
-    description: "Em análise",
+    description: "Em breve",
     color: "#0056D2",
-    badge: "Planejado",
+    badge: "Em breve",
   },
   {
     icon: Library,
     name: "Khan Academy",
-    description: "Em avaliação",
+    description: "Em breve",
     color: "#14BF96",
-    badge: "Planejado",
+    badge: "Em breve",
   },
   {
     icon: Play,
     name: "TED",
-    description: "Em estudo",
+    description: "Em breve",
     color: "#E62B1E",
-    badge: "Planejado",
+    badge: "Em breve",
   },
 ];
 
@@ -131,7 +131,7 @@ export function IntegrationsSection() {
                 <div className="flex flex-col items-center justify-center text-center h-full space-y-3">
                   {/* Icon */}
                   <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center relative transition-all duration-300"
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center relative transition-all duration-300"
                     style={{
                       backgroundColor: integration.badge === "Integrado"
                         ? `${integration.color}15`
@@ -191,7 +191,7 @@ export function IntegrationsSection() {
             Tem alguma sugestão de integração?
           </p>
           <button 
-            className="text-[#B4FF39] hover:text-[#a3e830] transition-colors font-medium"
+            className="text-[#B4FF39] hover:text-[#a3e830] transition-colors font-medium cursor-pointer"
             style={{ fontFamily: 'Metropolis, sans-serif' }}
           >
             Fale conosco →

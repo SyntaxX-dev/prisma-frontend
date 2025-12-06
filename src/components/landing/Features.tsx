@@ -99,7 +99,7 @@ export function Features() {
                 className="h-full w-full p-6"
               >
                 <div className="flex flex-col h-full">
-                  <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-white/10 flex items-center justify-center mb-4 rounded-2xl">
                     <feature.icon className="w-6 h-6 text-white" />
                   </div>
 
