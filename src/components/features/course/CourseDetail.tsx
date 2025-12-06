@@ -112,6 +112,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [limitsInfo, setLimitsInfo] = useState<AllLimitsInfo | null>(null);
   const [generatedType, setGeneratedType] = useState<GenerationType | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [isMobileContentOpen, setIsMobileContentOpen] = useState(false);
   const fetchingRef = useRef(false);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -938,9 +939,9 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   }
 
   return (
-    <div className={`relative flex flex-1 h-[calc(100vh-4rem)] bg-transparent overflow-hidden transition-all duration-300 ease-in-out ${isVideoPlaying ? 'ml-0 right-16' : 'ml-4 right-0'}`}>
-      <div className="relative z-10 flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent">
-        <div className={`pb-0 transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-1' : 'p-4'}`}>
+    <div className={`relative flex flex-col lg:flex-row flex-1 h-[calc(100vh-4rem)] bg-transparent overflow-hidden transition-all duration-300 ease-in-out ${isVideoPlaying ? 'ml-0 right-0 lg:right-16' : 'ml-0 lg:ml-4 right-0'}`}>
+      <div className="relative z-10 flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent pb-[180px] lg:pb-0">
+        <div className={`pb-0 transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-1' : 'p-2 md:p-4'}`}>
           <div className="flex items-start">
             <Button
               variant="ghost"
@@ -955,7 +956,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
             </Button>
           </div>
         </div>
-        <div className="relative bg-black aspect-video shadow-2xl rounded-4xl w-full max-h-[800px]">
+        <div className="relative bg-black aspect-video shadow-2xl rounded-2xl md:rounded-4xl w-full max-h-[800px]">
           {selectedVideo?.youtubeId ? (
             <>
               {/* Container onde o YouTube Player API criará o iframe */}
@@ -1021,25 +1022,25 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
         </div>
 
-        <div className={`transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-2 lg:p-4' : 'p-6 lg:p-8'}`}>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white mb-4">{selectedVideo?.title || "Carregando..."}</h1>
+        <div className={`transition-all duration-300 ease-in-out ${isVideoPlaying ? 'p-2 lg:p-4' : 'p-4 md:p-6 lg:p-8'}`}>
+          <div className="mb-4 md:mb-6">
+            <h1 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">{selectedVideo?.title || "Carregando..."}</h1>
 
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-3">
+              <div className="flex items-center gap-4 md:gap-6 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-white/60" />
-                  <span className="text-white/70">{selectedVideo?.duration || "0:00"}</span>
+                  <Clock className="w-4 h-4 md:w-5 md:h-5 text-white/60" />
+                  <span className="text-white/70 text-sm md:text-base">{selectedVideo?.duration || "0:00"}</span>
                 </div>
                 <Badge
                   className={`${selectedVideo?.isCompleted
                     ? 'bg-[#bd18b4]/20 text-[#c532e2] border-[#bd18b4]/30'
                     : 'bg-white/10 text-white/60 border-white/20'
-                    } backdrop-blur-sm`}
+                    } backdrop-blur-sm text-xs md:text-sm`}
                 >
                   {selectedVideo?.isCompleted ? (
                     <>
-                      <CheckCircle className="w-4 h-4 mr-1" />
+                      <CheckCircle className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                       Concluída
                     </>
                   ) : (
@@ -1048,11 +1049,11 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   onClick={() => selectedVideo && handleMarkVideoComplete(selectedVideo)}
                   disabled={!selectedVideo?.videoId}
-                  className={`font-semibold shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${selectedVideo?.isCompleted
+                  className={`font-semibold shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto ${selectedVideo?.isCompleted
                     ? 'bg-[#bd18b4] hover:bg-[#aa22c5] text-black hover:shadow-[#bd18b4]/25'
                     : 'bg-white/20 hover:bg-white/30 text-white/70 hover:text-white'
                     }`}
@@ -1065,40 +1066,40 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
           </div>
 
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="bg-white/5 backdrop-blur-sm border border-white/20 w-full justify-start h-16 px-2 py-2 gap-2 rounded-2xl">
+            <TabsList className="bg-white/5 backdrop-blur-sm border border-white/20 w-full justify-start h-auto md:h-16 px-2 py-2 gap-2 rounded-xl md:rounded-2xl flex-wrap md:flex-nowrap">
               <TabsTrigger
                 value="overview"
-                className="text-white/40 hover:text-white/60 bg-transparent data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#bd18b4] data-[state=active]:to-[#9c14a3] data-[state=active]:shadow-[0_0_20px_rgba(189,24,180,0.5)] rounded-xl cursor-pointer transition-all duration-300 px-6 py-2.5 font-semibold border border-transparent data-[state=active]:border-[#bd18b4] active:scale-95"
+                className="text-white/40 hover:text-white/60 bg-transparent data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#bd18b4] data-[state=active]:to-[#9c14a3] data-[state=active]:shadow-[0_0_20px_rgba(189,24,180,0.5)] rounded-xl cursor-pointer transition-all duration-300 px-4 md:px-6 py-2 md:py-2.5 font-semibold border border-transparent data-[state=active]:border-[#bd18b4] active:scale-95 text-sm md:text-base"
               >
                 Visao Geral
               </TabsTrigger>
               <TabsTrigger
                 value="mindmap"
-                className="text-white/40 hover:text-white/60 bg-transparent data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#bd18b4] data-[state=active]:to-[#9c14a3] data-[state=active]:shadow-[0_0_20px_rgba(189,24,180,0.5)] rounded-xl cursor-pointer transition-all duration-300 px-6 py-2.5 font-semibold border border-transparent data-[state=active]:border-[#bd18b4] flex items-center active:scale-95"
+                className="text-white/40 hover:text-white/60 bg-transparent data-[state=active]:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#bd18b4] data-[state=active]:to-[#9c14a3] data-[state=active]:shadow-[0_0_20px_rgba(189,24,180,0.5)] rounded-xl cursor-pointer transition-all duration-300 px-4 md:px-6 py-2 md:py-2.5 font-semibold border border-transparent data-[state=active]:border-[#bd18b4] flex items-center active:scale-95 text-sm md:text-base"
               >
                 <Brain className="w-4 h-4 mr-2 flex-shrink-0" />
                 <span>Mapa Mental</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="mt-6">
-              <div className="space-y-6">
+            <TabsContent value="overview" className="mt-4 md:mt-6">
+              <div className="space-y-4 md:space-y-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-white mb-3">Sobre esta aula</h2>
+                  <h2 className="text-base md:text-lg font-semibold text-white mb-2 md:mb-3">Sobre esta aula</h2>
 
                   {selectedVideo?.channelTitle && (
-                    <div className="flex items-center gap-3 mb-4 p-3 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10">
+                    <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 p-2 md:p-3 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10">
                       {selectedVideo?.channelThumbnailUrl && (
                         <Image
                           src={selectedVideo.channelThumbnailUrl}
                           alt={selectedVideo.channelTitle || "Canal"}
                           width={32}
                           height={32}
-                          className="w-8 h-8 rounded-full object-cover"
+                          className="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover"
                         />
                       )}
                       <div className="flex flex-col">
-                        <span className="text-white/80 font-medium text-sm">{selectedVideo.channelTitle}</span>
+                        <span className="text-white/80 font-medium text-xs md:text-sm">{selectedVideo.channelTitle}</span>
                         {selectedVideo?.viewCount && (
                           <span className="text-white/50 text-xs">{selectedVideo.viewCount.toLocaleString()} visualizações</span>
                         )}
@@ -1106,7 +1107,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     </div>
                   )}
 
-                  <div className="text-white/70 leading-relaxed whitespace-pre-wrap break-words">
+                  <div className="text-white/70 text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">
                     {selectedVideo?.description ? (
                       selectedVideo.description.split(/(\s+)/).map((part, index) => {
                         // Detecta URLs e transforma em links clicáveis
@@ -1157,15 +1158,15 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
               <div className="space-y-4">
                 {/* Mostrar informações dos limites */}
                 {limitsInfo && !mindMap && (
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                     {/* Limite Mapa Mental */}
-                    <div className={`flex-1 px-4 py-3 rounded-lg text-sm ${
+                    <div className={`flex-1 px-3 md:px-4 py-2 md:py-3 rounded-lg text-xs md:text-sm ${
                       !limitsInfo.mindmap.canGenerate
                         ? 'bg-red-500/10 border border-red-500/30 text-red-400'
                         : 'bg-white/5 border border-white/10 text-white/60'
                     }`}>
                       <div className="flex items-center gap-2 mb-1">
-                        <Brain className="w-4 h-4" />
+                        <Brain className="w-3 h-3 md:w-4 md:h-4" />
                         <span className="font-medium">Mapa Mental</span>
                       </div>
                       <div className="space-y-1">
@@ -1184,13 +1185,13 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                       </div>
                     </div>
                     {/* Limite Texto */}
-                    <div className={`flex-1 px-4 py-3 rounded-lg text-sm ${
+                    <div className={`flex-1 px-3 md:px-4 py-2 md:py-3 rounded-lg text-xs md:text-sm ${
                       !limitsInfo.text.canGenerate
                         ? 'bg-red-500/10 border border-red-500/30 text-red-400'
                         : 'bg-white/5 border border-white/10 text-white/60'
                     }`}>
                       <div className="flex items-center gap-2 mb-1">
-                        <FileText className="w-4 h-4" />
+                        <FileText className="w-3 h-3 md:w-4 md:h-4" />
                         <span className="font-medium">Texto</span>
                       </div>
                       <div className="space-y-1">
@@ -1212,26 +1213,26 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 )}
 
                 {!mindMap && !mindMapLoading && !mindMapError && (
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
-                    <Brain className="w-16 h-16 text-white/30 mx-auto mb-4" />
-                    <p className="text-white/60 mb-6">
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 md:p-8 text-center border border-white/10">
+                    <Brain className="w-12 h-12 md:w-16 md:h-16 text-white/30 mx-auto mb-3 md:mb-4" />
+                    <p className="text-white/60 text-sm md:text-base mb-4 md:mb-6 px-2">
                       Escolha o tipo de conteúdo que deseja gerar para este vídeo usando IA
                     </p>
-                    <div className="flex gap-4 justify-center">
+                    <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
                       <Button
                         onClick={() => handleGenerate('mindmap')}
                         disabled={limitsInfo ? !limitsInfo.mindmap.canGenerate : false}
-                        className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto"
                       >
-                        <Brain className="w-5 h-5 mr-2" />
+                        <Brain className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                         Gerar Mapa Mental
                       </Button>
                       <Button
                         onClick={() => handleGenerate('text')}
                         disabled={limitsInfo ? !limitsInfo.text.canGenerate : false}
-                        className="bg-[#1e88e5] cursor-pointer hover:bg-[#1976d2] text-white font-semibold shadow-lg hover:shadow-[#1e88e5]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[#1e88e5] cursor-pointer hover:bg-[#1976d2] text-white font-semibold shadow-lg hover:shadow-[#1e88e5]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto"
                       >
-                        <FileText className="w-5 h-5 mr-2" />
+                        <FileText className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                         Gerar Texto
                       </Button>
                     </div>
@@ -1278,33 +1279,33 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
                 {mindMap && (
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center gap-2">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div className="flex gap-2 items-center">
                         {generatedType === 'mindmap' && (
-                          <span className="text-white/60 flex items-center gap-2">
+                          <span className="text-white/60 flex items-center gap-2 text-sm md:text-base">
                             <Brain className="w-4 h-4" />
                             Mapa Mental Interativo
                           </span>
                         )}
                         {generatedType === 'text' && (
-                          <span className="text-white/60 flex items-center gap-2">
+                          <span className="text-white/60 flex items-center gap-2 text-sm md:text-base">
                             <FileText className="w-4 h-4" />
                             Resumo em Texto
                           </span>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 w-full sm:w-auto">
                         <Button
                           onClick={handleDownloadPdf}
                           disabled={downloading}
                           variant="ghost"
                           size="sm"
-                          className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10 disabled:opacity-50"
+                          className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10 disabled:opacity-50 text-xs md:text-sm flex-1 sm:flex-initial"
                         >
                           {downloading ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            <Loader2 className="w-3 h-3 md:w-4 md:h-4 mr-2 animate-spin" />
                           ) : (
-                            <Download className="w-4 h-4 mr-2" />
+                            <Download className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                           )}
                           {downloading ? 'Gerando PDF...' : 'Baixar PDF'}
                         </Button>
@@ -1315,20 +1316,20 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                           }}
                           variant="ghost"
                           size="sm"
-                          className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10"
+                          className="text-white/60 cursor-pointer hover:text-white hover:bg-white/10 text-xs md:text-sm flex-1 sm:flex-initial"
                         >
-                          <Brain className="w-4 h-4 mr-2" />
+                          <Brain className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                           Gerar outro
                         </Button>
                       </div>
                     </div>
 
                     {generatedType === 'mindmap' ? (
-                      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden" style={{ height: '600px' }}>
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden" style={{ height: '400px', maxHeight: '600px' }}>
                         <InteractiveMindMap markdown={mindMap} />
                       </div>
                     ) : (
-                      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 overflow-auto" style={{ height: '600px' }}>
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-4 md:p-6 overflow-auto" style={{ height: '400px', maxHeight: '600px' }}>
                         <div className="prose prose-invert max-w-none text-white">
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
@@ -1358,9 +1359,10 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         </div>
       </div>
 
-      <div className={`relative z-10 bg-transparent backdrop-blur-md border-l border-white/10 flex flex-col transition-all duration-300 ease-in-out ${isVideoPlaying ? 'w-96' : 'w-96'}`}>
+      {/* Desktop Sidebar */}
+      <div className={`hidden lg:flex relative z-10 bg-transparent backdrop-blur-md border-l border-white/10 flex-col transition-all duration-300 ease-in-out w-96`}>
         <div className="p-4 border-b border-white/10">
-          <h2 className="text-white font-semibold mb-2">Conteúdo</h2>
+          <h2 className="text-white font-semibold mb-2 text-base">Conteúdo</h2>
           <div className="flex items-center justify-between text-sm">
             <span className="text-white/60">Progresso do curso</span>
             <span className="text-[#c532e2] font-medium">
@@ -1452,6 +1454,143 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
             ))}
           </div>
         </ScrollArea>
+      </div>
+
+      {/* Mobile Bottom Sheet */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+        {/* Overlay quando aberto */}
+        {isMobileContentOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm -z-10"
+            onClick={() => setIsMobileContentOpen(false)}
+          />
+        )}
+        
+        {/* Bottom Sheet */}
+        <div className={`relative bg-transparent backdrop-blur-md border-t border-white/10 transition-all duration-300 ease-out ${
+          isMobileContentOpen ? 'h-[80vh]' : 'h-auto'
+        }`}>
+          {/* Header - sempre visível */}
+          <button
+            onClick={() => setIsMobileContentOpen(!isMobileContentOpen)}
+            className="w-full p-4 flex flex-col gap-2 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/10"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-white font-semibold text-base">Conteúdo</h2>
+              <ChevronDown
+                className={`w-5 h-5 text-white/60 transition-transform duration-300 ${
+                  isMobileContentOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-white/60">Progresso do curso</span>
+              <span className="text-[#c532e2] font-medium">
+                {courseProgress ? `${courseProgress.progressPercentage}%` : '0%'}
+              </span>
+            </div>
+            
+            <div className="w-full bg-white/10 rounded-full h-2 mt-2 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-[#bd18b4] to-[#c532e2] h-2 rounded-full transition-all duration-500 shadow-lg shadow-[#bd18b4]/30"
+                style={{ width: `${courseProgress?.progressPercentage || 0}%` }}
+              />
+            </div>
+            
+            <div className="text-xs text-white/50 mt-2 text-left">
+              {courseProgress ? (
+                `${courseProgress.completedVideos} de ${courseProgress.totalVideos} vídeos concluídos`
+              ) : (
+                '0 de 0 vídeos concluídos'
+              )}
+            </div>
+          </button>
+
+          {/* Conteúdo expansível */}
+          {isMobileContentOpen && (
+            <div className="overflow-y-auto h-[calc(80vh-160px)] bg-transparent">
+              <div className="p-4 space-y-2">
+                {modules.map((module, moduleIndex) => (
+                  <div key={module.id} className="bg-white/5 backdrop-blur-sm rounded-lg overflow-hidden border border-white/10 hover:bg-white/[0.07] transition-colors">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleModule(module.id);
+                      }}
+                      className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="bg-gradient-to-br from-[#bd18b4]/20 to-[#aa22c5]/20 rounded-lg w-8 h-8 flex items-center justify-center text-sm font-semibold text-[#c532e2] border border-[#bd18b4]/20">
+                          {moduleIndex + 1}
+                        </div>
+                        <div className="text-left">
+                          <h3 className="text-white text-sm font-medium line-clamp-1">{module.title}</h3>
+                          <p className="text-white/40 text-xs">
+                            {module.completedVideos}/{module.videosCount} aulas • {module.totalDuration}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronDown
+                        className={`w-4 h-4 text-white/60 transition-transform ${
+                          expandedModules.has(module.id) ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    {expandedModules.has(module.id) && (
+                      <div className="border-t border-white/5">
+                        {module.videos.map((video) => (
+                          <button
+                            key={video.id}
+                            onClick={() => {
+                              handleVideoSelect(video);
+                              setIsMobileContentOpen(false);
+                            }}
+                            disabled={video.locked}
+                            className={`w-full px-3 py-2.5 flex items-center gap-3 hover:bg-white/5 transition-all ${
+                              video.locked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                            } ${
+                              selectedVideo?.id === video.id
+                                ? 'bg-[#bd18b4]/10 border-l-2 border-[#bd18b4] hover:bg-[#bd18b4]/15'
+                                : ''
+                            }`}
+                          >
+                            <div className="flex-shrink-0">
+                              {video.locked ? (
+                                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
+                                  <Lock className="w-3.5 h-3.5 text-white/40" />
+                                </div>
+                              ) : video.isCompleted ? (
+                                <div className="w-7 h-7 rounded-full bg-[#bd18b4]/20 flex items-center justify-center">
+                                  <CheckCircle className="w-4 h-4 text-[#c532e2]" />
+                                </div>
+                              ) : (
+                                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                                  <Play className="w-3.5 h-3.5 text-white/60" fill="currentColor" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 text-left">
+                              <p className={`text-sm ${
+                                selectedVideo?.id === video.id
+                                  ? 'text-[#c532e2] font-medium'
+                                  : 'text-white/80'
+                              } line-clamp-1`}>
+                                {video.title}
+                              </p>
+                              <p className="text-xs text-white/40">{video.duration}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
