@@ -157,30 +157,30 @@ function AuthScreenContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1b1e] flex items-center justify-center p-8">
-      <div className="w-full max-w-7xl bg-[#202024] rounded-3xl shadow-2xl overflow-hidden flex relative">
-        {/* Painel Esquerdo - Squircle Verde */}
-        <div className="w-1/2 p-16 flex items-center justify-center">
+    <div className="min-h-screen bg-[#1a1b1e] flex items-center justify-center p-4 md:p-8">
+      <div className="w-full max-w-7xl bg-[#202024] rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
+        {/* Painel Esquerdo - Squircle Roxo */}
+        <div className="w-full md:w-1/2 p-6 md:p-16 flex items-center justify-center">
           <div 
-            className="w-full h-[600px] bg-gradient-to-br from-[#aa22c5] to-[#a727a0] flex flex-col justify-between p-12 relative overflow-hidden shadow-xl"
+            className="w-full h-[400px] md:h-[600px] bg-gradient-to-br from-[#aa22c5] to-[#a727a0] flex flex-col justify-between p-6 md:p-12 relative overflow-hidden shadow-xl"
             style={{
-              borderRadius: '60px',
+              borderRadius: '40px',
             }}
           >
             {/* Texto Superior */}
             <div className="text-white z-10">
-              <h1 className="text-5xl font-bold mb-4 leading-tight">
+              <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 leading-tight">
                 Transforme seu<br />
                 aprendizado com nossa<br />
                 <span className="relative inline-block">
                   plataforma.
-                  <svg className="absolute -bottom-2 left-0 w-full" height="8" viewBox="0 0 200 8" fill="none">
+                  <svg className="absolute -bottom-1 md:-bottom-2 left-0 w-full" height="8" viewBox="0 0 200 8" fill="none">
                     <path d="M2 6C50 2 150 2 198 6" stroke="orange" strokeWidth="3" strokeLinecap="round"/>
                   </svg>
                 </span>
               </h1>
-              <p className="text-white/80 text-base leading-relaxed">
-                Videoaulas organizadas e curadas para acelerar<br />
+              <p className="text-white/80 text-xs md:text-base leading-relaxed">
+                Videoaulas organizadas e curadas para acelerar<br className="hidden md:block" />
                 seus estudos e alcançar seus objetivos de forma eficiente.
               </p>
             </div>
@@ -192,7 +192,7 @@ function AuthScreenContent() {
                 alt="Personagens"
                 width={500}
                 height={400}
-                className="object-contain"
+                className="object-contain w-[250px] h-[200px] md:w-[500px] md:h-[400px]"
                 priority
               />
             </div>
@@ -203,27 +203,27 @@ function AuthScreenContent() {
         </div>
 
         {/* Painel Direito - Formulário */}
-        <div className="w-1/2 p-16 flex flex-col justify-center">
+        <div className="w-full md:w-1/2 p-6 md:p-16 flex flex-col justify-center">
           <div className="w-full max-w-md mx-auto">
             {/* Logo */}
-            <div className="flex items-center gap-3 mb-8">
+            <div className="flex items-center gap-3 mb-6 md:mb-8">
               <Image
                 src="/logo-prisma.svg"
                 alt="Prisma Logo"
                 width={40}
                 height={40}
-                className="object-contain"
+                className="object-contain w-8 h-8 md:w-10 md:h-10"
                 priority
               />
-              <span className="text-2xl font-bold text-white">Prisma</span>
+              <span className="text-xl md:text-2xl font-bold text-white">Prisma</span>
             </div>
 
-            <h2 className="text-4xl font-bold text-white mb-2">Bem-vindo de volta</h2>
-            <p className="text-gray-400 mb-8">Por favor, faça login na sua conta</p>
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-2">Bem-vindo de volta</h2>
+            <p className="text-gray-400 mb-6 md:mb-8 text-sm md:text-base">Por favor, faça login na sua conta</p>
 
             {isLogin ? (
               <form 
-                className="space-y-5"
+                className="space-y-4 md:space-y-5"
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleLoginSubmit();
@@ -235,7 +235,7 @@ function AuthScreenContent() {
                     placeholder="Endereço de email"
                     value={loginForm.email}
                     onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-14 px-5 focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
+                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-12 md:h-14 px-4 md:px-5 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
                     required
                   />
                 </div>
@@ -246,7 +246,7 @@ function AuthScreenContent() {
                     placeholder="Senha"
                     value={loginForm.password}
                     onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-14 px-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
+                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-12 md:h-14 px-4 md:px-5 pr-12 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
                     required
                   />
                   <button
@@ -261,7 +261,7 @@ function AuthScreenContent() {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    className="text-sm text-gray-400 hover:text-[#bd18b4] transition-colors cursor-pointer"
+                    className="text-xs md:text-sm text-gray-400 hover:text-[#bd18b4] transition-colors cursor-pointer"
                   >
                     Esqueceu a senha?
                   </button>
@@ -269,24 +269,24 @@ function AuthScreenContent() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-[#bd18b4] hover:bg-[#aa22c5] text-black rounded-xl h-14 font-semibold transition-all shadow-lg shadow-[#a727a0]/25 cursor-pointer disabled:cursor-not-allowed"
+                  className="w-full bg-[#bd18b4] hover:bg-[#aa22c5] text-black rounded-xl h-12 md:h-14 font-semibold transition-all shadow-lg shadow-[#a727a0]/25 cursor-pointer disabled:cursor-not-allowed text-sm md:text-base"
                 >
                   {isLoading ? 'Entrando...' : 'Login'}
                 </button>
 
-                <div className="relative my-8">
+                <div className="relative my-6 md:my-8">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
                   </div>
-                  <div className="relative flex justify-center text-sm">
+                  <div className="relative flex justify-center text-xs md:text-sm">
                     <span className="px-4 bg-[#202024] text-gray-400">Ou faça login com</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                   <button
                     type="button"
-                    className="border border-[#323238] text-gray-300 hover:bg-[#29292E] rounded-xl h-14 font-medium flex items-center justify-center gap-3 transition-colors cursor-pointer"
+                    className="border border-[#323238] text-gray-300 hover:bg-[#29292E] rounded-xl h-12 md:h-14 font-medium flex items-center justify-center gap-2 md:gap-3 transition-colors cursor-pointer text-sm md:text-base"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -299,7 +299,7 @@ function AuthScreenContent() {
 
                   <button
                     type="button"
-                    className="border border-[#323238] text-gray-300 hover:bg-[#29292E] rounded-xl h-14 font-medium flex items-center justify-center gap-3 transition-colors cursor-pointer"
+                    className="border border-[#323238] text-gray-300 hover:bg-[#29292E] rounded-xl h-12 md:h-14 font-medium flex items-center justify-center gap-2 md:gap-3 transition-colors cursor-pointer text-sm md:text-base"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -308,7 +308,7 @@ function AuthScreenContent() {
                   </button>
                 </div>
 
-                <div className="text-center text-sm text-gray-500 mt-6">
+                <div className="text-center text-xs md:text-sm text-gray-500 mt-4 md:mt-6">
                   Não tem uma conta?{' '}
                   <button
                     type="button"
@@ -321,7 +321,7 @@ function AuthScreenContent() {
               </form>
             ) : (
               <form 
-                className="space-y-4"
+                className="space-y-3 md:space-y-4"
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleRegisterSubmit();
@@ -333,7 +333,7 @@ function AuthScreenContent() {
                     placeholder="Nome completo"
                     value={registerForm.name}
                     onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
-                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-14 px-5 focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
+                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-12 md:h-14 px-4 md:px-5 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
                   />
                 </div>
 
@@ -343,7 +343,7 @@ function AuthScreenContent() {
                     placeholder="Idade"
                     value={registerForm.age}
                     onChange={(e) => setRegisterForm({ ...registerForm, age: e.target.value })}
-                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-14 px-5 focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
+                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-12 md:h-14 px-4 md:px-5 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
                   />
                 </div>
 
@@ -351,7 +351,7 @@ function AuthScreenContent() {
                   <select
                     value={registerForm.educationLevel}
                     onChange={(e) => setRegisterForm({ ...registerForm, educationLevel: e.target.value })}
-                    className="w-full bg-[#29292E] border border-[#323238] text-white rounded-xl h-14 px-5 focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4] cursor-pointer"
+                    className="w-full bg-[#29292E] border border-[#323238] text-white rounded-xl h-12 md:h-14 px-4 md:px-5 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4] cursor-pointer"
                   >
                     <option value="GRADUACAO">Graduação</option>
                     <option value="MESTRADO">Mestrado</option>
@@ -365,7 +365,7 @@ function AuthScreenContent() {
                     placeholder="Endereço de email"
                     value={registerForm.email}
                     onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-14 px-5 focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
+                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-12 md:h-14 px-4 md:px-5 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
                   />
                 </div>
 
@@ -375,7 +375,7 @@ function AuthScreenContent() {
                     placeholder="Senha"
                     value={registerForm.password}
                     onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-14 px-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
+                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-12 md:h-14 px-4 md:px-5 pr-12 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
                   />
                   <button
                     type="button"
@@ -392,7 +392,7 @@ function AuthScreenContent() {
                     placeholder="Confirmar senha"
                     value={registerForm.confirmPassword}
                     onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
-                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-14 px-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
+                    className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-12 md:h-14 px-4 md:px-5 pr-12 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
                   />
                   <button
                     type="button"
@@ -406,12 +406,12 @@ function AuthScreenContent() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-[#b822c5] hover:bg-[#b822c5dc] text-black rounded-xl h-14 font-semibold transition-all shadow-lg shadow-[#b822c5]/25 cursor-pointer disabled:cursor-not-allowed"
+                  className="w-full bg-[#b822c5] hover:bg-[#b822c5dc] text-black rounded-xl h-12 md:h-14 font-semibold transition-all shadow-lg shadow-[#b822c5]/25 cursor-pointer disabled:cursor-not-allowed text-sm md:text-base"
                 >
                   {isLoading ? 'Criando conta...' : 'Criar Conta'}
                 </button>
 
-                <div className="text-center text-sm text-gray-500 mt-6">
+                <div className="text-center text-xs md:text-sm text-gray-500 mt-4 md:mt-6">
                   Já tem uma conta?{' '}
                   <button
                     type="button"
