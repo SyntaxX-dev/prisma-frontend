@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, HelpCircle, X, LogOut, User, Settings, AlertCircle, Loader2 } from "lucide-react";
+import { Search, Bell, HelpCircle, X, LogOut, User, Settings, AlertCircle, Loader2, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -40,6 +40,7 @@ export function Navbar({}: NavbarProps) {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState<string>('/dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -102,22 +103,23 @@ export function Navbar({}: NavbarProps) {
     <ClientOnly>
       <div
         data-navbar
-        className={`fixed top-0 right-0 z-50 w-[calc(100vw-20%)] p-4 transition-all duration-300 bg-transparent`}
+        className={`fixed top-0 right-0 z-50 w-full md:w-[calc(100vw-20%)] p-2 md:p-4 transition-all duration-300 bg-transparent`}
         style={{
           transform: 'translateZ(0)',
           backfaceVisibility: 'hidden',
           willChange: 'transform'
         }}
       >
-      <div className="flex items-center justify-between gap-4 relative w-full">
+      <div className="flex items-center justify-between gap-2 md:gap-4 relative w-full">
 
-        <div className="bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
+        {/* Desktop Navigation */}
+        <div className="hidden md:block bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
           <nav className="flex items-center gap-6">
             {navItems.map((item) => (
               <button
                 key={item}
                 onClick={() => handleNavClick(item)}
-                className={`transition-colors cursor-pointer ${isActive(item)
+                className={`transition-colors cursor-pointer text-sm ${isActive(item)
                   ? 'text-[#bd18b4]'
                   : 'text-white/80 hover:text-[#bd18b4]'
                   }`}
@@ -128,9 +130,9 @@ export function Navbar({}: NavbarProps) {
           </nav>
         </div>
 
-        <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-3 border border-white/20">
-          <div className="flex items-center gap-3">
-            <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-64' : 'w-8'
+        <div className="bg-white/15 backdrop-blur-md rounded-full px-3 md:px-4 py-2 md:py-3 border border-white/20 ml-auto">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-48 md:w-64' : 'w-8'
               }`}>
               {searchExpanded || isSearching ? (
                 <div className="flex items-center gap-2">
@@ -291,9 +293,10 @@ export function Navbar({}: NavbarProps) {
           </div>
         </div>
 
+        {/* Desktop Profile Dropdown */}
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors">
+            <div className="hidden md:flex bg-white/15 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors">
               <div className="flex items-center gap-3">
                 <Avatar className="w-8 h-8">
                   <AvatarImage 

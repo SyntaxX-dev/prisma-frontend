@@ -33,15 +33,10 @@ export function HorizontalCarousel({
 }: HorizontalCarouselProps) {
   return (
     <div className="w-full">
-      <div className="flex flex-wrap gap-4 md:gap-6">
+      <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
         {courses.map((course, index) => (
           <div
             key={course.courseId || index}
-            style={{
-              width: `${itemWidth}px`,
-              maxWidth: '100%',
-            }}
-            className="flex-shrink-0"
           >
             <CourseCard {...course} />
           </div>

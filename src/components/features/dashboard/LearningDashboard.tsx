@@ -36,11 +36,11 @@ export function LearningDashboard({ userName }: { userName?: string }) {
 
 
   return (
-    <div className="pl-2 pr-6 pt-10 overflow-x-hidden" style={{ marginLeft: '6rem' }}> {/* Compensa sidebar: left-4 (16px) + w-64 (256px) = 272px */}
+    <div className="pl-2 pr-4 md:pr-6 pt-6 md:pt-10 overflow-x-hidden ml-0 md:ml-[6rem]">
 
-      <div className="mb-8">
-        <h1 className="text-white text-2xl font-bold mb-2">{greeting}, {userName || "Usuário"}!</h1>
-        <p className="text-white/60 text-sm">Continue aprendendo e desenvolvendo suas habilidades em tecnologia.</p>
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-white text-xl md:text-2xl font-bold mb-2">{greeting}, {userName || "Usuário"}!</h1>
+        <p className="text-white/60 text-xs md:text-sm">Continue aprendendo e desenvolvendo suas habilidades em tecnologia.</p>
       </div>
 
       {coursesLoading ? (
@@ -52,23 +52,23 @@ export function LearningDashboard({ userName }: { userName?: string }) {
           <div className="text-red-400 text-lg">Erro ao carregar cursos</div>
         </div>
       ) : courses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center ">
+        <div className="flex flex-col items-center justify-center px-4">
           <Image
             src="/defaultwithoutcourses.png"
             alt="Nenhum curso disponível"
             width={1000}
             height={1000}
-            className="mb-6 opacity-80"
+            className="mb-6 opacity-80 max-w-full h-auto"
           />
         </div>
       ) : (
         <div>
           {/* Seção de Cursos Patrocinados - apenas quando não há busca */}
           {!isSearching && (
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-white text-lg font-semibold">Cursos Patrocinados</h2>
+                  <h2 className="text-white text-base md:text-lg font-semibold">Cursos Patrocinados</h2>
                   <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-1 rounded-full font-medium">
                     DESTAQUE
                   </span>
@@ -76,15 +76,15 @@ export function LearningDashboard({ userName }: { userName?: string }) {
               </div>
               
               {/* Carrossel de cursos patrocinados */}
-              <div className="w-full">
+              <div className="w-full -mx-2 md:mx-0">
                 {producerLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <LoadingGrid size="60" color="#FFD700" />
                   </div>
                 ) : producerError ? (
-                  <div className="text-red-400 text-sm">Erro ao carregar cursos patrocinados</div>
+                  <div className="text-red-400 text-sm px-2">Erro ao carregar cursos patrocinados</div>
                 ) : producerCourses.length === 0 ? (
-                  <div className="text-white/60 text-sm">Nenhum curso de produtor disponível no momento.</div>
+                  <div className="text-white/60 text-sm px-2">Nenhum curso de produtor disponível no momento.</div>
                 ) : (
                   <HorizontalCarousel 
                     courses={producerCourses}
@@ -97,7 +97,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
           )}
 
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-lg font-semibold">
+            <h2 className="text-white text-base md:text-lg font-semibold">
               {isSearching ? 'Resultados da Busca' : 'Cursos Disponíveis'}
             </h2>
           </div>
@@ -107,15 +107,15 @@ export function LearningDashboard({ userName }: { userName?: string }) {
             <div className="space-y-4">
               {courses.length === 0 ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <div className="text-white/60 text-lg mb-2">Nenhum curso encontrado</div>
-                    <div className="text-white/40 text-sm">
+                  <div className="text-center px-4">
+                    <div className="text-white/60 text-base md:text-lg mb-2">Nenhum curso encontrado</div>
+                    <div className="text-white/40 text-xs md:text-sm">
                       Tente ajustar os filtros de busca na barra superior
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                   {courses.map((course) => (
                     <CourseCard
                       key={course.courseId}
@@ -140,7 +140,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
             </div>
           ) : (
             /* Mostra grid quando não há busca */
-            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
               {courses.map((course) => (
                 <CourseCard
                   key={course.courseId}

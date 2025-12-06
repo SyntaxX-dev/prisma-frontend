@@ -1,4 +1,4 @@
-import { ChevronDown, Home, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain, UserPlus } from "lucide-react";
+import { ChevronDown, Home, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain, UserPlus, Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -27,6 +27,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isExpanded = !isVideoPlaying || isHovered;
 
@@ -91,6 +92,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
   };
 
   const handleNavigation = (item: string) => {
+    setIsMobileMenuOpen(false); // Fechar menu mobile ao navegar
     if (item === "Dashboard") {
       navigateWithLoading('/dashboard', 'Carregando Dashboard...');
     } else if (item === "Chats") {
@@ -156,8 +158,106 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
   ];
 
   return (
+    <>
+      {/* Mobile Menu Button - Fixed Top */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="md:hidden fixed top-4 left-4 z-[60] bg-white/20 backdrop-blur-md border border-white/30 rounded-full p-3 text-white hover:bg-white/30 transition-all"
+      >
+        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[50]"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <div
+        className={`md:hidden fixed left-0 top-0 h-full w-64 z-[55] transition-transform duration-300 ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div
+          className="h-full w-full flex flex-col p-4 pt-20"
+          style={{
+            background: 'rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+            backdropFilter: 'blur(5px)',
+            WebkitBackdropFilter: 'blur(5px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)'
+          }}
+        >
+          <div className="flex-1 overflow-y-auto">
+            {/* Main Items */}
+            <div className="mb-4">
+              <h3 className="text-white/60 text-xs font-semibold mb-2 px-3">Principal</h3>
+              {mainItems.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => handleNavigation(item.label)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
+                    isActive(item.label)
+                      ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
+                      : 'text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Features Items */}
+            <div className="mb-4">
+              <h3 className="text-white/60 text-xs font-semibold mb-2 px-3">Recursos</h3>
+              {featuresItems.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => handleNavigation(item.label)}
+                  disabled={item.disabled}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
+                    item.disabled
+                      ? 'opacity-50 cursor-not-allowed'
+                      : isActive(item.label)
+                      ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
+                      : 'text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Tools Items */}
+            <div>
+              <h3 className="text-white/60 text-xs font-semibold mb-2 px-3">Conta</h3>
+              {toolsItems.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => handleNavigation(item.label)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
+                    isActive(item.label)
+                      ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
+                      : 'text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
     <div
-      className={`fixed left-4 top-4 h-[calc(100vh-2rem)] z-50 transition-all duration-300 ease-in-out overflow-visible ${isExpanded ? 'w-64' : 'w-16'}`}
+      className={`fixed left-4 top-4 h-[calc(100vh-2rem)] z-50 transition-all duration-300 ease-in-out overflow-visible hidden md:block ${isExpanded ? 'w-64' : 'w-16'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -508,5 +608,6 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
       `}</style>
 
     </div>
+    </>
   );
 }
