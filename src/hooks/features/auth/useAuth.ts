@@ -81,6 +81,11 @@ export function useAuth() {
     localStorage.removeItem('auth_expires');
     setAuthState({ isAuthenticated: false, user: null, token: null });
     showSuccess(`Até logo, ${userName}!`);
+    
+    // Redirecionar para login após logout
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login';
+    }
   };
 
   const updateUser = (user: UserProfile) => {

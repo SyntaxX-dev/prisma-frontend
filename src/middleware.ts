@@ -5,17 +5,11 @@ import type { NextRequest } from 'next/server';
 const PUBLIC_ROUTES = [
   '/',
   '/auth/login',
-  '/auth/register',
-  '/auth/forgot-password',
-  '/auth/reset-password',
-  '/api',
 ];
 
 // Rotas de autenticação (se já estiver logado, redireciona para dashboard)
 const AUTH_ROUTES = [
   '/auth/login',
-  '/auth/register',
-  '/auth/forgot-password',
 ];
 
 export function middleware(request: NextRequest) {
