@@ -365,9 +365,9 @@ export function DirectChatView({
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a]">
+    <div className="flex flex-col h-full bg-[#0a0a0a] w-full max-w-full overflow-hidden">
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 pt-12 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-2 md:p-4 pt-12 space-y-3 md:space-y-4 w-full max-w-full">
         {isLoadingMessages ? (
           <div className="flex flex-col gap-4">
             {[
@@ -475,7 +475,7 @@ export function DirectChatView({
                     messageRefs.current.delete(msg.id);
                   }
                 }}
-                className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''} group relative`}
+                className={`flex gap-2 md:gap-3 ${isOwn ? 'flex-row-reverse' : ''} group relative w-full max-w-full`}
               >
                 <div className="relative shrink-0">
                   <Avatar className="w-8 h-8 shrink-0">
@@ -490,7 +490,7 @@ export function DirectChatView({
                 </div>
 
                 <div 
-                  className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[70%] relative`}
+                  className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[75%] md:max-w-[70%] flex-1 min-w-0 relative`}
                   onMouseEnter={() => setHoveredMessageId(msg.id)}
                   onMouseLeave={() => !isEditing && setHoveredMessageId(null)}
                 >
@@ -674,7 +674,7 @@ export function DirectChatView({
         disabled={!isConnected || uploading}
         className="fixed inset-0"
       />
-      <div className="flex flex-col gap-2 p-4 border-t border-white/10 bg-[#1a1a1a]">
+      <div className="flex flex-col gap-2 p-2 md:p-4 border-t border-white/10 bg-[#1a1a1a] w-full max-w-full overflow-hidden">
         {/* Preview de arquivos pendentes */}
         {pendingAttachments.length > 0 && (
           <div className="flex flex-wrap gap-2 pb-2">
@@ -700,14 +700,14 @@ export function DirectChatView({
             ))}
           </div>
         )}
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-1.5 md:gap-2 w-full max-w-full min-w-0">
         <textarea
           value={message}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
           disabled={!isConnected}
-          className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-3 py-1.5 text-sm flex-1 overflow-y-auto overflow-x-hidden"
+          className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-2 md:px-3 py-1.5 text-sm flex-1 min-w-0 overflow-y-auto overflow-x-hidden max-w-full"
           rows={1}
           style={{ 
             wordBreak: 'break-word', 
@@ -736,19 +736,19 @@ export function DirectChatView({
             input.click();
           }}
           disabled={!isConnected || uploading}
-          className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer shrink-0"
+          className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-8 h-8 md:w-9 md:h-9 cursor-pointer shrink-0"
           title="Anexar arquivo"
         >
-          <Paperclip className="w-4 h-4" />
+          <Paperclip className="w-3.5 h-3.5 md:w-4 md:h-4" />
         </Button>
         <div className="relative shrink-0" ref={emojiPickerRef}>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
-            className={`text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer ${isEmojiPickerOpen ? 'bg-[#1a1a1a] text-white' : ''}`}
+            className={`text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-8 h-8 md:w-9 md:h-9 cursor-pointer ${isEmojiPickerOpen ? 'bg-[#1a1a1a] text-white' : ''}`}
           >
-            <Smile className="w-4 h-4" />
+            <Smile className="w-3.5 h-3.5 md:w-4 md:h-4" />
           </Button>
           {isEmojiPickerOpen && (
             <div className="absolute bottom-full right-0 mb-2 z-50">
@@ -787,12 +787,12 @@ export function DirectChatView({
         <Button
           onClick={handleSend}
           disabled={!isConnected || (!message.trim() && pendingAttachments.length === 0) || uploading}
-          className="bg-[#bd18b4] hover:bg-[#bd18b4]/80 text-black px-4 py-2 h-[32px] shrink-0"
+          className="bg-[#bd18b4] hover:bg-[#bd18b4]/80 text-black px-3 md:px-4 py-2 h-[32px] shrink-0"
         >
           {uploading ? (
-            <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
           ) : (
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5 md:w-4 md:h-4" />
           )}
         </Button>
         </div>

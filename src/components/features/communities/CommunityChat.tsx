@@ -483,13 +483,13 @@ export function CommunityChat({
 
   return (
     <div 
-      className="flex-1 flex flex-col h-full rounded-2xl overflow-hidden border border-white/10"
+      className="flex-1 flex flex-col h-full rounded-2xl overflow-hidden border border-white/10 w-full max-w-full"
       style={{
         background: 'rgb(14, 14, 14)',
       }}
     >
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-5 pt-12 space-y-6 pb-32">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-2 md:p-5 pt-12 space-y-3 md:space-y-6 pb-32 w-full max-w-full">
         {isLoadingMessages ? (
           <div className="flex flex-col gap-4">
             {[
@@ -499,7 +499,7 @@ export function CommunityChat({
             ].map((size, i) => (
               <div key={`left-${i}`} className="flex gap-3">
                 <Skeleton className="w-8 h-8 rounded-full bg-[#29292E] shrink-0" />
-                <div className="flex flex-col items-start max-w-[70%]">
+                <div className="flex flex-col items-start max-w-[75%] md:max-w-[70%] flex-1 min-w-0">
                   <Skeleton 
                     className="rounded-2xl px-4 py-2.5 bg-[#29292E] border border-[#323238]"
                     style={{ width: size.width, height: '32px' }}
@@ -514,7 +514,7 @@ export function CommunityChat({
             ].map((size, i) => (
               <div key={`right-${i}`} className="flex gap-3 flex-row-reverse">
                 <Skeleton className="w-8 h-8 rounded-full bg-[#29292E] shrink-0" />
-                <div className="flex flex-col items-end max-w-[70%]">
+                <div className="flex flex-col items-end max-w-[75%] md:max-w-[70%] flex-1 min-w-0">
                   <Skeleton 
                     className="rounded-2xl px-4 py-2.5 bg-[#29292E]"
                     style={{ width: size.width, height: '32px' }}
@@ -598,7 +598,7 @@ export function CommunityChat({
                       messageRefs.current.delete(message.id);
                     }
                   }}
-                  className={`flex gap-3 ${messageIsOwn ? "flex-row-reverse" : ""} group relative`}
+                  className={`flex gap-2 md:gap-3 ${messageIsOwn ? "flex-row-reverse" : ""} group relative w-full max-w-full`}
                 >
                   <div className="w-8 flex-shrink-0">
                     {showAvatar && (
@@ -621,7 +621,7 @@ export function CommunityChat({
                   </div>
 
                   <div
-                    className={`flex flex-col max-w-[70%] ${
+                    className={`flex flex-col max-w-[75%] md:max-w-[70%] flex-1 min-w-0 ${
                       messageIsOwn ? "items-end" : "items-start"
                     } relative`}
                     onMouseEnter={() => setHoveredMessageId(message.id)}
@@ -824,9 +824,9 @@ export function CommunityChat({
         className="fixed inset-0"
       />
       <div 
-        className="p-4 border-t border-white/10 bg-[#1a1a1a]"
+        className="p-2 md:p-4 border-t border-white/10 bg-[#1a1a1a] w-full max-w-full overflow-hidden"
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 w-full max-w-full">
           {/* Preview de arquivos pendentes */}
           {pendingAttachments.length > 0 && (
             <div className="flex flex-wrap gap-2 pb-2">
@@ -852,7 +852,7 @@ export function CommunityChat({
               ))}
             </div>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2 w-full max-w-full min-w-0">
           <Button
             variant="ghost"
             size="icon"
@@ -870,10 +870,10 @@ export function CommunityChat({
               input.click();
             }}
             disabled={!isConnected || uploading}
-            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer shrink-0"
+            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-8 h-8 md:w-9 md:h-9 cursor-pointer shrink-0"
             title="Anexar arquivo"
           >
-            <Paperclip className="w-4 h-4" />
+            <Paperclip className="w-3.5 h-3.5 md:w-4 md:h-4" />
           </Button>
 
           <textarea
@@ -882,7 +882,7 @@ export function CommunityChat({
             onKeyDown={handleKeyDown}
             placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
             disabled={!isConnected}
-            className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-3 py-1.5 text-sm flex-1 overflow-y-auto overflow-x-hidden"
+            className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-2 md:px-3 py-1.5 text-sm flex-1 min-w-0 overflow-y-auto overflow-x-hidden max-w-full"
             rows={1}
             style={{
               wordBreak: 'break-word', 

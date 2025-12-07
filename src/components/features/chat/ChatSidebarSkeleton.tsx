@@ -5,7 +5,7 @@ import { Phone, Video, Pin, Users, ImageIcon, ChevronDown } from "lucide-react";
 
 export function ChatSidebarSkeleton() {
   return (
-    <div className="w-[300px] flex flex-col h-full gap-3">
+    <div className="w-full lg:w-[300px] flex flex-col h-full gap-2 md:gap-3">
       {/* Quick Actions - Ilha 1 */}
       <div 
         className="p-4 rounded-2xl border border-white/10"
@@ -62,7 +62,7 @@ export function ChatSidebarSkeleton() {
                 <Skeleton className="w-8 h-8 rounded-full bg-[#29292E] shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Skeleton className="h-4 w-24 bg-[#29292E]" />
+                    <Skeleton className="h-4 w-20 md:w-24 bg-[#29292E]" />
                     <Skeleton className="h-3 w-8 bg-[#29292E]" />
                   </div>
                   <Skeleton className="h-3 w-full bg-[#29292E] mb-1" />
