@@ -524,7 +524,6 @@ function CommunitiesPageContent() {
   const [tooltipCommunity, setTooltipCommunity] = useState<Community | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | undefined>();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(true);
   
   // Estados para chat direto
@@ -1202,72 +1201,53 @@ function CommunitiesPageContent() {
       )}
 
       {/* Communities List - Sidebar Esquerda */}
-      <div className={`
-        hidden lg:block relative
-        transition-all duration-300 ease-in-out
-        ${isLeftSidebarCollapsed ? 'w-0' : 'w-auto'}
-      `}>
-        {!isLeftSidebarCollapsed && (
-          <CommunityList
-            communities={communities}
-            selectedCommunityId={selectedCommunityId}
-            onSelectCommunity={(id) => {
-              // Buscar a comunidade na lista
-              const community = communities.find(c => c.id === id);
-              if (!community) return;
-              
-              // Se for membro ou dono, abrir normalmente
-              if (community.isMember || community.isOwner) {
-              setSelectedCommunityId(id);
-              setSelectedChatUserId(null);
-                // Salvar como última conversa
-                saveLastConversation('community', id);
-                // Atualizar URL com community param
-                const params = new URLSearchParams(searchParams.toString());
-                params.set('community', id);
-                params.delete('chat'); // Remover chat param se existir
-                router.push(`/communities?${params.toString()}`);
-              } else if (community.visibility === 'PUBLIC') {
-                // Se for pública e não for membro, mostrar tooltip centralizado
-                setTooltipPosition({
-                  x: window.innerWidth / 2 - 160,
-                  y: window.innerHeight / 2 - 200,
-                });
-                setTooltipCommunity(community);
-              }
-              // Se for privada e não for membro, não fazer nada (não deveria aparecer na lista)
-            }}
-            onCreateCommunity={() => setIsCreateModalOpen(true)}
-            onCommunityClick={handleCommunityClick}
-            conversations={conversations}
-            selectedChatUserId={selectedChatUserId}
-            onSelectConversation={(userId) => {
-              setSelectedChatUserId(userId);
-              setSelectedCommunityId(undefined);
+      <div className="hidden lg:block relative">
+        <CommunityList
+          communities={communities}
+          selectedCommunityId={selectedCommunityId}
+          onSelectCommunity={(id) => {
+            // Buscar a comunidade na lista
+            const community = communities.find(c => c.id === id);
+            if (!community) return;
+            
+            // Se for membro ou dono, abrir normalmente
+            if (community.isMember || community.isOwner) {
+            setSelectedCommunityId(id);
+            setSelectedChatUserId(null);
               // Salvar como última conversa
-              saveLastConversation('chat', userId);
-              // Atualizar URL com chat param
+              saveLastConversation('community', id);
+              // Atualizar URL com community param
               const params = new URLSearchParams(searchParams.toString());
-              params.set('chat', userId);
-              params.delete('community'); // Remover community param se existir
+              params.set('community', id);
+              params.delete('chat'); // Remover chat param se existir
               router.push(`/communities?${params.toString()}`);
-              loadChatUser(userId);
-            }}
-          />
-        )}
-        
-        {/* Botão de colapsar sidebar esquerda */}
-        <button
-          onClick={() => setIsLeftSidebarCollapsed(!isLeftSidebarCollapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-r-lg hover:bg-white/20 transition-all flex items-center justify-center"
-          title={isLeftSidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
-        >
-          {isLeftSidebarCollapsed ? (
-            <ChevronRight className="w-4 h-4 text-white" />
-          ) : (
-            <ChevronLeft className="w-4 h-4 text-white" />
-          )}
-        </button>
+            } else if (community.visibility === 'PUBLIC') {
+              // Se for pública e não for membro, mostrar tooltip centralizado
+              setTooltipPosition({
+                x: window.innerWidth / 2 - 160,
+                y: window.innerHeight / 2 - 200,
+              });
+              setTooltipCommunity(community);
+            }
+            // Se for privada e não for membro, não fazer nada (não deveria aparecer na lista)
+          }}
+          onCreateCommunity={() => setIsCreateModalOpen(true)}
+          onCommunityClick={handleCommunityClick}
+          conversations={conversations}
+          selectedChatUserId={selectedChatUserId}
+          onSelectConversation={(userId) => {
+            setSelectedChatUserId(userId);
+            setSelectedCommunityId(undefined);
+            // Salvar como última conversa
+            saveLastConversation('chat', userId);
+            // Atualizar URL com chat param
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('chat', userId);
+            params.delete('community'); // Remover community param se existir
+            router.push(`/communities?${params.toString()}`);
+            loadChatUser(userId);
+          }}
+        />
       </div>
 
       {/* Mobile Left Sidebar Modal */}
