@@ -296,20 +296,20 @@ export default function QuestionsPage() {
 
       <div className="relative z-10">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-        <div className="ml-72">
+        <div className="ml-0 lg:ml-72">
           <Suspense fallback={<div className="h-20" />}>
             <Navbar isDark={isDark} toggleTheme={toggleTheme} />
           </Suspense>
 
           {/* Main Content */}
-          <div className="min-h-screen px-8 py-24 flex items-center justify-center">
+          <div className="min-h-screen px-4 md:px-8 py-12 md:py-24 flex items-center justify-center">
             <div className="w-full max-w-7xl mx-auto">
               {/* INPUT VIEW */}
               {viewState === 'input' && (
                 <>
                   {/* Header */}
-                  <div className="text-center mb-12">
-                    <h1 className="text-6xl font-light mb-4 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                  <div className="text-center mb-8 md:mb-12">
+                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-light mb-4 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                       Olá, {user?.name || 'Estudante'}
                     </h1>
                   </div>
@@ -317,7 +317,7 @@ export default function QuestionsPage() {
                   {/* Input principal */}
                   <div className="relative max-w-4xl mx-auto">
                     <div
-                      className="rounded-[32px] p-1 transition-all duration-300"
+                      className="rounded-2xl md:rounded-[32px] p-1 transition-all duration-300"
                       style={{
                         background: 'rgba(255, 255, 255, 0.1)',
                         backdropFilter: 'blur(10px)',
@@ -327,24 +327,24 @@ export default function QuestionsPage() {
                       }}
                     >
                       <form onSubmit={handleGenerateQuiz}>
-                        <div className="flex items-center gap-4 px-6 py-4">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-4">
                           <input
                             type="text"
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
                             placeholder="Digite o tema do quiz..."
-                            className="flex-1 bg-transparent text-white placeholder-white/50 text-lg outline-none"
+                            className="flex-1 bg-transparent text-white placeholder-white/50 text-base md:text-lg outline-none"
                             disabled={loading}
                           />
 
                           <button
                             type="submit"
                             disabled={loading || !topic.trim()}
-                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 sm:px-6 py-2 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                           >
                             {loading ? (
                               <>
-                                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                <svg className="animate-spin h-4 w-4 md:h-5 md:w-5" viewBox="0 0 24 24">
                                   <circle
                                     className="opacity-25"
                                     cx="12"
@@ -364,7 +364,7 @@ export default function QuestionsPage() {
                               </>
                             ) : (
                               <>
-                                <Sparkles className="w-5 h-5" />
+                                <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
                                 Gerar
                               </>
                             )}
@@ -375,14 +375,14 @@ export default function QuestionsPage() {
 
                     {/* Error message */}
                     {error && (
-                      <div className="mt-4 bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-3 rounded-2xl backdrop-blur-sm">
+                      <div className="mt-4 bg-red-500/10 border border-red-500/20 text-red-400 px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl backdrop-blur-sm text-sm md:text-base">
                         {error}
                       </div>
                     )}
                   </div>
 
                   {/* Sugestões */}
-                  <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                  <div className="mt-8 md:mt-12 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-w-4xl mx-auto">
                     {[
                       'Questões sobre Física - Cinemática',
                       'História do Brasil - Era Vargas',
@@ -393,7 +393,7 @@ export default function QuestionsPage() {
                         key={index}
                         onClick={() => setTopic(suggestion)}
                         disabled={loading}
-                        className="text-left px-6 py-4 rounded-2xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-left px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           background: 'rgba(255, 255, 255, 0.05)',
                           backdropFilter: 'blur(10px)',
@@ -401,18 +401,18 @@ export default function QuestionsPage() {
                           border: '1px solid rgba(255, 255, 255, 0.1)',
                         }}
                       >
-                        <div className="flex items-start gap-3">
-                          <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-                          <span className="text-white/80 text-sm">{suggestion}</span>
+                        <div className="flex items-start gap-2 md:gap-3">
+                          <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                          <span className="text-white/80 text-xs md:text-sm">{suggestion}</span>
                         </div>
                       </button>
                     ))}
                   </div>
 
                   {/* Informações */}
-                  <div className="mt-12 text-center">
+                  <div className="mt-8 md:mt-12 text-center">
                     <div
-                      className="inline-block px-6 py-4 rounded-2xl"
+                      className="inline-block px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl"
                       style={{
                         background: 'rgba(255, 255, 255, 0.05)',
                         backdropFilter: 'blur(10px)',
@@ -420,13 +420,13 @@ export default function QuestionsPage() {
                         border: '1px solid rgba(255, 255, 255, 0.1)',
                       }}
                     >
-                      <p className="text-white/60 text-sm mb-2">
+                      <p className="text-white/60 text-xs md:text-sm mb-2">
                         📚 Serão geradas 10 questões de múltipla escolha
                       </p>
-                      <p className="text-white/60 text-sm mb-2">
+                      <p className="text-white/60 text-xs md:text-sm mb-2">
                         ✅ Gabarito completo com explicações detalhadas
                       </p>
-                      <p className="text-yellow-400/80 text-sm">
+                      <p className="text-yellow-400/80 text-xs md:text-sm">
                         ⚠️ Progresso será perdido se sair da página durante o quiz
                       </p>
                     </div>
@@ -436,16 +436,16 @@ export default function QuestionsPage() {
 
               {/* QUIZ VIEW */}
               {viewState === 'quiz' && currentQuestion && (
-                <div className="space-y-8 max-w-4xl mx-auto">
+                <div className="space-y-6 md:space-y-8 max-w-4xl mx-auto">
                   {/* Progress */}
                   <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
+                    <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full"
                       style={{
                         background: 'rgba(189, 24, 180, 0.1)',
                         border: '1px solid rgba(189, 24, 180, 0.3)',
                       }}
                     >
-                      <span className="text-white/80 text-sm">
+                      <span className="text-white/80 text-xs md:text-sm">
                         Questão {currentQuestionIndex + 1} de {questions.length}
                       </span>
                     </div>
@@ -453,7 +453,7 @@ export default function QuestionsPage() {
 
                   {/* Question Card */}
                   <div
-                    className="rounded-3xl p-8"
+                    className="rounded-2xl md:rounded-3xl p-4 md:p-8"
                     style={{
                       background: 'rgba(255, 255, 255, 0.05)',
                       backdropFilter: 'blur(10px)',
@@ -461,12 +461,12 @@ export default function QuestionsPage() {
                       border: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
                   >
-                    <h2 className="text-2xl font-light text-white mb-8">
+                    <h2 className="text-lg md:text-2xl font-light text-white mb-6 md:mb-8">
                       {currentQuestion.questionText}
                     </h2>
 
                     {/* Options */}
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                       {currentQuestion.options.map((option) => {
                         const isSelected = selectedOption === option.optionNumber;
                         const isCorrect = answerFeedback?.correctOption === option.optionNumber;
@@ -493,7 +493,7 @@ export default function QuestionsPage() {
                             key={option.id}
                             onClick={() => !answerFeedback && setSelectedOption(option.optionNumber)}
                             disabled={!!answerFeedback}
-                            className="w-full text-left px-6 py-4 rounded-2xl transition-all duration-200 hover:scale-[1.02] disabled:cursor-not-allowed"
+                            className="w-full text-left px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl transition-all duration-200 hover:scale-[1.02] disabled:cursor-not-allowed"
                             style={{
                               background: bgColor,
                               backdropFilter: 'blur(10px)',
@@ -501,10 +501,10 @@ export default function QuestionsPage() {
                               border: `2px solid ${borderColor}`,
                             }}
                           >
-                            <div className="flex items-center justify-between gap-4">
-                              <div className="flex items-center gap-4 flex-1">
+                            <div className="flex items-center justify-between gap-3 md:gap-4">
+                              <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
                                 <div
-                                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                  className="w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center flex-shrink-0"
                                   style={{
                                     background: answerFeedback
                                       ? isCorrect
@@ -517,16 +517,16 @@ export default function QuestionsPage() {
                                       : 'rgba(255, 255, 255, 0.1)',
                                   }}
                                 >
-                                  <span className="text-white font-medium">{option.optionNumber}</span>
+                                  <span className="text-white font-medium text-sm md:text-base">{option.optionNumber}</span>
                                 </div>
-                                <span className="text-white/90">{option.optionText}</span>
+                                <span className="text-white/90 text-sm md:text-base break-words">{option.optionText}</span>
                               </div>
 
                               {answerFeedback && isCorrect && (
-                                <Check className="w-6 h-6 text-green-400 flex-shrink-0" />
+                                <Check className="w-5 h-5 md:w-6 md:h-6 text-green-400 flex-shrink-0" />
                               )}
                               {answerFeedback && isWrong && (
-                                <X className="w-6 h-6 text-red-400 flex-shrink-0" />
+                                <X className="w-5 h-5 md:w-6 md:h-6 text-red-400 flex-shrink-0" />
                               )}
                             </div>
                           </button>
@@ -537,7 +537,7 @@ export default function QuestionsPage() {
                     {/* Feedback */}
                     {answerFeedback && (
                       <div
-                        className="mt-6 p-6 rounded-2xl"
+                        className="mt-4 md:mt-6 p-4 md:p-6 rounded-xl md:rounded-2xl"
                         style={{
                           background: answerFeedback.isCorrect
                             ? 'rgba(34, 197, 94, 0.1)'
@@ -547,29 +547,29 @@ export default function QuestionsPage() {
                             : '1px solid rgba(239, 68, 68, 0.3)',
                         }}
                       >
-                        <div className="flex items-start gap-3 mb-3">
+                        <div className="flex items-start gap-2 md:gap-3 mb-2 md:mb-3">
                           {answerFeedback.isCorrect ? (
-                            <Check className="w-6 h-6 text-green-400 flex-shrink-0" />
+                            <Check className="w-5 h-5 md:w-6 md:h-6 text-green-400 flex-shrink-0" />
                           ) : (
-                            <X className="w-6 h-6 text-red-400 flex-shrink-0" />
+                            <X className="w-5 h-5 md:w-6 md:h-6 text-red-400 flex-shrink-0" />
                           )}
-                          <div>
-                            <h3 className={`font-semibold mb-2 ${answerFeedback.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`font-semibold mb-1 md:mb-2 text-sm md:text-base ${answerFeedback.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
                               {answerFeedback.isCorrect ? 'Correto!' : 'Incorreto'}
                             </h3>
-                            <p className="text-white/80 text-sm">{answerFeedback.explanation}</p>
+                            <p className="text-white/80 text-xs md:text-sm break-words">{answerFeedback.explanation}</p>
                           </div>
                         </div>
                       </div>
                     )}
 
                     {/* Action Button */}
-                    <div className="mt-8 flex justify-center">
+                    <div className="mt-6 md:mt-8 flex justify-center">
                       {!answerFeedback ? (
                         <button
                           onClick={handleSubmitAnswer}
                           disabled={selectedOption === null || loading}
-                          className="flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                          className="flex items-center gap-2 px-6 md:px-8 py-2.5 md:py-3 rounded-full font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 text-sm md:text-base"
                           style={{
                             background: 'linear-gradient(135deg, #bd18b4 0%, #e91e63 100%)',
                           }}
@@ -580,7 +580,7 @@ export default function QuestionsPage() {
                         <button
                           onClick={handleNextQuestion}
                           disabled={loading}
-                          className="flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all duration-200 hover:scale-105"
+                          className="flex items-center gap-2 px-6 md:px-8 py-2.5 md:py-3 rounded-full font-medium transition-all duration-200 hover:scale-105 text-sm md:text-base"
                           style={{
                             background: 'linear-gradient(135deg, #bd18b4 0%, #e91e63 100%)',
                           }}
@@ -588,7 +588,7 @@ export default function QuestionsPage() {
                           {currentQuestionIndex < questions.length - 1 ? (
                             <>
                               Próxima
-                              <ArrowRight className="w-5 h-5" />
+                              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
                             </>
                           ) : (
                             'Ver Resultado'
@@ -602,10 +602,10 @@ export default function QuestionsPage() {
 
               {/* RESULT VIEW */}
               {viewState === 'result' && finalResult && (
-                <div className="space-y-8 max-w-7xl mx-auto">
+                <div className="space-y-6 md:space-y-8 max-w-7xl mx-auto pt-8 md:pt-8">
                   {/* Score Card */}
                   <div
-                    className="rounded-3xl p-8 text-center max-w-2xl mx-auto"
+                    className="rounded-2xl md:rounded-3xl p-6 md:p-8 text-center max-w-2xl mx-auto"
                     style={{
                       background: 'rgba(255, 255, 255, 0.05)',
                       backdropFilter: 'blur(10px)',
@@ -613,42 +613,42 @@ export default function QuestionsPage() {
                       border: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
                   >
-                    <h2 className="text-4xl font-light mb-4 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                    <h2 className="text-2xl md:text-4xl font-light mb-3 md:mb-4 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                       Quiz Concluído!
                     </h2>
-                    <p className="text-white/60 mb-6">Tema: {topic}</p>
+                    <p className="text-white/60 mb-4 md:mb-6 text-sm md:text-base">Tema: {topic}</p>
 
-                    <div className="inline-flex items-center gap-4 px-8 py-4 rounded-2xl"
+                    <div className="inline-flex items-center gap-3 md:gap-4 px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl"
                       style={{
                         background: 'rgba(189, 24, 180, 0.1)',
                         border: '1px solid rgba(189, 24, 180, 0.3)',
                       }}
                     >
-                      <span className="text-5xl font-bold text-white">{finalResult.score}</span>
-                      <span className="text-white/60 text-xl">/ {finalResult.totalQuestions}</span>
+                      <span className="text-3xl md:text-5xl font-bold text-white">{finalResult.score}</span>
+                      <span className="text-white/60 text-lg md:text-xl">/ {finalResult.totalQuestions}</span>
                     </div>
 
-                    <p className="mt-4 text-white/60">
+                    <p className="mt-3 md:mt-4 text-white/60 text-sm md:text-base">
                       Você acertou {Math.round((finalResult.score / finalResult.totalQuestions) * 100)}% das questões
                     </p>
 
                     {/* Action Buttons */}
-                    <div className="flex justify-center gap-4 mt-8">
+                    <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4 mt-6 md:mt-8">
                       <button
                         onClick={handleDownloadPDF}
-                        className="flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-200 hover:scale-105"
+                        className="flex items-center justify-center gap-2 px-5 md:px-6 py-2.5 md:py-3 rounded-full transition-all duration-200 hover:scale-105 text-sm md:text-base"
                         style={{
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                         }}
                       >
-                        <Download className="w-5 h-5" />
+                        <Download className="w-4 h-4 md:w-5 md:h-5" />
                         Baixar PDF
                       </button>
 
                       <button
                         onClick={handleStartNewQuiz}
-                        className="flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 hover:scale-105"
+                        className="flex items-center justify-center gap-2 px-5 md:px-6 py-2.5 md:py-3 rounded-full font-medium transition-all duration-200 hover:scale-105 text-sm md:text-base"
                         style={{
                           background: 'linear-gradient(135deg, #bd18b4 0%, #e91e63 100%)',
                         }}
@@ -660,13 +660,13 @@ export default function QuestionsPage() {
 
                   {/* Gabarito */}
                   <div>
-                    <h3 className="text-2xl font-light text-white mb-6">Gabarito Completo</h3>
+                    <h3 className="text-xl md:text-2xl font-light text-white mb-4 md:mb-6">Gabarito Completo</h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                       {finalResult.questions.map((question, index) => (
                         <div
                           key={index}
-                          className="rounded-2xl p-6 flex flex-col"
+                          className="rounded-xl md:rounded-2xl p-4 md:p-6 flex flex-col"
                           style={{
                             background: 'rgba(255, 255, 255, 0.05)',
                             backdropFilter: 'blur(10px)',
@@ -674,9 +674,9 @@ export default function QuestionsPage() {
                             border: '1px solid rgba(255, 255, 255, 0.1)',
                           }}
                         >
-                          <div className="flex items-start gap-3 mb-5">
+                          <div className="flex items-start gap-2 md:gap-3 mb-4 md:mb-5">
                             <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                              className="w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center flex-shrink-0"
                               style={{
                                 background: question.isCorrect
                                   ? 'rgba(34, 197, 94, 0.2)'
@@ -684,17 +684,17 @@ export default function QuestionsPage() {
                               }}
                             >
                               {question.isCorrect ? (
-                                <Check className="w-5 h-5 text-green-400" />
+                                <Check className="w-4 h-4 md:w-5 md:h-5 text-green-400" />
                               ) : (
-                                <X className="w-5 h-5 text-red-400" />
+                                <X className="w-4 h-4 md:w-5 md:h-5 text-red-400" />
                               )}
                             </div>
-                            <h4 className="text-base font-medium text-white flex-1 leading-snug">
+                            <h4 className="text-sm md:text-base font-medium text-white flex-1 leading-snug">
                               {index + 1}. {question.questionText}
                             </h4>
                           </div>
 
-                          <div className="space-y-2.5 mb-5 ml-11 flex-grow">
+                          <div className="space-y-2 md:space-y-2.5 mb-4 md:mb-5 ml-9 md:ml-11 flex-grow">
                             {question.options.map((option) => {
                               const isCorrect = option.optionNumber === question.correctOption;
                               const isSelected = option.optionNumber === question.selectedOption;
@@ -702,7 +702,7 @@ export default function QuestionsPage() {
                               return (
                                 <div
                                   key={option.optionNumber}
-                                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg"
+                                  className="flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg"
                                   style={{
                                     background: isCorrect
                                       ? 'rgba(34, 197, 94, 0.1)'
@@ -711,9 +711,9 @@ export default function QuestionsPage() {
                                       : 'transparent',
                                   }}
                                 >
-                                  {isCorrect && <Check className="w-4 h-4 text-green-400 flex-shrink-0" />}
-                                  {isSelected && !isCorrect && <X className="w-4 h-4 text-red-400 flex-shrink-0" />}
-                                  <span className={`text-sm leading-relaxed ${isCorrect ? 'text-green-400' : isSelected ? 'text-red-400' : 'text-white/60'}`}>
+                                  {isCorrect && <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-400 flex-shrink-0" />}
+                                  {isSelected && !isCorrect && <X className="w-3.5 h-3.5 md:w-4 md:h-4 text-red-400 flex-shrink-0" />}
+                                  <span className={`text-xs md:text-sm leading-relaxed break-words ${isCorrect ? 'text-green-400' : isSelected ? 'text-red-400' : 'text-white/60'}`}>
                                     {option.optionNumber}. {option.optionText}
                                   </span>
                                 </div>
@@ -722,13 +722,13 @@ export default function QuestionsPage() {
                           </div>
 
                           <div
-                            className="p-4 rounded-lg ml-11 mt-auto"
+                            className="p-3 md:p-4 rounded-lg ml-9 md:ml-11 mt-auto"
                             style={{
                               background: 'rgba(255, 255, 255, 0.05)',
                               border: '1px solid rgba(255, 255, 255, 0.1)',
                             }}
                           >
-                            <p className="text-white/60 text-sm leading-relaxed">
+                            <p className="text-white/60 text-xs md:text-sm leading-relaxed break-words">
                               <span className="text-white/80 font-medium">Explicação:</span> {question.explanation}
                             </p>
                           </div>

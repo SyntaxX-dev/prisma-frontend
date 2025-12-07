@@ -211,19 +211,19 @@ function SettingsContent() {
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-          <div className="p-2 ml-10" style={{ marginTop: '80px' }}>
-            <div className="mb-8">
-              <div className="flex items-center gap-4 mb-6">
-                <div>
-                  <h1 className="text-white text-3xl font-bold">Configurações</h1>
-                  <p className="text-white/60 text-lg">Personalize sua experiência na plataforma</p>
+          <div className="p-4 md:p-2 ml-0 md:ml-10" style={{ marginTop: '80px' }}>
+            <div className="mb-6 md:mb-8">
+              <div className="flex items-center justify-center md:justify-start gap-4 mb-4 md:mb-6">
+                <div className="text-center md:text-left">
+                  <h1 className="text-white text-2xl md:text-3xl font-bold">Configurações</h1>
+                  <p className="text-white/60 text-base md:text-lg">Personalize sua experiência na plataforma</p>
                 </div>
               </div>
             </div>
 
-            <div className="w-full space-y-6">
+            <div className="w-full max-w-7xl mx-auto space-y-6">
               {/* Seção de Trocar de Plano - Topo, largura completa */}
-              <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+              <Card className="bg-[#bd18b4]/5 backdrop-blur-sm border-[#bd18b4]/20">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     Trocar de Plano
@@ -234,18 +234,16 @@ function SettingsContent() {
                     Escolha o plano que melhor se adequa às suas necessidades. Você pode trocar a qualquer momento.
                   </p>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
                     {plans.map((plan) => (
                       <div
                         key={plan.name}
-                        className={`relative rounded-xl border-2 p-6 transition-all cursor-pointer flex flex-col h-full ${
-                          plan.popular
+                        className={`relative rounded-xl border-2 p-4 md:p-6 transition-all cursor-pointer flex flex-col h-full ${
+                          subscriptionPlan === plan.name
+                            ? 'border-[#bd18b4]/40 bg-[#bd18b4]/5 ring-2 ring-[#bd18b4]/30 ring-offset-2 ring-offset-gray-900'
+                            : plan.popular
                             ? 'border-[#B4FF39] bg-[#B4FF39]/10'
                             : 'border-white/20 bg-white/5 hover:border-white/40'
-                        } ${
-                          subscriptionPlan === plan.name
-                            ? 'ring-2 ring-[#B4FF39] ring-offset-2 ring-offset-gray-900'
-                            : ''
                         }`}
                         onClick={() => handleChangePlan(plan.name)}
                       >
@@ -259,8 +257,8 @@ function SettingsContent() {
 
                         {subscriptionPlan === plan.name && (
                           <div className="absolute top-4 right-4">
-                            <div className="w-6 h-6 rounded-full bg-[#B4FF39] flex items-center justify-center">
-                              <Check className="w-4 h-4 text-black" />
+                            <div className="w-6 h-6 rounded-full bg-[#bd18b4]/30 flex items-center justify-center">
+                              <Check className="w-4 h-4 text-[#c532e2]" />
                             </div>
                           </div>
                         )}
@@ -287,7 +285,7 @@ function SettingsContent() {
                             onClick={() => handleChangePlan(plan.name)}
                             className={`w-full cursor-pointer ${
                               subscriptionPlan === plan.name
-                                ? 'bg-white/20 text-white cursor-not-allowed'
+                                ? 'bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] cursor-not-allowed'
                                 : plan.popular
                                 ? 'bg-[#B4FF39] hover:bg-[#B4FF39]/80 text-black'
                                 : 'bg-white/10 hover:bg-white/20 text-white'
@@ -306,7 +304,7 @@ function SettingsContent() {
               {/* Cards de Ações - Grid com 3 cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Card de Sugestões via WhatsApp */}
-                <Card className="bg-white/5 backdrop-blur-sm border-white/10 flex flex-col h-full">
+                <Card className="bg-[#bd18b4]/5 backdrop-blur-sm border-[#bd18b4]/20 flex flex-col h-full">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <MessageCircle className="w-5 h-5 text-[#c532e2]" />
@@ -327,7 +325,7 @@ function SettingsContent() {
                           const message = encodeURIComponent('Olá! Gostaria de dar uma sugestão sobre a plataforma.');
                           window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
                         }}
-                        className="w-full bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] border border-[#bd18b4]/30 cursor-pointer"
+                        className="w-full bg-[#bd18b4]/10 hover:bg-[#bd18b4]/20 text-[#c532e2] border border-[#bd18b4]/20 cursor-pointer"
                       >
                         <MessageCircle className="w-4 h-4 mr-2" />
                         Enviar Mensagem
@@ -337,7 +335,7 @@ function SettingsContent() {
                 </Card>
 
                 {/* Card de Produtor Exclusivo */}
-                <Card className="bg-white/5 backdrop-blur-sm border-white/10 flex flex-col h-full">
+                <Card className="bg-[#bd18b4]/5 backdrop-blur-sm border-[#bd18b4]/20 flex flex-col h-full">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <UserPlus className="w-5 h-5 text-purple-400" />
@@ -368,7 +366,7 @@ function SettingsContent() {
                 </Card>
 
                 {/* Card de Assinatura/Cancelamento */}
-                <Card className="bg-white/5 backdrop-blur-sm border-white/10 flex flex-col h-full">
+                <Card className="bg-[#bd18b4]/5 backdrop-blur-sm border-[#bd18b4]/20 flex flex-col h-full">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <CreditCard className="w-5 h-5 text-yellow-400" />
@@ -504,14 +502,12 @@ function SettingsContent() {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-xl border-2 p-6 transition-all cursor-pointer flex flex-col h-full ${
-                  plan.popular
+                className={`relative rounded-xl border-2 p-4 md:p-6 transition-all cursor-pointer flex flex-col h-full ${
+                  subscriptionPlan === plan.name
+                    ? 'border-[#bd18b4]/40 bg-[#bd18b4]/5 ring-2 ring-[#bd18b4]/30 ring-offset-2 ring-offset-gray-900'
+                    : plan.popular
                     ? 'border-[#B4FF39] bg-[#B4FF39]/10'
                     : 'border-white/20 bg-white/5 hover:border-white/40'
-                } ${
-                  subscriptionPlan === plan.name
-                    ? 'ring-2 ring-[#B4FF39] ring-offset-2 ring-offset-gray-900'
-                    : ''
                 }`}
                 onClick={() => handleChangePlan(plan.name)}
               >
@@ -525,8 +521,8 @@ function SettingsContent() {
 
                 {subscriptionPlan === plan.name && (
                   <div className="absolute top-4 right-4">
-                    <div className="w-6 h-6 rounded-full bg-[#B4FF39] flex items-center justify-center">
-                      <Check className="w-4 h-4 text-black" />
+                    <div className="w-6 h-6 rounded-full bg-[#bd18b4]/30 flex items-center justify-center">
+                      <Check className="w-4 h-4 text-[#c532e2]" />
                     </div>
                   </div>
                 )}
@@ -552,7 +548,7 @@ function SettingsContent() {
                   <Button
                     className={`w-full ${
                       subscriptionPlan === plan.name
-                        ? 'bg-white/20 text-white cursor-not-allowed'
+                        ? 'bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] cursor-not-allowed'
                         : plan.popular
                         ? 'bg-[#B4FF39] hover:bg-[#B4FF39]/80 text-black cursor-pointer'
                         : 'bg-white/10 hover:bg-white/20 text-white cursor-pointer'
