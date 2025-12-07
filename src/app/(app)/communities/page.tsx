@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, Menu, X, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { CommunityList } from "@/components/features/communities/CommunityList";
 import { CommunityChat } from "@/components/features/communities/CommunityChat";
 import { CommunityInfo } from "@/components/features/communities/CommunityInfo";
@@ -523,6 +523,9 @@ function CommunitiesPageContent() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [tooltipCommunity, setTooltipCommunity] = useState<Community | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | undefined>();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
+  const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(true);
   
   // Estados para chat direto
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -687,6 +690,20 @@ function CommunitiesPageContent() {
       hasLoadedCommunities.current = true;
       loadCommunities();
     }
+  }, []);
+
+  // Abrir sidebar esquerda no mobile ao carregar a página
+  useEffect(() => {
+    const checkMobile = () => {
+      if (window.innerWidth < 1024) { // lg breakpoint do Tailwind
+        setIsMobileSidebarOpen(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Este useEffect foi removido - a restauração agora é feita no useEffect abaixo (linha 709)
@@ -1174,65 +1191,182 @@ function CommunitiesPageContent() {
         />
       </div>
 
-      <div className="relative z-10 flex h-screen w-screen overflow-hidden p-4 pt-6 gap-3">
-      {/* Communities List - Ilha Esquerda */}
-        <CommunityList
-          communities={communities}
-          selectedCommunityId={selectedCommunityId}
-          onSelectCommunity={(id) => {
-            // Buscar a comunidade na lista
-            const community = communities.find(c => c.id === id);
-            if (!community) return;
-            
-            // Se for membro ou dono, abrir normalmente
-            if (community.isMember || community.isOwner) {
-            setSelectedCommunityId(id);
-            setSelectedChatUserId(null);
-              // Salvar como última conversa
-              saveLastConversation('community', id);
-              // Atualizar URL com community param
-              const params = new URLSearchParams(searchParams.toString());
-              params.set('community', id);
-              params.delete('chat'); // Remover chat param se existir
-              router.push(`/communities?${params.toString()}`);
-            } else if (community.visibility === 'PUBLIC') {
-              // Se for pública e não for membro, mostrar tooltip centralizado
-              setTooltipPosition({
-                x: window.innerWidth / 2 - 160,
-                y: window.innerHeight / 2 - 200,
-              });
-              setTooltipCommunity(community);
-            }
-            // Se for privada e não for membro, não fazer nada (não deveria aparecer na lista)
-          }}
-          onCreateCommunity={() => setIsCreateModalOpen(true)}
-          onCommunityClick={handleCommunityClick}
-          conversations={conversations}
-          selectedChatUserId={selectedChatUserId}
-          onSelectConversation={(userId) => {
-            setSelectedChatUserId(userId);
-            setSelectedCommunityId(undefined);
-            // Salvar como última conversa
-            saveLastConversation('chat', userId);
-            // Atualizar URL com chat param
-            const params = new URLSearchParams(searchParams.toString());
-            params.set('chat', userId);
-            params.delete('community'); // Remover community param se existir
-            router.push(`/communities?${params.toString()}`);
-            loadChatUser(userId);
-          }}
+      <div className="relative z-10 flex h-screen w-screen overflow-hidden p-2 md:p-4 pt-4 md:pt-6 gap-2 md:gap-3">
+      
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          onClick={() => setIsMobileSidebarOpen(false)}
         />
+      )}
+
+      {/* Communities List - Sidebar Esquerda */}
+      <div className={`
+        hidden lg:block relative
+        transition-all duration-300 ease-in-out
+        ${isLeftSidebarCollapsed ? 'w-0' : 'w-auto'}
+      `}>
+        {!isLeftSidebarCollapsed && (
+          <CommunityList
+            communities={communities}
+            selectedCommunityId={selectedCommunityId}
+            onSelectCommunity={(id) => {
+              // Buscar a comunidade na lista
+              const community = communities.find(c => c.id === id);
+              if (!community) return;
+              
+              // Se for membro ou dono, abrir normalmente
+              if (community.isMember || community.isOwner) {
+              setSelectedCommunityId(id);
+              setSelectedChatUserId(null);
+                // Salvar como última conversa
+                saveLastConversation('community', id);
+                // Atualizar URL com community param
+                const params = new URLSearchParams(searchParams.toString());
+                params.set('community', id);
+                params.delete('chat'); // Remover chat param se existir
+                router.push(`/communities?${params.toString()}`);
+              } else if (community.visibility === 'PUBLIC') {
+                // Se for pública e não for membro, mostrar tooltip centralizado
+                setTooltipPosition({
+                  x: window.innerWidth / 2 - 160,
+                  y: window.innerHeight / 2 - 200,
+                });
+                setTooltipCommunity(community);
+              }
+              // Se for privada e não for membro, não fazer nada (não deveria aparecer na lista)
+            }}
+            onCreateCommunity={() => setIsCreateModalOpen(true)}
+            onCommunityClick={handleCommunityClick}
+            conversations={conversations}
+            selectedChatUserId={selectedChatUserId}
+            onSelectConversation={(userId) => {
+              setSelectedChatUserId(userId);
+              setSelectedCommunityId(undefined);
+              // Salvar como última conversa
+              saveLastConversation('chat', userId);
+              // Atualizar URL com chat param
+              const params = new URLSearchParams(searchParams.toString());
+              params.set('chat', userId);
+              params.delete('community'); // Remover community param se existir
+              router.push(`/communities?${params.toString()}`);
+              loadChatUser(userId);
+            }}
+          />
+        )}
+        
+        {/* Botão de colapsar sidebar esquerda */}
+        <button
+          onClick={() => setIsLeftSidebarCollapsed(!isLeftSidebarCollapsed)}
+          className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-r-lg hover:bg-white/20 transition-all flex items-center justify-center"
+          title={isLeftSidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+        >
+          {isLeftSidebarCollapsed ? (
+            <ChevronRight className="w-4 h-4 text-white" />
+          ) : (
+            <ChevronLeft className="w-4 h-4 text-white" />
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Left Sidebar Modal */}
+      {isMobileSidebarOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+          
+          {/* Sidebar Modal */}
+          <div className="lg:hidden fixed top-0 left-0 right-0 bottom-0 z-50 w-full h-screen bg-[#040404] border-r border-white/10 overflow-y-auto transform transition-transform duration-300">
+            {/* Botão de fechar */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="absolute top-4 right-4 z-[1] p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            
+            <div className="pt-20 h-full">
+              <CommunityList
+                communities={communities}
+                selectedCommunityId={selectedCommunityId}
+                onSelectCommunity={(id) => {
+                // Buscar a comunidade na lista
+                const community = communities.find(c => c.id === id);
+                if (!community) return;
+                
+                // Se for membro ou dono, abrir normalmente
+                if (community.isMember || community.isOwner) {
+                  // Fechar sidebar mobile primeiro
+                  setIsMobileSidebarOpen(false);
+                  // Atualizar estados
+                  setSelectedCommunityId(id);
+                  setSelectedChatUserId(null);
+                  // Salvar como última conversa
+                  saveLastConversation('community', id);
+                  // Atualizar URL com community param
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set('community', id);
+                  params.delete('chat'); // Remover chat param se existir
+                  router.push(`/communities?${params.toString()}`);
+                } else if (community.visibility === 'PUBLIC') {
+                  // Se for pública e não for membro, mostrar tooltip centralizado
+                  setTooltipPosition({
+                    x: window.innerWidth / 2 - 160,
+                    y: window.innerHeight / 2 - 200,
+                  });
+                  setTooltipCommunity(community);
+                }
+              }}
+              onCreateCommunity={() => {
+                setIsCreateModalOpen(true);
+                setIsMobileSidebarOpen(false);
+              }}
+              onCommunityClick={handleCommunityClick}
+              conversations={conversations}
+              selectedChatUserId={selectedChatUserId}
+              onSelectConversation={(userId) => {
+                // Fechar sidebar mobile primeiro
+                setIsMobileSidebarOpen(false);
+                // Atualizar estados
+                setSelectedChatUserId(userId);
+                setSelectedCommunityId(undefined);
+                // Salvar como última conversa
+                saveLastConversation('chat', userId);
+                // Atualizar URL com chat param
+                const params = new URLSearchParams(searchParams.toString());
+                params.set('chat', userId);
+                params.delete('community'); // Remover community param se existir
+                router.push(`/communities?${params.toString()}`);
+                loadChatUser(userId);
+              }}
+            />
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Chat Area - Coluna Central + Direita */}
       {selectedChatUserId && userProfile ? (
-        <div className="flex-1 flex flex-col gap-3">
+        <div className="flex-1 flex flex-col gap-2 md:gap-3 relative z-10">
           {/* Header Global - Fora da Ilha */}
           {isLoadingChatUser || !chatUser || isLoadingConversation ? (
             <ChatHeaderSkeleton />
           ) : (
-          <div className="flex items-center justify-between gap-4">
-            {/* Nome do Usuário com Avatar */}
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            {/* Botão Menu - Apenas Mobile */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+            >
+              <Menu className="w-5 h-5 text-white" />
+            </button>
+
+            {/* Nome do Usuário com Avatar - Desktop apenas */}
+            <div className="hidden lg:flex items-center gap-3">
               <Avatar className="w-10 h-10">
                 <AvatarImage 
                   src={chatUser.profileImage || undefined} 
@@ -1247,12 +1381,12 @@ function CommunitiesPageContent() {
               </h1>
             </div>
             
-            {/* Search Bar + Actions */}
-            <div className="flex items-center gap-4">
+            {/* Search Bar + Actions - Centralizado no mobile */}
+            <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-initial justify-center lg:justify-end">
               {/* Search Bar */}
-              <div className="relative flex items-center gap-2" style={{ width: '280px' }}>
+              <div className="relative flex items-center gap-2 flex-1 lg:flex-initial max-w-xs lg:max-w-none" style={{ minWidth: '200px', maxWidth: '280px' }}>
                 <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                   <input
                     type="text"
                     placeholder="Search"
@@ -1303,7 +1437,7 @@ function CommunitiesPageContent() {
                       setCurrentSearchIndex(0);
                       setLastSearchQuery('');
                     }}
-                    className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
+                    className="w-full h-10 sm:h-12 pl-9 sm:pl-12 pr-3 sm:pr-4 rounded-full text-white text-sm sm:text-base placeholder:text-gray-500 focus:outline-none transition-colors"
                     style={{
                       background: 'rgb(30, 30, 30)',
                     }}
@@ -1311,7 +1445,7 @@ function CommunitiesPageContent() {
                 </div>
                 {/* Botões de navegação */}
                 {hasMultipleMatches && (
-                  <div className="flex flex-col gap-0.5">
+                  <div className="hidden sm:flex flex-col gap-0.5">
                     <button
                       type="button"
                       onMouseDown={(e) => {
@@ -1361,9 +1495,11 @@ function CommunitiesPageContent() {
               </div>
 
               {/* Right Actions */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <NotificationsDropdown />
-                <div className="w-12 h-12 rounded-full relative">
+                
+                {/* Avatar - Desktop apenas */}
+                <div className="hidden lg:block w-12 h-12 rounded-full relative">
                   <Avatar className="w-full h-full">
                     <AvatarImage 
                       src={userProfile?.profileImage || undefined} 
@@ -1376,6 +1512,14 @@ function CommunitiesPageContent() {
                   </Avatar>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#bd18b4] rounded-full border-2 border-[#040404]" />
                 </div>
+
+                {/* Botão Sidebar Direita - Apenas Mobile */}
+                <button
+                  onClick={() => setIsRightSidebarCollapsed(!isRightSidebarCollapsed)}
+                  className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                >
+                  <PanelRightOpen className="w-5 h-5 text-white" />
+                </button>
               </div>
             </div>
           </div>
@@ -1423,55 +1567,117 @@ function CommunitiesPageContent() {
               )}
             </div>
             
-            {/* Community Info Sidebar - Ilhas Direita */}
-            {isLoadingChatUser || !chatUser || isLoadingConversation ? (
-              <ChatSidebarSkeleton />
-            ) : (
-              chatUser && (
-            <CommunityInfo 
-              community={{
-                id: `chat-${chatUser.id}`,
-                name: chatUser.name,
-                description: '',
-                avatarUrl: chatUser.profileImage || undefined,
-                memberCount: 2,
-                isOwner: false,
-                isMember: true,
-                createdAt: new Date().toISOString(),
-              }}
-              onStartVideoCall={() => {}}
-              onStartVoiceCall={async () => {
-                try {
-                  await startCall(chatUser.id);
-                } catch (error) {
-                  console.error('Erro ao iniciar chamada:', error);
-                }
-              }}
-              isFromSidebar={false}
-                  pinnedMessages={pinnedMessages}
-                  currentUserId={userProfile.id}
-                  currentUserAvatar={userProfile.profileImage}
-                  friendName={chatUser.name}
-                  friendAvatar={chatUser.profileImage}
-                  onUnpinMessage={unpinMessage}
-            />
-              )
+            {/* Community Info Sidebar - Desktop sempre aberta */}
+            <div className="hidden lg:block relative">
+              {isLoadingChatUser || !chatUser || isLoadingConversation ? (
+                <ChatSidebarSkeleton />
+              ) : (
+                chatUser && (
+                  <CommunityInfo 
+                    community={{
+                      id: `chat-${chatUser.id}`,
+                      name: chatUser.name,
+                      description: '',
+                      avatarUrl: chatUser.profileImage || undefined,
+                      memberCount: 2,
+                      isOwner: false,
+                      isMember: true,
+                      createdAt: new Date().toISOString(),
+                    }}
+                    onStartVideoCall={() => {}}
+                    onStartVoiceCall={async () => {
+                      try {
+                        await startCall(chatUser.id);
+                      } catch (error) {
+                        console.error('Erro ao iniciar chamada:', error);
+                      }
+                    }}
+                    isFromSidebar={false}
+                    pinnedMessages={pinnedMessages}
+                    currentUserId={userProfile.id}
+                    currentUserAvatar={userProfile.profileImage}
+                    friendName={chatUser.name}
+                    friendAvatar={chatUser.profileImage}
+                    onUnpinMessage={unpinMessage}
+                  />
+                )
+              )}
+            </div>
+
+            {/* Mobile Right Sidebar Modal - Chat Direto */}
+            {!isRightSidebarCollapsed && chatUser && (
+              <>
+                {/* Overlay */}
+                <div 
+                  className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                  onClick={() => setIsRightSidebarCollapsed(true)}
+                />
+                
+                {/* Sidebar Modal */}
+                <div className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transform transition-transform duration-300">
+                  {/* Botão de fechar */}
+                  <button
+                    onClick={() => setIsRightSidebarCollapsed(true)}
+                    className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
+                  
+                  <div className="pt-16 px-4 flex justify-center">
+                    <CommunityInfo 
+                    community={{
+                      id: `chat-${chatUser.id}`,
+                      name: chatUser.name,
+                      description: '',
+                      avatarUrl: chatUser.profileImage || undefined,
+                      memberCount: 2,
+                      isOwner: false,
+                      isMember: true,
+                      createdAt: new Date().toISOString(),
+                    }}
+                    onStartVideoCall={() => {}}
+                    onStartVoiceCall={async () => {
+                      try {
+                        await startCall(chatUser.id);
+                      } catch (error) {
+                        console.error('Erro ao iniciar chamada:', error);
+                      }
+                    }}
+                    isFromSidebar={false}
+                    pinnedMessages={pinnedMessages}
+                    currentUserId={userProfile.id}
+                    currentUserAvatar={userProfile.profileImage}
+                    friendName={chatUser.name}
+                    friendAvatar={chatUser.profileImage}
+                    onUnpinMessage={unpinMessage}
+                  />
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
       ) : selectedCommunity ? (
-        <div className="flex-1 flex flex-col gap-3">
+        <div className="flex-1 flex flex-col gap-2 md:gap-3 relative z-10">
           {/* Header Global - Fora da Ilha */}
-          <div className="flex items-center justify-between gap-4">
-            {/* Nome da Comunidade */}
-            <h1 className="text-white font-semibold text-2xl">{selectedCommunity.name}</h1>
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            {/* Botão Menu - Apenas Mobile */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+            >
+              <Menu className="w-5 h-5 text-white" />
+            </button>
+
+            {/* Nome da Comunidade - Desktop apenas */}
+            <h1 className="hidden lg:block text-white font-semibold text-2xl">{selectedCommunity.name}</h1>
             
-            {/* Search Bar + Actions */}
-            <div className="flex items-center gap-4">
+            {/* Search Bar + Actions - Centralizado no mobile */}
+            <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-initial justify-center lg:justify-end">
               {/* Search Bar */}
-              <div className="relative flex items-center gap-2" style={{ width: '280px' }}>
+              <div className="relative flex items-center gap-2 flex-1 lg:flex-initial max-w-xs lg:max-w-none" style={{ minWidth: '200px', maxWidth: '280px' }}>
                 <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <Search className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-gray-500" />
                   <input
                     type="text"
                     placeholder="Search"
@@ -1522,7 +1728,7 @@ function CommunitiesPageContent() {
                       setCurrentCommunitySearchIndex(0);
                       setLastCommunitySearchQuery('');
                     }}
-                    className="w-full h-12 pl-12 pr-4 rounded-full text-white placeholder:text-gray-500 focus:outline-none transition-colors"
+                    className="w-full h-10 lg:h-12 pl-9 lg:pl-12 pr-3 lg:pr-4 rounded-full text-white text-sm lg:text-base placeholder:text-gray-500 focus:outline-none transition-colors"
                     style={{
                       background: 'rgb(30, 30, 30)',
                     }}
@@ -1578,9 +1784,11 @@ function CommunitiesPageContent() {
               </div>
 
               {/* Right Actions */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <NotificationsDropdown />
-                <div className="w-12 h-12 rounded-full relative">
+                
+                {/* Avatar - Desktop apenas */}
+                <div className="hidden lg:block w-12 h-12 rounded-full relative">
                   <Avatar className="w-12 h-12">
                     <AvatarImage 
                       src={userProfile?.profileImage || undefined} 
@@ -1600,12 +1808,20 @@ function CommunitiesPageContent() {
                     }} 
                   />
                 </div>
+
+                {/* Botão Sidebar Direita - Apenas Mobile */}
+                <button
+                  onClick={() => setIsRightSidebarCollapsed(!isRightSidebarCollapsed)}
+                  className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                >
+                  <PanelRightOpen className="w-5 h-5 text-white" />
+                </button>
               </div>
             </div>
           </div>
 
           {/* Conteúdo Principal - Chat + Sidebar */}
-          <div className="flex-1 flex gap-3 overflow-hidden pt-2">
+          <div className="flex-1 flex gap-2 md:gap-3 overflow-hidden pt-2">
             {/* Área do Chat - Ilha */}
             {isLoadingCommunityMessages ? (
               <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
@@ -1637,20 +1853,65 @@ function CommunitiesPageContent() {
               />
             )}
             
-            {/* Community Info Sidebar - Ilhas Direita */}
-            {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
-              <ChatSidebarSkeleton />
-            ) : (
-              <CommunityInfo 
-                community={selectedCommunity}
-                onStartVideoCall={handleStartVideoCall}
-                onStartVoiceCall={handleStartVoiceCall}
-                isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
-                pinnedMessages={communityPinnedMessages}
-                currentUserId={userProfile?.id}
-                currentUserAvatar={userProfile?.profileImage}
-                onUnpinMessage={unpinCommunityMessage}
-              />
+            {/* Community Info Sidebar - Desktop sempre aberta */}
+            <div className="hidden lg:block relative">
+              {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
+                <ChatSidebarSkeleton />
+              ) : (
+                <CommunityInfo 
+                  community={selectedCommunity}
+                  onStartVideoCall={handleStartVideoCall}
+                  onStartVoiceCall={handleStartVoiceCall}
+                  isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
+                  pinnedMessages={communityPinnedMessages}
+                  currentUserId={userProfile?.id}
+                  currentUserAvatar={userProfile?.profileImage}
+                  onUnpinMessage={unpinCommunityMessage}
+                />
+              )}
+            </div>
+
+            {/* Mobile Right Sidebar Modal */}
+            {!isRightSidebarCollapsed && (
+              <>
+                {/* Overlay */}
+                <div 
+                  className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                  onClick={() => setIsRightSidebarCollapsed(true)}
+                />
+                
+                {/* Sidebar Modal */}
+                <div className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transform transition-transform duration-300">
+                  {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
+                    <div className="pt-16 px-4">
+                      <ChatSidebarSkeleton />
+                    </div>
+                  ) : (
+                    <>
+                      {/* Botão de fechar */}
+                      <button
+                        onClick={() => setIsRightSidebarCollapsed(true)}
+                        className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                      >
+                        <X className="w-5 h-5 text-white" />
+                      </button>
+                      
+                      <div className="pt-16 px-4 flex justify-center">
+                        <CommunityInfo 
+                          community={selectedCommunity}
+                          onStartVideoCall={handleStartVideoCall}
+                          onStartVoiceCall={handleStartVoiceCall}
+                          isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
+                          pinnedMessages={communityPinnedMessages}
+                          currentUserId={userProfile?.id}
+                          currentUserAvatar={userProfile?.profileImage}
+                          onUnpinMessage={unpinCommunityMessage}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </div>
