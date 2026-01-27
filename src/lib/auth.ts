@@ -50,7 +50,12 @@ export function setAuthState(token: string, user: UserProfile): void {
     // Expira em 7 dias
     const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 dias em milissegundos
     const expiresDate = new Date(Date.now() + expiresIn);
-    document.cookie = `auth_token=${token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`;
+    
+    // Em produção (HTTPS), adicionar Secure
+    const isSecure = window.location.protocol === 'https:';
+    const secureFlag = isSecure ? '; Secure' : '';
+    
+    document.cookie = `auth_token=${token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax${secureFlag}`;
   }
 }
 

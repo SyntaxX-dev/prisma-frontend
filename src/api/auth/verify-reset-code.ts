@@ -1,8 +1,13 @@
 import { httpClient } from '../http/client';
-import { VerifyResetCodeDto, ApiResponse } from '../../types/auth-api';
+import { VerifyResetCodeDto } from '../../types/auth-api';
 import { ApiError } from '../http/client';
 
-export async function verifyResetCode(data: VerifyResetCodeDto): Promise<ApiResponse> {
+export interface VerifyResetCodeResponse {
+  message: string;
+  valid: boolean;
+}
+
+export async function verifyResetCode(data: VerifyResetCodeDto): Promise<VerifyResetCodeResponse> {
   try {
 
     if (!data.email && typeof window !== 'undefined') {
@@ -13,7 +18,7 @@ export async function verifyResetCode(data: VerifyResetCodeDto): Promise<ApiResp
       data.email = storedEmail;
     }
     
-    const response = await httpClient.post<ApiResponse>('/auth/verify-reset-code', data);
+    const response = await httpClient.post<VerifyResetCodeResponse>('/auth/verify-reset-code', data);
     return response;
   } catch (error) {
     throw error as ApiError;

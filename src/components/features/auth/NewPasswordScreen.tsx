@@ -2,31 +2,23 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-// Logo import removed - using Next.js Image with public path instead
-import { motion } from 'framer-motion';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Card } from '../../ui/card';
-import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle, Shield } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Lock, Eye, EyeOff, ArrowLeft, Shield } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import styles from './AuthScreen.module.css';
-import spotlightStyles from '../../shared/spotlight.module.css';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { resetPasswordSchema, ResetPasswordFormData } from '@/lib/validators/auth';
 import { resetPassword } from '@/api/auth/reset-password';
 import { PasswordResetService } from '@/lib/services/password-reset';
+import { useNotifications } from '@/hooks/shared';
 
 
 
 export function NewPasswordScreen() {
+    const router = useRouter();
+    const { showError, showSuccess } = useNotifications();
     const [isLoading, setIsLoading] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    const router = useRouter();
 
     const form = useForm<ResetPasswordFormData>({
         resolver: zodResolver(resetPasswordSchema),
@@ -44,7 +36,9 @@ export function NewPasswordScreen() {
             const code = PasswordResetService.getCode();
 
             if (!email || !code) {
-                throw new Error('Dados de reset não encontrados. Volte para a tela anterior.');
+                showError('Dados de reset não encontrados. Volte para a tela anterior.');
+                router.push('/auth/reset-password/verify-code');
+                return;
             }
 
             await resetPassword({
@@ -54,273 +48,165 @@ export function NewPasswordScreen() {
             });
 
             PasswordResetService.clearData();
-
-            setIsSuccess(true);
-        } catch (error: unknown) {
+            showSuccess('Senha alterada com sucesso! Redirecionando para o login...');
+            
+            setTimeout(() => {
+                router.push('/auth/login');
+            }, 2000);
+        } catch (error: any) {
+            const errorMessage = error?.message || error?.details?.message || 'Erro ao alterar senha. Tente novamente.';
+            showError(errorMessage);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        setMousePosition({ x, y });
-    };
-
-    if (isSuccess) {
-        return (
-            <div className="min-h-screen flex items-center justify-center p-4">
-                <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="w-full max-w-2xl"
-                >
-                    <Card
-                        className={`${styles['glass-card']} ${spotlightStyles['spotlight-card']}`}
-                        onMouseMove={handleMouseMove}
+    return (
+        <div className="min-h-screen bg-[#1a1b1e] flex items-center justify-center p-4 md:p-8">
+            <div className="w-full max-w-7xl bg-[#202024] rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
+                {/* Painel Esquerdo - Squircle Roxo */}
+                <div className="w-full md:w-1/2 p-6 md:p-16 flex items-center justify-center">
+                    <div 
+                        className="w-full h-[400px] md:h-[600px] bg-gradient-to-br from-[#aa22c5] to-[#a727a0] flex flex-col justify-between p-6 md:p-12 relative overflow-hidden shadow-xl"
                         style={{
-                            transform: `perspective(1000px) rotateX(${(mousePosition.y - 250) * 0.01}deg) rotateY(${(mousePosition.x - 400) * 0.01}deg)`,
+                            borderRadius: '40px',
                         }}
                     >
-                        <div
-                            className={spotlightStyles.spotlight}
-                            style={{
-                                '--mouse-x': `${mousePosition.x}px`,
-                                '--mouse-y': `${mousePosition.y}px`,
-                            } as React.CSSProperties}
-                        />
-
-                        <div className="p-8 text-center">
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                                className="inline-flex items-center justify-center w-20 h-20 mb-6 bg-[#bd18b4] rounded-full"
-                            >
-                                <CheckCircle className="w-12 h-12 text-black" />
-                            </motion.div>
-
-                            <motion.h2
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="text-3xl font-bold text-[#bd18b4] mb-4"
-                                style={{ fontFamily: 'monospace' }}
-                            >
-                                SENHA ALTERADA!
-                            </motion.h2>
-
-                            <motion.p
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.4 }}
-                                className="text-white text-lg mb-6"
-                            >
-                                Sua senha foi alterada com sucesso. Agora você pode fazer login com sua nova senha.
-                            </motion.p>
-
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                            >
-                                <Link href="/login">
-                                    <Button className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#bd18b4] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg">
-                                        Ir para o Login
-                                    </Button>
-                                </Link>
-                            </motion.div>
-                        </div>
-                    </Card>
-                </motion.div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="w-full max-w-4xl"
-            >
-                <Card
-                    className={`${styles['glass-card']} ${spotlightStyles['spotlight-card']}`}
-                    onMouseMove={handleMouseMove}
-                    style={{
-                        transform: `perspective(1000px) rotateX(${(mousePosition.y - 250) * 0.01}deg) rotateY(${(mousePosition.x - 400) * 0.01}deg)`,
-                    }}
-                >
-                    <div
-                        className={spotlightStyles.spotlight}
-                        style={{
-                            '--mouse-x': `${mousePosition.x}px`,
-                            '--mouse-y': `${mousePosition.y}px`,
-                        } as React.CSSProperties}
-                    />
-
-                    <div className="flex min-h-[500px] relative">
-                        <div className="absolute left-[45%] top-0 bottom-0 w-px bg-[#bd18b4]/30 z-10" />
-
-                        <motion.div
-                            initial={{ opacity: 0, x: -50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="flex-1 p-8 flex flex-col justify-center items-center text-center relative z-10"
-                        >
-                            <div className="inline-flex items-center justify-center w-40 h-40 mb-6">
-                                <Image
-                                    src="/prisma-white.svg"
-                                    alt="Logo"
-                                    width={200}
-                                    height={200}
-                                    className="w-56 h-56 object-contain rounded-full"
-                                    priority
-                                />
-                            </div>
-                            <h2 className="text-3xl font-bold text-[#bd18b4] mb-4" style={{ fontFamily: 'monospace' }}>
-                                NOVA SENHA
-                            </h2>
-                            <h3 className="text-xl text-white mb-6">Defina sua nova senha</h3>
-                            <p className="text-gray-400 text-sm mb-8">
-                                Escolha uma senha segura e fácil de lembrar
+                        {/* Texto Superior */}
+                        <div className="text-white z-10">
+                            <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 leading-tight">
+                                Defina sua<br />
+                                <span className="relative inline-block">
+                                    nova senha
+                                    <svg className="absolute -bottom-1 md:-bottom-2 left-0 w-full" height="8" viewBox="0 0 200 8" fill="none">
+                                        <path d="M2 6C50 2 150 2 198 6" stroke="orange" strokeWidth="3" strokeLinecap="round"/>
+                                    </svg>
+                                </span>
+                            </h1>
+                            <p className="text-white/80 text-xs md:text-base leading-relaxed">
+                                Escolha uma senha segura<br className="hidden md:block" />
+                                e fácil de lembrar.
                             </p>
-                            <div className="flex items-center justify-center space-x-2 text-[#bd18b4] mb-4">
-                                <Shield className="w-5 h-5" />
-                                <span className="text-sm">Senha deve ter pelo menos 8 caracteres</span>
-                            </div>
-                            <Link href="/reset-password/verify-code">
-                                <Button className="bg-transparent cursor-pointer border-2 border-[#bd18b4] text-[#bd18b4] hover:bg-[#bd18b4] hover:text-black transition-all duration-300 px-8 py-2 rounded-lg">
-                                    Voltar
-                                </Button>
-                            </Link>
-                        </motion.div>
-
-                        <div className="flex-1 p-8 flex flex-col justify-center relative z-10">
-                            <div className="max-w-sm mx-auto w-full">
-                                <motion.div
-                                    initial={{ opacity: 0, x: 50 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.5 }}
-                                >
-                                    <div className="flex items-center mb-8">
-                                        <Link href="/reset-password/verify-code">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="p-2 text-[#bd18b4] hover:bg-[#bd18b4]/10 rounded-lg mr-4"
-                                            >
-                                                <ArrowLeft className="w-5 h-5" />
-                                            </Button>
-                                        </Link>
-                                        <h2 className="text-2xl font-bold text-[#bd18b4]" style={{ fontFamily: 'monospace' }}>
-                                            NOVA SENHA
-                                        </h2>
-                                    </div>
-
-                                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                        <div className="relative">
-                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#bd18b4]" />
-                                            <Input
-                                                type={showPassword ? 'text' : 'password'}
-                                                placeholder="Nova senha"
-                                                {...form.register('newPassword')}
-                                                className={`pl-10 pr-10 bg-white/10 backdrop-blur-sm border-[#bd18b4]/30 text-white placeholder-gray-300 focus:border-[#bd18b4] focus:ring-[#bd18b4]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${form.formState.errors.newPassword ? 'border-red-500' : ''
-                                                    }`}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#bd18b4] transition-colors cursor-pointer"
-                                            >
-                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                            </button>
-                                            {form.formState.errors.newPassword && (
-                                                <p className="text-red-400 text-xs mt-1 ml-1">
-                                                    {form.formState.errors.newPassword.message}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="relative">
-                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#bd18b4]" />
-                                            <Input
-                                                type={showConfirmPassword ? 'text' : 'password'}
-                                                placeholder="Confirmar nova senha"
-                                                {...form.register('confirmPassword')}
-                                                className={`pl-10 pr-10 bg-white/10 backdrop-blur-sm border-[#bd18b4]/30 text-white placeholder-gray-300 focus:border-[#bd18b4] focus:ring-[#bd18b4]/20 focus:shadow-[0_0_20px_rgba(179,226,64,0.2)] rounded-lg ${form.formState.errors.confirmPassword ? 'border-red-500' : ''
-                                                    }`}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#bd18b4] transition-colors cursor-pointer"
-                                            >
-                                                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                            </button>
-                                            {form.formState.errors.confirmPassword && (
-                                                <p className="text-red-400 text-xs mt-1 ml-1">
-                                                    {form.formState.errors.confirmPassword.message}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <motion.div
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
-                                        >
-                                            <Button
-                                                type="submit"
-                                                disabled={isLoading}
-                                                className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black py-3 shadow-[0_0_30px_rgba(179,226,64,0.3)] border border-[#bd18b4] transition-all duration-300 hover:shadow-[0_0_40px_rgba(179,226,64,0.4)] rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                <motion.span
-                                                    initial={false}
-                                                    animate={{
-                                                        textShadow: ['0 0 0px rgba(0,0,0,0)', '0 0 10px rgba(0,0,0,0.3)', '0 0 0px rgba(0,0,0,0)'],
-                                                    }}
-                                                    transition={{ duration: 2, repeat: Infinity }}
-                                                >
-                                                    {isLoading ? 'Alterando senha...' : 'Alterar Senha'}
-                                                </motion.span>
-                                            </Button>
-                                        </motion.div>
-                                    </form>
-                                </motion.div>
+                            <div className="flex items-center gap-2 mt-4 text-white/90">
+                                <Shield className="w-4 h-4 md:w-5 md:h-5" />
+                                <span className="text-xs md:text-sm">Senha deve ter pelo menos 8 caracteres</span>
                             </div>
                         </div>
-                    </div>
-                </Card>
 
-                <motion.div
-                    className="absolute -top-10 -right-10 w-20 h-20 border border-[#bd18b4]/20 rounded-full"
-                    animate={{
-                        rotate: [0, 360],
-                        scale: [1, 1.1, 1],
-                    }}
-                    transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                    }}
-                />
-                <motion.div
-                    className="absolute -bottom-10 -left-10 w-16 h-16 border border-[#bd18b4]/20"
-                    animate={{
-                        rotate: [0, -360],
-                    }}
-                    transition={{
-                        duration: 6,
-                        repeat: Infinity,
-                    }}
-                    style={{
-                        clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-                    }}
-                />
-            </motion.div>
+                        {/* Personagens na parte inferior */}
+                        <div className="flex justify-center items-end z-10">
+                            <Image
+                                src="/humans.png"
+                                alt="Personagens"
+                                width={500}
+                                height={400}
+                                className="object-contain w-[250px] h-[200px] md:w-[500px] md:h-[400px]"
+                                priority
+                            />
+                        </div>
+
+                        {/* Gradiente de fundo decorativo */}
+                        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#aa22c5]/30 to-transparent"></div>
+                    </div>
+                </div>
+
+                {/* Painel Direito - Formulário */}
+                <div className="w-full md:w-1/2 p-6 md:p-16 flex flex-col justify-center">
+                    <div className="w-full max-w-md mx-auto">
+                        {/* Logo */}
+                        <div className="flex items-center gap-3 mb-6 md:mb-8">
+                            <Image
+                                src="/logo-prisma.svg"
+                                alt="Prisma Logo"
+                                width={40}
+                                height={40}
+                                className="object-contain w-8 h-8 md:w-10 md:h-10"
+                                priority
+                            />
+                            <span className="text-xl md:text-2xl font-bold text-white">Prisma</span>
+                        </div>
+
+                        <h2 className="text-2xl md:text-4xl font-bold text-white mb-2">
+                            Nova Senha
+                        </h2>
+                        <p className="text-gray-400 mb-6 md:mb-8 text-sm md:text-base">
+                            Defina uma nova senha para sua conta
+                        </p>
+
+                        <form 
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="space-y-4 md:space-y-5"
+                        >
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="Nova senha"
+                                    {...form.register('newPassword')}
+                                    className={`w-full bg-[#29292E] border ${
+                                        form.formState.errors.newPassword ? 'border-red-500' : 'border-[#323238]'
+                                    } text-white placeholder-gray-400 rounded-xl h-12 md:h-14 pl-12 pr-12 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#bd18b4] transition-colors cursor-pointer"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                                {form.formState.errors.newPassword && (
+                                    <p className="text-red-400 text-xs mt-1 ml-1">
+                                        {form.formState.errors.newPassword.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    placeholder="Confirmar nova senha"
+                                    {...form.register('confirmPassword')}
+                                    className={`w-full bg-[#29292E] border ${
+                                        form.formState.errors.confirmPassword ? 'border-red-500' : 'border-[#323238]'
+                                    } text-white placeholder-gray-400 rounded-xl h-12 md:h-14 pl-12 pr-12 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#bd18b4] transition-colors cursor-pointer"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                                {form.formState.errors.confirmPassword && (
+                                    <p className="text-red-400 text-xs mt-1 ml-1">
+                                        {form.formState.errors.confirmPassword.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full bg-[#bd18b4] hover:bg-[#aa22c5] text-black rounded-xl h-12 md:h-14 font-semibold transition-all shadow-lg shadow-[#a727a0]/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                            >
+                                {isLoading ? 'Alterando senha...' : 'Alterar Senha'}
+                            </button>
+
+                            <div className="pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/auth/reset-password/verify-code')}
+                                    className="w-full bg-transparent border-2 border-[#323238] text-gray-400 hover:border-[#bd18b4] hover:text-[#bd18b4] rounded-xl h-12 md:h-14 font-semibold transition-all cursor-pointer text-sm md:text-base flex items-center justify-center gap-2"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Voltar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 } 

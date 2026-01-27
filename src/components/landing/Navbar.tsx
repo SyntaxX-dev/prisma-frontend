@@ -64,10 +64,10 @@ export function Navbar() {
             </Button>
             <Button 
               className="bg-[#8b5cf6] text-white hover:bg-[#7c3aed] hover:scale-105 hover:shadow-[0_0_20px_rgba(139,92,246,0.5)] transition-all duration-300 cursor-pointer"
-              onClick={() => window.location.href = '/auth/register'}
+              onClick={() => window.location.href = '/plans'}
               style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
             >
-              Cadastre se
+              Cadastre-se
             </Button>
           </div>
 
@@ -116,7 +116,7 @@ export function Navbar() {
                   className="text-white hover:text-white hover:bg-[#8b5cf6]/10 justify-start transition-all duration-300 border border-transparent hover:border-[#8b5cf6]/30 cursor-pointer"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    window.location.href = '/auth/register';
+                    window.location.href = '/plans';
                   }}
                   style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}
                 >

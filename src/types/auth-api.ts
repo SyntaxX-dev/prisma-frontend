@@ -5,6 +5,7 @@ export interface RegisterUserDto {
   confirmPassword: string;
   age: number;
   educationLevel: EducationLevel;
+  token?: string; // Token de registro (obrigatório para registro pago)
 }
 
 export interface LoginDto {

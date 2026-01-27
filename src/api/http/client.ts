@@ -21,7 +21,17 @@ export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T>
 	});
 	
 	if (!res.ok) {
-		const errorData = await res.json().catch(() => ({}));
+		let errorData: any = {};
+		try {
+			const text = await res.text();
+			if (text) {
+				errorData = JSON.parse(text);
+			}
+		} catch {
+			// Se não conseguir parsear, usar objeto vazio
+			errorData = {};
+		}
+		
 		const error: ApiError = {
 			message: errorData.message || `HTTP ${res.status}`,
 			status: res.status,

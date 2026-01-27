@@ -10,12 +10,18 @@ import { getProfile } from '@/api/auth/get-profile';
 import { useAuth } from '@/hooks/features/auth';
 import { useNotifications } from '@/hooks/shared';
 
-function AuthScreenContent() {
+interface AuthScreenContentProps {
+  mode?: 'login' | 'register';
+  registrationToken?: string;
+  expiresAt?: Date;
+}
+
+function AuthScreenContent({ mode = 'login', registrationToken, expiresAt }: AuthScreenContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
   const { showError, showSuccess } = useNotifications();
-  const [isLogin, setIsLogin] = useState(true);
+  const isLogin = mode === 'login';
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,17 +70,19 @@ function AuthScreenContent() {
       // Fazer login usando o hook useAuth (isso vai salvar token nos cookies também)
       login(token, userProfile, false);
 
-      // Delay para garantir que os cookies foram setados antes do redirecionamento
-      // O cookie precisa estar disponível para o middleware verificar
-      await new Promise(resolve => setTimeout(resolve, 300));
-
       // Redirecionar para a página original ou dashboard
       const redirectTo = searchParams.get('redirect_to') || '/dashboard';
       console.log('[AuthScreen] Redirecionando para:', redirectTo);
 
+      // Usar uma abordagem mais robusta: passar o token via query param
+      // para uma rota que seta o cookie no servidor e redireciona
+      // Isso garante que o cookie esteja disponível para o middleware
+      const redirectUrl = new URL(redirectTo, window.location.origin);
+      redirectUrl.searchParams.set('auth_token', token);
+      redirectUrl.searchParams.set('set_cookie', 'true');
+      
       // Usar window.location.href para garantir redirecionamento completo
-      // e que o middleware possa verificar o cookie
-      window.location.href = redirectTo;
+      window.location.href = redirectUrl.toString();
     } catch (error: any) {
       let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';
       
@@ -103,15 +111,21 @@ function AuthScreenContent() {
       return;
     }
 
+    if (!registrationToken) {
+      showError('Token de registro não encontrado. Por favor, use o link enviado por email.');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await registerUser({
-        name: registerForm.name,
-        email: registerForm.email,
+        name: registerForm.name.trim(),
+        email: registerForm.email.toLowerCase().trim(),
         password: registerForm.password,
         confirmPassword: registerForm.confirmPassword,
         age: parseInt(registerForm.age),
         educationLevel: registerForm.educationLevel as 'GRADUACAO' | 'MESTRADO' | 'DOUTORADO' | 'FUNDAMENTAL' | 'ENSINO_MEDIO' | 'POS_GRADUACAO',
+        token: registrationToken,
       });
 
       // A API retorna accessToken, não token
@@ -131,18 +145,25 @@ function AuthScreenContent() {
       // Fazer login usando o hook useAuth (isso vai salvar token nos cookies também)
       login(token, userProfile, false);
 
-      showSuccess('Conta criada com sucesso!');
+      showSuccess('Cadastro realizado com sucesso! Você pode fazer login agora.');
 
       // Pequeno delay para garantir que os cookies foram setados
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Redirecionar para o dashboard
-      console.log('[AuthScreen] Registro bem-sucedido, redirecionando para dashboard');
-      window.location.href = '/dashboard';
+      // Redirecionar para login conforme o guia
+      console.log('[AuthScreen] Registro bem-sucedido, redirecionando para login');
+      router.push('/auth/login');
     } catch (error: any) {
       let errorMessage = 'Erro ao criar conta. Tente novamente.';
       
-      if (error?.message) {
+      // Tratamento de erros específicos conforme o guia
+      if (error?.status === 401) {
+        errorMessage = 'Token inválido ou expirado. Verifique o link do email.';
+      } else if (error?.status === 429) {
+        errorMessage = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+      } else if (error?.status === 400) {
+        errorMessage = error?.message || 'Dados inválidos. Verifique os campos.';
+      } else if (error?.message) {
         errorMessage = error.message;
       } else if (error?.details?.message) {
         errorMessage = error.details.message;
@@ -218,8 +239,26 @@ function AuthScreenContent() {
               <span className="text-xl md:text-2xl font-bold text-white">Prisma</span>
             </div>
 
-            <h2 className="text-2xl md:text-4xl font-bold text-white mb-2">Bem-vindo de volta</h2>
-            <p className="text-gray-400 mb-6 md:mb-8 text-sm md:text-base">Por favor, faça login na sua conta</p>
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-2">
+              {isLogin ? 'Bem-vindo de volta' : 'Crie sua conta'}
+            </h2>
+            <p className="text-gray-400 mb-6 md:mb-8 text-sm md:text-base">
+              {isLogin ? 'Por favor, faça login na sua conta' : 'Preencha os dados abaixo para criar sua conta'}
+            </p>
+            
+            {!isLogin && expiresAt && (
+              <div className="mb-4 p-3 bg-[#29292E] border border-[#323238] rounded-xl">
+                <p className="text-xs md:text-sm text-gray-400">
+                  ⏰ Este link expira em: {expiresAt.toLocaleString('pt-BR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </p>
+              </div>
+            )}
 
             {isLogin ? (
               <form 
@@ -261,6 +300,7 @@ function AuthScreenContent() {
                 <div className="flex justify-end">
                   <button
                     type="button"
+                    onClick={() => router.push('/auth/forgot-password')}
                     className="text-xs md:text-sm text-gray-400 hover:text-[#bd18b4] transition-colors cursor-pointer"
                   >
                     Esqueceu a senha?
@@ -308,16 +348,6 @@ function AuthScreenContent() {
                   </button>
                 </div>
 
-                <div className="text-center text-xs md:text-sm text-gray-500 mt-4 md:mt-6">
-                  Não tem uma conta?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setIsLogin(false)}
-                    className="text-[#c532e2] font-semibold hover:underline cursor-pointer"
-                  >
-                    Cadastre-se
-                  </button>
-                </div>
               </form>
             ) : (
               <form 
@@ -362,11 +392,13 @@ function AuthScreenContent() {
                 <div>
                   <input
                     type="email"
-                    placeholder="Endereço de email"
+                    placeholder="Email (do pagamento)"
                     value={registerForm.email}
                     onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                     className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 rounded-xl h-12 md:h-14 px-4 md:px-5 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#bd18b4]/20 focus:border-[#bd18b4]"
+                    required
                   />
+                  <p className="text-xs text-gray-500 mt-1">Use o mesmo email usado no pagamento</p>
                 </div>
 
                 <div className="relative">
@@ -415,7 +447,7 @@ function AuthScreenContent() {
                   Já tem uma conta?{' '}
                   <button
                     type="button"
-                    onClick={() => setIsLogin(true)}
+                    onClick={() => router.push('/auth/login')}
                     className="text-[#b822c5] font-semibold hover:underline cursor-pointer"
                   >
                     Faça login
@@ -430,14 +462,20 @@ function AuthScreenContent() {
   );
 }
 
-export function AuthScreen() {
+interface AuthScreenProps {
+  mode?: 'login' | 'register';
+  registrationToken?: string;
+  expiresAt?: Date;
+}
+
+export function AuthScreen({ mode = 'login', registrationToken, expiresAt }: AuthScreenProps) {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#1a1b1e] flex items-center justify-center">
         <div className="text-white">Carregando...</div>
       </div>
     }>
-      <AuthScreenContent />
+      <AuthScreenContent mode={mode} registrationToken={registrationToken} expiresAt={expiresAt} />
     </Suspense>
   );
 }

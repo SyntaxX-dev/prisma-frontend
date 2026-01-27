@@ -81,7 +81,7 @@ export function HeroSection() {
               >
                 <button
                   className="px-12 py-4 text-lg font-bold cursor-pointer text-white rounded-lg transition-all duration-300"
-                  onClick={() => window.location.href = '/auth/register'}
+                  onClick={() => window.location.href = '/plans'}
                   style={{ 
                     fontFamily: 'Metropolis, sans-serif',
                     fontWeight: 700,

@@ -26,6 +26,6 @@ export default function LoginPage() {
 		);
 	}
 
-	return <AuthScreen />;
+	return <AuthScreen mode="login" />;
 }
 
