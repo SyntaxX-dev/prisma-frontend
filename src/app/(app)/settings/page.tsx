@@ -51,6 +51,7 @@ function SettingsContent() {
   const [downgradeData, setDowngradeData] = useState<ChangePlanData | null>(null);
   const [showPixModal, setShowPixModal] = useState(false);
   const [pixData, setPixData] = useState<{ qrCode: ChangePlanData['pixQrCode']; amount: number; paymentUrl?: string } | null>(null);
+  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
   const [pendingPlanChange, setPendingPlanChange] = useState<PendingPlanChange | null>(null);
   const [isCancellingPlanChange, setIsCancellingPlanChange] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -87,9 +88,11 @@ function SettingsContent() {
         } else {
           setSubscriptionPlan(null);
         }
+        setSubscriptionDetails(response.data);
         setPendingPlanChange(response.data.pendingPlanChange || null);
       } else {
         setSubscriptionPlan(null);
+        setSubscriptionDetails(null);
         setPendingPlanChange(null);
       }
     } catch (error: any) {
@@ -98,6 +101,7 @@ function SettingsContent() {
         console.error('Erro ao carregar assinatura:', error);
       }
       setSubscriptionPlan(null);
+      setSubscriptionDetails(null);
       setPendingPlanChange(null);
     } finally {
       setIsLoadingSubscription(false);
@@ -491,7 +495,12 @@ function SettingsContent() {
 
                           <div className="space-y-2">
                             <p className="text-white font-medium">Próxima cobrança</p>
-                            <p className="text-gray-400 text-sm">Em 15 de fevereiro de 2025</p>
+                            <p className="text-gray-400 text-sm">
+                              {subscriptionDetails?.currentPeriodEnd
+                                ? `Em ${new Date(subscriptionDetails.currentPeriodEnd).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                                : 'Data não disponível'
+                              }
+                            </p>
                           </div>
                         </div>
 
