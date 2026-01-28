@@ -63,17 +63,17 @@ export function SubscriptionStatus() {
 
     const isActive = subscription.status === 'ACTIVE';
     const isPending = subscription.status === 'PENDING';
-    const endDate = new Date(subscription.endDate);
-    const formattedEndDate = endDate.toLocaleDateString('pt-BR', {
+    const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
+    const formattedEndDate = endDate ? endDate.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: 'long',
         year: 'numeric'
-    });
+    }) : 'Vitalício';
 
     return (
         <div className={`bg-gradient-to-br ${isActive
-                ? 'from-[#8b5cf6]/10 to-[#a855f7]/5'
-                : 'from-gray-800/10 to-gray-700/5'
+            ? 'from-[#8b5cf6]/10 to-[#a855f7]/5'
+            : 'from-gray-800/10 to-gray-700/5'
             } rounded-xl p-6 border-2 ${isActive ? 'border-[#8b5cf6]/30' : 'border-gray-700/30'
             } relative overflow-hidden`}>
             {/* Background decoration */}
@@ -94,10 +94,10 @@ export function SubscriptionStatus() {
                             </h3>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${isActive
-                                        ? 'bg-green-500/20 text-green-400'
-                                        : isPending
-                                            ? 'bg-yellow-500/20 text-yellow-400'
-                                            : 'bg-red-500/20 text-red-400'
+                                    ? 'bg-green-500/20 text-green-400'
+                                    : isPending
+                                        ? 'bg-yellow-500/20 text-yellow-400'
+                                        : 'bg-red-500/20 text-red-400'
                                     }`}>
                                     {isActive && <Check className="w-3 h-3" />}
                                     {isActive ? 'Ativa' : isPending ? 'Pendente' : 'Inativa'}

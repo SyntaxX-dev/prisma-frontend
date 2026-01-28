@@ -16,7 +16,7 @@ export function useChangePlan() {
             return response.data;
         } catch (err: unknown) {
             const apiError = err as ApiError;
-            const message = apiError.details?.message || apiError.message || 'Erro ao mudar de plano';
+            const message = (apiError.details as any)?.message || apiError.message || 'Erro ao mudar de plano';
             setError(message);
             throw err;
         } finally {

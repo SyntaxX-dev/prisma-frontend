@@ -46,7 +46,7 @@ export function VerifyCodeScreen() {
                 code: data.code
             });
 
-            if (response.status === 'success') {
+            if (response.valid) {
                 PasswordResetService.saveCode(data.code);
                 router.push('/reset-password/new-password');
             } else {
