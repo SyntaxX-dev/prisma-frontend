@@ -7,6 +7,7 @@ import { CommunityList } from "@/components/features/communities/CommunityList";
 import { CommunityChat } from "@/components/features/communities/CommunityChat";
 import { CommunityInfo } from "@/components/features/communities/CommunityInfo";
 import { CreateCommunityModal } from "@/components/features/communities/CreateCommunityModal";
+import { EmptyChatState } from "@/components/features/communities/EmptyChatState";
 import { VoiceCallScreen } from "@/components/features/communities/VoiceCallScreen";
 import type { Community, CommunityMessage } from "@/types/community";
 import { LoadingGrid } from "@/components/ui/loading-grid";
@@ -516,7 +517,7 @@ function CommunitiesPageContent() {
   const searchParams = useSearchParams();
   const chatUserId = searchParams.get('chat');
   const communityIdFromUrl = searchParams.get('community');
-  
+
   const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>(communityIdFromUrl || undefined);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
@@ -525,7 +526,7 @@ function CommunitiesPageContent() {
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | undefined>();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(true);
-  
+
   // Estados para chat direto
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(chatUserId || null);
@@ -543,14 +544,14 @@ function CommunitiesPageContent() {
   const [activeCommunitySearchQuery, setActiveCommunitySearchQuery] = useState<string>('');
   const [currentCommunitySearchIndex, setCurrentCommunitySearchIndex] = useState<number>(0);
   const [lastCommunitySearchQuery, setLastCommunitySearchQuery] = useState<string>('');
-  
+
   // Estados para loading do chat da comunidade
   const [isLoadingCommunityMessages, setIsLoadingCommunityMessages] = useState(false);
   const [isLoadingCommunityPinnedMessages, setIsLoadingCommunityPinnedMessages] = useState(false);
-  
+
   // Combinar comunidades da API com mocks para busca
   const allCommunities = [...communities, ...MOCK_COMMUNITIES];
-  
+
   // Call states
   const [isInVideoCall, setIsInVideoCall] = useState(false);
   const [isInVoiceCall, setIsInVoiceCall] = useState(false);
@@ -558,20 +559,20 @@ function CommunitiesPageContent() {
   // Ref para evitar chamadas duplicadas
   const hasLoadedCommunities = useRef(false);
   const hasRestoredLastConversation = useRef(false);
-  
+
   // Hook para obter dados do usuário logado
   const { userProfile } = useProfile();
-  
+
   // Hook para status online
   const { statusMap, getBatchStatus, getStatus } = useUserStatus();
-  
+
   // Buscar status do próprio usuário quando o perfil estiver disponível
   useEffect(() => {
     if (userProfile?.id) {
       getStatus(userProfile.id);
     }
   }, [userProfile?.id, getStatus]);
-  
+
   // Hook para chat direto
   const {
     socket,
@@ -593,14 +594,14 @@ function CommunitiesPageContent() {
   // Usar word boundaries para match apenas de palavras completas
   const matchingMessages = activeSearchQuery.trim()
     ? directMessages.filter((msg) => {
-        const query = activeSearchQuery.trim().toLowerCase();
-        const content = msg.content.toLowerCase();
-        // Usar regex com word boundaries para match de palavras completas
-        const regex = new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-        return regex.test(content);
-      })
+      const query = activeSearchQuery.trim().toLowerCase();
+      const content = msg.content.toLowerCase();
+      // Usar regex com word boundaries para match de palavras completas
+      const regex = new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      return regex.test(content);
+    })
     : [];
-  
+
   const hasMultipleMatches = matchingMessages.length > 1;
 
   // Hook para chamadas de voz
@@ -633,14 +634,14 @@ function CommunitiesPageContent() {
   // Calcular mensagens de comunidade que correspondem à busca (após communityMessages ser definido)
   const matchingCommunityMessages = activeCommunitySearchQuery.trim()
     ? communityMessages.filter((msg) => {
-        const query = activeCommunitySearchQuery.trim().toLowerCase();
-        const content = msg.content.toLowerCase();
-        // Usar regex com word boundaries para match de palavras completas
-        const regex = new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-        return regex.test(content);
-      })
+      const query = activeCommunitySearchQuery.trim().toLowerCase();
+      const content = msg.content.toLowerCase();
+      // Usar regex com word boundaries para match de palavras completas
+      const regex = new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      return regex.test(content);
+    })
     : [];
-  
+
   const hasMultipleCommunityMatches = matchingCommunityMessages.length > 1;
 
   // Definir loadChatUser antes dos useEffects que o usam
@@ -658,7 +659,7 @@ function CommunitiesPageContent() {
           profileImage: response.data.profileImage,
         };
         setChatUser(userData);
-        
+
         // Adicionar à lista de conversas se não existir
         setConversations(prev => {
           const exists = prev.some(c => c.otherUser.id === userId);
@@ -698,10 +699,10 @@ function CommunitiesPageContent() {
         setIsMobileSidebarOpen(true);
       }
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
@@ -713,7 +714,7 @@ function CommunitiesPageContent() {
   useEffect(() => {
     const chatParam = searchParams.get('chat');
     const communityParam = searchParams.get('community');
-    
+
     // Se não há parâmetros na URL e comunidades já foram carregadas, resetar flag
     // Isso permite restaurar quando entrar na página sem parâmetros
     if (!chatParam && !communityParam && !isLoadingCommunities && communities.length > 0) {
@@ -737,7 +738,7 @@ function CommunitiesPageContent() {
   useEffect(() => {
     const chatParam = searchParams.get('chat');
     const communityParam = searchParams.get('community');
-    
+
     // Só sincronizar communityId se não houver chat na URL
     if (!chatParam) {
       if (communityParam && communityParam !== selectedCommunityId) {
@@ -754,7 +755,7 @@ function CommunitiesPageContent() {
   useEffect(() => {
     const chatParam = searchParams.get('chat');
     const communityParam = searchParams.get('community');
-    
+
     // Salvar automaticamente quando há parâmetros na URL
     if (chatParam) {
       saveLastConversation('chat', chatParam);
@@ -767,14 +768,14 @@ function CommunitiesPageContent() {
   useEffect(() => {
     const chatParam = searchParams.get('chat');
     const communityParam = searchParams.get('community');
-    
+
     // Se não há parâmetros na URL e ainda não restauramos, restaurar última conversa
     // Priorizar chats sobre comunidades se ambos estiverem salvos
     if (!chatParam && !communityParam && !hasRestoredLastConversation.current && !isLoadingCommunities) {
       const lastConversation = loadLastConversation();
       if (lastConversation) {
         hasRestoredLastConversation.current = true;
-        
+
         // Priorizar chats - se for chat, restaurar imediatamente
         if (lastConversation.type === 'chat') {
           // Para chats, podemos restaurar mesmo sem conversations carregado
@@ -799,7 +800,7 @@ function CommunitiesPageContent() {
         }
       }
     }
-    
+
     // Processar parâmetros da URL
     if (chatParam) {
       // Limpar comunidade selecionada quando entrar em chat de usuário
@@ -832,7 +833,7 @@ function CommunitiesPageContent() {
       setIsLoadingConversation(true);
       // Mock delay para visualizar skeletons (2 segundos)
       setTimeout(() => {
-      loadConversation(selectedChatUserId);
+        loadConversation(selectedChatUserId);
       }, 2000);
     } else {
       setIsLoadingConversation(false);
@@ -907,10 +908,10 @@ function CommunitiesPageContent() {
   const loadCommunities = async () => {
     try {
       setIsLoadingCommunities(true);
-      
+
       // Verificar token antes de fazer a requisição
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      
+
       // Decodificar o token JWT para verificar o userId
       let userIdFromToken: string | null = null;
       if (token) {
@@ -920,13 +921,13 @@ function CommunitiesPageContent() {
         } catch (e) {
         }
       }
-      
+
       const response = await getCommunities();
-      
-      
+
+
       // Verificar diferentes formatos de resposta
       let communitiesData: any[] = [];
-      
+
       if (response.success) {
         if (Array.isArray(response.data)) {
           // Se data é um array direto
@@ -945,11 +946,11 @@ function CommunitiesPageContent() {
         // Se data é um array
         communitiesData = response.data;
       }
-      
+
       // Mapear dados da API para o formato esperado
       // IMPORTANTE: isOwner e isMember já vêm corretos da API quando o token JWT é enviado
       // O token é enviado automaticamente pelo httpClient se estiver em localStorage.getItem('auth_token')
-      
+
       const mappedCommunities: Community[] = communitiesData.map((community: any) => {
         return {
           id: community.id,
@@ -966,8 +967,8 @@ function CommunitiesPageContent() {
           ownerId: community.ownerId,
         };
       });
-      
-      
+
+
       // Filtrar comunidades privadas que o usuário não pertence
       const filteredCommunities = mappedCommunities.filter((community) => {
         // Se for pública, sempre mostrar
@@ -981,72 +982,72 @@ function CommunitiesPageContent() {
         // Se não tiver visibility definida, mostrar apenas se for membro ou dono (comportamento padrão seguro)
         return community.isMember || community.isOwner;
       });
-      
+
       setCommunities(filteredCommunities);
-      
+
       // Selecionar primeira comunidade que o usuário é membro ou dono
-       // Só se não houver communityId na URL e não houver última conversa salva
-       const currentCommunityIdFromUrl = searchParams.get('community');
-       const currentChatUserIdFromUrl = searchParams.get('chat');
-       
-       // Só selecionar automaticamente se não houver parâmetros na URL
-       if (!selectedCommunityId && !currentCommunityIdFromUrl && !currentChatUserIdFromUrl) {
-         // Verificar se há última conversa salva
-         const lastConversation = loadLastConversation();
-         
-         if (lastConversation) {
-           // Se há uma última conversa salva, não selecionar comunidade automaticamente
-           // A restauração será feita pelo useEffect que monitora searchParams
-           if (lastConversation.type === 'chat') {
-             // Se é um chat, não selecionar comunidade - o chat será restaurado pelo useEffect
-             return;
-           } else if (lastConversation.type === 'community') {
-             const lastCommunity = filteredCommunities.find(c => c.id === lastConversation.id);
-             if (lastCommunity && (lastCommunity.isMember || lastCommunity.isOwner)) {
-               setSelectedCommunityId(lastCommunity.id);
-               const params = new URLSearchParams();
-               params.set('community', lastCommunity.id);
-               router.push(`/communities?${params.toString()}`);
-               return; // Não continuar para seleção automática
-             }
-           }
-           // Se a última conversa não existe mais ou não é válida, continuar para seleção automática
-         }
-         
-         // Se não há última conversa válida, selecionar primeira comunidade
-         const userCommunity = filteredCommunities.find(
+      // Só se não houver communityId na URL e não houver última conversa salva
+      const currentCommunityIdFromUrl = searchParams.get('community');
+      const currentChatUserIdFromUrl = searchParams.get('chat');
+
+      // Só selecionar automaticamente se não houver parâmetros na URL
+      if (!selectedCommunityId && !currentCommunityIdFromUrl && !currentChatUserIdFromUrl) {
+        // Verificar se há última conversa salva
+        const lastConversation = loadLastConversation();
+
+        if (lastConversation) {
+          // Se há uma última conversa salva, não selecionar comunidade automaticamente
+          // A restauração será feita pelo useEffect que monitora searchParams
+          if (lastConversation.type === 'chat') {
+            // Se é um chat, não selecionar comunidade - o chat será restaurado pelo useEffect
+            return;
+          } else if (lastConversation.type === 'community') {
+            const lastCommunity = filteredCommunities.find(c => c.id === lastConversation.id);
+            if (lastCommunity && (lastCommunity.isMember || lastCommunity.isOwner)) {
+              setSelectedCommunityId(lastCommunity.id);
+              const params = new URLSearchParams();
+              params.set('community', lastCommunity.id);
+              router.push(`/communities?${params.toString()}`);
+              return; // Não continuar para seleção automática
+            }
+          }
+          // Se a última conversa não existe mais ou não é válida, continuar para seleção automática
+        }
+
+        // Se não há última conversa válida, selecionar primeira comunidade
+        const userCommunity = filteredCommunities.find(
           (c) => c.isMember || c.isOwner
         );
-        
+
         if (userCommunity) {
           // Se encontrou uma comunidade que o usuário faz parte, abrir ela
           setSelectedCommunityId(userCommunity.id);
-           // Salvar como última conversa
-           saveLastConversation('community', userCommunity.id);
-           // Atualizar URL
-           const params = new URLSearchParams();
-           params.set('community', userCommunity.id);
-           router.push(`/communities?${params.toString()}`);
+          // Salvar como última conversa
+          saveLastConversation('community', userCommunity.id);
+          // Atualizar URL
+          const params = new URLSearchParams();
+          params.set('community', userCommunity.id);
+          router.push(`/communities?${params.toString()}`);
         }
       }
     } catch (error: any) {
       toast.error("Erro ao carregar comunidades");
       // Em caso de erro, usar mocks como fallback
       setCommunities(MOCK_COMMUNITIES);
-       const currentCommunityIdFromUrl = searchParams.get('community');
-       const currentChatUserIdFromUrl = searchParams.get('chat');
-       // Só selecionar comunidade automaticamente se não houver chat na URL e não houver última conversa salva
-       if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId && !currentCommunityIdFromUrl && !currentChatUserIdFromUrl) {
-         // Verificar se há uma última conversa salva antes de selecionar automaticamente
-         const lastConversation = loadLastConversation();
-         if (!lastConversation || lastConversation.type !== 'chat') {
-           // Só selecionar comunidade se não houver chat salvo
-        setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
-           // Atualizar URL
-           const params = new URLSearchParams();
-           params.set('community', MOCK_COMMUNITIES[0].id);
-           router.push(`/communities?${params.toString()}`);
-         }
+      const currentCommunityIdFromUrl = searchParams.get('community');
+      const currentChatUserIdFromUrl = searchParams.get('chat');
+      // Só selecionar comunidade automaticamente se não houver chat na URL e não houver última conversa salva
+      if (MOCK_COMMUNITIES.length > 0 && !selectedCommunityId && !currentCommunityIdFromUrl && !currentChatUserIdFromUrl) {
+        // Verificar se há uma última conversa salva antes de selecionar automaticamente
+        const lastConversation = loadLastConversation();
+        if (!lastConversation || lastConversation.type !== 'chat') {
+          // Só selecionar comunidade se não houver chat salvo
+          setSelectedCommunityId(MOCK_COMMUNITIES[0].id);
+          // Atualizar URL
+          const params = new URLSearchParams();
+          params.set('community', MOCK_COMMUNITIES[0].id);
+          router.push(`/communities?${params.toString()}`);
+        }
       }
     } finally {
       setIsLoadingCommunities(false);
@@ -1088,13 +1089,13 @@ function CommunitiesPageContent() {
     // Se não for membro, verificar se é pública
     // Se for pública, mostrar tooltip para entrar
     if (community.visibility === 'PUBLIC') {
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const tooltipWidth = 320;
-    setTooltipPosition({
-      x: rect.left + rect.width / 2 - tooltipWidth / 2, // Centralizar tooltip em relação ao item
-      y: rect.bottom + 10, // Abaixo do item com espaçamento
-    });
-    setTooltipCommunity(community);
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      const tooltipWidth = 320;
+      setTooltipPosition({
+        x: rect.left + rect.width / 2 - tooltipWidth / 2, // Centralizar tooltip em relação ao item
+        y: rect.bottom + 10, // Abaixo do item com espaçamento
+      });
+      setTooltipCommunity(community);
       return;
     }
 
@@ -1119,8 +1120,8 @@ function CommunitiesPageContent() {
     }
   };
 
-  // Buscar comunidade selecionada nas comunidades da API
-  const selectedCommunity = communities.find(
+  // Buscar comunidade selecionada nas comunidades da API + MOCKS
+  const selectedCommunity = allCommunities.find(
     (c) => c.id === selectedCommunityId
   );
 
@@ -1140,7 +1141,7 @@ function CommunitiesPageContent() {
 
   if (isLoadingCommunities) {
     return (
-      <div 
+      <div
         className="flex items-center justify-center h-screen w-screen"
         style={{
           background: '#040404',
@@ -1191,785 +1192,801 @@ function CommunitiesPageContent() {
       </div>
 
       <div className="relative z-10 flex h-screen w-screen overflow-hidden p-2 md:p-4 pt-4 md:pt-6 gap-2 md:gap-3">
-      
-      {/* Mobile Sidebar Overlay */}
-      {isMobileSidebarOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-          onClick={() => setIsMobileSidebarOpen(false)}
-        />
-      )}
 
-      {/* Communities List - Sidebar Esquerda */}
-      <div className="hidden lg:block relative">
-        <CommunityList
-          communities={communities}
-          selectedCommunityId={selectedCommunityId}
-          onSelectCommunity={(id) => {
-            // Buscar a comunidade na lista
-            const community = communities.find(c => c.id === id);
-            if (!community) return;
-            
-            // Se for membro ou dono, abrir normalmente
-            if (community.isMember || community.isOwner) {
-            setSelectedCommunityId(id);
-            setSelectedChatUserId(null);
-              // Salvar como última conversa
-              saveLastConversation('community', id);
-              // Atualizar URL com community param
-              const params = new URLSearchParams(searchParams.toString());
-              params.set('community', id);
-              params.delete('chat'); // Remover chat param se existir
-              router.push(`/communities?${params.toString()}`);
-            } else if (community.visibility === 'PUBLIC') {
-              // Se for pública e não for membro, mostrar tooltip centralizado
-              setTooltipPosition({
-                x: window.innerWidth / 2 - 160,
-                y: window.innerHeight / 2 - 200,
-              });
-              setTooltipCommunity(community);
-            }
-            // Se for privada e não for membro, não fazer nada (não deveria aparecer na lista)
-          }}
-          onCreateCommunity={() => setIsCreateModalOpen(true)}
-          onCommunityClick={handleCommunityClick}
-          conversations={conversations}
-          selectedChatUserId={selectedChatUserId}
-          onSelectConversation={(userId) => {
-            setSelectedChatUserId(userId);
-            setSelectedCommunityId(undefined);
-            // Salvar como última conversa
-            saveLastConversation('chat', userId);
-            // Atualizar URL com chat param
-            const params = new URLSearchParams(searchParams.toString());
-            params.set('chat', userId);
-            params.delete('community'); // Remover community param se existir
-            router.push(`/communities?${params.toString()}`);
-            loadChatUser(userId);
-          }}
-        />
-      </div>
-
-      {/* Mobile Left Sidebar Modal */}
-      {isMobileSidebarOpen && (
-        <>
-          {/* Overlay */}
-          <div 
+        {/* Mobile Sidebar Overlay */}
+        {isMobileSidebarOpen && (
+          <div
             className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
-          
-          {/* Sidebar Modal */}
-          <div className="lg:hidden fixed top-0 left-0 right-0 bottom-0 z-50 w-full h-screen bg-[#040404] border-r border-white/10 overflow-y-auto transform transition-transform duration-300">
-            {/* Botão de fechar */}
-            <button
-              onClick={() => setIsMobileSidebarOpen(false)}
-              className="absolute top-4 right-4 z-[1] p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
-            
-            <div className="pt-20 h-full">
-              <CommunityList
-                communities={communities}
-                selectedCommunityId={selectedCommunityId}
-                onSelectCommunity={(id) => {
-                // Buscar a comunidade na lista
-                const community = communities.find(c => c.id === id);
-                if (!community) return;
-                
-                // Se for membro ou dono, abrir normalmente
-                if (community.isMember || community.isOwner) {
-                  // Fechar sidebar mobile primeiro
-                  setIsMobileSidebarOpen(false);
-                  // Atualizar estados
-                  setSelectedCommunityId(id);
-                  setSelectedChatUserId(null);
-                  // Salvar como última conversa
-                  saveLastConversation('community', id);
-                  // Atualizar URL com community param
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.set('community', id);
-                  params.delete('chat'); // Remover chat param se existir
-                  router.push(`/communities?${params.toString()}`);
-                } else if (community.visibility === 'PUBLIC') {
-                  // Se for pública e não for membro, mostrar tooltip centralizado
-                  setTooltipPosition({
-                    x: window.innerWidth / 2 - 160,
-                    y: window.innerHeight / 2 - 200,
-                  });
-                  setTooltipCommunity(community);
-                }
-              }}
-              onCreateCommunity={() => {
-                setIsCreateModalOpen(true);
-                setIsMobileSidebarOpen(false);
-              }}
-              onCommunityClick={handleCommunityClick}
-              conversations={conversations}
-              selectedChatUserId={selectedChatUserId}
-              onSelectConversation={(userId) => {
-                // Fechar sidebar mobile primeiro
-                setIsMobileSidebarOpen(false);
-                // Atualizar estados
-                setSelectedChatUserId(userId);
-                setSelectedCommunityId(undefined);
+        )}
+
+        {/* Communities List - Sidebar Esquerda */}
+        <div className="hidden lg:block relative">
+          <CommunityList
+            communities={communities}
+            selectedCommunityId={selectedCommunityId}
+            onSelectCommunity={(id) => {
+              // Buscar a comunidade na lista
+              const community = communities.find(c => c.id === id);
+              if (!community) return;
+
+              // Se for membro ou dono, abrir normalmente
+              if (community.isMember || community.isOwner) {
+                setSelectedCommunityId(id);
+                setSelectedChatUserId(null);
                 // Salvar como última conversa
-                saveLastConversation('chat', userId);
-                // Atualizar URL com chat param
+                saveLastConversation('community', id);
+                // Atualizar URL com community param
                 const params = new URLSearchParams(searchParams.toString());
-                params.set('chat', userId);
-                params.delete('community'); // Remover community param se existir
+                params.set('community', id);
+                params.delete('chat'); // Remover chat param se existir
                 router.push(`/communities?${params.toString()}`);
-                loadChatUser(userId);
-              }}
+              } else if (community.visibility === 'PUBLIC') {
+                // Se for pública e não for membro, mostrar tooltip centralizado
+                setTooltipPosition({
+                  x: window.innerWidth / 2 - 160,
+                  y: window.innerHeight / 2 - 200,
+                });
+                setTooltipCommunity(community);
+              }
+              // Se for privada e não for membro, não fazer nada (não deveria aparecer na lista)
+            }}
+            onCreateCommunity={() => setIsCreateModalOpen(true)}
+            onCommunityClick={handleCommunityClick}
+            conversations={conversations}
+            selectedChatUserId={selectedChatUserId}
+            onSelectConversation={(userId) => {
+              setSelectedChatUserId(userId);
+              setSelectedCommunityId(undefined);
+              // Salvar como última conversa
+              saveLastConversation('chat', userId);
+              // Atualizar URL com chat param
+              const params = new URLSearchParams(searchParams.toString());
+              params.set('chat', userId);
+              params.delete('community'); // Remover community param se existir
+              router.push(`/communities?${params.toString()}`);
+              loadChatUser(userId);
+            }}
+          />
+        </div>
+
+        {/* Mobile Left Sidebar Modal */}
+        {isMobileSidebarOpen && (
+          <>
+            {/* Overlay */}
+            <div
+              className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              onClick={() => setIsMobileSidebarOpen(false)}
             />
-            </div>
-          </div>
-        </>
-      )}
 
-      {/* Chat Area - Coluna Central + Direita */}
-      {selectedChatUserId && userProfile ? (
-        <div className="flex-1 flex flex-col gap-2 md:gap-3 relative z-10">
-          {/* Header Global - Fora da Ilha */}
-          {isLoadingChatUser || !chatUser || isLoadingConversation ? (
-            <ChatHeaderSkeleton />
-          ) : (
-          <div className="flex items-center justify-between gap-2 md:gap-4">
-            {/* Botão Menu - Apenas Mobile */}
-            <button
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-            >
-              <Menu className="w-5 h-5 text-white" />
-            </button>
+            {/* Sidebar Modal */}
+            <div className="lg:hidden fixed top-0 left-0 right-0 bottom-0 z-50 w-full h-screen bg-[#040404] border-r border-white/10 overflow-y-auto transform transition-transform duration-300">
+              {/* Botão de fechar */}
+              <button
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="absolute top-4 right-4 z-[1] p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
 
-            {/* Nome do Usuário com Avatar - Desktop apenas */}
-            <div className="hidden lg:flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage 
-                  src={chatUser.profileImage || undefined} 
-                  alt={chatUser.name}
-                />
-                <AvatarFallback className="bg-[#bd18b4] text-black">
-                  {chatUser.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <h1 className="text-white font-semibold text-2xl">
-                {chatUser.name}
-              </h1>
-            </div>
-            
-            {/* Search Bar + Actions - Centralizado no mobile */}
-            <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-initial justify-center lg:justify-end">
-              {/* Search Bar */}
-              <div className="relative flex items-center gap-2 flex-1 lg:flex-initial max-w-xs lg:max-w-none" style={{ minWidth: '200px', maxWidth: '280px' }}>
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && searchQuery.trim()) {
-                        const trimmedQuery = searchQuery.trim();
-                        // Ativar o highlight apenas quando pressionar Enter
-                        setActiveSearchQuery(trimmedQuery);
-                        
-                        // Calcular mensagens correspondentes temporariamente
-                        const query = trimmedQuery.toLowerCase();
-                        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const regex = new RegExp(`\\b${escapedQuery}\\b`, 'i');
-                        const tempMatchingMessages = directMessages.filter((msg) =>
-                          regex.test(msg.content)
-                        );
-                        
-                        let newIndex: number;
-                        
-                        // Se é a mesma busca da última vez, navegar para a próxima
-                        if (trimmedQuery === lastSearchQuery && tempMatchingMessages.length > 0) {
-                          // Ir para a próxima mensagem (mais antiga, índice menor)
-                          newIndex = currentSearchIndex > 0 
-                            ? currentSearchIndex - 1 
-                            : tempMatchingMessages.length - 1;
-                        } else {
-                          // Nova busca: começar na última mensagem (mais recente)
-                          newIndex = tempMatchingMessages.length > 0 
-                            ? tempMatchingMessages.length - 1 
-                            : 0;
-                        }
-                        
-                        setCurrentSearchIndex(newIndex);
-                        setLastSearchQuery(trimmedQuery);
-                        
-                        // Disparar evento customizado para fazer scroll até a mensagem
-                        const event = new CustomEvent('scrollToSearch', { 
-                          detail: { query: trimmedQuery, index: newIndex } 
-                        });
-                        window.dispatchEvent(event);
-                      }
-                    }}
-                    onBlur={() => {
-                      // Limpar highlight quando sair do campo
-                      setActiveSearchQuery('');
-                      setCurrentSearchIndex(0);
-                      setLastSearchQuery('');
-                    }}
-                    className="w-full h-10 sm:h-12 pl-9 sm:pl-12 pr-3 sm:pr-4 rounded-full text-white text-sm sm:text-base placeholder:text-gray-500 focus:outline-none transition-colors"
-                    style={{
-                      background: 'rgb(30, 30, 30)',
-                    }}
-                  />
-                </div>
-                {/* Botões de navegação */}
-                {hasMultipleMatches && (
-                  <div className="hidden sm:flex flex-col gap-0.5">
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Prevenir blur do input
-                      }}
-                      onClick={() => {
-                        // Seta para cima: vai para mensagem mais antiga (índice menor)
-                        const newIndex = currentSearchIndex > 0 
-                          ? currentSearchIndex - 1 
-                          : matchingMessages.length - 1;
-                        setCurrentSearchIndex(newIndex);
-                        const event = new CustomEvent('scrollToSearch', { 
-                          detail: { query: activeSearchQuery, index: newIndex } 
-                        });
-                        window.dispatchEvent(event);
-                      }}
-                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
-                      style={{ background: 'rgb(30, 30, 30)' }}
-                      title="Mensagem anterior (mais antiga)"
-                    >
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Prevenir blur do input
-                      }}
-                      onClick={() => {
-                        // Seta para baixo: vai para mensagem mais recente (índice maior)
-                        const newIndex = currentSearchIndex < matchingMessages.length - 1 
-                          ? currentSearchIndex + 1 
-                          : 0;
-                        setCurrentSearchIndex(newIndex);
-                        const event = new CustomEvent('scrollToSearch', { 
-                          detail: { query: activeSearchQuery, index: newIndex } 
-                        });
-                        window.dispatchEvent(event);
-                      }}
-                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
-                      style={{ background: 'rgb(30, 30, 30)' }}
-                      title="Próxima mensagem (mais recente)"
-                    >
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <div className="pt-20 h-full">
+                <CommunityList
+                  communities={communities}
+                  selectedCommunityId={selectedCommunityId}
+                  onSelectCommunity={(id) => {
+                    // Buscar a comunidade na lista
+                    const community = communities.find(c => c.id === id);
+                    if (!community) return;
 
-              {/* Right Actions */}
-              <div className="flex items-center gap-2 md:gap-3">
-                <NotificationsDropdown />
-                
-                {/* Avatar - Desktop apenas */}
-                <div className="hidden lg:block w-12 h-12 rounded-full relative">
-                  <Avatar className="w-full h-full">
-                    <AvatarImage 
-                      src={userProfile?.profileImage || undefined} 
-                      alt={userProfile?.name || 'User'}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-[#bd18b4] text-black">
-                      {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#bd18b4] rounded-full border-2 border-[#040404]" />
-                </div>
-
-                {/* Botão Sidebar Direita - Apenas Mobile */}
-                <button
-                  onClick={() => setIsRightSidebarCollapsed(!isRightSidebarCollapsed)}
-                  className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-                >
-                  <PanelRightOpen className="w-5 h-5 text-white" />
-                </button>
-              </div>
-            </div>
-          </div>
-          )}
-
-          {/* Conteúdo Principal - Chat + Sidebar */}
-          <div className="flex-1 flex gap-3 overflow-hidden pt-2">
-            {/* Área do Chat Direto - Ilha */}
-            <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
-              {isLoadingChatUser || !chatUser ? (
-                <ChatSkeleton />
-              ) : (
-                <DirectChatView
-                  friendId={chatUser.id}
-                  friendName={chatUser.name}
-                  friendAvatar={chatUser.profileImage}
-                  currentUserId={userProfile.id}
-                  currentUserName={userProfile.name}
-                  currentUserAvatar={userProfile.profileImage}
-                  messages={directMessages}
-                  searchQuery={activeSearchQuery}
-                  currentSearchIndex={currentSearchIndex}
-                  onSearchIndexChange={setCurrentSearchIndex}
-                  isConnected={isConnected}
-                  isTyping={isTyping}
-                  typingUserId={typingUserId}
-                  onSend={async (receiverId, content, attachments) => {
-                    await sendMessage(receiverId, content || '', attachments);
-                  }}
-                  onTyping={sendTypingIndicator}
-                  onPinMessage={pinMessage}
-                  onUnpinMessage={unpinMessage}
-                  pinnedMessages={pinnedMessages}
-                  onEditMessage={editMessage}
-                  onDeleteMessage={deleteMessage}
-                  onStartCall={async (receiverId) => {
-                    try {
-                      await startCall(receiverId);
-                    } catch (error) {
-                      console.error('Erro ao iniciar chamada:', error);
+                    // Se for membro ou dono, abrir normalmente
+                    if (community.isMember || community.isOwner) {
+                      // Fechar sidebar mobile primeiro
+                      setIsMobileSidebarOpen(false);
+                      // Atualizar estados
+                      setSelectedCommunityId(id);
+                      setSelectedChatUserId(null);
+                      // Salvar como última conversa
+                      saveLastConversation('community', id);
+                      // Atualizar URL com community param
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.set('community', id);
+                      params.delete('chat'); // Remover chat param se existir
+                      router.push(`/communities?${params.toString()}`);
+                    } else if (community.visibility === 'PUBLIC') {
+                      // Se for pública e não for membro, mostrar tooltip centralizado
+                      setTooltipPosition({
+                        x: window.innerWidth / 2 - 160,
+                        y: window.innerHeight / 2 - 200,
+                      });
+                      setTooltipCommunity(community);
                     }
                   }}
-                  isLoadingMessages={isLoadingConversation}
+                  onCreateCommunity={() => {
+                    setIsCreateModalOpen(true);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onCommunityClick={handleCommunityClick}
+                  conversations={conversations}
+                  selectedChatUserId={selectedChatUserId}
+                  onSelectConversation={(userId) => {
+                    // Fechar sidebar mobile primeiro
+                    setIsMobileSidebarOpen(false);
+                    // Atualizar estados
+                    setSelectedChatUserId(userId);
+                    setSelectedCommunityId(undefined);
+                    // Salvar como última conversa
+                    saveLastConversation('chat', userId);
+                    // Atualizar URL com chat param
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set('chat', userId);
+                    params.delete('community'); // Remover community param se existir
+                    router.push(`/communities?${params.toString()}`);
+                    loadChatUser(userId);
+                  }}
                 />
-              )}
+              </div>
             </div>
-            
-            {/* Community Info Sidebar - Desktop sempre aberta */}
-            <div className="hidden lg:block relative">
-              {isLoadingChatUser || !chatUser || isLoadingConversation ? (
-                <ChatSidebarSkeleton />
-              ) : (
-                chatUser && (
-                  <CommunityInfo 
-                    community={{
-                      id: `chat-${chatUser.id}`,
-                      name: chatUser.name,
-                      description: '',
-                      avatarUrl: chatUser.profileImage || undefined,
-                      memberCount: 2,
-                      isOwner: false,
-                      isMember: true,
-                      createdAt: new Date().toISOString(),
-                    }}
-                    onStartVideoCall={() => {}}
-                    onStartVoiceCall={async () => {
-                      try {
-                        await startCall(chatUser.id);
-                      } catch (error) {
-                        console.error('Erro ao iniciar chamada:', error);
-                      }
-                    }}
-                    isFromSidebar={false}
-                    pinnedMessages={pinnedMessages}
-                    currentUserId={userProfile.id}
-                    currentUserAvatar={userProfile.profileImage}
-                    friendName={chatUser.name}
-                    friendAvatar={chatUser.profileImage}
-                    onUnpinMessage={unpinMessage}
-                  />
-                )
-              )}
-            </div>
+          </>
+        )}
 
-            {/* Mobile Right Sidebar Modal - Chat Direto */}
-            {!isRightSidebarCollapsed && chatUser && (
-              <>
-                {/* Overlay */}
-                <div 
-                  className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-                  onClick={() => setIsRightSidebarCollapsed(true)}
-                />
-                
-                {/* Sidebar Modal */}
-                <div className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transform transition-transform duration-300">
-                  {/* Botão de fechar */}
-                  <button
-                    onClick={() => setIsRightSidebarCollapsed(true)}
-                    className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-                  >
-                    <X className="w-5 h-5 text-white" />
-                  </button>
-                  
-                  <div className="pt-16 px-4 flex justify-center">
-                    <CommunityInfo 
-                    community={{
-                      id: `chat-${chatUser.id}`,
-                      name: chatUser.name,
-                      description: '',
-                      avatarUrl: chatUser.profileImage || undefined,
-                      memberCount: 2,
-                      isOwner: false,
-                      isMember: true,
-                      createdAt: new Date().toISOString(),
-                    }}
-                    onStartVideoCall={() => {}}
-                    onStartVoiceCall={async () => {
-                      try {
-                        await startCall(chatUser.id);
-                      } catch (error) {
-                        console.error('Erro ao iniciar chamada:', error);
-                      }
-                    }}
-                    isFromSidebar={false}
-                    pinnedMessages={pinnedMessages}
-                    currentUserId={userProfile.id}
-                    currentUserAvatar={userProfile.profileImage}
-                    friendName={chatUser.name}
-                    friendAvatar={chatUser.profileImage}
-                    onUnpinMessage={unpinMessage}
-                  />
+        {/* Chat Area - Coluna Central + Direita */}
+        {selectedChatUserId && userProfile ? (
+          <div className="flex-1 flex flex-col gap-2 md:gap-3 relative z-10">
+            {/* Header Global - Fora da Ilha */}
+            {isLoadingChatUser || !chatUser || isLoadingConversation ? (
+              <ChatHeaderSkeleton />
+            ) : (
+              <div className="flex items-center justify-between gap-2 md:gap-4">
+                {/* Botão Menu - Apenas Mobile */}
+                <button
+                  onClick={() => setIsMobileSidebarOpen(true)}
+                  className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                >
+                  <Menu className="w-5 h-5 text-white" />
+                </button>
+
+                {/* Nome do Usuário com Avatar - Desktop apenas */}
+                <div className="hidden lg:flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage
+                      src={chatUser.profileImage || undefined}
+                      alt={chatUser.name}
+                    />
+                    <AvatarFallback className="bg-[#bd18b4] text-black">
+                      {chatUser.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <h1 className="text-white font-semibold text-2xl">
+                    {chatUser.name}
+                  </h1>
+                </div>
+
+                {/* Search Bar + Actions - Centralizado no mobile */}
+                <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-initial justify-center lg:justify-end">
+                  {/* Search Bar */}
+                  <div className="relative flex items-center gap-2 flex-1 lg:flex-initial max-w-xs lg:max-w-none" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                      <input
+                        type="text"
+                        placeholder="Search"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && searchQuery.trim()) {
+                            const trimmedQuery = searchQuery.trim();
+                            // Ativar o highlight apenas quando pressionar Enter
+                            setActiveSearchQuery(trimmedQuery);
+
+                            // Calcular mensagens correspondentes temporariamente
+                            const query = trimmedQuery.toLowerCase();
+                            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const regex = new RegExp(`\\b${escapedQuery}\\b`, 'i');
+                            const tempMatchingMessages = directMessages.filter((msg) =>
+                              regex.test(msg.content)
+                            );
+
+                            let newIndex: number;
+
+                            // Se é a mesma busca da última vez, navegar para a próxima
+                            if (trimmedQuery === lastSearchQuery && tempMatchingMessages.length > 0) {
+                              // Ir para a próxima mensagem (mais antiga, índice menor)
+                              newIndex = currentSearchIndex > 0
+                                ? currentSearchIndex - 1
+                                : tempMatchingMessages.length - 1;
+                            } else {
+                              // Nova busca: começar na última mensagem (mais recente)
+                              newIndex = tempMatchingMessages.length > 0
+                                ? tempMatchingMessages.length - 1
+                                : 0;
+                            }
+
+                            setCurrentSearchIndex(newIndex);
+                            setLastSearchQuery(trimmedQuery);
+
+                            // Disparar evento customizado para fazer scroll até a mensagem
+                            const event = new CustomEvent('scrollToSearch', {
+                              detail: { query: trimmedQuery, index: newIndex }
+                            });
+                            window.dispatchEvent(event);
+                          }
+                        }}
+                        onBlur={() => {
+                          // Limpar highlight quando sair do campo
+                          setActiveSearchQuery('');
+                          setCurrentSearchIndex(0);
+                          setLastSearchQuery('');
+                        }}
+                        className="w-full h-10 sm:h-12 pl-9 sm:pl-12 pr-3 sm:pr-4 rounded-full text-white text-sm sm:text-base placeholder:text-gray-500 focus:outline-none transition-colors"
+                        style={{
+                          background: 'rgb(30, 30, 30)',
+                        }}
+                      />
+                    </div>
+                    {/* Botões de navegação */}
+                    {hasMultipleMatches && (
+                      <div className="hidden sm:flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevenir blur do input
+                          }}
+                          onClick={() => {
+                            // Seta para cima: vai para mensagem mais antiga (índice menor)
+                            const newIndex = currentSearchIndex > 0
+                              ? currentSearchIndex - 1
+                              : matchingMessages.length - 1;
+                            setCurrentSearchIndex(newIndex);
+                            const event = new CustomEvent('scrollToSearch', {
+                              detail: { query: activeSearchQuery, index: newIndex }
+                            });
+                            window.dispatchEvent(event);
+                          }}
+                          className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
+                          style={{ background: 'rgb(30, 30, 30)' }}
+                          title="Mensagem anterior (mais antiga)"
+                        >
+                          <ChevronUp className="w-4 h-4 text-gray-400" />
+                        </button>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevenir blur do input
+                          }}
+                          onClick={() => {
+                            // Seta para baixo: vai para mensagem mais recente (índice maior)
+                            const newIndex = currentSearchIndex < matchingMessages.length - 1
+                              ? currentSearchIndex + 1
+                              : 0;
+                            setCurrentSearchIndex(newIndex);
+                            const event = new CustomEvent('scrollToSearch', {
+                              detail: { query: activeSearchQuery, index: newIndex }
+                            });
+                            window.dispatchEvent(event);
+                          }}
+                          className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
+                          style={{ background: 'rgb(30, 30, 30)' }}
+                          title="Próxima mensagem (mais recente)"
+                        >
+                          <ChevronDown className="w-4 h-4 text-gray-400" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Actions */}
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <NotificationsDropdown />
+
+                    {/* Avatar - Desktop apenas */}
+                    <div className="hidden lg:block w-12 h-12 rounded-full relative">
+                      <Avatar className="w-full h-full">
+                        <AvatarImage
+                          src={userProfile?.profileImage || undefined}
+                          alt={userProfile?.name || 'User'}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-[#bd18b4] text-black">
+                          {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#bd18b4] rounded-full border-2 border-[#040404]" />
+                    </div>
+
+                    {/* Botão Sidebar Direita - Apenas Mobile */}
+                    <button
+                      onClick={() => setIsRightSidebarCollapsed(!isRightSidebarCollapsed)}
+                      className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                    >
+                      <PanelRightOpen className="w-5 h-5 text-white" />
+                    </button>
                   </div>
                 </div>
-              </>
+              </div>
             )}
-          </div>
-        </div>
-      ) : selectedCommunity ? (
-        <div className="flex-1 flex flex-col gap-2 md:gap-3 relative z-10">
-          {/* Header Global - Fora da Ilha */}
-          <div className="flex items-center justify-between gap-2 md:gap-4">
-            {/* Botão Menu - Apenas Mobile */}
-            <button
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-            >
-              <Menu className="w-5 h-5 text-white" />
-            </button>
 
-            {/* Nome da Comunidade - Desktop apenas */}
-            <h1 className="hidden lg:block text-white font-semibold text-2xl">{selectedCommunity.name}</h1>
-            
-            {/* Search Bar + Actions - Centralizado no mobile */}
-            <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-initial justify-center lg:justify-end">
-              {/* Search Bar */}
-              <div className="relative flex items-center gap-2 flex-1 lg:flex-initial max-w-xs lg:max-w-none" style={{ minWidth: '200px', maxWidth: '280px' }}>
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-gray-500" />
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    value={communitySearchQuery}
-                    onChange={(e) => setCommunitySearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && communitySearchQuery.trim()) {
-                        const trimmedQuery = communitySearchQuery.trim();
-                        // Ativar o highlight apenas quando pressionar Enter
-                        setActiveCommunitySearchQuery(trimmedQuery);
-                        
-                        // Calcular mensagens correspondentes temporariamente
-                        const query = trimmedQuery.toLowerCase();
-                        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const regex = new RegExp(`\\b${escapedQuery}\\b`, 'i');
-                        const tempMatchingMessages = communityMessages.filter((msg) =>
-                          regex.test(msg.content)
-                        );
-                        
-                        let newIndex: number;
-                        
-                        // Se é a mesma busca da última vez, navegar para a próxima
-                        if (trimmedQuery === lastCommunitySearchQuery && tempMatchingMessages.length > 0) {
-                          // Ir para a próxima mensagem (mais antiga, índice menor)
-                          newIndex = currentCommunitySearchIndex > 0 
-                            ? currentCommunitySearchIndex - 1 
-                            : tempMatchingMessages.length - 1;
-                        } else {
-                          // Nova busca: começar na última mensagem (mais recente)
-                          newIndex = tempMatchingMessages.length > 0 
-                            ? tempMatchingMessages.length - 1 
-                            : 0;
-                        }
-                        
-                        setCurrentCommunitySearchIndex(newIndex);
-                        setLastCommunitySearchQuery(trimmedQuery);
-                        
-                        // Disparar evento customizado para fazer scroll até a mensagem
-                        const event = new CustomEvent('scrollToCommunitySearch', { 
-                          detail: { query: trimmedQuery, index: newIndex } 
-                        });
-                        window.dispatchEvent(event);
+            {/* Conteúdo Principal - Chat + Sidebar */}
+            <div className="flex-1 flex gap-3 overflow-hidden pt-2">
+              {/* Área do Chat Direto - Ilha */}
+              <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
+                {isLoadingChatUser || !chatUser ? (
+                  <ChatSkeleton />
+                ) : (
+                  <DirectChatView
+                    friendId={chatUser.id}
+                    friendName={chatUser.name}
+                    friendAvatar={chatUser.profileImage}
+                    currentUserId={userProfile.id}
+                    currentUserName={userProfile.name}
+                    currentUserAvatar={userProfile.profileImage}
+                    messages={directMessages}
+                    searchQuery={activeSearchQuery}
+                    currentSearchIndex={currentSearchIndex}
+                    onSearchIndexChange={setCurrentSearchIndex}
+                    isConnected={isConnected}
+                    isTyping={isTyping}
+                    typingUserId={typingUserId}
+                    onSend={async (receiverId, content, attachments) => {
+                      await sendMessage(receiverId, content || '', attachments);
+                    }}
+                    onTyping={sendTypingIndicator}
+                    onPinMessage={pinMessage}
+                    onUnpinMessage={unpinMessage}
+                    pinnedMessages={pinnedMessages}
+                    onEditMessage={editMessage}
+                    onDeleteMessage={deleteMessage}
+                    onStartCall={async (receiverId) => {
+                      try {
+                        await startCall(receiverId);
+                      } catch (error) {
+                        console.error('Erro ao iniciar chamada:', error);
                       }
                     }}
-                    onBlur={() => {
-                      // Limpar highlight quando sair do campo
-                      setActiveCommunitySearchQuery('');
-                      setCurrentCommunitySearchIndex(0);
-                      setLastCommunitySearchQuery('');
-                    }}
-                    className="w-full h-10 lg:h-12 pl-9 lg:pl-12 pr-3 lg:pr-4 rounded-full text-white text-sm lg:text-base placeholder:text-gray-500 focus:outline-none transition-colors"
-                    style={{
-                      background: 'rgb(30, 30, 30)',
-                    }}
+                    isLoadingMessages={isLoadingConversation}
                   />
-                </div>
-                {/* Botões de navegação */}
-                {hasMultipleCommunityMatches && (
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Prevenir blur do input
-                      }}
-                      onClick={() => {
-                        const newIndex = currentCommunitySearchIndex > 0 
-                          ? currentCommunitySearchIndex - 1 
-                          : matchingCommunityMessages.length - 1;
-                        setCurrentCommunitySearchIndex(newIndex);
-                        const event = new CustomEvent('scrollToCommunitySearch', { 
-                          detail: { query: activeCommunitySearchQuery, index: newIndex } 
-                        });
-                        window.dispatchEvent(event);
-                      }}
-                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
-                      style={{ background: 'rgb(30, 30, 30)' }}
-                      title="Mensagem anterior (mais antiga)"
-                    >
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Prevenir blur do input
-                      }}
-                      onClick={() => {
-                        const newIndex = currentCommunitySearchIndex < matchingCommunityMessages.length - 1 
-                          ? currentCommunitySearchIndex + 1 
-                          : 0;
-                        setCurrentCommunitySearchIndex(newIndex);
-                        const event = new CustomEvent('scrollToCommunitySearch', { 
-                          detail: { query: activeCommunitySearchQuery, index: newIndex } 
-                        });
-                        window.dispatchEvent(event);
-                      }}
-                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
-                      style={{ background: 'rgb(30, 30, 30)' }}
-                      title="Próxima mensagem (mais recente)"
-                    >
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div>
                 )}
               </div>
 
-              {/* Right Actions */}
-              <div className="flex items-center gap-2 md:gap-3">
-                <NotificationsDropdown />
-                
-                {/* Avatar - Desktop apenas */}
-                <div className="hidden lg:block w-12 h-12 rounded-full relative">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage 
-                      src={userProfile?.profileImage || undefined} 
-                      alt={userProfile?.name || 'User'} 
+              {/* Community Info Sidebar - Desktop sempre aberta */}
+              <div className="hidden lg:block relative">
+                {isLoadingChatUser || !chatUser || isLoadingConversation ? (
+                  <ChatSidebarSkeleton />
+                ) : (
+                  chatUser && (
+                    <CommunityInfo
+                      community={{
+                        id: `chat-${chatUser.id}`,
+                        name: chatUser.name,
+                        description: '',
+                        avatarUrl: chatUser.profileImage || undefined,
+                        memberCount: 2,
+                        isOwner: false,
+                        isMember: true,
+                        createdAt: new Date().toISOString(),
+                      }}
+                      onStartVideoCall={() => { }}
+                      onStartVoiceCall={async () => {
+                        try {
+                          await startCall(chatUser.id);
+                        } catch (error) {
+                          console.error('Erro ao iniciar chamada:', error);
+                        }
+                      }}
+                      isFromSidebar={false}
+                      pinnedMessages={pinnedMessages}
+                      currentUserId={userProfile.id}
+                      currentUserAvatar={userProfile.profileImage}
+                      friendName={chatUser.name}
+                      friendAvatar={chatUser.profileImage}
+                      onUnpinMessage={unpinMessage}
                     />
-                    <AvatarFallback 
-                      className="bg-[#bd18b4] text-black text-sm font-semibold"
-                    >
-                      {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  {/* Indicador de status online */}
-                  <div 
-                    className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#040404] transition-colors"
-                    style={{ 
-                      background: userProfile?.id && statusMap.get(userProfile.id) === 'online' ? '#bd18b4' : '#666'
-                    }} 
+                  )
+                )}
+              </div>
+
+              {/* Mobile Right Sidebar Modal - Chat Direto */}
+              {!isRightSidebarCollapsed && chatUser && (
+                <>
+                  {/* Overlay */}
+                  <div
+                    className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                    onClick={() => setIsRightSidebarCollapsed(true)}
                   />
-                </div>
 
-                {/* Botão Sidebar Direita - Apenas Mobile */}
-                <button
-                  onClick={() => setIsRightSidebarCollapsed(!isRightSidebarCollapsed)}
-                  className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-                >
-                  <PanelRightOpen className="w-5 h-5 text-white" />
-                </button>
-              </div>
-            </div>
-          </div>
+                  {/* Sidebar Modal */}
+                  <div className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transform transition-transform duration-300">
+                    {/* Botão de fechar */}
+                    <button
+                      onClick={() => setIsRightSidebarCollapsed(true)}
+                      className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
 
-          {/* Conteúdo Principal - Chat + Sidebar */}
-          <div className="flex-1 flex gap-2 md:gap-3 overflow-hidden pt-2">
-            {/* Área do Chat - Ilha */}
-            {isLoadingCommunityMessages ? (
-              <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
-                <ChatSkeleton />
-              </div>
-            ) : (
-              <CommunityChat
-                community={selectedCommunity}
-                messages={communityMessages}
-                pinnedMessages={communityPinnedMessages}
-                currentUserId={userProfile?.id}
-                currentUserName={userProfile?.name}
-                currentUserAvatar={userProfile?.profileImage}
-                searchQuery={activeCommunitySearchQuery}
-                currentSearchIndex={currentCommunitySearchIndex}
-                onSearchIndexChange={setCurrentCommunitySearchIndex}
-                onSendMessage={handleSendMessage}
-                onEditMessage={editCommunityMessage}
-                onDeleteMessage={deleteCommunityMessage}
-                onPinMessage={pinCommunityMessage}
-                onUnpinMessage={unpinCommunityMessage}
-                onStartVideoCall={handleStartVideoCall}
-                onStartVoiceCall={handleStartVoiceCall}
-                isConnected={isCommunityConnected}
-                isTyping={isCommunityTyping}
-                typingUserId={communityTypingUserId}
-                onTyping={sendCommunityTypingIndicator}
-                isLoadingMessages={isLoadingCommunityMessages}
-              />
-            )}
-            
-            {/* Community Info Sidebar - Desktop sempre aberta */}
-            <div className="hidden lg:block relative">
-              {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
-                <ChatSidebarSkeleton />
-              ) : (
-                <CommunityInfo 
-                  community={selectedCommunity}
-                  onStartVideoCall={handleStartVideoCall}
-                  onStartVoiceCall={handleStartVoiceCall}
-                  isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
-                  pinnedMessages={communityPinnedMessages}
-                  currentUserId={userProfile?.id}
-                  currentUserAvatar={userProfile?.profileImage}
-                  onUnpinMessage={unpinCommunityMessage}
-                />
+                    <div className="pt-16 px-4 flex justify-center">
+                      <CommunityInfo
+                        community={{
+                          id: `chat-${chatUser.id}`,
+                          name: chatUser.name,
+                          description: '',
+                          avatarUrl: chatUser.profileImage || undefined,
+                          memberCount: 2,
+                          isOwner: false,
+                          isMember: true,
+                          createdAt: new Date().toISOString(),
+                        }}
+                        onStartVideoCall={() => { }}
+                        onStartVoiceCall={async () => {
+                          try {
+                            await startCall(chatUser.id);
+                          } catch (error) {
+                            console.error('Erro ao iniciar chamada:', error);
+                          }
+                        }}
+                        isFromSidebar={false}
+                        pinnedMessages={pinnedMessages}
+                        currentUserId={userProfile.id}
+                        currentUserAvatar={userProfile.profileImage}
+                        friendName={chatUser.name}
+                        friendAvatar={chatUser.profileImage}
+                        onUnpinMessage={unpinMessage}
+                      />
+                    </div>
+                  </div>
+                </>
               )}
             </div>
+          </div>
+        ) : selectedCommunity ? (
+          <div className="flex-1 flex flex-col gap-2 md:gap-3 relative z-10">
+            {/* Header Global - Fora da Ilha */}
+            <div className="flex items-center justify-between gap-2 md:gap-4">
+              {/* Botão Menu - Apenas Mobile */}
+              <button
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+              >
+                <Menu className="w-5 h-5 text-white" />
+              </button>
 
-            {/* Mobile Right Sidebar Modal */}
-            {!isRightSidebarCollapsed && (
-              <>
-                {/* Overlay */}
-                <div 
-                  className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-                  onClick={() => setIsRightSidebarCollapsed(true)}
-                />
-                
-                {/* Sidebar Modal */}
-                <div className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transform transition-transform duration-300">
-                  {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
-                    <div className="pt-16 px-4">
-                      <ChatSidebarSkeleton />
-                    </div>
-                  ) : (
-                    <>
-                      {/* Botão de fechar */}
+              {/* Nome da Comunidade - Desktop apenas */}
+              <h1 className="hidden lg:block text-white font-semibold text-2xl">{selectedCommunity.name}</h1>
+
+              {/* Search Bar + Actions - Centralizado no mobile */}
+              <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-initial justify-center lg:justify-end">
+                {/* Search Bar */}
+                <div className="relative flex items-center gap-2 flex-1 lg:flex-initial max-w-xs lg:max-w-none" style={{ minWidth: '200px', maxWidth: '280px' }}>
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-gray-500" />
+                    <input
+                      type="text"
+                      placeholder="Search"
+                      value={communitySearchQuery}
+                      onChange={(e) => setCommunitySearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && communitySearchQuery.trim()) {
+                          const trimmedQuery = communitySearchQuery.trim();
+                          // Ativar o highlight apenas quando pressionar Enter
+                          setActiveCommunitySearchQuery(trimmedQuery);
+
+                          // Calcular mensagens correspondentes temporariamente
+                          const query = trimmedQuery.toLowerCase();
+                          const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                          const regex = new RegExp(`\\b${escapedQuery}\\b`, 'i');
+                          const tempMatchingMessages = communityMessages.filter((msg) =>
+                            regex.test(msg.content)
+                          );
+
+                          let newIndex: number;
+
+                          // Se é a mesma busca da última vez, navegar para a próxima
+                          if (trimmedQuery === lastCommunitySearchQuery && tempMatchingMessages.length > 0) {
+                            // Ir para a próxima mensagem (mais antiga, índice menor)
+                            newIndex = currentCommunitySearchIndex > 0
+                              ? currentCommunitySearchIndex - 1
+                              : tempMatchingMessages.length - 1;
+                          } else {
+                            // Nova busca: começar na última mensagem (mais recente)
+                            newIndex = tempMatchingMessages.length > 0
+                              ? tempMatchingMessages.length - 1
+                              : 0;
+                          }
+
+                          setCurrentCommunitySearchIndex(newIndex);
+                          setLastCommunitySearchQuery(trimmedQuery);
+
+                          // Disparar evento customizado para fazer scroll até a mensagem
+                          const event = new CustomEvent('scrollToCommunitySearch', {
+                            detail: { query: trimmedQuery, index: newIndex }
+                          });
+                          window.dispatchEvent(event);
+                        }
+                      }}
+                      onBlur={() => {
+                        // Limpar highlight quando sair do campo
+                        setActiveCommunitySearchQuery('');
+                        setCurrentCommunitySearchIndex(0);
+                        setLastCommunitySearchQuery('');
+                      }}
+                      className="w-full h-10 lg:h-12 pl-9 lg:pl-12 pr-3 lg:pr-4 rounded-full text-white text-sm lg:text-base placeholder:text-gray-500 focus:outline-none transition-colors"
+                      style={{
+                        background: 'rgb(30, 30, 30)',
+                      }}
+                    />
+                  </div>
+                  {/* Botões de navegação */}
+                  {hasMultipleCommunityMatches && (
+                    <div className="flex flex-col gap-0.5">
                       <button
-                        onClick={() => setIsRightSidebarCollapsed(true)}
-                        className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // Prevenir blur do input
+                        }}
+                        onClick={() => {
+                          const newIndex = currentCommunitySearchIndex > 0
+                            ? currentCommunitySearchIndex - 1
+                            : matchingCommunityMessages.length - 1;
+                          setCurrentCommunitySearchIndex(newIndex);
+                          const event = new CustomEvent('scrollToCommunitySearch', {
+                            detail: { query: activeCommunitySearchQuery, index: newIndex }
+                          });
+                          window.dispatchEvent(event);
+                        }}
+                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
+                        style={{ background: 'rgb(30, 30, 30)' }}
+                        title="Mensagem anterior (mais antiga)"
                       >
-                        <X className="w-5 h-5 text-white" />
+                        <ChevronUp className="w-4 h-4 text-gray-400" />
                       </button>
-                      
-                      <div className="pt-16 px-4 flex justify-center">
-                        <CommunityInfo 
-                          community={selectedCommunity}
-                          onStartVideoCall={handleStartVideoCall}
-                          onStartVoiceCall={handleStartVoiceCall}
-                          isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
-                          pinnedMessages={communityPinnedMessages}
-                          currentUserId={userProfile?.id}
-                          currentUserAvatar={userProfile?.profileImage}
-                          onUnpinMessage={unpinCommunityMessage}
-                        />
-                      </div>
-                    </>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // Prevenir blur do input
+                        }}
+                        onClick={() => {
+                          const newIndex = currentCommunitySearchIndex < matchingCommunityMessages.length - 1
+                            ? currentCommunitySearchIndex + 1
+                            : 0;
+                          setCurrentCommunitySearchIndex(newIndex);
+                          const event = new CustomEvent('scrollToCommunitySearch', {
+                            detail: { query: activeCommunitySearchQuery, index: newIndex }
+                          });
+                          window.dispatchEvent(event);
+                        }}
+                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#3a3a3a] transition-colors"
+                        style={{ background: 'rgb(30, 30, 30)' }}
+                        title="Próxima mensagem (mais recente)"
+                      >
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </button>
+                    </div>
                   )}
                 </div>
-              </>
-            )}
+
+                {/* Right Actions */}
+                <div className="flex items-center gap-2 md:gap-3">
+                  <NotificationsDropdown />
+
+                  {/* Avatar - Desktop apenas */}
+                  <div className="hidden lg:block w-12 h-12 rounded-full relative">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage
+                        src={userProfile?.profileImage || undefined}
+                        alt={userProfile?.name || 'User'}
+                      />
+                      <AvatarFallback
+                        className="bg-[#bd18b4] text-black text-sm font-semibold"
+                      >
+                        {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    {/* Indicador de status online */}
+                    <div
+                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#040404] transition-colors"
+                      style={{
+                        background: userProfile?.id && statusMap.get(userProfile.id) === 'online' ? '#bd18b4' : '#666'
+                      }}
+                    />
+                  </div>
+
+                  {/* Botão Sidebar Direita - Apenas Mobile */}
+                  <button
+                    onClick={() => setIsRightSidebarCollapsed(!isRightSidebarCollapsed)}
+                    className="lg:hidden p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                  >
+                    <PanelRightOpen className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Conteúdo Principal - Chat + Sidebar */}
+            <div className="flex-1 flex gap-2 md:gap-3 overflow-hidden pt-2">
+              {/* Área do Chat - Ilha */}
+              {isLoadingCommunityMessages ? (
+                <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden">
+                  <ChatSkeleton />
+                </div>
+              ) : (
+                <CommunityChat
+                  community={selectedCommunity}
+                  messages={communityMessages}
+                  pinnedMessages={communityPinnedMessages}
+                  currentUserId={userProfile?.id}
+                  currentUserName={userProfile?.name}
+                  currentUserAvatar={userProfile?.profileImage}
+                  searchQuery={activeCommunitySearchQuery}
+                  currentSearchIndex={currentCommunitySearchIndex}
+                  onSearchIndexChange={setCurrentCommunitySearchIndex}
+                  onSendMessage={async (content, attachments) => {
+                    // Verificação para Mock Communities
+                    const isMock = MOCK_COMMUNITIES.some(c => c.id === selectedCommunityId);
+                    if (isMock) {
+                      // Simular envio de mensagem
+                      await new Promise(resolve => setTimeout(resolve, 500));
+                      // Aqui poderíamos adicionar a mensagem ao estado local se quiséssemos simular completamente
+                      return;
+                    }
+                    await handleSendMessage(content, attachments);
+                  }}
+                  onEditMessage={editCommunityMessage}
+                  onDeleteMessage={deleteCommunityMessage}
+                  onPinMessage={pinCommunityMessage}
+                  onUnpinMessage={unpinCommunityMessage}
+                  onStartVideoCall={handleStartVideoCall}
+                  onStartVoiceCall={handleStartVoiceCall}
+                  // FORÇAR CONNECTED SE FOR MOCK OU SE ID FOR CURTO (Heurística para mocks)
+                  isConnected={
+                    isCommunityConnected ||
+                    MOCK_COMMUNITIES.some(c => c.id === selectedCommunityId) ||
+                    (selectedCommunityId && selectedCommunityId.length < 10) ||
+                    true // DEBUG: Forçar true temporariamente para resolver o bloqueio
+                  }
+                  isTyping={isCommunityTyping}
+                  typingUserId={communityTypingUserId}
+                  onTyping={sendCommunityTypingIndicator}
+                  isLoadingMessages={isLoadingCommunityMessages}
+                />
+              )}
+
+              {/* Community Info Sidebar - Desktop sempre aberta */}
+              <div className="hidden lg:block relative">
+                {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
+                  <ChatSidebarSkeleton />
+                ) : (
+                  <CommunityInfo
+                    community={selectedCommunity}
+                    onStartVideoCall={handleStartVideoCall}
+                    onStartVoiceCall={handleStartVoiceCall}
+                    isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
+                    pinnedMessages={communityPinnedMessages}
+                    currentUserId={userProfile?.id}
+                    currentUserAvatar={userProfile?.profileImage}
+                    onUnpinMessage={unpinCommunityMessage}
+                  />
+                )}
+              </div>
+
+              {/* Mobile Right Sidebar Modal */}
+              {!isRightSidebarCollapsed && (
+                <>
+                  {/* Overlay */}
+                  <div
+                    className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                    onClick={() => setIsRightSidebarCollapsed(true)}
+                  />
+
+                  {/* Sidebar Modal */}
+                  <div className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transform transition-transform duration-300">
+                    {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
+                      <div className="pt-16 px-4">
+                        <ChatSidebarSkeleton />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Botão de fechar */}
+                        <button
+                          onClick={() => setIsRightSidebarCollapsed(true)}
+                          className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                        >
+                          <X className="w-5 h-5 text-white" />
+                        </button>
+
+                        <div className="pt-16 px-4 flex justify-center">
+                          <CommunityInfo
+                            community={selectedCommunity}
+                            onStartVideoCall={handleStartVideoCall}
+                            onStartVoiceCall={handleStartVoiceCall}
+                            isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
+                            pinnedMessages={communityPinnedMessages}
+                            currentUserId={userProfile?.id}
+                            currentUserAvatar={userProfile?.profileImage}
+                            onUnpinMessage={unpinCommunityMessage}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center rounded-2xl" style={{ background: '#303030' }}>
-          <p className="text-gray-500">Select a community to start chatting</p>
-        </div>
-      )}
+        ) : (
+          <div className="flex-1 flex flex-col relative z-10">
+            <EmptyChatState onCreateCommunity={() => setIsCreateModalOpen(true)} />
+          </div>
+        )}
 
-      {/* Community Join Tooltip */}
-      {tooltipCommunity && (
-        <CommunityJoinTooltip
-          community={tooltipCommunity}
-          isOpen={!!tooltipCommunity}
-          onClose={() => setTooltipCommunity(null)}
-          onJoinSuccess={handleJoinSuccess}
-          position={tooltipPosition}
+        {/* Community Join Tooltip */}
+        {tooltipCommunity && (
+          <CommunityJoinTooltip
+            community={tooltipCommunity}
+            isOpen={!!tooltipCommunity}
+            onClose={() => setTooltipCommunity(null)}
+            onJoinSuccess={handleJoinSuccess}
+            position={tooltipPosition}
+          />
+        )}
+
+        {/* Create Community Modal */}
+        <CreateCommunityModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={() => {
+            setIsCreateModalOpen(false);
+            refreshCommunities();
+          }}
         />
-      )}
 
-      {/* Create Community Modal */}
-      <CreateCommunityModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => {
-          setIsCreateModalOpen(false);
-          refreshCommunities();
-        }}
-      />
-
-      {/* Voice Call Modal - Aparece sempre que há uma chamada ativa ou erro */}
-      {(callState.status !== 'idle' || callState.error) && (
-        <VoiceCallModal
-          callState={callState}
-          currentUserId={userProfile?.id}
-          callerName={
-            callState.callerName ||
-            (callState.callerId === userProfile?.id
-              ? userProfile.name
-              : callState.callerId && callState.callerId !== userProfile?.id
-                ? 'Usuário'
-                : chatUser?.name || 'Usuário')
-          }
-          callerAvatar={
-            callState.callerAvatar !== undefined
-              ? callState.callerAvatar
-              : callState.callerId === userProfile?.id
+        {/* Voice Call Modal - Aparece sempre que há uma chamada ativa ou erro */}
+        {(callState.status !== 'idle' || callState.error) && (
+          <VoiceCallModal
+            callState={callState}
+            currentUserId={userProfile?.id}
+            callerName={
+              callState.callerName ||
+              (callState.callerId === userProfile?.id
+                ? userProfile.name
+                : callState.callerId && callState.callerId !== userProfile?.id
+                  ? 'Usuário'
+                  : chatUser?.name || 'Usuário')
+            }
+            callerAvatar={
+              callState.callerAvatar !== undefined
+                ? callState.callerAvatar
+                : callState.callerId === userProfile?.id
+                  ? userProfile.profileImage
+                  : chatUser?.profileImage || null
+            }
+            receiverName={
+              callState.receiverId === userProfile?.id
+                ? userProfile.name
+                : callState.receiverId && callState.receiverId !== userProfile?.id
+                  ? 'Usuário'
+                  : chatUser?.name || 'Usuário'
+            }
+            receiverAvatar={
+              callState.receiverId === userProfile?.id
                 ? userProfile.profileImage
                 : chatUser?.profileImage || null
-          }
-          receiverName={
-            callState.receiverId === userProfile?.id
-              ? userProfile.name
-              : callState.receiverId && callState.receiverId !== userProfile?.id
-                ? 'Usuário'
-                : chatUser?.name || 'Usuário'
-          }
-          receiverAvatar={
-            callState.receiverId === userProfile?.id
-              ? userProfile.profileImage
-              : chatUser?.profileImage || null
-          }
-          onAccept={async (roomId) => {
-            try {
-              await acceptCall(roomId);
-            } catch (error) {
-              console.error('Erro ao aceitar chamada:', error);
             }
-          }}
-          onReject={(roomId) => {
-            rejectCall(roomId);
-          }}
-          onEnd={() => {
-            endCall();
-          }}
-          onToggleAudio={toggleLocalAudio}
-        />
-      )}
+            onAccept={async (roomId) => {
+              try {
+                await acceptCall(roomId);
+              } catch (error) {
+                console.error('Erro ao aceitar chamada:', error);
+              }
+            }}
+            onReject={(roomId) => {
+              rejectCall(roomId);
+            }}
+            onEnd={() => {
+              endCall();
+            }}
+            onToggleAudio={toggleLocalAudio}
+          />
+        )}
       </div>
     </div>
   );

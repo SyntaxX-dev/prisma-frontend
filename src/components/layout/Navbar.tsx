@@ -34,7 +34,7 @@ interface NavbarProps {
   toggleTheme?: () => void;
 }
 
-export function Navbar({}: NavbarProps) {
+export function Navbar({ }: NavbarProps) {
 
   const navItems = ["Dashboard", "Chats", "Vistos Atualmente", "Meu resumo", "Mapas Mentais", "Questões", "Perfil", "Configurações"];
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -46,25 +46,25 @@ export function Navbar({}: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  
+
   // Atualizar currentPath quando a URL mudar
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentPath(window.location.pathname);
     }
   }, [pathname]);
-  
+
   // Verificar se está em uma página de curso (não carregar offensives)
   const isCoursePage = currentPath?.includes('/course/') && (
-    currentPath?.includes('/sub-courses') || 
+    currentPath?.includes('/sub-courses') ||
     currentPath?.includes('/videos')
   );
-  
-  
-  
-  
+
+
+
+
   const { streakData, isStreakActive } = useStreak(!isCoursePage);
-  
+
   // Sempre tentar acessar dados de offensives para o calendário
   const { data: offensivesData, refetch: refetchOffensives } = useOffensives(true);
   const { searchQuery, updateSearch, clearSearch, isSearching, isLoading } = useSearch();

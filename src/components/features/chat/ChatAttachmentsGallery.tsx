@@ -25,13 +25,13 @@ export function ChatAttachmentsGallery({
 }: ChatAttachmentsGalleryProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   const totalFiles = attachments.length;
-  
+
   // Limitar a 4 itens para exibição
   const itemsToShow = attachments.slice(0, 4);
   const remainingCount = attachments.length - 4;
-  
+
   const handleImageClick = (attachment: Attachment, hasBlur: boolean) => {
     if (hasBlur) {
       setIsModalOpen(true);
@@ -43,23 +43,84 @@ export function ChatAttachmentsGallery({
       }
     }
   };
-  
+
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center p-4">
-        <div className="text-gray-400 text-sm">Carregando arquivos...</div>
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-3">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-gray-400" />
+            <span className="text-sm font-medium text-white">Files</span>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="flex flex-col items-center">
+            <div
+              className="w-8 h-8 rounded-full border-2 border-[#bd18b4] border-t-transparent animate-spin mb-3"
+            />
+            <span className="text-gray-400 text-xs">Carregando...</span>
+          </div>
+        </div>
       </div>
     );
   }
-  
+
   if (totalFiles === 0) {
-    return null;
+    return (
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-3">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-gray-400" />
+            <span className="text-sm font-medium text-white">Files</span>
+          </div>
+        </div>
+
+        {/* Empty state */}
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="relative mb-4">
+            {/* Glow effect */}
+            <div
+              className="absolute inset-0 rounded-2xl animate-pulse"
+              style={{
+                background: 'radial-gradient(circle, rgba(189, 24, 180, 0.15) 0%, transparent 70%)',
+                transform: 'scale(1.3)',
+                filter: 'blur(12px)',
+              }}
+            />
+
+            {/* Icon container */}
+            <div
+              className="relative w-16 h-16 rounded-2xl flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(145deg, rgba(40, 40, 48, 0.8) 0%, rgba(25, 25, 32, 0.9) 100%)',
+                border: '1px solid rgba(189, 24, 180, 0.2)',
+                boxShadow: '0 0 0 1px rgba(255,255,255,0.03)',
+              }}
+            >
+              <div
+                className="absolute inset-0 rounded-2xl"
+                style={{
+                  background: 'radial-gradient(circle at 30% 30%, rgba(189, 24, 180, 0.1) 0%, transparent 60%)',
+                }}
+              />
+              <ImageIcon className="w-7 h-7 text-gray-500 relative z-10" strokeWidth={1.5} />
+            </div>
+          </div>
+
+          <p className="text-gray-400 text-xs text-center mb-1">Nenhum arquivo</p>
+          <p className="text-gray-600 text-[10px] text-center">
+            Arquivos compartilhados aparecerão aqui
+          </p>
+        </div>
+      </div>
+    );
   }
-  
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div 
+      <div
         className="flex items-center justify-between p-3 cursor-pointer hover:bg-[#252525] transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -73,7 +134,7 @@ export function ChatAttachmentsGallery({
           <ChevronUp className="w-4 h-4 text-gray-400" />
         )}
       </div>
-      
+
       {isExpanded && (
         <>
           {/* Attachments grid - 2x2, máximo 4 itens */}
@@ -83,7 +144,7 @@ export function ChatAttachmentsGallery({
                 const isLastItem = index === 3;
                 const hasMore = remainingCount > 0;
                 const shouldShowBlur = isLastItem && hasMore;
-                
+
                 if (isImage(attachment)) {
                   return (
                     <div
@@ -112,7 +173,7 @@ export function ChatAttachmentsGallery({
                     </div>
                   );
                 }
-                
+
                 // Para arquivos não-imagem, mostrar um placeholder visual
                 return (
                   <div
@@ -161,7 +222,7 @@ export function ChatAttachmentsGallery({
               <X className="w-5 h-5" />
             </button>
           </DialogHeader>
-          
+
           <div className="flex-1 overflow-y-auto p-4 min-h-0">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {attachments.map((attachment) => {
@@ -187,7 +248,7 @@ export function ChatAttachmentsGallery({
                     </div>
                   );
                 }
-                
+
                 return (
                   <div
                     key={attachment.id}

@@ -3,38 +3,33 @@
 import { motion } from "motion/react";
 import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
-import LightRays from "./LightRays";
+import { PencilScribble } from "@/components/ui/PencilScribble";
 
 const faqs = [
   {
     question: "Como funciona a curadoria dos vídeos?",
     answer:
-      "Nossa equipe de especialistas seleciona cuidadosamente os melhores vídeos do YouTube para cada tópico. Analisamos qualidade de conteúdo, didática, avaliações e feedback dos usuários para garantir apenas o melhor material para seu aprendizado.",
+      "Nossa equipe seleciona cuidadosamente os melhores vídeos do YouTube para cada tópico, analisando qualidade de conteúdo, didática e avaliações.",
   },
   {
     question: "Posso acessar de qualquer dispositivo?",
     answer:
-      "Sim! O PRISMA é totalmente responsivo e funciona perfeitamente em computadores, tablets e smartphones. Seu progresso é sincronizado automaticamente entre todos os dispositivos.",
+      "Sim! O Prisma é totalmente responsivo e funciona em computadores, tablets e smartphones. Seu progresso é sincronizado automaticamente.",
   },
   {
-    question: "Qual a diferença entre o PRISMA e assistir diretamente no YouTube?",
+    question: "Qual a diferença entre o Prisma e o YouTube?",
     answer:
-      "No YouTube, você perde tempo procurando conteúdo e não tem uma sequência estruturada de aprendizado. No PRISMA, todo o conteúdo é organizado em trilhas de aprendizado progressivas, com o melhor conteúdo já selecionado para você.",
+      "No YouTube você perde tempo procurando conteúdo. No Prisma, tudo é organizado em trilhas de aprendizado progressivas com o melhor conteúdo já selecionado.",
   },
   {
-    question: "Posso cancelar minha assinatura a qualquer momento?",
+    question: "Posso cancelar minha assinatura?",
     answer:
-      "Sim, você pode cancelar sua assinatura quando quiser, sem multas ou taxas extras. Você continuará tendo acesso até o fim do período já pago.",
+      "Sim, você pode cancelar quando quiser, sem multas. Você continua com acesso até o fim do período pago.",
   },
   {
     question: "Vocês emitem certificados?",
     answer:
-      "Sim! Ao concluir uma trilha de aprendizado completa, você recebe um certificado digital que pode ser compartilhado em suas redes sociais e currículo.",
-  },
-  {
-    question: "Com que frequência o conteúdo é atualizado?",
-    answer:
-      "Adicionamos novos cursos e videoaulas semanalmente. Nossa equipe está sempre buscando o melhor conteúdo novo do YouTube para manter a plataforma sempre atualizada.",
+      "Sim! Ao concluir uma trilha completa, você recebe um certificado digital que pode compartilhar.",
   },
 ];
 
@@ -42,85 +37,86 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="suporte" className="py-20 md:py-32 bg-gradient-to-b from-[#0A0E27] to-[#050818] relative overflow-hidden">
-      {/* LightRays Background */}
-      <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0, transform: 'translateZ(0)' }}>
-        <LightRays 
-          raysOrigin="top-center"
-          raysColor="#8b5cf6"
-          raysSpeed={1.5}
-          lightSpread={0.8}
-          rayLength={1.2}
-          followMouse={true}
-          mouseInfluence={0.1}
-          noiseAmount={0.1}
-          distortion={0.05}
-          className="custom-rays"
+    <section id="suporte" className="py-24 bg-[#202024] relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <PencilScribble
+          path="M 0 30 Q 50 10, 100 30 T 200 30"
+          color="#bd18b4"
+          width={250}
+          height={50}
+          className="absolute top-16 left-10 opacity-10"
+        />
+        <PencilScribble
+          path="M 0 20 Q 30 40, 60 20 T 120 20"
+          color="#aa22c5"
+          width={150}
+          height={40}
+          className="absolute bottom-20 right-20 opacity-10"
         />
       </div>
-      
-      {/* Background elements */}
-      <div className="absolute top-1/4 left-0 w-96 h-96 bg-[#8b5cf6] opacity-5 blur-3xl rounded-full z-10" />
-      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[#a855f7] opacity-5 blur-3xl rounded-full z-10" />
 
-      <div className="container mx-auto px-4 relative z-20">
+      <div className="container mx-auto px-6 relative z-10">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false, amount: 0.3 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
-          <h2 
-            className="text-4xl md:text-6xl text-white mb-6"
-            style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 700 }}
+          <h2
+            className="text-3xl md:text-4xl font-bold text-white mb-4"
+            style={{ fontFamily: 'Metropolis, sans-serif' }}
           >
-            Perguntas <span className="text-[#8b5cf6]">Frequentes</span>
+            Perguntas{" "}
+            <span className="text-[#bd18b4]">frequentes</span>
           </h2>
-          <p 
-            className="text-xl text-gray-400 max-w-3xl mx-auto"
+          <p
+            className="text-gray-400"
             style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
           >
-            Tudo o que você precisa saber sobre o PRISMA
+            Tudo que você precisa saber sobre o Prisma.
           </p>
         </motion.div>
 
-        <div className="max-w-3xl mx-auto">
+        {/* FAQ Items */}
+        <div className="max-w-2xl mx-auto space-y-3">
           {faqs.map((faq, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="mb-4"
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full bg-gradient-to-br from-gray-900/80 to-gray-800/40 border border-gray-700 rounded-2xl p-6 hover:border-[#8b5cf6] transition-all duration-300 text-left cursor-pointer"
+                className="w-full bg-[#1a1b1e] border border-[#323238] rounded-xl p-5 hover:border-[#bd18b4]/30 transition-all duration-300 text-left cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <h3 
-                    className="text-lg md:text-xl text-white pr-8"
+                  <h3
+                    className="text-white font-medium"
                     style={{ fontFamily: 'Metropolis, sans-serif' }}
                   >
                     {faq.question}
                   </h3>
-                  <div className="flex-shrink-0 w-8 h-8 bg-[#8b5cf6]/10 rounded-lg flex items-center justify-center">
+                  <div className="flex-shrink-0 w-6 h-6 bg-[#bd18b4]/10 rounded-lg flex items-center justify-center">
                     {openIndex === index ? (
-                      <Minus className="w-5 h-5 text-[#8b5cf6]" />
+                      <Minus className="w-4 h-4 text-[#bd18b4]" />
                     ) : (
-                      <Plus className="w-5 h-5 text-[#8b5cf6]" />
+                      <Plus className="w-4 h-4 text-[#bd18b4]" />
                     )}
                   </div>
                 </div>
 
                 <div
-                  className={`grid transition-all duration-300 ${openIndex === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                  className={`grid transition-all duration-300 ${openIndex === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    }`}
                 >
                   <div className="overflow-hidden">
-                    <p 
-                      className="text-gray-400 mt-4 leading-relaxed"
+                    <p
+                      className="text-gray-400 mt-3 text-sm leading-relaxed"
                       style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
                     >
                       {faq.answer}
@@ -134,24 +130,24 @@ export function FAQ() {
 
         {/* CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center mt-12"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: false, amount: 0.3 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center mt-10"
         >
-          <p 
-            className="text-gray-400 mb-4"
+          <p
+            className="text-gray-500 text-sm"
             style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
           >
-            Ainda tem dúvidas?
+            Ainda tem dúvidas?{" "}
+            <button
+              className="text-[#bd18b4] hover:underline cursor-pointer"
+              style={{ fontFamily: 'Metropolis, sans-serif' }}
+            >
+              Entre em contato
+            </button>
           </p>
-          <button 
-            className="text-[#8b5cf6] hover:underline text-lg cursor-pointer"
-            style={{ fontFamily: 'Metropolis, sans-serif' }}
-          >
-            Entre em contato com nosso suporte →
-          </button>
         </motion.div>
       </div>
     </section>

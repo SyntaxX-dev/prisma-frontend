@@ -33,8 +33,9 @@ export function CommunityJoinTooltip({
       return { x: '50%', y: '50%', transform: 'translate(-50%, -50%)' };
     }
 
-    const tooltipWidth = 320; // w-[320px]
-    const tooltipHeight = 300; // Altura aproximada do tooltip
+    const tooltipWidth = typeof window !== 'undefined' && window.innerWidth >= 1024 ? 450 :
+      typeof window !== 'undefined' && window.innerWidth >= 768 ? 400 : 320;
+    const tooltipHeight = 320; // Altura aproximada do tooltip
     const padding = 16; // Padding da tela
     const spacing = 10; // Espaçamento do elemento
 
@@ -102,29 +103,29 @@ export function CommunityJoinTooltip({
             onClick={onClose}
             className="fixed inset-0 z-40 bg-black/50"
           />
-          
+
           {/* Tooltip */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="fixed z-50 w-[320px] rounded-2xl border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto"
+            className="fixed z-50 w-[320px] md:w-[400px] lg:w-[450px] rounded-2xl border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto"
             style={{
               background: 'rgb(30, 30, 30)',
               left: adjustedPosition.x,
               top: adjustedPosition.y,
               transform: adjustedPosition.transform,
-              maxWidth: `calc(100vw - ${32}px)`, // Garantir que não ultrapasse a largura da tela
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
             }}
           >
             {/* Header com avatar */}
-            <div className="p-4 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-16 h-16 rounded-xl shrink-0">
+            <div className="p-4 md:p-5 lg:p-6 border-b border-white/10">
+              <div className="flex items-center gap-3 md:gap-4">
+                <Avatar className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-xl shrink-0">
                   <AvatarImage src={community.avatarUrl || undefined} className="rounded-xl" />
-                  <AvatarFallback 
-                    className="font-semibold text-lg rounded-xl"
+                  <AvatarFallback
+                    className="font-semibold text-lg md:text-xl lg:text-2xl rounded-xl"
                     style={{
                       background: '#bd18b4',
                       color: '#000',
@@ -133,16 +134,16 @@ export function CommunityJoinTooltip({
                     {getInitials(community.name)}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-white text-base mb-1 truncate">
+                  <h3 className="font-semibold text-white text-base md:text-lg lg:text-xl mb-1 md:mb-2 truncate">
                     {community.name}
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <div className="flex items-center gap-2 text-xs md:text-sm text-gray-400">
                     {community.visibility === 'PRIVATE' ? (
-                      <Lock className="w-3 h-3" />
+                      <Lock className="w-3 h-3 md:w-4 md:h-4" />
                     ) : (
-                      <Globe className="w-3 h-3" />
+                      <Globe className="w-3 h-3 md:w-4 md:h-4" />
                     )}
                     <span>{community.visibility === 'PRIVATE' ? 'Privada' : 'Pública'}</span>
                   </div>
@@ -151,23 +152,23 @@ export function CommunityJoinTooltip({
             </div>
 
             {/* Informações */}
-            <div className="p-4 space-y-3">
+            <div className="p-4 md:p-5 lg:p-6 space-y-3 md:space-y-4">
               {community.description && (
                 <div>
-                  <p className="text-sm text-gray-300 leading-relaxed">
+                  <p className="text-sm md:text-base text-gray-300 leading-relaxed">
                     {community.description}
                   </p>
                 </div>
               )}
 
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Users className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-sm md:text-base text-gray-400">
+                <Users className="w-4 h-4 md:w-5 md:h-5" />
                 <span>{community.memberCount || 0} membros</span>
               </div>
 
               {community.focus && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 rounded-lg border border-white/10 text-gray-400">
+                  <span className="text-xs md:text-sm px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-white/10 text-gray-400">
                     {community.focus}
                   </span>
                 </div>
@@ -175,11 +176,11 @@ export function CommunityJoinTooltip({
             </div>
 
             {/* Botão de ação */}
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 md:p-5 lg:p-6 border-t border-white/10">
               <Button
                 onClick={handleJoin}
                 disabled={isJoining}
-                className="w-full rounded-xl font-semibold transition-all hover:scale-[1.02] cursor-pointer"
+                className="w-full h-10 md:h-12 rounded-xl font-semibold text-sm md:text-base transition-all hover:scale-[1.02] cursor-pointer"
                 style={{
                   background: '#bd18b4',
                   color: '#000',
@@ -187,7 +188,7 @@ export function CommunityJoinTooltip({
               >
                 {isJoining ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 md:w-5 md:h-5 mr-2 animate-spin" />
                     Entrando...
                   </>
                 ) : (

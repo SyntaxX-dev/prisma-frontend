@@ -1,6 +1,6 @@
 "use client";
 
-import { 
+import {
   Phone,
   Video,
   Pin,
@@ -10,7 +10,8 @@ import {
   Image as ImageIcon,
   File,
   Loader2,
-  Trash2
+  Trash2,
+  Users
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -50,10 +51,10 @@ interface CommunityInfoProps {
   onUnpinMessage?: (messageId: string) => Promise<{ success: boolean; message?: string }>;
 }
 
-export function CommunityInfo({ 
-  community, 
-  onStartVideoCall, 
-  onStartVoiceCall, 
+export function CommunityInfo({
+  community,
+  onStartVideoCall,
+  onStartVoiceCall,
   isFromSidebar = false,
   pinnedMessages = [],
   currentUserId,
@@ -72,19 +73,19 @@ export function CommunityInfo({
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [isCurrentUserOwner, setIsCurrentUserOwner] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
-  
+
   // Ref para evitar chamadas duplicadas
   const hasLoadedMembers = useRef<string | null>(null);
   const hasLoadedMemberStatusRef = useRef<string>('');
-  
+
   // Determinar se é chat pessoal ou comunidade
   const isPersonalChat = community.id.startsWith('chat-');
   const chatId = isPersonalChat ? community.id.replace('chat-', '') : community.id;
   const chatType = isPersonalChat ? 'personal' : 'community';
-  
+
   // Buscar attachments
   const { attachments, loading: loadingAttachments } = useChatAttachments(chatType, chatId);
-  
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -97,7 +98,7 @@ export function CommunityInfo({
   // Carregar membros apenas quando o usuário for membro da comunidade
   useEffect(() => {
     const shouldLoad = isFromSidebar && community.id && (community.isMember || community.isOwner);
-    
+
     if (shouldLoad) {
       // Verificar se já carregou para esta comunidade específica
       if (hasLoadedMembers.current !== community.id) {
@@ -121,14 +122,14 @@ export function CommunityInfo({
         limit: 50, // Carregar até 50 membros
         offset: 0,
       });
-      
+
       if (response.success && response.data) {
         const membersList = response.data.members || [];
         setMembers(membersList);
-        
+
         // Verificar se o usuário atual é o dono
         setIsCurrentUserOwner(response.data.isCurrentUserOwner || false);
-        
+
         // Criar mapa de membros para fácil acesso
         const newMemberMap = new Map<string, { name: string; avatar?: string }>();
         membersList.forEach((member: CommunityMember) => {
@@ -138,11 +139,11 @@ export function CommunityInfo({
           });
         });
         setMemberMap(newMemberMap);
-        
+
         // Buscar status de todos os membros (incluindo o próprio usuário se estiver na lista)
         const memberIds = membersList.map(m => m.id);
         const membersKey = memberIds.sort().join(',');
-        
+
         // Só buscar se a lista de membros mudou
         if (memberIds.length > 0 && membersKey !== hasLoadedMemberStatusRef.current) {
           hasLoadedMemberStatusRef.current = membersKey;
@@ -215,14 +216,14 @@ export function CommunityInfo({
   return (
     <div className="w-[300px] flex flex-col h-full gap-3">
       {/* Quick Actions - Ilha 1 */}
-      <div 
+      <div
         className="p-4 rounded-2xl border border-white/10"
         style={{
           background: 'rgb(14, 14, 14)',
         }}
       >
         <div className="grid grid-cols-2 gap-2">
-          <button 
+          <button
             disabled={true}
             className="flex flex-col items-center gap-2 p-2 rounded-lg transition-colors cursor-not-allowed opacity-50"
           >
@@ -230,7 +231,7 @@ export function CommunityInfo({
               <Phone className="w-4 h-4 text-gray-400" />
             </div>
           </button>
-          <button 
+          <button
             onClick={onStartVideoCall}
             disabled={true}
             className="flex flex-col items-center gap-2 p-2 rounded-lg transition-colors cursor-not-allowed opacity-50"
@@ -244,7 +245,7 @@ export function CommunityInfo({
 
       {/* Members - Ilha 2 */}
       {isFromSidebar && (
-        <div 
+        <div
           className="rounded-2xl overflow-hidden border border-white/10"
           style={{
             background: 'rgb(14, 14, 14)',
@@ -259,28 +260,40 @@ export function CommunityInfo({
               }}
             >
               {isLoadingMembers ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                <div className="flex flex-col items-center justify-center py-6">
+                  <div
+                    className="w-6 h-6 rounded-full border-2 border-[#bd18b4] border-t-transparent animate-spin mb-2"
+                  />
+                  <span className="text-gray-500 text-xs">Carregando...</span>
                 </div>
               ) : membersError ? (
                 <div className="text-xs text-red-400 py-2 px-2">
                   {membersError}
                 </div>
               ) : members.length === 0 ? (
-                <div className="text-xs text-gray-500 py-2 px-2">
-                  Nenhum membro encontrado
+                <div className="flex flex-col items-center justify-center py-6">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
+                    style={{
+                      background: 'linear-gradient(145deg, rgba(40, 40, 48, 0.8) 0%, rgba(25, 25, 32, 0.9) 100%)',
+                      border: '1px solid rgba(189, 24, 180, 0.2)',
+                    }}
+                  >
+                    <Users className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <p className="text-xs text-gray-500 text-center">Nenhum membro encontrado</p>
                 </div>
               ) : (
                 members.map((member) => (
-                  <div 
-                    key={member.id} 
+                  <div
+                    key={member.id}
                     onClick={() => router.push(`/profile?userId=${member.id}`)}
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer"
                   >
                     <div className="relative">
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={member.profileImage || undefined} alt={member.name} />
-                        <AvatarFallback 
+                        <AvatarFallback
                           className="text-xs font-medium"
                           style={{
                             background: '#bd18b4',
@@ -291,12 +304,12 @@ export function CommunityInfo({
                         </AvatarFallback>
                       </Avatar>
                       {/* Indicador de online */}
-                      <div 
+                      <div
                         className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors`}
-                        style={{ 
+                        style={{
                           background: (statusMap.get(member.id) === 'online' || (currentUserId && member.id === currentUserId && statusMap.get(currentUserId) === 'online')) ? '#bd18b4' : '#666',
-                          borderColor: 'rgb(30, 30, 30)' 
-                        }} 
+                          borderColor: 'rgb(30, 30, 30)'
+                        }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -348,12 +361,12 @@ export function CommunityInfo({
                 if (memberToRemove && community.id) {
                   try {
                     setIsRemovingMember(true);
-                    
+
                     const response = await removeCommunityMember({
                       communityId: community.id,
                       memberId: memberToRemove.id,
                     });
-                    
+
                     if (response.success) {
                       // Remover da lista localmente
                       setMembers(prev => prev.filter(m => m.id !== memberToRemove.id));
@@ -362,10 +375,10 @@ export function CommunityInfo({
                         newMap.delete(memberToRemove.id);
                         return newMap;
                       });
-                      
+
                       setIsRemoveDialogOpen(false);
                       setMemberToRemove(null);
-                      
+
                       // Recarregar membros para garantir sincronização
                       if (hasLoadedMembers.current === community.id) {
                         loadMembers();
@@ -391,7 +404,7 @@ export function CommunityInfo({
       </AlertDialog>
 
       {/* Mensagens Fixadas - Ilha 2 ou 3 */}
-      <div 
+      <div
         className="rounded-2xl overflow-hidden border border-white/10"
         style={{
           background: 'rgb(14, 14, 14)',
@@ -409,13 +422,13 @@ export function CommunityInfo({
               pinnedMessages.map((pinnedMsg) => {
                 const isFromCurrentUser = pinnedMsg.message.senderId === currentUserId;
                 const member = memberMap.get(pinnedMsg.message.senderId);
-                const senderName = isFromCurrentUser 
-                  ? 'Você' 
+                const senderName = isFromCurrentUser
+                  ? 'Você'
                   : (member?.name || friendName || 'Usuário');
-                const senderAvatar = isFromCurrentUser 
+                const senderAvatar = isFromCurrentUser
                   ? (currentUserAvatar || undefined)
                   : (member?.avatar || friendAvatar || undefined);
-                
+
                 const handleUnpin = async (e: React.MouseEvent) => {
                   e.stopPropagation(); // Prevenir que o clique dispare o scroll
                   if (onUnpinMessage) {
@@ -427,19 +440,19 @@ export function CommunityInfo({
                 };
 
                 return (
-                  <div 
-                    key={pinnedMsg.id} 
+                  <div
+                    key={pinnedMsg.id}
                     onClick={() => {
                       // Disparar evento customizado para fazer scroll até a mensagem
-                      window.dispatchEvent(new CustomEvent('scrollToMessage', { 
-                        detail: { messageId: pinnedMsg.messageId } 
+                      window.dispatchEvent(new CustomEvent('scrollToMessage', {
+                        detail: { messageId: pinnedMsg.messageId }
                       }));
                     }}
                     className="flex items-start gap-2 p-2 rounded-lg hover:bg-[rgb(26,26,26)] transition-colors cursor-pointer"
                   >
                     <Avatar className="w-8 h-8 shrink-0">
                       <AvatarImage src={senderAvatar || undefined} alt={senderName} />
-                      <AvatarFallback 
+                      <AvatarFallback
                         className="text-xs font-medium"
                         style={{
                           background: '#bd18b4',
@@ -467,14 +480,25 @@ export function CommunityInfo({
                 );
               })
             ) : (
-              <p className="text-xs text-gray-500 text-center py-4">Nenhuma mensagem fixada</p>
+              <div className="flex flex-col items-center justify-center py-6">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(40, 40, 48, 0.8) 0%, rgba(25, 25, 32, 0.9) 100%)',
+                    border: '1px solid rgba(189, 24, 180, 0.2)',
+                  }}
+                >
+                  <Pin className="w-5 h-5 text-gray-500" />
+                </div>
+                <p className="text-xs text-gray-500 text-center">Nenhuma mensagem fixada</p>
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* Files - Ilha 3 */}
-      <div 
+      <div
         className="rounded-2xl overflow-hidden flex-1 border border-white/10"
         style={{
           background: 'rgb(14, 14, 14)',

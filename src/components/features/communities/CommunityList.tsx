@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from 'react';
-import { Plus, Home } from "lucide-react";
+import { Plus, Home, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Community } from "@/types/community";
 import { motion, useInView } from 'motion/react';
@@ -29,8 +29,8 @@ interface CommunityItemProps {
 
 const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
   const itemRef = useRef<HTMLButtonElement>(null);
-  const inView = useInView(itemRef, { 
-    amount: 0.1, 
+  const inView = useInView(itemRef, {
+    amount: 0.1,
     once: false,
     margin: "0px 0px 200px 0px"
   });
@@ -53,7 +53,7 @@ const NavItem: React.FC<NavItemProps> = ({ item, index, onSelect }) => {
     >
       <Avatar className="w-full h-full rounded-xl">
         <AvatarImage src={item.avatarUrl} alt={item.label} className="rounded-xl" />
-        <AvatarFallback 
+        <AvatarFallback
           className="text-xs font-medium rounded-xl"
           style={{
             background: '#bd18b4',
@@ -93,8 +93,8 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
   statusMap,
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(itemRef, { 
-    amount: 0.1, 
+  const inView = useInView(itemRef, {
+    amount: 0.1,
     once: false,
     margin: "0px 0px 200px 0px"
   });
@@ -130,7 +130,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
           <div className="relative shrink-0">
             <Avatar className="w-12 h-12 rounded-xl">
               <AvatarImage src={community.avatarUrl || undefined} className="rounded-xl" />
-              <AvatarFallback 
+              <AvatarFallback
                 className="font-semibold text-sm rounded-xl"
                 style={{
                   background: '#bd18b4',
@@ -142,11 +142,11 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
             </Avatar>
             {/* Indicador de online - apenas para conversas */}
             {isConversation && userId && statusMap && (
-              <div 
+              <div
                 className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a] transition-colors"
-                style={{ 
+                style={{
                   background: statusMap.get(userId) === 'online' ? '#bd18b4' : '#666'
-                }} 
+                }}
               />
             )}
           </div>
@@ -157,7 +157,7 @@ const CommunityItem: React.FC<CommunityItemProps> = ({
                 {community.name}
               </h3>
             </div>
-            
+
             <p className="text-xs text-gray-400 truncate">
               {community.lastMessage?.sender ? `${community.lastMessage.sender}: ` : ''}
               {community.lastMessage
@@ -220,12 +220,12 @@ export function CommunityList({
 }: CommunityListProps) {
   const { statusMap, getBatchStatus } = useUserStatus();
   const hasLoadedConversationStatusRef = useRef<string>('');
-  
+
   // Buscar status dos usuários das conversas
   useEffect(() => {
     const userIds = conversations.map(c => c.otherUser.id);
     const conversationsKey = userIds.sort().join(',');
-    
+
     // Só buscar se a lista de conversas mudou
     if (userIds.length > 0 && conversationsKey !== hasLoadedConversationStatusRef.current) {
       hasLoadedConversationStatusRef.current = conversationsKey;
@@ -247,7 +247,7 @@ export function CommunityList({
       const date = new Date(timestamp);
       const now = new Date();
       const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
-      
+
       if (diffInMinutes < 60) return `${diffInMinutes} m`;
       if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} h`;
       return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -290,14 +290,14 @@ export function CommunityList({
   return (
     <div className="flex gap-3 h-full">
       {/* Sidebar Cilíndrica - Navegação */}
-      <div 
+      <div
         className="w-[76px] flex flex-col items-center py-4 gap-3 rounded-xl border border-white/10 sidebar-container"
         style={{
           background: 'rgb(14, 14, 14)',
         }}
       >
         {/* Botão Voltar ao Dashboard */}
-        <button 
+        <button
           onClick={() => router.push('/dashboard')}
           className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 cursor-pointer"
           style={{
@@ -311,15 +311,15 @@ export function CommunityList({
 
         {/* Logo */}
         <div className="w-12 h-12 flex items-center justify-center shrink-0">
-          <img 
-            src="/logo-prisma.svg" 
-            alt="Prisma Logo" 
+          <img
+            src="/logo-prisma.svg"
+            alt="Prisma Logo"
             className="w-full h-full object-contain"
           />
         </div>
 
         {/* Navigation Items - Comunidades da API */}
-        <div 
+        <div
           className="flex-1 flex flex-col items-center gap-3 py-2 overflow-y-auto overflow-x-hidden min-h-0 w-full sidebar-scrollbar"
         >
           <div className="flex flex-col items-center gap-3 w-full sidebar-items-container">
@@ -328,10 +328,10 @@ export function CommunityList({
             ) : (
               navItems.map((item, index) => {
                 return (
-                  <NavItem 
-                    key={item.id} 
-                    item={item} 
-                    index={index} 
+                  <NavItem
+                    key={item.id}
+                    item={item}
+                    index={index}
                     onSelect={onSelectCommunity}
                   />
                 );
@@ -340,76 +340,106 @@ export function CommunityList({
           </div>
         </div>
 
-          {/* Add Button */}
-          <button 
-            onClick={onCreateCommunity}
-            className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 cursor-pointer"
-            style={{
-              background: '#bd18b4',
-              color: '#000',
-            }}
-          >
-            <Plus className="w-5 h-5" />
-          </button>
+        {/* Add Button */}
+        <button
+          onClick={onCreateCommunity}
+          className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 cursor-pointer"
+          style={{
+            background: '#bd18b4',
+            color: '#000',
+          }}
+        >
+          <Plus className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Lista de Chats - Ilhas com AnimatedList */}
       <div className="w-[320px] flex flex-col pr-2 overflow-hidden min-h-0 shrink-0">
-        <AnimatedList
-          showGradients={true}
-          enableArrowNavigation={true}
-          displayScrollbar={true}
-          maxHeight="100%"
-          className="h-full"
-          onItemSelect={(item, index) => {
-            const community = chatCommunities[index];
-            if (community) {
-              // Verificar se é uma conversa direta (começa com "chat-")
-              if (community.id.startsWith('chat-')) {
-                const userId = community.id.replace('chat-', '');
-                if (onSelectConversation) {
-                  onSelectConversation(userId);
-                }
-              } else {
-                onSelectCommunity(community.id);
-              }
-            }
-          }}
-        >
-          {chatCommunities.map((community, index) => {
-            const isConversation = community.id.startsWith('chat-');
-            const userId = isConversation ? community.id.replace('chat-', '') : undefined;
-            
-            return (
-              <CommunityItem
-                key={community.id}
-                community={community}
-                index={index}
-                isSelected={
-                  isConversation
-                    ? selectedChatUserId === userId
-                    : selectedCommunityId === community.id
-                }
-                onSelect={(id) => {
-                  if (id.startsWith('chat-')) {
-                    const userId = id.replace('chat-', '');
-                    if (onSelectConversation) {
-                      onSelectConversation(userId);
-                    }
-                  } else {
-                    onSelectCommunity(id);
-                  }
+        {chatCommunities.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+              style={{
+                background: 'linear-gradient(145deg, rgba(30, 30, 38, 0.8) 0%, rgba(20, 20, 28, 0.8) 100%)',
+                border: '1px solid rgba(189, 24, 180, 0.2)',
+              }}
+            >
+              <MessageCircle className="w-8 h-8 text-gray-500" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-white font-semibold text-sm mb-2">Sem conversas ainda</h3>
+            <p className="text-gray-500 text-xs leading-relaxed">
+              Inicie um chat direto ou entre em uma comunidade para começar.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-2 w-full">
+              <button
+                onClick={onCreateCommunity}
+                className="w-full py-3 rounded-xl text-xs font-medium text-white transition-all hover:scale-[1.02] cursor-pointer border border-white/5"
+                style={{
+                  background: 'rgba(189, 24, 180, 0.1)',
                 }}
-                getInitials={getInitials}
-                formatTime={formatTime}
-                onCommunityClick={onCommunityClick}
-                isConversation={isConversation}
-                userId={userId}
-                statusMap={statusMap}
-              />
-            );
-          })}
-        </AnimatedList>
+              >
+                Explorar Comunidades
+              </button>
+            </div>
+          </div>
+        ) : (
+          <AnimatedList
+            showGradients={true}
+            enableArrowNavigation={true}
+            displayScrollbar={true}
+            maxHeight="100%"
+            className="h-full"
+            onItemSelect={(item, index) => {
+              const community = chatCommunities[index];
+              if (community) {
+                // Verificar se é uma conversa direta (começa com "chat-")
+                if (community.id.startsWith('chat-')) {
+                  const userId = community.id.replace('chat-', '');
+                  if (onSelectConversation) {
+                    onSelectConversation(userId);
+                  }
+                } else {
+                  onSelectCommunity(community.id);
+                }
+              }
+            }}
+          >
+            {chatCommunities.map((community, index) => {
+              const isConversation = community.id.startsWith('chat-');
+              const userId = isConversation ? community.id.replace('chat-', '') : undefined;
+
+              return (
+                <CommunityItem
+                  key={community.id}
+                  community={community}
+                  index={index}
+                  isSelected={
+                    isConversation
+                      ? selectedChatUserId === userId
+                      : selectedCommunityId === community.id
+                  }
+                  onSelect={(id) => {
+                    if (id.startsWith('chat-')) {
+                      const userId = id.replace('chat-', '');
+                      if (onSelectConversation) {
+                        onSelectConversation(userId);
+                      }
+                    } else {
+                      onSelectCommunity(id);
+                    }
+                  }}
+                  getInitials={getInitials}
+                  formatTime={formatTime}
+                  onCommunityClick={onCommunityClick}
+                  isConversation={isConversation}
+                  userId={userId}
+                  statusMap={statusMap}
+                />
+              );
+            })}
+          </AnimatedList>
+        )}
       </div>
     </div>
   );

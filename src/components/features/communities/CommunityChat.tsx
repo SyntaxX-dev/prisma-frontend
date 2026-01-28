@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { 
-  Send, 
-  Paperclip, 
-  Smile, 
+import {
+  Send,
+  Paperclip,
+  Smile,
   Pin,
   Trash2,
   Pencil,
@@ -77,7 +77,7 @@ export function CommunityChat({
   const [messageInput, setMessageInput] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([]);
-  
+
   const { uploading, uploadFiles, ErrorModal } = useFileUpload({
     isCommunity: true,
     communityId: community.id,
@@ -116,10 +116,10 @@ export function CommunityChat({
           messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
         }
       };
-      
+
       // Marcar que já rolou para esta comunidade
       hasScrolledToBottomRef.current = community.id;
-      
+
       // Usar requestAnimationFrame para garantir que o DOM foi atualizado
       requestAnimationFrame(() => {
         scrollToBottom();
@@ -136,15 +136,15 @@ export function CommunityChat({
     const handleScrollToMessage = (event: CustomEvent<{ messageId: string }>) => {
       const { messageId } = event.detail;
       const messageElement = messageRefs.current.get(messageId);
-      
+
       if (messageElement) {
         // Aguardar um pouco para garantir que o DOM está atualizado
         setTimeout(() => {
-          messageElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
+          messageElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
           });
-          
+
           // Adicionar um destaque temporário na mensagem
           messageElement.style.transition = 'all 0.3s ease';
           messageElement.style.backgroundColor = 'rgba(179, 226, 64, 0.1)';
@@ -190,16 +190,16 @@ export function CommunityChat({
         const messageElement = messageRefs.current.get(foundMessage.id);
         if (messageElement) {
           setTimeout(() => {
-            messageElement.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
+            messageElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
             });
-            
+
             // Adicionar um destaque temporário na mensagem
             messageElement.style.transition = 'all 0.3s ease';
             messageElement.style.backgroundColor = 'rgba(179, 226, 64, 0.2)';
             messageElement.style.borderRadius = '8px';
-            
+
             setTimeout(() => {
               messageElement.style.backgroundColor = '';
               messageElement.style.borderRadius = '';
@@ -222,7 +222,7 @@ export function CommunityChat({
         // Escapar HTML para segurança
         return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
-      
+
       // Escapar HTML do texto primeiro
       const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -260,7 +260,7 @@ export function CommunityChat({
   useEffect(() => {
     const loadMembers = async () => {
       if (!community.id) return;
-      
+
       try {
         setIsLoadingMembers(true);
         const response = await getCommunityMembers({
@@ -271,7 +271,7 @@ export function CommunityChat({
 
         if (response.success && response.data.members) {
           const newMemberMap = new Map<string, { name: string; avatar?: string }>();
-          
+
           // Adicionar membros da comunidade
           response.data.members.forEach((member: CommunityMember) => {
             newMemberMap.set(member.id, {
@@ -403,12 +403,12 @@ export function CommunityChat({
       pendingAttachments.length > 0
         ? prepareAttachmentsForSend(pendingAttachments)
         : undefined;
-    
+
     try {
       await onSendMessage(messageToSend, attachmentsToSend);
       setMessageInput("");
       setPendingAttachments([]);
-      
+
       // Parar de digitar após enviar
       if (onTyping && typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -482,7 +482,7 @@ export function CommunityChat({
   const avatarSrc = typingMember?.avatar ?? undefined;
 
   return (
-    <div 
+    <div
       className="flex-1 flex flex-col h-full rounded-2xl overflow-hidden border border-white/10 w-full max-w-full"
       style={{
         background: 'rgb(14, 14, 14)',
@@ -500,7 +500,7 @@ export function CommunityChat({
               <div key={`left-${i}`} className="flex gap-3">
                 <Skeleton className="w-8 h-8 rounded-full bg-[#29292E] shrink-0" />
                 <div className="flex flex-col items-start max-w-[75%] md:max-w-[70%] flex-1 min-w-0">
-                  <Skeleton 
+                  <Skeleton
                     className="rounded-2xl px-4 py-2.5 bg-[#29292E] border border-[#323238]"
                     style={{ width: size.width, height: '32px' }}
                   />
@@ -515,7 +515,7 @@ export function CommunityChat({
               <div key={`right-${i}`} className="flex gap-3 flex-row-reverse">
                 <Skeleton className="w-8 h-8 rounded-full bg-[#29292E] shrink-0" />
                 <div className="flex flex-col items-end max-w-[75%] md:max-w-[70%] flex-1 min-w-0">
-                  <Skeleton 
+                  <Skeleton
                     className="rounded-2xl px-4 py-2.5 bg-[#29292E]"
                     style={{ width: size.width, height: '32px' }}
                   />
@@ -529,13 +529,85 @@ export function CommunityChat({
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgb(26, 26, 26)' }}>
-                <Smile className="w-8 h-8 text-gray-600" />
+            <div className="text-center max-w-md px-6">
+              {/* Animated Icon Container */}
+              <div className="mb-8 flex justify-center">
+                <div className="relative">
+                  {/* Outer glow */}
+                  <div
+                    className="absolute inset-0 rounded-[28px] animate-pulse"
+                    style={{
+                      background: 'radial-gradient(circle, rgba(189, 24, 180, 0.3) 0%, transparent 70%)',
+                      transform: 'scale(1.5)',
+                      filter: 'blur(20px)',
+                    }}
+                  />
+
+                  {/* Main container */}
+                  <div
+                    className="relative w-28 h-28 rounded-[28px] flex items-center justify-center"
+                    style={{
+                      background: 'linear-gradient(145deg, rgba(40, 40, 48, 0.9) 0%, rgba(25, 25, 32, 0.95) 100%)',
+                      border: '1px solid rgba(189, 24, 180, 0.3)',
+                      boxShadow: '0 0 0 1px rgba(255,255,255,0.05), 0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+                    }}
+                  >
+                    {/* Inner gradient */}
+                    <div
+                      className="absolute inset-0 rounded-[28px]"
+                      style={{
+                        background: 'radial-gradient(circle at 30% 30%, rgba(189, 24, 180, 0.15) 0%, transparent 60%)',
+                      }}
+                    />
+
+                    <Send className="w-12 h-12 text-[#bd18b4] relative z-10" strokeWidth={1.5} />
+
+                    {/* Floating sparkles */}
+                    <div
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center animate-bounce"
+                      style={{
+                        background: 'linear-gradient(135deg, #bd18b4, #9333ea)',
+                        animationDuration: '2s',
+                      }}
+                    >
+                      <Smile className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-gray-500 text-sm">
-                Nenhuma mensagem ainda. Comece a conversar!
+
+              {/* Text content */}
+              <h3
+                className="text-2xl font-bold mb-3"
+                style={{
+                  background: 'linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.7) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Inicie uma conversa
+              </h3>
+
+              <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                Esta comunidade está esperando suas ideias! Seja o primeiro a enviar uma mensagem e começar a interação.
               </p>
+
+              {/* Decorative dots */}
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="w-2 h-2 rounded-full"
+                    style={{
+                      background: i === 2
+                        ? 'linear-gradient(135deg, #bd18b4, #9333ea)'
+                        : 'rgba(189, 24, 180, 0.3)',
+                      animation: `pulse 2s ease-in-out infinite`,
+                      animationDelay: `${i * 0.2}s`,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         ) : (
@@ -544,15 +616,15 @@ export function CommunityChat({
               const messageIsOwn = isOwn(message.senderId);
               const showAvatar = index === 0 || messages[index - 1].senderId !== message.senderId;
               const showName = showAvatar && !messageIsOwn;
-              const member = memberMap.get(message.senderId) || { 
-                name: messageIsOwn ? (currentUserName || "Você") : "Usuário", 
-                avatar: messageIsOwn ? (currentUserAvatar || undefined) : undefined 
+              const member = memberMap.get(message.senderId) || {
+                name: messageIsOwn ? (currentUserName || "Você") : "Usuário",
+                avatar: messageIsOwn ? (currentUserAvatar || undefined) : undefined
               };
               const isPinned = pinnedMessages.some(p => p.messageId === message.id);
               const isHovered = hoveredMessageId === message.id;
               const isEditing = editingMessageId === message.id;
               const timeAgo = formatTime(message.createdAt);
-              
+
               // Verificar se a mensagem ainda pode ser editada (15 minutos após o envio)
               const messageDate = new Date(message.createdAt);
               const now = new Date();
@@ -587,7 +659,7 @@ export function CommunityChat({
                 setMessageToDelete(message.id);
                 setDeleteConfirmOpen(true);
               };
-              
+
               return (
                 <div
                   key={message.id}
@@ -603,11 +675,11 @@ export function CommunityChat({
                   <div className="w-8 flex-shrink-0">
                     {showAvatar && (
                       <Avatar className="w-8 h-8">
-                        <AvatarImage 
-                          src={messageIsOwn ? (currentUserAvatar || member.avatar) : member.avatar} 
+                        <AvatarImage
+                          src={messageIsOwn ? (currentUserAvatar || member.avatar) : member.avatar}
                           alt={member.name}
                         />
-                        <AvatarFallback 
+                        <AvatarFallback
                           className="text-xs font-medium"
                           style={{
                             background: '#bd18b4',
@@ -621,9 +693,8 @@ export function CommunityChat({
                   </div>
 
                   <div
-                    className={`flex flex-col max-w-[75%] md:max-w-[70%] flex-1 min-w-0 ${
-                      messageIsOwn ? "items-end" : "items-start"
-                    } relative`}
+                    className={`flex flex-col max-w-[75%] md:max-w-[70%] flex-1 min-w-0 ${messageIsOwn ? "items-end" : "items-start"
+                      } relative`}
                     onMouseEnter={() => setHoveredMessageId(message.id)}
                     onMouseLeave={() => !isEditing && setHoveredMessageId(null)}
                   >
@@ -701,21 +772,20 @@ export function CommunityChat({
                         </>
                       )}
                     </AnimatePresence>
-                    
+
                     <div className="group relative">
                       <div className="flex flex-col gap-2">
                         {message.content && (
                           <div
-                            className={`px-3 py-2 rounded-lg ${
-                              messageIsOwn
+                            className={`px-3 py-2 rounded-lg ${messageIsOwn
                                 ? "rounded-tr-sm bg-[#bd18b4] text-black"
                                 : "rounded-tl-sm bg-[#29292E] text-white border border-[#323238]"
-                            }`}
+                              }`}
                           >
-                            <p 
-                              className={`text-sm leading-relaxed break-words ${messageIsOwn ? 'text-black' : 'text-white'}`} 
+                            <p
+                              className={`text-sm leading-relaxed break-words ${messageIsOwn ? 'text-black' : 'text-white'}`}
                               style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
-                              dangerouslySetInnerHTML={{ 
+                              dangerouslySetInnerHTML={{
                                 __html: highlightText(message.content, searchQuery)
                               }}
                             />
@@ -752,7 +822,7 @@ export function CommunityChat({
                           </div>
                         )}
                       </div>
-                      
+
                       <div className={`flex items-center gap-1 mt-1 px-1 ${messageIsOwn ? "justify-end" : "justify-start"}`}>
                         <span className="text-[10px] text-gray-600">
                           {timeAgo}
@@ -766,7 +836,7 @@ export function CommunityChat({
                 </div>
               );
             })}
-            
+
             {/* Typing indicator */}
             {shouldShowTyping && typingMember && (
               <div className="flex gap-3">
@@ -785,21 +855,21 @@ export function CommunityChat({
                       {typingMember?.name || "Alguém"} está digitando
                     </span>
                     <div className="flex items-center gap-1">
-                      <span 
+                      <span
                         className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
                         style={{
                           animation: 'typing-dot 1.4s infinite ease-in-out',
                           animationDelay: '0ms'
                         }}
                       />
-                      <span 
+                      <span
                         className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
                         style={{
                           animation: 'typing-dot 1.4s infinite ease-in-out',
                           animationDelay: '200ms'
                         }}
                       />
-                      <span 
+                      <span
                         className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
                         style={{
                           animation: 'typing-dot 1.4s infinite ease-in-out',
@@ -811,7 +881,7 @@ export function CommunityChat({
                 </div>
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </>
         )}
@@ -823,7 +893,7 @@ export function CommunityChat({
         disabled={!isConnected || uploading}
         className="fixed inset-0"
       />
-      <div 
+      <div
         className="p-2 md:p-4 border-t border-white/10 bg-[#1a1a1a] w-full max-w-full overflow-hidden"
       >
         <div className="flex flex-col gap-2 w-full max-w-full">
@@ -853,89 +923,89 @@ export function CommunityChat({
             </div>
           )}
           <div className="flex items-center gap-1.5 md:gap-2 w-full max-w-full min-w-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.multiple = true;
-              input.accept = 'image/*,application/pdf';
-              input.onchange = (e) => {
-                const files = Array.from((e.target as HTMLInputElement).files || []);
-                if (files.length > 0) {
-                  handleFilesSelected(files);
-                }
-              };
-              input.click();
-            }}
-            disabled={!isConnected || uploading}
-            className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-8 h-8 md:w-9 md:h-9 cursor-pointer shrink-0"
-            title="Anexar arquivo"
-          >
-            <Paperclip className="w-3.5 h-3.5 md:w-4 md:h-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = true;
+                input.accept = 'image/*,application/pdf';
+                input.onchange = (e) => {
+                  const files = Array.from((e.target as HTMLInputElement).files || []);
+                  if (files.length > 0) {
+                    handleFilesSelected(files);
+                  }
+                };
+                input.click();
+              }}
+              disabled={!isConnected || uploading}
+              className="text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-8 h-8 md:w-9 md:h-9 cursor-pointer shrink-0"
+              title="Anexar arquivo"
+            >
+              <Paperclip className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            </Button>
 
-          <textarea
-            value={messageInput}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
-            disabled={!isConnected}
-            className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-2 md:px-3 py-1.5 text-sm flex-1 min-w-0 overflow-y-auto overflow-x-hidden max-w-full"
-            rows={1}
-            style={{
-              wordBreak: 'break-word', 
-              overflowWrap: 'break-word',
-              whiteSpace: 'pre-wrap',
-              height: '32px',
-              maxHeight: '32px',
-              minHeight: '32px',
-              lineHeight: '1.25rem'
-            }}
-          />
+            <textarea
+              value={messageInput}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
+              disabled={!isConnected}
+              className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-2 md:px-3 py-1.5 text-sm flex-1 min-w-0 overflow-y-auto overflow-x-hidden max-w-full"
+              rows={1}
+              style={{
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
+                height: '32px',
+                maxHeight: '32px',
+                minHeight: '32px',
+                lineHeight: '1.25rem'
+              }}
+            />
 
-          <div className="relative" ref={emojiPickerRef}>
-          <Button
-            variant="ghost"
-            size="icon"
-              onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
-              className={`text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer ${isEmojiPickerOpen ? 'bg-[#1a1a1a] text-white' : ''}`}
-          >
-            <Smile className="w-4 h-4" />
-          </Button>
-            {isEmojiPickerOpen && (
-              <div className="absolute bottom-full right-0 mb-2 z-50">
-                <div className="bg-[#202024] border border-[#323238] rounded-lg shadow-lg">
-                  <EmojiPicker
-                    onEmojiClick={handleEmojiClick}
-                    theme={Theme.DARK}
-                    width={300}
-                    height={350}
-                    skinTonesDisabled
-                    searchDisabled={false}
-                  />
+            <div className="relative" ref={emojiPickerRef}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+                className={`text-gray-500 hover:text-white hover:bg-[#1a1a1a] rounded-lg w-9 h-9 cursor-pointer ${isEmojiPickerOpen ? 'bg-[#1a1a1a] text-white' : ''}`}
+              >
+                <Smile className="w-4 h-4" />
+              </Button>
+              {isEmojiPickerOpen && (
+                <div className="absolute bottom-full right-0 mb-2 z-50">
+                  <div className="bg-[#202024] border border-[#323238] rounded-lg shadow-lg">
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      theme={Theme.DARK}
+                      width={300}
+                      height={350}
+                      skinTonesDisabled
+                      searchDisabled={false}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          <Button
-            onClick={handleSend}
-            disabled={(!messageInput.trim() && pendingAttachments.length === 0) || !isConnected || uploading}
-            size="icon"
-            className="rounded-lg w-9 h-9 cursor-pointer"
-            style={{
-              background: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#bd18b4' : 'rgb(26, 26, 26)',
-              color: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#000' : '#666',
-            }}
-          >
-            {uploading ? (
-              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </Button>
+            <Button
+              onClick={handleSend}
+              disabled={(!messageInput.trim() && pendingAttachments.length === 0) || !isConnected || uploading}
+              size="icon"
+              className="rounded-lg w-9 h-9 cursor-pointer"
+              style={{
+                background: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#bd18b4' : 'rgb(26, 26, 26)',
+                color: (messageInput.trim() || pendingAttachments.length > 0) && isConnected ? '#000' : '#666',
+              }}
+            >
+              {uploading ? (
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
           </div>
         </div>
       </div>

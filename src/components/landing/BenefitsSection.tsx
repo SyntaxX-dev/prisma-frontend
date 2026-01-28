@@ -1,148 +1,127 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Users, BookOpen, Brain, Zap, Target, Database } from "lucide-react";
-import TextType from "@/components/ui/TextType";
-import FuzzyText from "@/components/ui/FuzzyText";
-import SpotlightCard from "@/components/ui/SpotlightCard";
-import { Aurora } from "@/components/backgrounds";
+import { Users, BookOpen, Brain } from "lucide-react";
+import { PencilScribble } from "@/components/ui/PencilScribble";
 
 const benefits = [
   {
     icon: Users,
-    title: "Comunidades Interativas",
-    description:
-      "Monte comunidades com outros estudantes e participe de chats em tempo real. Conecte-se com pessoas que compartilham os mesmos objetivos de aprendizado.",
-    color: "#B4FF39",
+    title: "Comunidades",
+    description: "Conecte-se com outros estudantes em grupos de estudo.",
+    color: "#bd18b4",
   },
   {
     icon: BookOpen,
-    title: "Conteúdo Organizado",
-    description:
-      "Nosso conteúdo é cuidadosamente separado por módulos e subcursos, facilitando sua navegação e garantindo um aprendizado estruturado e eficiente.",
-    color: "#8B5CF6",
+    title: "Conteúdo Curado",
+    description: "Vídeos selecionados e organizados em trilhas de aprendizado.",
+    color: "#aa22c5",
   },
   {
     icon: Brain,
     title: "IA de Resumos",
-    description:
-      "Nossa inteligência artificial gera resumos automáticos dos conteúdos estudados, otimizando seu tempo de revisão e fixação do conhecimento.",
-    color: "#EC4899",
+    description: "Resumos automáticos para otimizar seu tempo de estudo.",
+    color: "#a727a0",
   },
 ];
 
 export function BenefitsSection() {
   return (
-    <section className="py-20 md:py-32 bg-gradient-to-b from-[#0A0E27] to-[#050818] relative overflow-hidden">
-      {/* Aurora Background */}
-      <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
-        <Aurora 
-          colorStops={['#8b5cf6', '#3b82f6', '#7c3aed']}
-          amplitude={1.0}
-          blend={0.5}
+    <section className="py-24 bg-[#1a1b1e] relative overflow-hidden">
+      {/* Decorative scribbles */}
+      <div className="absolute inset-0 pointer-events-none">
+        <PencilScribble
+          path="M 0 50 Q 100 20, 200 50 T 400 50"
+          color="#bd18b4"
+          width={500}
+          height={80}
+          className="absolute top-10 left-5 opacity-10"
+        />
+        <PencilScribble
+          path="M 0 30 Q 80 50, 160 30 T 320 30"
+          color="#aa22c5"
+          width={400}
+          height={60}
+          className="absolute bottom-20 right-10 opacity-10"
         />
       </div>
-      
-      {/* Background elements */}
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#B4FF39] to-transparent opacity-30 z-10" />
 
-      <div className="container mx-auto px-4 relative z-20">
-        {/* First benefit block */}
-        <div className="max-w-6xl mx-auto mb-32">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center md:text-left mb-12"
+      <div className="container mx-auto px-6 relative z-10">
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.3 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <h2
+            className="text-3xl md:text-4xl font-bold text-white mb-4"
+            style={{ fontFamily: 'Metropolis, sans-serif' }}
           >
-            <h2 className="text-4xl md:text-6xl text-white mb-6">
-              <div style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 400 }}>
-                <TextType 
-                  text={["Pare de perder tempo"]}
-                  typingSpeed={75}
-                  pauseDuration={1500}
-                  showCursor={false}
-                  loop={false}
-                  deletingSpeed={0}
-                  startOnVisible={true}
-                  className="block"
-                />
-                <br className="hidden md:block" />
-                <span>
-                  <TextType 
-                    text={["com estudos no "]}
-                    typingSpeed={75}
-                    pauseDuration={1500}
-                    showCursor={false}
-                    loop={false}
-                    deletingSpeed={0}
-                    initialDelay={2000}
-                    startOnVisible={true}
-                    className="inline"
-                  />
-                  <TextType 
-                    text={["Caos"]}
-                    typingSpeed={75}
-                    pauseDuration={1500}
-                    showCursor={false}
-                    loop={false}
-                    deletingSpeed={0}
-                    initialDelay={4000}
-                    startOnVisible={true}
-                    className="inline text-[#B4FF39] text-6xl font-bold"
-                  />
-                </span>
-              </div>
-            </h2>
-            <p 
-              className="text-xl text-gray-400 max-w-3xl"
-              style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+            Por que escolher o{" "}
+            <span className="relative inline-block">
+              <span className="text-[#bd18b4]">Prisma</span>
+              <PencilScribble
+                path="M 0 5 Q 30 0, 60 5 T 120 5"
+                color="#bd18b4"
+                width={130}
+                height={15}
+                className="absolute -bottom-1 left-0 opacity-60"
+              />
+            </span>
+            ?
+          </h2>
+          <p
+            className="text-gray-400 max-w-xl mx-auto"
+            style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+          >
+            Focamos no que realmente importa: seu aprendizado eficiente.
+          </p>
+        </motion.div>
+
+        {/* Benefits grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {benefits.map((benefit, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="group"
             >
-              Estudantes perdem tempo navegando entre conteúdos descentralizados
-              em diferentes plataformas, criando uma experiência fragmentada e
-              ineficiente. O PRISMA centraliza e organiza todo o conteúdo em um
-              só lugar, permitindo que você foque no que realmente importa.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="group"
-              >
-                <SpotlightCard 
-                  className="h-full"
-                  spotlightColor={`rgba(${benefit.color === "#B4FF39" ? "180, 255, 57" : benefit.color === "#8B5CF6" ? "139, 92, 246" : "236, 72, 153"}, 0.2)`}
+              <div className="bg-[#202024] border border-[#323238] rounded-2xl p-8 h-full hover:border-[#bd18b4]/30 transition-all duration-300">
+                {/* Icon */}
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-5"
+                  style={{ backgroundColor: `${benefit.color}15` }}
                 >
-                  <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center mb-6 relative"
-                    style={{ backgroundColor: `${benefit.color}20` }}
-                  >
-                    <benefit.icon
-                      className="w-7 h-7"
-                      style={{ color: benefit.color }}
-                    />
-                    <div
-                      className="absolute inset-0 opacity-20 blur-xl rounded-xl"
-                      style={{ backgroundColor: benefit.color }}
-                    />
-                  </div>
-                  <h3 className="text-2xl text-white mb-4">{benefit.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">
-                    {benefit.description}
-                  </p>
-                </SpotlightCard>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+                  <benefit.icon
+                    className="w-6 h-6"
+                    style={{ color: benefit.color }}
+                  />
+                </div>
 
+                {/* Title */}
+                <h3
+                  className="text-xl font-semibold text-white mb-3"
+                  style={{ fontFamily: 'Metropolis, sans-serif' }}
+                >
+                  {benefit.title}
+                </h3>
+
+                {/* Description */}
+                <p
+                  className="text-gray-400 text-sm leading-relaxed"
+                  style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                >
+                  {benefit.description}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
