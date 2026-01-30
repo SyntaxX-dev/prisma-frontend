@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
+import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { LoadingGrid } from "@/components/ui/loading-grid";
 import { ArrowLeft, ArrowRight, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -135,56 +136,14 @@ export default function CoursePage() {
 
   return (
     <div className={`min-h-screen ${isDark ? 'dark' : ''}`}>
-      <div
-        className={`fixed inset-0 transition-all duration-300 ${isDark
-          ? 'bg-gray-950'
-          : 'bg-gray-500'
-          }`}
-        style={{
-          backgroundImage: isDark
-            ? `
-        radial-gradient(circle at 25% 25%, rgba(189, 24, 180, 0.08) 0%, transparent 55%),
-        radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.05) 0%, transparent 55%)
-      `
-            : `
-        radial-gradient(circle at 25% 25%, rgba(189, 24, 180, 0.1) 0%, transparent 55%),
-        radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.06) 0%, transparent 55%)
-      `
-        }}
-      />
-
-      <div
-        className="fixed inset-0 pointer-events-none"
-        aria-hidden="true"
-        style={{
-          backgroundImage: `
-            radial-gradient(circle at 15% 10%, rgba(197, 50, 226, 0.05), transparent 20%),
-            radial-gradient(circle at 85% 90%, rgba(129, 140, 248, 0.04), transparent 20%)
-          `
-        }}
-      />
-
-      <div
-        className={`fixed inset-0 backdrop-blur-sm transition-all duration-300 ${isDark ? 'bg-black/30' : 'bg-black/10'
-          }`}
-      />
-
-      <div
-        className="fixed inset-0 pointer-events-none"
-        aria-hidden="true"
-        style={{
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-          backgroundPosition: '0 0'
-        }}
-      />
+      <BackgroundGrid />
 
       <div className="relative z-10 flex">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-          <div className="p-4 md:p-6 ml-0 md:ml-10 pt-4 md:pt-6" style={{ marginTop: '80px' }}>
+          <div className="p-4 md:p-6 ml-0 md:ml-10 pt-24 md:pt-10">
             <div className="mb-6 md:mb-8">
               <Button
                 variant="ghost"
@@ -229,7 +188,7 @@ export default function CoursePage() {
                       </Button>
                     )}
                     <Button
-                      onClick={() => {}}
+                      onClick={() => { }}
                       className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black rounded-lg w-10 h-10 p-0 flex items-center justify-center"
                     >
                       <Search className="w-4 h-4" />
@@ -249,10 +208,10 @@ export default function CoursePage() {
                   <div
                     key={subCourse.id}
                     onClick={() => navigateWithLoading(`/course/${courseId}/sub-courses/${subCourse.id}/videos`, `Carregando ${subCourse.name}...`)}
-                    className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 md:p-6 cursor-pointer hover:bg-white/10 transition-all duration-300 group"
+                    className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 cursor-pointer hover:bg-white/10 hover:border-[#bd18b4]/40 transition-all duration-300 group transform hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]"
                   >
-                    <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
-                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden flex items-center justify-center bg-white/5 ring-1 ring-white/10 flex-shrink-0">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center bg-white/5 ring-1 ring-white/10 flex-shrink-0 group-hover:scale-110 transition-transform duration-500 shadow-lg">
                         <img
                           src={subCourse.channelThumbnailUrl?.trim() ? subCourse.channelThumbnailUrl : defaultThumbnail}
                           alt={`Miniatura de ${subCourse.name}`}
@@ -263,20 +222,28 @@ export default function CoursePage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-white text-base md:text-lg font-semibold group-hover:text-[#c532e2] transition-colors line-clamp-2">
+                        <h3 className="text-white text-lg font-bold group-hover:text-[#bd18b4] transition-colors line-clamp-1 leading-tight">
                           {subCourse.name}
                         </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] text-[#bd18b4] font-bold uppercase tracking-widest bg-[#bd18b4]/10 px-2 py-0.5 rounded-md">
+                            Subcurso
+                          </span>
+                        </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-white/40 group-hover:text-[#c532e2] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                      <ArrowRight className="w-5 h-5 text-white/20 group-hover:text-[#bd18b4] group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-white/70 text-sm leading-relaxed line-clamp-3">
-                        {subCourse.description}
-                      </p>
-                      <div className="flex items-center gap-2 mt-3">
-                        <span className="bg-[#bd18b4]/20 text-[#c532e2] text-xs px-2 py-1 rounded-full">
-                          Disponível
-                        </span>
+
+                    <p className="text-white/40 text-xs font-medium leading-relaxed line-clamp-2 mb-4 h-8">
+                      {subCourse.description}
+                    </p>
+
+                    <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                      <span className="text-[10px] text-white/30 font-bold uppercase tracking-tighter">
+                        Disponível agora
+                      </span>
+                      <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center">
+                        <ArrowRight className="w-3 h-3 text-white/40 group-hover:text-white transition-colors" />
                       </div>
                     </div>
                   </div>

@@ -14,11 +14,11 @@ export default function CourseDetailPage() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const { setLoading } = useLoading();
-  
+
   useEffect(() => {
     setIsDataLoading(false);
   }, []);
-  
+
   useVideoPageLoad({
     waitForVideo: true,
     videoLoading: isDataLoading,
@@ -80,7 +80,7 @@ export default function CourseDetailPage() {
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} isVideoPlaying={isVideoPlaying} />
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-          <div style={{ marginTop: '80px' }}>
+          <div className="pt-24 md:pt-10">
             <CourseDetail onVideoPlayingChange={setIsVideoPlaying} isVideoPlaying={isVideoPlaying} subCourseId={params.courseId as string} />
           </div>
         </div>

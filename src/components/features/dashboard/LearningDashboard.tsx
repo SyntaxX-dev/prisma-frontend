@@ -5,13 +5,14 @@ import Image from "next/image";
 import { useSearch } from "@/hooks/shared";
 import { useCourseSearchWithParams, useProducerCourses } from "@/hooks/features/courses";
 import { HorizontalCarousel } from "../course/HorizontalCarousel";
+import { Sparkles } from "lucide-react";
 
 export function LearningDashboard({ userName }: { userName?: string }) {
   const [greeting, setGreeting] = useState("");
-  
+
   // Hook para search params
   const { searchParams, isSearching } = useSearch();
-  
+
   // Hook unificado que gerencia tanto busca quanto carregamento inicial
   const { data: courses = [], isLoading: coursesLoading, error } = useCourseSearchWithParams(searchParams);
   const { data: producerCourses = [], isLoading: producerLoading, isError: producerError } = useProducerCourses();
@@ -36,11 +37,21 @@ export function LearningDashboard({ userName }: { userName?: string }) {
 
 
   return (
-    <div className="pl-2 pr-4 md:pr-6 pt-6 md:pt-10 overflow-x-hidden ml-0 md:ml-[6rem]">
+    <div className="pl-2 pr-4 md:pr-6 pt-24 md:pt-28 overflow-x-hidden ml-0 md:ml-[6rem]">
 
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-white text-xl md:text-2xl font-bold mb-2">{greeting}, {userName || "Usuário"}!</h1>
-        <p className="text-white/60 text-xs md:text-sm">Continue aprendendo e desenvolvendo suas habilidades em tecnologia.</p>
+      <div className="mb-10 relative">
+        <div className="flex items-center gap-4 mb-3">
+          <div className="w-12 h-1 bg-gradient-to-r from-[#bd18b4] to-[#aa22c5] rounded-full" />
+          <h1 className="text-white text-3xl md:text-4xl font-black tracking-tight uppercase">
+            {greeting}, {userName?.split(' ')[0] || "Explorador"}!
+          </h1>
+        </div>
+        <p className="text-white/40 text-sm md:text-base font-medium max-w-2xl leading-relaxed">
+          Sua jornada de conhecimento continua aqui. Explore novos horizontes e domine as tecnologias que moldam o futuro.
+        </p>
+
+        {/* Subtle decorative element */}
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-[#bd18b4]/5 blur-[80px] -z-10 pointer-events-none" />
       </div>
 
       {coursesLoading ? (
@@ -67,14 +78,17 @@ export function LearningDashboard({ userName }: { userName?: string }) {
           {!isSearching && (
             <div className="mb-6 md:mb-8">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-white text-base md:text-lg font-semibold">Cursos Patrocinados</h2>
-                  <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-1 rounded-full font-medium">
-                    DESTAQUE
-                  </span>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-white text-lg md:text-xl font-black tracking-tight uppercase">Cursos Patrocinados</h2>
+                  <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">
+                      Destaque
+                    </span>
+                  </div>
                 </div>
               </div>
-              
+
               {/* Carrossel de cursos patrocinados */}
               <div className="w-full -mx-2 md:mx-0">
                 {producerLoading ? (
@@ -86,7 +100,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                 ) : producerCourses.length === 0 ? (
                   <div className="text-white/60 text-sm px-2">Nenhum curso de produtor disponível no momento.</div>
                 ) : (
-                  <HorizontalCarousel 
+                  <HorizontalCarousel
                     courses={producerCourses}
                     itemWidth={280}
                     limitVisibleCards={true}
@@ -97,7 +111,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
           )}
 
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-base md:text-lg font-semibold">
+            <h2 className="text-white text-lg md:text-xl font-black tracking-tight uppercase">
               {isSearching ? 'Resultados da Busca' : 'Cursos Disponíveis'}
             </h2>
           </div>

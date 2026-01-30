@@ -182,7 +182,7 @@ export function HeroSection() {
               className="px-8 py-4 bg-[#bd18b4] text-white font-semibold rounded-xl hover:bg-[#aa22c5] transition-all duration-300 cursor-pointer shadow-lg shadow-[#bd18b4]/20 hover:shadow-[#bd18b4]/40"
               style={{ fontFamily: 'Metropolis, sans-serif' }}
             >
-              Começar gratuitamente
+              Começar agora
             </button>
             <button
               onClick={() => document.getElementById('funcionalidades')?.scrollIntoView({ behavior: 'smooth' })}

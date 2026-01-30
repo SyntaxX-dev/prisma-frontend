@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import InteractiveMindMap from '@/components/features/course/InteractiveMindMap';
 import { Navbar } from '@/components/layout';
 import { Sidebar } from '@/components/Sidebar';
-import DotGrid from '@/components/shared/DotGrid';
+import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { LoadingGrid } from '@/components/ui/loading-grid';
 import { usePageDataLoad } from '@/hooks/shared';
 
@@ -63,25 +63,13 @@ function MindMapsContent() {
   if (loading) {
     return (
       <div className="min-h-screen text-white relative">
-        <div className="fixed inset-0 z-0">
-          <DotGrid
-            dotSize={1}
-            gap={24}
-            baseColor="rgba(255,255,255,0.25)"
-            activeColor="#bd18b4"
-            proximity={120}
-            shockRadius={250}
-            shockStrength={5}
-            resistance={750}
-            returnDuration={1.5}
-          />
-        </div>
+        <BackgroundGrid />
 
         <div className="relative z-10 flex">
           <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
           <div className="flex-1">
             <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-            <div style={{ marginTop: '80px' }} className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+            <div className="flex items-center justify-center min-h-screen p-4 pt-28">
               <div className="text-center">
                 <Loader2 className="w-8 h-8 md:w-12 md:h-12 text-[#bd18b4] animate-spin mx-auto mb-4" />
                 <p className="text-sm md:text-base text-white/70">Carregando mapas mentais...</p>
@@ -96,25 +84,13 @@ function MindMapsContent() {
   if (error) {
     return (
       <div className="min-h-screen text-white relative">
-        <div className="fixed inset-0 z-0">
-          <DotGrid
-            dotSize={1}
-            gap={24}
-            baseColor="rgba(255,255,255,0.25)"
-            activeColor="#bd18b4"
-            proximity={120}
-            shockRadius={250}
-            shockStrength={5}
-            resistance={750}
-            returnDuration={1.5}
-          />
-        </div>
+        <BackgroundGrid />
 
         <div className="relative z-10 flex">
           <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
           <div className="flex-1">
             <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-            <div style={{ marginTop: '80px' }} className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+            <div className="flex items-center justify-center min-h-screen p-4 pt-28">
               <div className="text-center">
                 <p className="text-sm md:text-base text-red-400">{error}</p>
               </div>
@@ -127,26 +103,14 @@ function MindMapsContent() {
 
   return (
     <div className="min-h-screen text-white relative">
-      <div className="fixed inset-0 z-0">
-        <DotGrid
-          dotSize={1}
-          gap={24}
-          baseColor="rgba(255,255,255,0.25)"
-          activeColor="#bd18b4"
-          proximity={120}
-          shockRadius={250}
-          shockStrength={5}
-          resistance={750}
-          returnDuration={1.5}
-        />
-      </div>
+      <BackgroundGrid />
 
       <div className="relative z-10 flex">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-          <div style={{ marginTop: '80px' }}>
-            <div className="flex-1 p-4 md:p-6 ml-0 lg:ml-[280px] pt-6 md:pt-10">
+          <div>
+            <div className="flex-1 p-4 md:p-6 ml-0 lg:ml-[280px] pt-28 md:pt-32">
               {/* Header */}
               <div className="mb-6 md:mb-8">
                 <h1 className="text-2xl md:text-4xl font-bold text-white mb-2 flex items-center gap-2 md:gap-3">

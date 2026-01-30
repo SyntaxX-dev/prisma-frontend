@@ -317,7 +317,7 @@ function SettingsContent() {
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-          <div className="p-4 md:p-6 lg:p-8 xl:p-10 2xl:p-12 ml-0 md:ml-10" style={{ marginTop: '80px' }}>
+          <div className="p-4 md:p-6 lg:p-8 xl:p-10 2xl:p-12 ml-0 md:ml-10 pt-24 md:pt-10">
             <div className="mb-6 md:mb-8">
               <div className="flex items-center justify-center md:justify-start gap-4 mb-4 md:mb-6">
                 <div className="text-center md:text-left">

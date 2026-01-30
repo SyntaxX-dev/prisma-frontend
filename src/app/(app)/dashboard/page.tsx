@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
 import { LearningDashboard } from "@/components/features/dashboard";
-import DotGrid from "@/components/shared/DotGrid";
+import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useAuth } from "../../../hooks/features/auth";
 import { usePageDataLoad } from "@/hooks/shared";
@@ -49,29 +49,16 @@ function DashboardContent() {
 	}, [login]);
 
 	return (
-		<div className="h-screen text-white relative overflow-hidden">
-			{/* DotGrid Background */}
-			<div className="fixed inset-0 z-0">
-				<DotGrid
-					dotSize={1}
-					gap={24}
-					baseColor="rgba(255,255,255,0.7)"
-					activeColor="#bd18b4"
-					proximity={120}
-					shockRadius={250}
-					shockStrength={5}
-					resistance={750}
-					returnDuration={1.5}
-				/>
-			</div>
+		<div className="min-h-screen text-white relative">
+			<BackgroundGrid />
 
-			<div className="relative z-10 flex h-full overflow-x-hidden">
+			<div className="relative z-10 flex min-h-screen">
 				<Sidebar isDark={isDark} toggleTheme={toggleTheme} />
-				<div className="flex-1 flex flex-col overflow-hidden">
+				<div className="flex-1 flex flex-col relative">
 					<Navbar isDark={isDark} toggleTheme={toggleTheme} />
-					<div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ marginTop: '80px' }}>
+					<main className="flex-1 w-full pt-24 md:pt-10">
 						<LearningDashboard userName={user?.name} />
-					</div>
+					</main>
 				</div>
 			</div>
 		</div>

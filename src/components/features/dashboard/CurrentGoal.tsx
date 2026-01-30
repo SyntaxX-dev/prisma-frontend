@@ -13,7 +13,7 @@ export function CurrentGoal({ current, target }: CurrentGoalProps) {
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-white font-semibold text-lg">Meta Atual</h3>
         <Button
@@ -49,7 +49,7 @@ export function CurrentGoal({ current, target }: CurrentGoalProps) {
               className="transition-all duration-500"
             />
           </svg>
-          
+
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="text-2xl font-bold text-white">

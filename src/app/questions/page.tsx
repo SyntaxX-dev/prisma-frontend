@@ -6,7 +6,7 @@ import { submitAnswer } from '@/api/quiz/submit-answer';
 import { getResult, type QuestionResult } from '@/api/quiz/get-result';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/layout/Navbar';
-import DotGrid from '@/components/shared/DotGrid';
+import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { Sparkles, Check, X, Download, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/features/auth';
 
@@ -279,20 +279,7 @@ export default function QuestionsPage() {
 
   return (
     <div className="min-h-screen text-white relative">
-      {/* DotGrid Background */}
-      <div className="fixed inset-0 z-0">
-        <DotGrid
-          dotSize={1}
-          gap={24}
-          baseColor="rgba(255,255,255,0.25)"
-          activeColor="#bd18b4"
-          proximity={120}
-          shockRadius={250}
-          shockStrength={5}
-          resistance={750}
-          returnDuration={1.5}
-        />
-      </div>
+      <BackgroundGrid />
 
       <div className="relative z-10">
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
@@ -317,13 +304,12 @@ export default function QuestionsPage() {
                   {/* Input principal */}
                   <div className="relative max-w-4xl mx-auto">
                     <div
-                      className="rounded-2xl md:rounded-[32px] p-1 transition-all duration-300"
+                      className="rounded-3xl p-1 transition-all duration-500 overflow-hidden"
                       style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        backdropFilter: 'blur(10px)',
-                        WebkitBackdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                       }}
                     >
                       <form onSubmit={handleGenerateQuiz}>
@@ -340,7 +326,7 @@ export default function QuestionsPage() {
                           <button
                             type="submit"
                             disabled={loading || !topic.trim()}
-                            className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 sm:px-6 py-2 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                            className="flex items-center justify-center gap-2 bg-[#bd18b4] hover:bg-[#aa22c5] text-white font-bold px-6 sm:px-8 py-3 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base shadow-[0_0_20px_rgba(189,24,180,0.3)] hover:shadow-[0_0_30px_rgba(189,24,180,0.5)] transform hover:-translate-y-0.5"
                           >
                             {loading ? (
                               <>
@@ -393,12 +379,11 @@ export default function QuestionsPage() {
                         key={index}
                         onClick={() => setTopic(suggestion)}
                         disabled={loading}
-                        className="text-left px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-left px-5 md:px-6 py-4 md:py-5 rounded-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20 transform hover:-translate-y-1 group"
                         style={{
-                          background: 'rgba(255, 255, 255, 0.05)',
+                          background: 'rgba(255, 255, 255, 0.03)',
                           backdropFilter: 'blur(10px)',
-                          WebkitBackdropFilter: 'blur(10px)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
                         }}
                       >
                         <div className="flex items-start gap-2 md:gap-3">
@@ -510,11 +495,11 @@ export default function QuestionsPage() {
                                       ? isCorrect
                                         ? 'rgba(34, 197, 94, 0.2)'
                                         : isWrong
-                                        ? 'rgba(239, 68, 68, 0.2)'
-                                        : 'rgba(255, 255, 255, 0.1)'
+                                          ? 'rgba(239, 68, 68, 0.2)'
+                                          : 'rgba(255, 255, 255, 0.1)'
                                       : isSelected
-                                      ? 'rgba(189, 24, 180, 0.3)'
-                                      : 'rgba(255, 255, 255, 0.1)',
+                                        ? 'rgba(189, 24, 180, 0.3)'
+                                        : 'rgba(255, 255, 255, 0.1)',
                                   }}
                                 >
                                   <span className="text-white font-medium text-sm md:text-base">{option.optionNumber}</span>
@@ -707,8 +692,8 @@ export default function QuestionsPage() {
                                     background: isCorrect
                                       ? 'rgba(34, 197, 94, 0.1)'
                                       : isSelected
-                                      ? 'rgba(239, 68, 68, 0.1)'
-                                      : 'transparent',
+                                        ? 'rgba(239, 68, 68, 0.1)'
+                                        : 'transparent',
                                   }}
                                 >
                                   {isCorrect && <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-400 flex-shrink-0" />}

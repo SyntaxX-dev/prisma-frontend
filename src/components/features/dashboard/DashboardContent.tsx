@@ -67,24 +67,27 @@ export function DashboardContent() {
       {!loading && !error && courses.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <Card key={course.id} className="bg-white/10 backdrop-blur-md border-white/20 p-6 text-white hover:bg-white/15 transition-colors cursor-pointer">
+            <Card key={course.id} className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer rounded-2xl group">
               <div className="mb-4">
-                <img
-                  src={course.imageUrl}
-                  alt={course.name}
-                  className="w-full h-40 object-cover rounded-lg mb-4"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop';
-                  }}
-                />
-                <h3 className="text-lg font-semibold mb-2">{course.name}</h3>
-                <p className="text-white/70 text-sm mb-4">{course.description}</p>
-                <div className="flex justify-between items-center text-xs text-white/60">
+                <div className="overflow-hidden rounded-xl mb-4 relative aspect-video">
+                  <img
+                    src={course.imageUrl}
+                    alt={course.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors duration-500" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 group-hover:text-[#bd18b4] transition-colors">{course.name}</h3>
+                <p className="text-white/50 text-xs font-medium mb-4 line-clamp-2 leading-relaxed">{course.description}</p>
+                <div className="flex justify-between items-center text-[10px] text-white/40 uppercase font-bold tracking-wider pt-4 border-t border-white/5">
                   <span>Criado em: {new Date(course.createdAt).toLocaleDateString('pt-BR')}</span>
                 </div>
               </div>
-              <Button className="w-full bg-white/20 text-white border-white/30 hover:bg-white/30">
+              <Button className="w-full bg-white/10 text-white border border-white/10 hover:bg-[#bd18b4] hover:border-[#bd18b4] transition-all duration-300 rounded-xl font-bold uppercase text-[11px] tracking-widest py-6">
                 Acessar Curso
               </Button>
             </Card>

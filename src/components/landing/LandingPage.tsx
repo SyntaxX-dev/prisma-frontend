@@ -17,6 +17,10 @@ function MouseFollower() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // Check for touch device - if strictly mobile per user request, preventing listeners is good
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+    if (isTouchDevice) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
       if (!isVisible) setIsVisible(true);
@@ -43,7 +47,7 @@ function MouseFollower() {
 
   return (
     <motion.div
-      className="fixed pointer-events-none z-[9999] mix-blend-difference"
+      className="hidden md:block fixed pointer-events-none z-[9999] mix-blend-difference"
       animate={{
         x: mousePosition.x - 10,
         y: mousePosition.y - 10,

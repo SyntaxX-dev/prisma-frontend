@@ -12,7 +12,7 @@ import { VoiceCallScreen } from "@/components/features/communities/VoiceCallScre
 import type { Community, CommunityMessage } from "@/types/community";
 import { LoadingGrid } from "@/components/ui/loading-grid";
 import { VideoCallScreen } from "@/components/features/communities/VideoCallScreens";
-import DotGrid from "@/components/shared/DotGrid";
+import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { getCommunities } from "@/api/communities/get-communities";
 import { CommunityJoinTooltip } from "@/components/features/communities/CommunityJoinTooltip";
 import { NotificationsDropdown } from "@/components/features/notifications/NotificationsDropdown";
@@ -1175,21 +1175,8 @@ function CommunitiesPageContent() {
   }
 
   return (
-    <div className="min-h-screen  text-white relative">
-      {/* DotGrid Background */}
-      <div className="fixed inset-0 z-0">
-        <DotGrid
-          dotSize={1}
-          gap={24}
-          baseColor="rgba(255,255,255,0.25)"
-          activeColor="#bd18b4"
-          proximity={120}
-          shockRadius={250}
-          shockStrength={5}
-          resistance={750}
-          returnDuration={1.5}
-        />
-      </div>
+    <div className="min-h-screen text-white relative">
+      <BackgroundGrid />
 
       <div className="relative z-10 flex h-screen w-screen overflow-hidden p-2 md:p-4 pt-4 md:pt-6 gap-2 md:gap-3">
 

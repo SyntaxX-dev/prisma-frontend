@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { Navbar } from '@/components/layout';
 import { Sidebar } from '@/components/Sidebar';
-import DotGrid from '@/components/shared/DotGrid';
+import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { LoadingGrid } from '@/components/ui/loading-grid';
 import { InProgressVideoCard } from '@/components/features/course/InProgressVideoCard';
 import { getInProgressVideos, InProgressVideo } from '@/api/progress/get-in-progress-videos';
@@ -54,26 +54,13 @@ function WatchingContent() {
 
   return (
     <div className="min-h-screen text-white relative">
-      {/* DotGrid Background */}
-      <div className="fixed inset-0 z-0">
-        <DotGrid
-          dotSize={1}
-          gap={24}
-          baseColor="rgba(255,255,255,0.25)"
-          activeColor="#bd18b4"
-          proximity={120}
-          shockRadius={250}
-          shockStrength={5}
-          resistance={750}
-          returnDuration={1.5}
-        />
-      </div>
+      <BackgroundGrid />
 
       <div className="relative z-10 flex">
-        <Sidebar isDark={isDark} toggleTheme={() => {}} />
+        <Sidebar isDark={isDark} toggleTheme={() => { }} />
         <div className="flex-1">
-          <Navbar isDark={isDark} toggleTheme={() => {}} />
-          <div style={{ marginTop: '80px' }} className="pl-8 pr-8 py-6 w-full">
+          <Navbar isDark={isDark} toggleTheme={() => { }} />
+          <div className="pl-4 md:pl-8 pr-4 md:pr-8 pt-24 md:pt-10 w-full mb-8">
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-4">

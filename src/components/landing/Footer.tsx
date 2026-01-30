@@ -21,7 +21,7 @@ export function Footer() {
       <div className="container mx-auto px-6 py-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
           {/* Brand */}
-          <div>
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <div className="flex items-center gap-2 mb-4">
               <Image
                 src="/logo-prisma.svg"
@@ -38,7 +38,7 @@ export function Footer() {
               </span>
             </div>
             <p
-              className="text-gray-400 text-sm leading-relaxed"
+              className="text-gray-400 text-sm leading-relaxed max-w-xs md:max-w-none"
               style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
             >
               Transformando o caos do YouTube em uma experiência de aprendizado organizada.
@@ -46,7 +46,7 @@ export function Footer() {
           </div>
 
           {/* Links */}
-          <div>
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h4
               className="text-white font-semibold mb-4"
               style={{ fontFamily: 'Metropolis, sans-serif' }}
@@ -85,7 +85,7 @@ export function Footer() {
           </div>
 
           {/* Contact */}
-          <div>
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h4
               className="text-white font-semibold mb-4"
               style={{ fontFamily: 'Metropolis, sans-serif' }}

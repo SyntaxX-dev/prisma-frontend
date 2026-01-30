@@ -6,6 +6,9 @@ import { useProfile } from '@/hooks/features/profile';
 import { getUserProfile } from '@/api/auth/get-user-profile';
 import { getEmailValue } from '@/lib/utils/email';
 import { LoadingGrid } from '@/components/ui/loading-grid';
+import { BackgroundGrid } from '@/components/shared/BackgroundGrid';
+import { Navbar } from '@/components/layout';
+import { Sidebar } from '@/components/Sidebar';
 import {
     DndContext,
     KeyboardSensor,
@@ -146,7 +149,12 @@ export function ProfilePage() {
     const searchParams = useSearchParams();
     const userId = searchParams.get('userId');
     const { socket } = useNotificationsContext();
-    
+    const [isDark, setIsDark] = useState(true);
+
+    const toggleTheme = () => {
+        setIsDark(!isDark);
+    };
+
     // Estado local para os valores dos inputs do modal
     const [modalValues, setModalValues] = useState({
         nome: '',
@@ -155,15 +163,15 @@ export function ProfilePage() {
 
     // Estado para o modal de localização
     const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-    
+
     // Estado para visualização pública do perfil
     // Inicializar como false para evitar diferenças de hidratação
     const [isPublicView, setIsPublicView] = useState(false);
-    
+
     // Estado para perfil de outro usuário
     const [otherUserProfile, setOtherUserProfile] = useState<UserProfile | null>(null);
     const [isLoadingOtherProfile, setIsLoadingOtherProfile] = useState(false);
-    
+
     // Atualizar isPublicView quando userId mudar (após hidratação)
     useEffect(() => {
         setIsPublicView(!!userId);
@@ -190,7 +198,7 @@ export function ProfilePage() {
             'FACULDADE': 'Faculdade',
             'ENSINO_MEDIO': 'Ensino Médio'
         };
-        
+
         // Se for faculdade e tiver curso selecionado, mostrar apenas o curso
         if (focus === 'FACULDADE' && course) {
             const courseLabel = COLLEGE_COURSE_LABELS[course as keyof typeof COLLEGE_COURSE_LABELS];
@@ -198,7 +206,7 @@ export function ProfilePage() {
                 return courseLabel;
             }
         }
-        
+
         // Para outros casos, usar o label padrão
         return focusLabels[focus] || focus;
     };
@@ -206,19 +214,19 @@ export function ProfilePage() {
     // Função para formatar a data de criação do usuário
     const formatUserJoinDate = (createdAt?: string) => {
         if (!createdAt) return 'No Prisma desde 30/03/2020';
-        
+
         try {
             const date = new Date(createdAt);
             const day = date.getDate().toString().padStart(2, '0');
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const year = date.getFullYear();
-            
+
             return `No Prisma desde ${day}/${month}/${year}`;
         } catch (error) {
             return 'No Prisma desde 30/03/2020';
         }
     };
-    
+
     const {
         userProfile,
         isLoading,
@@ -292,7 +300,7 @@ export function ProfilePage() {
     // Função para carregar perfil de outro usuário
     const loadOtherUserProfile = async () => {
         if (!userId) return;
-        
+
         try {
             setIsLoadingOtherProfile(true);
             const response = await getUserProfile(userId);
@@ -327,16 +335,16 @@ export function ProfilePage() {
             // Verificar se o evento é relacionado ao usuário logado OU ao perfil sendo visualizado
             const isRelatedToLoggedUser = currentUserId && (data.userId === currentUserId || data.friendId === currentUserId);
             const isRelatedToViewedProfile = userId && (data.userId === userId || data.friendId === userId);
-            
+
             // Só atualizar se estiver visualizando o perfil do outro usuário envolvido na amizade
             if (isRelatedToViewedProfile && userId && !isOwnProfile) {
-                
+
                 // Mostrar notificação apenas se estiver visualizando o perfil do outro usuário
                 toast.success('Amizade desfeita', {
                     duration: 3000,
                     icon: '👋',
                 });
-                
+
                 loadOtherUserProfile();
             } else if (isRelatedToLoggedUser && isOwnProfile) {
                 // Se for o próprio perfil e o evento for relacionado, recarregar mas não mostrar notificação
@@ -347,12 +355,12 @@ export function ProfilePage() {
 
         // Escutar quando amizade for aceita
         const handleFriendAccepted = (data: any) => {
-            
+
             // Verificar se o evento é relacionado ao usuário logado OU ao perfil sendo visualizado
             const relatedUserId = data.relatedUserId || data.requester?.id || data.receiver?.id;
             const isRelatedToLoggedUser = currentUserId && (data.requester?.id === currentUserId || data.receiver?.id === currentUserId || relatedUserId === currentUserId);
             const isRelatedToViewedProfile = userId && relatedUserId === userId;
-            
+
             if (isRelatedToLoggedUser || isRelatedToViewedProfile) {
                 // Se estiver visualizando um perfil de outro usuário, recarregar
                 if (userId && !isOwnProfile) {
@@ -403,13 +411,13 @@ export function ProfilePage() {
     const user = useMemo(() => {
         return userId && otherUserProfile ? otherUserProfile : userProfile;
     }, [userId, otherUserProfile, userProfile]);
-    
+
     // Criar uma chave baseada na ordem dos links para forçar re-render quando a ordem mudar
     // Usar useState para evitar problemas de hidratação
     // Não usar user aqui porque ainda não está definido - usar userProfile ou otherUserProfile diretamente
     // Inicializar com string vazia para evitar diferenças entre servidor e cliente
     const [linksOrderKey, setLinksOrderKey] = useState('');
-    
+
     // Atualizar a chave quando a ordem mudar (apenas no cliente)
     useEffect(() => {
         const profile = userId && otherUserProfile ? otherUserProfile : userProfile;
@@ -451,15 +459,15 @@ export function ProfilePage() {
     const renderUserLinks = () => {
         // Ordem padrão conforme o guia
         const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
-        
+
         // Usar a ordem do backend se disponível, senão usar a ordem padrão
         const order = user?.socialLinksOrder || defaultOrder;
-        
+
         const links = order.map((fieldName: string) => {
             let url = '';
             let icon = Globe;
             let label = '';
-            
+
             // Mapear os campos para as URLs corretas
             switch (fieldName) {
                 case 'portfolio':
@@ -490,7 +498,7 @@ export function ProfilePage() {
                 default:
                     url = '';
             }
-            
+
             return {
                 key: fieldName,
                 url,
@@ -520,7 +528,7 @@ export function ProfilePage() {
                         </a>
                     );
                 })}
-                
+
                 {/* Slots vazios - apenas para o próprio perfil */}
                 {isOwnProfile && !isPublicView && Array.from({ length: emptySlots }).map((_, index) => (
                     <div
@@ -566,400 +574,418 @@ export function ProfilePage() {
 
     return (
         <div className="min-h-screen text-white relative">
-            {/* DotGrid Background */}
-            <div className="fixed inset-0 z-0">
-                <DotGrid
-                    dotSize={1}
-                    gap={24}
-                    baseColor="rgba(255,255,255,0.25)"
-                    activeColor="#bd18b4"
-                    proximity={120}
-                    shockRadius={250}
-                    shockStrength={5}
-                    resistance={750}
-                    returnDuration={1.5}
-                />
-            </div>
+            <BackgroundGrid />
 
 
-            <div className="fixed top-4 left-4 z-50 mt-4 ml-4">
-                <Button
-                    onClick={handleGoBack}
-                    variant="ghost"
-                    className="text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Voltar
-                </Button>
-            </div>
+            <div className="relative z-10 flex">
+                <Sidebar isDark={isDark} toggleTheme={toggleTheme} />
+                <div className="flex-1">
+                    <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-            <div className="relative z-10 p-6 pt-24 min-h-screen flex items-center">
-                <div className="max-w-7xl mx-auto w-full relative z-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-1">
-                            <div className="space-y-6">
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
+                    <div className="relative z-10 p-4 md:p-8 pt-28 md:pt-32 min-h-screen ml-0 md:ml-10">
+                        <div className="max-w-7xl mx-auto w-full relative z-10">
+                            <div className="mb-6">
+                                <Button
+                                    onClick={handleGoBack}
+                                    variant="ghost"
+                                    className="text-white/60 hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
+                                >
+                                    <ArrowLeft className="w-4 h-4 mr-2" />
+                                    Voltar
+                                </Button>
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div className="lg:col-span-1">
+                                    <div className="space-y-6">
+                                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-[#bd18b4]/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
 
-                                    <div className="text-center mb-6">
-                                        <div className="relative inline-block group mb-4">
-                                            <Avatar
-                                                className={`w-24 h-24 transition-all duration-300 ${isUploadingImage ? 'opacity-50' : isOwnProfile ? 'cursor-pointer hover:scale-105' : ''}`}
-                                                onClick={() => {
-                                                    if (isOwnProfile && !isUploadingImage) {
-                                                        document.getElementById('avatar-upload')?.click();
-                                                    }
-                                                }}
-                                            >
-                                                <AvatarImage 
-                                                    src={user.profileImage || avatarImage || "/api/placeholder/96/96"} 
-                                                    className="object-cover transition-all duration-300" 
-                                                    alt="Foto do perfil"
-                                                />
-                                                <AvatarFallback className="text-xl font-bold bg-[#bd18b4] text-black">
-                                                    {getInitials(user)}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            
-                                            {/* Overlay com ícone de câmera no hover - apenas para o próprio perfil */}
-                                            {isOwnProfile && !isUploadingImage && (
-                                                <div 
-                                                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover:pointer-events-auto"
-                                                    onClick={() => {
-                                                        if (!isUploadingImage) {
-                                                            document.getElementById('avatar-upload')?.click();
-                                                        }
-                                                    }}
-                                                >
-                                                    <Camera className="w-6 h-6 text-white" />
-                                                </div>
-                                            )}
-                                            
-                                            {/* Indicador de loading durante upload */}
-                                            {isUploadingImage && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                                                    <LoadingGrid size="24" color="#bd18b4" />
-                                                </div>
-                                            )}
-                                            
-                                            {/* Input de upload - apenas para o próprio perfil */}
-                                            {isOwnProfile && (
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleAvatarUpload}
-                                                    className="hidden"
-                                                    id="avatar-upload"
-                                                    disabled={isUploadingImage}
-                                                />
-                                            )}
-                                            
-                                            {/* Botão de remover foto - apenas para o próprio perfil */}
-                                            {isOwnProfile && (user.profileImage || avatarImage) && !isUploadingImage && (
-                                                <div 
-                                                    className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/80 border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/90 hover:border-red-500/50 hover:scale-110"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        deleteUserProfileImage();
-                                                    }}
-                                                    title="Remover foto"
-                                                >
-                                                    <Trash2 className="w-3 h-3 text-red-400" />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <h1 className="text-xl font-bold text-white mb-1">
-                                            {user.name}
-                                        </h1>
-                                        <p className="text-gray-400 text-sm mb-4">
-                                            {getEmailValue(user) || 'usuario@email.com'}
-                                        </p>
-                                        
-                                        {/* Botões de Ação */}
-                                        <div className="space-y-2">
-                                            {!isOwnProfile && (
-                                                <>
-                                                    <FriendRequestButton 
-                                                        userId={userId || ''} 
-                                                        isFriend={user.isFriend}
-                                                    />
-                                                    {user.isFriend && (
-                                                        <Button
+                                            <div className="text-center mb-6 relative z-10">
+                                                <div className="relative inline-block group mb-6">
+                                                    <Avatar
+                                                        className={`w-32 h-32 md:w-40 md:h-40 border-4 border-[#bd18b4]/20 shadow-2xl transition-all duration-500 ${isUploadingImage ? 'opacity-50' : isOwnProfile ? 'cursor-pointer group-hover:scale-105 group-hover:border-[#bd18b4]/40' : ''}`}
+                                                        onClick={() => {
+                                                            if (isOwnProfile && !isUploadingImage) {
+                                                                document.getElementById('avatar-upload')?.click();
+                                                            }
+                                                        }}
+                                                    >
+                                                        <AvatarImage
+                                                            src={user.profileImage || avatarImage || "/api/placeholder/96/96"}
+                                                            className="object-cover transition-all duration-300"
+                                                            alt="Foto do perfil"
+                                                        />
+                                                        <AvatarFallback className="text-3xl md:text-4xl font-black bg-gradient-to-br from-[#bd18b4] to-[#c532e2] text-white">
+                                                            {getInitials(user)}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+
+                                                    {/* Overlay com ícone de câmera no hover - apenas para o próprio perfil */}
+                                                    {isOwnProfile && !isUploadingImage && (
+                                                        <div
+                                                            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover:pointer-events-auto"
                                                             onClick={() => {
-                                                                router.push(`/communities?chat=${userId}`);
+                                                                if (!isUploadingImage) {
+                                                                    document.getElementById('avatar-upload')?.click();
+                                                                }
                                                             }}
-                                                            className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/80 text-black px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
                                                         >
-                                                            <MessageCircle className="w-4 h-4" />
-                                                            Conversar
+                                                            <Camera className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Indicador de loading durante upload */}
+                                                    {isUploadingImage && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                                                            <LoadingGrid size="24" color="#bd18b4" />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Input de upload - apenas para o próprio perfil */}
+                                                    {isOwnProfile && (
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={handleAvatarUpload}
+                                                            className="hidden"
+                                                            id="avatar-upload"
+                                                            disabled={isUploadingImage}
+                                                        />
+                                                    )}
+
+                                                    {/* Botão de remover foto - apenas para o próprio perfil */}
+                                                    {isOwnProfile && (user.profileImage || avatarImage) && !isUploadingImage && (
+                                                        <div
+                                                            className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/80 border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/90 hover:border-red-500/50 hover:scale-110"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                deleteUserProfileImage();
+                                                            }}
+                                                            title="Remover foto"
+                                                        >
+                                                            <Trash2 className="w-3 h-3 text-red-400" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <h1 className="text-2xl md:text-3xl font-black text-white mb-1 tracking-tight">
+                                                    {user.name}
+                                                </h1>
+                                                <p className="text-white/40 text-sm font-medium mb-6">
+                                                    {getEmailValue(user) || 'usuario@email.com'}
+                                                </p>
+
+                                                {/* Botões de Ação */}
+                                                <div className="space-y-2">
+                                                    {!isOwnProfile && (
+                                                        <>
+                                                            <FriendRequestButton
+                                                                userId={userId || ''}
+                                                                isFriend={user.isFriend}
+                                                            />
+                                                            {user.isFriend && (
+                                                                <Button
+                                                                    onClick={() => {
+                                                                        router.push(`/communities?chat=${userId}`);
+                                                                    }}
+                                                                    className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/80 text-black px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
+                                                                >
+                                                                    <MessageCircle className="w-4 h-4" />
+                                                                    Conversar
+                                                                </Button>
+                                                            )}
+                                                        </>
+                                                    )}
+
+                                                    {/* Botão "Ver perfil privado" - apenas para o próprio perfil */}
+                                                    {isOwnProfile && (
+                                                        <Button
+                                                            variant="outline"
+                                                            className={`w-full px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer ${isPublicView
+                                                                ? 'bg-[#bd18b4]/10 border-[#bd18b4] text-[#bd18b4] hover:bg-[#bd18b4]/20'
+                                                                : 'bg-transparent hover:bg-white/5 border-[#323238] text-gray-300 hover:text-white'
+                                                                }`}
+                                                            onClick={() => setIsPublicView(!isPublicView)}
+                                                        >
+                                                            <Eye className="w-4 h-4 mr-2" />
+                                                            {isPublicView ? 'Ver perfil privado' : 'Ver como outros me veem'}
                                                         </Button>
                                                     )}
-                                                </>
-                                            )}
-                                            
-                                            {/* Botão "Ver perfil privado" - apenas para o próprio perfil */}
-                                            {isOwnProfile && (
-                                                <Button 
-                                                    variant="outline"
-                                                    className={`w-full px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
-                                                        isPublicView 
-                                                            ? 'bg-[#bd18b4]/10 border-[#bd18b4] text-[#bd18b4] hover:bg-[#bd18b4]/20' 
-                                                            : 'bg-transparent hover:bg-white/5 border-[#323238] text-gray-300 hover:text-white'
-                                                    }`}
-                                                    onClick={() => setIsPublicView(!isPublicView)}
-                                                >
-                                                    <Eye className="w-4 h-4 mr-2" />
-                                                    {isPublicView ? 'Ver perfil privado' : 'Ver como outros me veem'}
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3 mb-6">
-                                        {basicInfoData.cidade ? (
-                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
-                                                <div className="flex items-center">
-                                                    <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-4 flex-shrink-0"></div>
-                                                    <span className="text-white text-sm font-medium">
-                                                        {basicInfoData.cidade}
-                                                    </span>
                                                 </div>
-                                                {!isPublicView && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => setIsLocationModalOpen(true)}
-                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
-                                                    >
-                                                        <Edit3 className="w-3 h-3 text-gray-400" />
-                                                    </Button>
-                                                )}
                                             </div>
-                                        ) : (
-                                            !isPublicView && (
-                                                <Button
-                                                    className="w-full bg-transparent hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2] text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer transition-colors"
-                                                    onClick={() => setIsLocationModalOpen(true)}
-                                                >
-                                                    <Plus className="w-4 h-4 mr-2" />
-                                                    Localização
-                                                </Button>
-                                            )
-                                        )}
-                                        {selectedFocus ? (
-                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center justify-between group hover:bg-white/5 transition-colors">
-                                                <div className="flex items-center">
-                                                    <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-3"></div>
-                                                    <span className="text-white text-sm font-medium">
-                                                        {getFocusLabel(selectedFocus, selectedCourse)}
-                                                    </span>
-                                                </div>
-                                                {!isPublicView && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => setIsFocusModalOpen(true)}
-                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 hover:bg-white/10 cursor-pointer"
-                                                    >
-                                                        <Edit3 className="w-3 h-3 text-gray-400" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            !isPublicView && (
-                                                <Button
-                                                    className="w-full bg-transparent hover:bg-white/5 text-[#bd18b4] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                                                    onClick={() => setIsFocusModalOpen(true)}
-                                                >
-                                                    <Plus className="w-4 h-4 mr-2" />
-                                                    Escolha seu foco
-                                                </Button>
-                                            )
-                                        )}
-                                        
-                                        {/* Idade */}
-                                        {user?.age && (
-                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
-                                                <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-4 flex-shrink-0"></div>
-                                                <span className="text-white text-sm font-medium">
-                                                    {user.age} anos
-                                                </span>
-                                            </div>
-                                        )}
-                                        
-                                        {/* Nível de Educação */}
-                                        {user?.educationLevel && (() => {
-                                            // Mapear valores da API (inglês) para valores do frontend (português)
-                                            const educationLevelMap: Record<string, keyof typeof EDUCATION_LEVEL_LABELS> = {
-                                                'POSTGRADUATE': 'POS_GRADUACAO',
-                                                'HIGH_SCHOOL': 'ENSINO_MEDIO',
-                                                'GRADUATION': 'GRADUACAO',
-                                                'ELEMENTARY': 'FUNDAMENTAL',
-                                                'MASTER': 'MESTRADO',
-                                                'DOCTORATE': 'DOUTORADO',
-                                            };
-                                            
-                                            const mappedLevel = educationLevelMap[user.educationLevel] || user.educationLevel as keyof typeof EDUCATION_LEVEL_LABELS;
-                                            const label = EDUCATION_LEVEL_LABELS[mappedLevel] || user.educationLevel;
-                                            
-                                            return (
-                                                <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
-                                                    <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-4 flex-shrink-0"></div>
-                                                    <span className="text-white text-sm font-medium">
-                                                        {label}
-                                                    </span>
-                                                </div>
-                                            );
-                                        })()}
-                                        
-                                        {/* Curso */}
-                                        {user?.collegeCourse && (
-                                            <div className="w-full bg-[#29292E] border border-[#323238] rounded-lg p-3 flex items-center">
-                                                <div className="w-2 h-2 bg-[#bd18b4] rounded-full mr-4 flex-shrink-0"></div>
-                                                <span className="text-white text-sm font-medium">
-                                                    {COLLEGE_COURSE_LABELS[user.collegeCourse as keyof typeof COLLEGE_COURSE_LABELS] || user.collegeCourse}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
 
-                                    <p className="text-gray-500 text-sm text-center">
-                                        {formatUserJoinDate(user?.createdAt)}
-                                    </p>
-                                </div>
-
-                                {/* Card de Momento de Carreira - Sempre visível */}
-                                <CareerMomentCard 
-                                    userProfile={user}
-                                    isPublicView={isPublicView || !isOwnProfile}
-                                    onEditClick={() => setIsCareerModalOpen(true)}
-                                />
-
-                                {/* Card de Habilidades */}
-                                <HabilitiesCard 
-                                    userProfile={user}
-                                    isPublicView={isPublicView || !isOwnProfile}
-                                    onEditClick={() => setIsHabilitiesModalOpen(true)}
-                                />
-
-                                {/* Links - Agora abaixo de Habilidades */}
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-white font-semibold text-sm">Links</h3>
-                                        {isOwnProfile && !isPublicView && (
-                                            <Button
-                                                className="bg-transparent hover:bg-white/5 text-white p-1 cursor-pointer"
-                                                size="sm"
-                                                onClick={() => setIsLinksModalOpen(true)}
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                    {renderUserLinks()}
-                                </div>
-
-                            </div>
-                        </div>
-
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Seção "Complete seu perfil" - apenas na visualização privada */}
-                            {!isPublicView && (
-                                <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
-                                    <h2 className="text-xl font-bold text-white mb-2">Complete seu perfil</h2>
-                                    <p className="text-gray-400 text-sm mb-6">Perfis completos atraem mais oportunidades!</p>
-
-                                    <div className="mb-6">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-white/80 text-sm">{completionPercentage}% completo</span>
-                                            <span className="text-gray-400 text-sm">{completedTasks} de {totalTasks}</span>
-                                        </div>
-                                        <div className="w-full bg-[#323238] rounded-full h-2">
-                                            <div
-                                                className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                                                style={{ width: `${completionPercentage}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {profileTasks.map((task, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center space-x-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
-                                                onClick={() => handleTaskClick(task.label)}
-                                            >
-                                                {task.completed ? (
-                                                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                            <div className="space-y-3 mb-6 relative z-10">
+                                                {basicInfoData.cidade ? (
+                                                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
+                                                        <div className="flex items-center">
+                                                            <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 flex-shrink-0 animate-pulse"></div>
+                                                            <span className="text-white/90 text-sm font-semibold">
+                                                                {basicInfoData.cidade}
+                                                            </span>
+                                                        </div>
+                                                        {!isPublicView && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => setIsLocationModalOpen(true)}
+                                                                className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1 h-8 w-8 hover:bg-white/10 cursor-pointer"
+                                                            >
+                                                                <Edit3 className="w-4 h-4 text-white/60" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                 ) : (
-                                                    <Circle className="w-5 h-5 text-gray-600" />
+                                                    !isPublicView && (
+                                                        <Button
+                                                            className="w-full bg-white/5 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-white text-white/50 border border-white/10 rounded-2xl justify-start text-sm py-3 px-4 cursor-pointer transition-all group/btn"
+                                                            onClick={() => setIsLocationModalOpen(true)}
+                                                        >
+                                                            <Plus className="w-4 h-4 mr-2 group-hover/btn:rotate-90 transition-transform" />
+                                                            Adicionar Localização
+                                                        </Button>
+                                                    )
                                                 )}
-                                                <span className={`text-sm ${task.completed ? 'text-white' : 'text-gray-400'}`}>
-                                                    {task.label}
-                                                </span>
+                                                {selectedFocus ? (
+                                                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
+                                                        <div className="flex items-center">
+                                                            <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 animate-pulse"></div>
+                                                            <span className="text-white/90 text-sm font-semibold">
+                                                                {getFocusLabel(selectedFocus, selectedCourse)}
+                                                            </span>
+                                                        </div>
+                                                        {!isPublicView && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => setIsFocusModalOpen(true)}
+                                                                className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1 h-8 w-8 hover:bg-white/10 cursor-pointer"
+                                                            >
+                                                                <Edit3 className="w-4 h-4 text-white/60" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    !isPublicView && (
+                                                        <Button
+                                                            className="w-full bg-white/5 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-white text-[#bd18b4]/80 border border-white/10 rounded-2xl justify-start text-sm py-3 px-4 cursor-pointer transition-all group/btn"
+                                                            onClick={() => setIsFocusModalOpen(true)}
+                                                        >
+                                                            <Plus className="w-4 h-4 mr-2 group-hover/btn:rotate-90 transition-transform" />
+                                                            Escolher Foco de Estudo
+                                                        </Button>
+                                                    )
+                                                )}
+
+                                                {/* Idade */}
+                                                {user?.age && (
+                                                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center group hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
+                                                        <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 flex-shrink-0 animate-pulse"></div>
+                                                        <span className="text-white/90 text-sm font-semibold">
+                                                            {user.age} anos
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* Nível de Educação */}
+                                                {user?.educationLevel && (() => {
+                                                    const educationLevelMap: Record<string, keyof typeof EDUCATION_LEVEL_LABELS> = {
+                                                        'POSTGRADUATE': 'POS_GRADUACAO',
+                                                        'HIGH_SCHOOL': 'ENSINO_MEDIO',
+                                                        'GRADUATION': 'GRADUACAO',
+                                                        'ELEMENTARY': 'FUNDAMENTAL',
+                                                        'MASTER': 'MESTRADO',
+                                                        'DOCTORATE': 'DOUTORADO',
+                                                    };
+
+                                                    const mappedLevel = educationLevelMap[user.educationLevel] || user.educationLevel as keyof typeof EDUCATION_LEVEL_LABELS;
+                                                    const label = EDUCATION_LEVEL_LABELS[mappedLevel] || user.educationLevel;
+
+                                                    return (
+                                                        <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center group hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
+                                                            <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 flex-shrink-0 animate-pulse"></div>
+                                                            <span className="text-white/90 text-sm font-semibold">
+                                                                {label}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })()}
+
+                                                {/* Curso */}
+                                                {user?.collegeCourse && (
+                                                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center group hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
+                                                        <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 flex-shrink-0 animate-pulse"></div>
+                                                        <span className="text-white/90 text-sm font-semibold">
+                                                            {COLLEGE_COURSE_LABELS[user.collegeCourse as keyof typeof COLLEGE_COURSE_LABELS] || user.collegeCourse}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
-                                        ))}
+
+                                            <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest text-center mt-6 relative z-10">
+                                                {formatUserJoinDate(user?.createdAt)}
+                                            </p>
+                                        </div>
+
+                                        {/* Card de Momento de Carreira - Sempre visível */}
+                                        <CareerMomentCard
+                                            userProfile={user}
+                                            isPublicView={isPublicView || !isOwnProfile}
+                                            onEditClick={() => setIsCareerModalOpen(true)}
+                                        />
+
+                                        {/* Card de Habilidades */}
+                                        <HabilitiesCard
+                                            userProfile={user}
+                                            isPublicView={isPublicView || !isOwnProfile}
+                                            onEditClick={() => setIsHabilitiesModalOpen(true)}
+                                        />
+
+                                        {/* Links - Agora abaixo de Habilidades */}
+                                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
+                                            <div className="flex items-center justify-between mb-4 relative z-10">
+                                                <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Links</h3>
+                                                {isOwnProfile && !isPublicView && (
+                                                    <Button
+                                                        className="bg-transparent hover:bg-white/5 text-white/40 hover:text-white p-2 cursor-pointer transition-all"
+                                                        size="sm"
+                                                        onClick={() => setIsLinksModalOpen(true)}
+                                                    >
+                                                        <Edit3 className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            <div className="relative z-10">
+                                                {renderUserLinks()}
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Card de Ofensivas - Agora acima do Sobre */}
-                            <OffensivesCard />
-
-                            {/* Sobre - Agora acima dos Links */}
-                            <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-semibold text-white">Sobre</h3>
+                                <div className="lg:col-span-2 space-y-6">
+                                    {/* Seção "Complete seu perfil" - apenas na visualização privada */}
                                     {!isPublicView && (
-                                        <Button
-                                            className="bg-transparent hover:bg-white/5 text-gray-400 p-1 cursor-pointer"
-                                            size="sm"
-                                            onClick={() => setIsAboutModalOpen(true)}
-                                        >
-                                            <Edit3 className="w-4 h-4" />
-                                        </Button>
+                                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-[#bd18b4]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                                                        <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                                                    </div>
+                                                    <div>
+                                                        <h2 className="text-2xl font-black text-white tracking-tight">Complete seu perfil</h2>
+                                                        <p className="text-white/40 text-sm font-medium">Perfis completos atraem mais oportunidades!</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mb-8">
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <span className="text-emerald-500 font-bold text-sm tracking-widest uppercase">{completionPercentage}% completo</span>
+                                                        <span className="text-white/40 font-bold text-xs">{completedTasks} de {totalTasks}</span>
+                                                    </div>
+                                                    <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden border border-white/5 p-0.5">
+                                                        <div
+                                                            className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                                                            style={{ width: `${completionPercentage}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {profileTasks.map((task, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className={`flex items-center space-x-3 cursor-pointer p-4 rounded-2xl transition-all border ${task.completed
+                                                                ? 'bg-emerald-500/5 border-emerald-500/10 hover:bg-emerald-500/10'
+                                                                : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
+                                                                }`}
+                                                            onClick={() => handleTaskClick(task.label)}
+                                                        >
+                                                            {task.completed ? (
+                                                                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                                                    <CheckCircle2 className="w-3 h-3 text-black" />
+                                                                </div>
+                                                            ) : (
+                                                                <Circle className="w-5 h-5 text-white/20" />
+                                                            )}
+                                                            <span className={`text-sm font-semibold tracking-tight ${task.completed ? 'text-white' : 'text-white/40'}`}>
+                                                                {task.label}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
-                                </div>
-                                <div className="text-gray-300 text-sm leading-relaxed">
-                                    {user.aboutYou ? (
-                                        <div 
-                                            dangerouslySetInnerHTML={{ __html: user.aboutYou }}
-                                            className="prose prose-invert prose-sm max-w-none"
-                                        />
-                                    ) : (
-                                        <span className="text-gray-500">—</span>
-                                    )}
+
+                                    {/* Card de Ofensivas - Agora acima do Sobre */}
+                                    <OffensivesCard />
+
+                                    {/* Sobre - Agora acima dos Links */}
+                                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
+                                        <div className="flex justify-between items-center mb-6 relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-6 bg-[#bd18b4] rounded-full" />
+                                                <h3 className="text-xl font-black text-white tracking-tight uppercase">Sobre</h3>
+                                            </div>
+                                            {!isPublicView && (
+                                                <Button
+                                                    className="bg-transparent hover:bg-white/5 text-white/40 hover:text-white p-2 cursor-pointer transition-all"
+                                                    size="sm"
+                                                    onClick={() => setIsAboutModalOpen(true)}
+                                                >
+                                                    <Edit3 className="w-5 h-5" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <div className="text-white/70 text-base leading-relaxed relative z-10 font-medium">
+                                            {user.aboutYou ? (
+                                                <div
+                                                    dangerouslySetInnerHTML={{ __html: user.aboutYou }}
+                                                    className="prose prose-invert prose-pink max-w-none text-white/70"
+                                                />
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center py-10 opacity-20">
+                                                    <Edit3 className="w-12 h-12 mb-4" />
+                                                    <span className="font-bold uppercase tracking-widest text-xs">Nada por aqui ainda</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h3 className="text-lg font-semibold text-white">Destaques</h3>
+                                            <Button
+                                                className="bg-transparent hover:bg-white/5 text-gray-400 p-1 cursor-pointer"
+                                                size="sm"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+
+                                        <div className="text-center py-8">
+                                            <div className="w-16 h-16 bg-[#323238] rounded-full flex items-center justify-center mx-auto mb-6">
+                                                <Rocket className="w-8 h-8 text-gray-500" />
+                                            </div>
+                                            <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
+                                                Compartilhe o link dos seus melhores projetos para se destacar e conquistar oportunidades
+                                            </p>
+                                            <Button className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-6 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer">
+                                                <Plus className="w-4 h-4" />
+                                                <span>Adicionar destaques</span>
+                                            </Button>
+                                        </div>
+                                    </div> */}
                                 </div>
                             </div>
-
-                            {/* <div className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-lg font-semibold text-white">Destaques</h3>
-                                    <Button
-                                        className="bg-transparent hover:bg-white/5 text-gray-400 p-1 cursor-pointer"
-                                        size="sm"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                    </Button>
-                                </div>
-
-                                <div className="text-center py-8">
-                                    <div className="w-16 h-16 bg-[#323238] rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <Rocket className="w-8 h-8 text-gray-500" />
-                                    </div>
-                                    <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
-                                        Compartilhe o link dos seus melhores projetos para se destacar e conquistar oportunidades
-                                    </p>
-                                    <Button className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-6 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer">
-                                        <Plus className="w-4 h-4" />
-                                        <span>Adicionar destaques</span>
-                                    </Button>
-                                </div>
-                            </div> */}
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Modals moved outside the main scrollable area for better stability */}
 
             {/* Modal para editar informações do perfil */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -970,10 +996,10 @@ export function ProfilePage() {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <form onSubmit={handleFormSubmit} >
+                    <form onSubmit={handleFormSubmit}>
                         {selectedTask && getModalFields(selectedTask).map((field) => (
                             <div key={field.key} className='flex flex-col gap-2'>
-                                <label className="text-sm text-gray-300 ">
+                                <label className="text-sm text-gray-300">
                                     {field.label}
                                 </label>
                                 {field.type === 'textarea' ? (
@@ -1090,7 +1116,6 @@ export function ProfilePage() {
                             />
                         </div>
 
-
                         {/* Nacionalidade */}
                         <div className="space-y-2">
                             <label className="text-sm text-gray-300">
@@ -1125,7 +1150,6 @@ export function ProfilePage() {
                                 </SelectContent>
                             </Select>
                         </div>
-
 
                         <div className="flex justify-end space-x-3 pt-4">
                             <Button
@@ -1416,14 +1440,11 @@ export function ProfilePage() {
                         e.preventDefault();
                         const formData = new FormData(e.currentTarget);
                         const momentCareer = formData.get('momentCareer') as string;
-                        
+
                         try {
-                            // Usar a função do hook para atualizar
                             await updateUserMomentCareer(momentCareer?.trim() || null);
                             setIsCareerModalOpen(false);
                         } catch (error: any) {
-                            
-                            // Mostrar erro específico para o usuário
                             if (error?.message?.includes('500 caracteres')) {
                                 alert('❌ O momento de carreira deve ter no máximo 500 caracteres');
                             } else if (error?.status === 400) {
