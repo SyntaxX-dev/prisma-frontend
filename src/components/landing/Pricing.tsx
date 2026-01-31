@@ -49,6 +49,27 @@ const plans = [
     ],
     cta: "Assinar Ultra",
   },
+  {
+    planId: 'PRODUCER' as const,
+    name: "Produtor",
+    price: "59.90",
+    period: "mês",
+    description: "Tudo do Ultra + a liberdade de criar e monetizar seu conhecimento.",
+    popular: false,
+    highlight: true,
+    features: [
+      "Conteúdo segmentado",
+      "Acesso a comunidades",
+      "Direito a ofensivas",
+      "Suporte 24/7",
+      "Prioridade no suporte 24/7",
+      "Acesso a todos os cursos premiums",
+      "Geração de mapas mentais",
+      "Acesso a IA de resumos para cada curso",
+      "Lançamento de cursos próprios",
+    ],
+    cta: "Começar a Criar",
+  },
 ];
 
 
@@ -111,6 +132,7 @@ export function Pricing() {
       return;
     }
 
+
     try {
       const result = await changeUserPlan(planId);
 
@@ -157,7 +179,7 @@ export function Pricing() {
       return 'Plano Atual';
     }
 
-    const planOrder: PlanType[] = ['START', 'PRO', 'ULTRA'];
+    const planOrder: PlanType[] = ['START', 'PRO', 'ULTRA', 'PRODUCER'];
     const currentIndex = planOrder.indexOf(currentPlanId);
     const newIndex = planOrder.indexOf(planId);
 
@@ -169,7 +191,7 @@ export function Pricing() {
   };
 
   return (
-    <section id="planos" className="py-24 bg-[#1a1b1e] relative overflow-hidden">
+    <section id="planos" className="py-12 bg-transparent relative overflow-hidden w-full">
       {/* Decorative scribbles */}
       <div className="absolute inset-0 pointer-events-none">
         <PencilScribble
@@ -228,8 +250,8 @@ export function Pricing() {
           </div>
         </motion.div>
 
-        {/* Plans grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-3xl lg:max-w-5xl mx-auto">
+        {/* Plans Container */}
+        <div className="flex flex-nowrap lg:flex-wrap justify-center gap-6 lg:gap-8 max-w-[1440px] mx-auto w-full">
           {plans.map((plan, index) => (
             <motion.div
               key={index}
@@ -237,21 +259,24 @@ export function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="w-full md:w-[calc(48%)] lg:w-[calc(31%)] min-w-[320px] max-w-[420px]"
             >
               <div
-                className={`bg-[#202024] rounded-2xl p-6 lg:p-10 h-full lg:min-h-[520px] flex flex-col relative ${plan.popular
-                  ? 'border-2 border-[#bd18b4]/50'
-                  : 'border border-[#323238]'
-                  } hover:border-[#bd18b4]/50 transition-all duration-300`}
+                className={`bg-surface-card rounded-2xl p-8 lg:p-12 min-h-[600px] flex flex-col relative transition-all duration-300 ${plan.popular
+                  ? 'border-2 border-brand/50 shadow-[0_0_20px_rgba(189,24,180,0.15)]'
+                  : plan.highlight
+                    ? 'border-2 border-brand-accent/60 shadow-[0_0_25px_rgba(197,50,226,0.2)]'
+                    : 'border border-surface-border'
+                  } hover:border-brand/50 group`}
               >
-                {/* Popular badge */}
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                {/* Popular/Highlight badge */}
+                {(plan.popular || plan.highlight) && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
                     <span
-                      className="bg-[#bd18b4] text-white text-xs font-medium px-3 py-1 rounded-full"
+                      className={`${plan.popular ? 'bg-[#bd18b4]' : 'bg-gradient-to-r from-brand to-brand-accent'} text-white text-[10px] lg:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg`}
                       style={{ fontFamily: 'Metropolis, sans-serif' }}
                     >
-                      Mais escolhido
+                      {plan.popular ? 'Mais escolhido' : 'Para Criadores'}
                     </span>
                   </div>
                 )}
@@ -259,13 +284,13 @@ export function Pricing() {
                 {/* Plan header */}
                 <div className="mb-6 pt-2">
                   <h3
-                    className="text-xl lg:text-2xl font-bold text-white mb-2"
+                    className="text-xl font-bold mb-2 text-white"
                     style={{ fontFamily: 'Metropolis, sans-serif' }}
                   >
                     {plan.name}
                   </h3>
                   <p
-                    className="text-gray-400 text-sm lg:text-base"
+                    className="text-gray-400 text-sm leading-relaxed min-h-[40px]"
                     style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
                   >
                     {plan.description}
@@ -273,13 +298,20 @@ export function Pricing() {
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-3 lg:space-y-4 mb-6 lg:mb-8 flex-grow">
+                <ul className="space-y-3 mb-8 flex-grow">
                   {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center gap-3">
-                      <Check className="w-4 h-4 text-[#bd18b4] flex-shrink-0" strokeWidth={3} />
+                    <li key={featureIndex} className="flex items-start gap-3">
+                      <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-brand" strokeWidth={3} />
                       <span
-                        className="text-gray-300 text-sm lg:text-base"
-                        style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
+                        className={`text-sm ${feature === "Lançamento de cursos próprios"
+                          ? "text-transparent bg-clip-text bg-gradient-to-r from-brand via-brand-accent to-brand-secondary animate-gradient bg-[length:200%_auto] font-bold"
+                          : "text-gray-300"
+                          }`}
+                        style={{
+                          fontFamily: 'Metropolis, sans-serif',
+                          fontWeight: feature === "Lançamento de cursos próprios" ? 800 : 300,
+                          animationDuration: feature === "Lançamento de cursos próprios" ? '3s' : undefined
+                        }}
                       >
                         {feature}
                       </span>
@@ -291,7 +323,7 @@ export function Pricing() {
                 <div className="mb-6">
                   <div className="flex items-baseline gap-1">
                     <span
-                      className="text-3xl lg:text-4xl font-bold text-white"
+                      className="text-3xl font-bold text-white"
                       style={{ fontFamily: 'Metropolis, sans-serif' }}
                     >
                       R${plan.price}
@@ -309,11 +341,13 @@ export function Pricing() {
                 <Button
                   size="lg"
                   disabled={isChangingPlan || isLoadingSubscription || (isAuthenticated && currentPlanId === plan.planId)}
-                  className={`w-full py-5 rounded-xl font-medium transition-all duration-300 cursor-pointer ${isAuthenticated && currentPlanId === plan.planId
+                  className={`w-full py-6 rounded-xl font-bold transition-all duration-300 cursor-pointer ${isAuthenticated && currentPlanId === plan.planId
                     ? "bg-gray-600 text-gray-300 cursor-not-allowed"
-                    : plan.popular
-                      ? "bg-[#bd18b4] text-white hover:bg-[#aa22c5]"
-                      : "bg-[#29292E] text-white hover:bg-[#323238] border border-[#323238]"
+                    : plan.highlight
+                      ? "bg-gradient-to-r from-brand to-brand-accent text-white hover:scale-[1.02] shadow-lg shadow-brand/20"
+                      : plan.popular
+                        ? "bg-brand text-white hover:bg-brand-secondary"
+                        : "bg-surface-card-alt text-white hover:bg-surface-border border border-surface-border"
                     }`}
                   onClick={() => handlePlanClick(plan.planId)}
                   style={{ fontFamily: 'Metropolis, sans-serif' }}

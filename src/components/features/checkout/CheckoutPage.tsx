@@ -42,6 +42,17 @@ export function CheckoutPage() {
     // Ref para evitar múltiplas chamadas de verificação
     const hasCheckedSubscription = useRef(false);
 
+    // Pré-preencher dados se autenticado
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            if (!customerName) setCustomerName(user.name || '');
+            if (!customerEmail) {
+                const emailStr = typeof user.email === 'object' ? user.email.value : user.email;
+                setCustomerEmail(emailStr || '');
+            }
+        }
+    }, [isAuthenticated, user]);
+
     // Verificar se usuário autenticado tem assinatura
     useEffect(() => {
         // Evitar múltiplas execuções
@@ -65,7 +76,8 @@ export function CheckoutPage() {
                     const planFromStorage = localStorage.getItem('selectedPlan') as PlanType;
                     const targetPlan = (planFromUrl || planFromStorage) as PlanType;
 
-                    if (targetPlan && ['START', 'PRO', 'ULTRA'].includes(targetPlan)) {
+                    const planOrder: PlanType[] = ['START', 'PRO', 'ULTRA', 'PRODUCER'];
+                    if (targetPlan && planOrder.includes(targetPlan)) {
                         if (response.data.planId === targetPlan) {
                             showError('Você já está neste plano');
                             router.push('/');
@@ -104,14 +116,14 @@ export function CheckoutPage() {
 
 
     useEffect(() => {
-        // Se já verificou assinatura e não tem, continuar com checkout normal
-        if (!isCheckingSubscription && !currentPlanId) {
+        // Se já verificou assinatura, carregar plano selecionado
+        if (!isCheckingSubscription) {
             const planFromUrl = searchParams.get('plan') as PlanType;
             const planFromStorage = localStorage.getItem('selectedPlan') as PlanType;
 
             const plan = planFromUrl || planFromStorage;
 
-            if (plan && ['START', 'PRO', 'ULTRA'].includes(plan)) {
+            if (plan && ['START', 'PRO', 'ULTRA', 'PRODUCER'].includes(plan)) {
                 setSelectedPlan(plan);
                 localStorage.setItem('selectedPlan', plan);
             } else {
@@ -229,14 +241,11 @@ export function CheckoutPage() {
                 setShowSubscriptionActiveModal(true);
             } else {
                 // Só logar e mostrar erro se não for de assinatura ativa
-                if (errorMessage || errorStatus) {
-                    console.error('Erro no checkout:', {
-                        status: errorStatus,
-                        message: errorMessage,
-                        error: error
-                    });
+                if (errorMessage.toLowerCase().includes('plano deve ser')) {
+                    showError('Plano selecionado inválido. Por favor, escolha outro plano.');
+                } else {
+                    showError(errorMessage || 'Erro ao processar pagamento. Tente novamente.');
                 }
-                showError(errorMessage || 'Erro ao processar pagamento. Tente novamente.');
             }
         } finally {
             setIsProcessing(false);
@@ -289,7 +298,7 @@ export function CheckoutPage() {
     // Se está verificando assinatura ou processando upgrade/downgrade, mostrar loading
     if (isCheckingSubscription || isChangingPlan || upgradeData || downgradeData) {
         return (
-            <div className="min-h-screen bg-[#1a1b1e] flex items-center justify-center">
+            <div className="min-h-screen bg-transparent flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-[#8b5cf6] animate-spin" />
             </div>
         );
@@ -297,7 +306,7 @@ export function CheckoutPage() {
 
     if (!selectedPlan) {
         return (
-            <div className="min-h-screen bg-[#1a1b1e] flex items-center justify-center">
+            <div className="min-h-screen bg-transparent flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-[#8b5cf6] animate-spin" />
             </div>
         );
@@ -306,7 +315,7 @@ export function CheckoutPage() {
     const isFormValid = customerName.trim() && customerEmail.trim() && customerEmail.includes('@');
 
     return (
-        <div className="min-h-screen bg-[#1a1b1e] py-12 px-4 relative">
+        <div className="min-h-screen bg-transparent py-12 px-4 relative">
             {/* Back Button */}
             <div className="absolute top-6 left-4 md:left-8 z-30">
                 <button
@@ -368,7 +377,6 @@ export function CheckoutPage() {
                                     <FeatureItem text="Suporte 24/7" />
                                     <FeatureItem text="Prioridade no suporte" />
                                     <FeatureItem text="Todos os cursos premiums" />
-                                    <FeatureItem text="Trilhas e PDF's" />
                                 </>
                             )}
                             {selectedPlan === 'ULTRA' && (
@@ -381,6 +389,19 @@ export function CheckoutPage() {
                                     <FeatureItem text="Todos os cursos premiums" />
                                     <FeatureItem text="Trilhas e PDF's" />
                                     <FeatureItem text="IA de resumos" highlighted />
+                                </>
+                            )}
+                            {selectedPlan === 'PRODUCER' && (
+                                <>
+                                    <FeatureItem text="Conteúdo segmentado" />
+                                    <FeatureItem text="Acesso a comunidades" />
+                                    <FeatureItem text="Direito a ofensivas" />
+                                    <FeatureItem text="Suporte 24/7" />
+                                    <FeatureItem text="Prioridade no suporte" />
+                                    <FeatureItem text="Todos os cursos premiums" />
+                                    <FeatureItem text="Trilhas e PDF's" />
+                                    <FeatureItem text="IA de resumos" highlighted />
+                                    <FeatureItem text="Lançamento de cursos" highlighted />
                                 </>
                             )}
                         </div>
@@ -483,122 +504,130 @@ export function CheckoutPage() {
             </div>
 
             {/* Payment Method Modal */}
-            {showPaymentModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-[#202024] rounded-2xl max-w-md w-full p-8 border border-[#323238] relative animate-in fade-in zoom-in duration-200">
-                        {/* Close Button */}
-                        <button
-                            onClick={() => !isProcessing && setShowPaymentModal(false)}
-                            disabled={isProcessing}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
-
-                        {/* Modal Header */}
-                        <div className="text-center mb-8">
-                            <h2 className="text-2xl font-bold text-white mb-2">
-                                Escolha a forma de pagamento
-                            </h2>
-                            <p className="text-gray-400 text-sm">
-                                Selecione como deseja pagar sua assinatura
-                            </p>
-                        </div>
-
-                        {/* Payment Options */}
-                        <div className="space-y-4">
-                            {/* PIX Option */}
+            {
+                showPaymentModal && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-[#202024] rounded-2xl max-w-md w-full p-8 border border-[#323238] relative animate-in fade-in zoom-in duration-200">
+                            {/* Close Button */}
                             <button
-                                onClick={() => handlePaymentMethodSelect('PIX')}
+                                onClick={() => !isProcessing && setShowPaymentModal(false)}
                                 disabled={isProcessing}
-                                className="w-full cursor-pointer bg-[#29292E] hover:bg-[#323238] border-2 border-[#323238] hover:border-[#8b5cf6] rounded-xl p-6 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
                             >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-[#8b5cf6]/10 rounded-xl flex items-center justify-center group-hover:bg-[#8b5cf6]/20 transition-colors">
-                                        <QrCode className="w-6 h-6 text-[#8b5cf6]" />
-                                    </div>
-                                    <div className="flex-1 text-left">
-                                        <div className="text-white font-semibold mb-1">PIX</div>
-                                        <div className="text-gray-400 text-sm">
-                                            Pagamento instantâneo via QR Code
-                                        </div>
-                                    </div>
-                                    <Check className="w-5 h-5 text-[#8b5cf6] opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
+                                <X className="w-6 h-6" />
                             </button>
 
-                            {/* Credit Card Option */}
-                            <button
-                                onClick={() => handlePaymentMethodSelect('CREDIT_CARD')}
-                                disabled={isProcessing}
-                                className="w-full cursor-pointer bg-[#29292E] hover:bg-[#323238] border-2 border-[#323238] hover:border-[#8b5cf6] rounded-xl p-6 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-[#8b5cf6]/10 rounded-xl flex items-center justify-center group-hover:bg-[#8b5cf6]/20 transition-colors">
-                                        <CreditCard className="w-6 h-6 text-[#8b5cf6]" />
-                                    </div>
-                                    <div className="flex-1 text-left">
-                                        <div className="text-white font-semibold mb-1">Cartão de Crédito</div>
-                                        <div className="text-gray-400 text-sm">
-                                            Parcelamento disponível
-                                        </div>
-                                    </div>
-                                    <Check className="w-5 h-5 text-[#8b5cf6] opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                            </button>
-                        </div>
-
-                        {/* Processing State */}
-                        {isProcessing && (
-                            <div className="mt-6 flex items-center justify-center gap-3 text-[#8b5cf6]">
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                <span className="text-sm">Processando pagamento...</span>
+                            {/* Modal Header */}
+                            <div className="text-center mb-8">
+                                <h2 className="text-2xl font-bold text-white mb-2">
+                                    Escolha a forma de pagamento
+                                </h2>
+                                <p className="text-gray-400 text-sm">
+                                    Selecione como deseja pagar sua assinatura
+                                </p>
                             </div>
-                        )}
+
+                            {/* Payment Options */}
+                            <div className="space-y-4">
+                                {/* PIX Option */}
+                                <button
+                                    onClick={() => handlePaymentMethodSelect('PIX')}
+                                    disabled={isProcessing}
+                                    className="w-full cursor-pointer bg-[#29292E] hover:bg-[#323238] border-2 border-[#323238] hover:border-[#8b5cf6] rounded-xl p-6 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-[#8b5cf6]/10 rounded-xl flex items-center justify-center group-hover:bg-[#8b5cf6]/20 transition-colors">
+                                            <QrCode className="w-6 h-6 text-[#8b5cf6]" />
+                                        </div>
+                                        <div className="flex-1 text-left">
+                                            <div className="text-white font-semibold mb-1">PIX</div>
+                                            <div className="text-gray-400 text-sm">
+                                                Pagamento instantâneo via QR Code
+                                            </div>
+                                        </div>
+                                        <Check className="w-5 h-5 text-[#8b5cf6] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                </button>
+
+                                {/* Credit Card Option */}
+                                <button
+                                    onClick={() => handlePaymentMethodSelect('CREDIT_CARD')}
+                                    disabled={isProcessing}
+                                    className="w-full cursor-pointer bg-[#29292E] hover:bg-[#323238] border-2 border-[#323238] hover:border-[#8b5cf6] rounded-xl p-6 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-[#8b5cf6]/10 rounded-xl flex items-center justify-center group-hover:bg-[#8b5cf6]/20 transition-colors">
+                                            <CreditCard className="w-6 h-6 text-[#8b5cf6]" />
+                                        </div>
+                                        <div className="flex-1 text-left">
+                                            <div className="text-white font-semibold mb-1">Cartão de Crédito</div>
+                                            <div className="text-gray-400 text-sm">
+                                                Parcelamento disponível
+                                            </div>
+                                        </div>
+                                        <Check className="w-5 h-5 text-[#8b5cf6] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                </button>
+                            </div>
+
+                            {/* Processing State */}
+                            {isProcessing && (
+                                <div className="mt-6 flex items-center justify-center gap-3 text-[#8b5cf6]">
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span className="text-sm">Processando pagamento...</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Modal de Confirmação de Upgrade */}
-            {upgradeData && (
-                <UpgradeConfirmationModal
-                    data={upgradeData}
-                    isOpen={!!upgradeData}
-                    onClose={() => {
-                        setUpgradeData(null);
-                        router.push('/');
-                    }}
-                    onGoToPayment={handleGoToPayment}
-                    onShowPix={handleShowPix}
-                />
-            )}
+            {
+                upgradeData && (
+                    <UpgradeConfirmationModal
+                        data={upgradeData}
+                        isOpen={!!upgradeData}
+                        onClose={() => {
+                            setUpgradeData(null);
+                            router.push('/');
+                        }}
+                        onGoToPayment={handleGoToPayment}
+                        onShowPix={handleShowPix}
+                    />
+                )
+            }
 
             {/* Modal de Confirmação de Downgrade */}
-            {downgradeData && (
-                <DowngradeConfirmationModal
-                    data={downgradeData}
-                    isOpen={!!downgradeData}
-                    onClose={() => {
-                        setDowngradeData(null);
-                        router.push('/');
-                    }}
-                />
-            )}
+            {
+                downgradeData && (
+                    <DowngradeConfirmationModal
+                        data={downgradeData}
+                        isOpen={!!downgradeData}
+                        onClose={() => {
+                            setDowngradeData(null);
+                            router.push('/');
+                        }}
+                    />
+                )
+            }
 
             {/* Modal de Pagamento PIX */}
-            {pixData && pixData.qrCode && (
-                <PixPaymentModal
-                    isOpen={showPixModal}
-                    onClose={() => {
-                        setShowPixModal(false);
-                        setPixData(null);
-                        router.push('/');
-                    }}
-                    qrCode={pixData.qrCode}
-                    amount={pixData.amount}
-                    paymentUrl={pixData.paymentUrl}
-                />
-            )}
+            {
+                pixData && pixData.qrCode && (
+                    <PixPaymentModal
+                        isOpen={showPixModal}
+                        onClose={() => {
+                            setShowPixModal(false);
+                            setPixData(null);
+                            router.push('/');
+                        }}
+                        qrCode={pixData.qrCode}
+                        amount={pixData.amount}
+                        paymentUrl={pixData.paymentUrl}
+                    />
+                )
+            }
 
             {/* Modal de Assinatura Ativa */}
             <Dialog open={showSubscriptionActiveModal} onOpenChange={setShowSubscriptionActiveModal}>
@@ -654,7 +683,7 @@ export function CheckoutPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
 

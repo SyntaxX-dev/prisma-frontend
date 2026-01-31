@@ -6,14 +6,14 @@ import { PencilScribble } from "@/components/ui/PencilScribble";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#1a1b1e]">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       {/* Subtle grid pattern */}
       <div
         className="absolute inset-0 opacity-[0.10]"
         style={{
           backgroundImage: `
-            linear-gradient(to right, #bd18b4 1px, transparent 1px),
-            linear-gradient(to bottom, #bd18b4 1px, transparent 1px)
+            linear-gradient(to right, var(--brand) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--brand) 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px'
         }}
@@ -28,7 +28,7 @@ export function HeroSection() {
         >
           <PencilScribble
             path="M 0 30 Q 30 0, 60 30 T 120 30"
-            color="#bd18b4"
+            color="var(--brand)"
             width={140}
             height={50}
             className="opacity-20"
@@ -42,7 +42,7 @@ export function HeroSection() {
         >
           <PencilScribble
             path="M 0 20 Q 20 0, 40 20 T 80 20"
-            color="#aa22c5"
+            color="var(--brand-secondary)"
             width={100}
             height={40}
             className="opacity-15"
@@ -56,7 +56,7 @@ export function HeroSection() {
         >
           <PencilScribble
             path="M 0 15 Q 25 0, 50 15 T 100 15"
-            color="#bd18b4"
+            color="var(--brand)"
             width={120}
             height={35}
             className="opacity-15"
@@ -72,7 +72,7 @@ export function HeroSection() {
           <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
             <path
               d="M 40 10 Q 65 10, 70 40 Q 70 65, 40 70 Q 15 70, 10 40 Q 10 15, 40 10"
-              stroke="#bd18b4"
+              stroke="var(--brand)"
               strokeWidth="1.5"
               fill="none"
               strokeLinecap="round"
@@ -90,7 +90,7 @@ export function HeroSection() {
           <svg width="60" height="40" viewBox="0 0 60 40" fill="none">
             <path
               d="M 5 20 L 45 20 M 35 10 L 50 20 L 35 30"
-              stroke="#aa22c5"
+              stroke="var(--brand-secondary)"
               strokeWidth="2"
               fill="none"
               strokeLinecap="round"
@@ -135,10 +135,10 @@ export function HeroSection() {
               Aprenda de forma
               <br />
               <span className="relative inline-block">
-                <span className="text-[#bd18b4]">organizada</span>
+                <span className="text-brand">organizada</span>
                 <PencilScribble
                   path="M 0 5 Q 50 0, 100 5 T 200 5"
-                  color="#bd18b4"
+                  color="var(--brand)"
                   width={220}
                   height={20}
                   className="absolute -bottom-2 left-0 opacity-60"
@@ -146,10 +146,10 @@ export function HeroSection() {
               </span>
               {" "}e{" "}
               <span className="relative inline-block">
-                <span className="text-[#aa22c5]">eficiente</span>
+                <span className="text-brand-secondary">eficiente</span>
                 <PencilScribble
                   path="M 0 5 Q 40 0, 80 5 T 160 5"
-                  color="#aa22c5"
+                  color="var(--brand-secondary)"
                   width={180}
                   height={20}
                   className="absolute -bottom-2 left-0 opacity-60"
@@ -179,7 +179,7 @@ export function HeroSection() {
           >
             <button
               onClick={() => window.location.href = '/plans'}
-              className="px-8 py-4 bg-[#bd18b4] text-white font-semibold rounded-xl hover:bg-[#aa22c5] transition-all duration-300 cursor-pointer shadow-lg shadow-[#bd18b4]/20 hover:shadow-[#bd18b4]/40"
+              className="px-8 py-4 bg-brand text-white font-semibold rounded-xl hover:bg-brand-secondary transition-all duration-300 cursor-pointer shadow-lg shadow-brand/20 hover:shadow-brand/40"
               style={{ fontFamily: 'Metropolis, sans-serif' }}
             >
               Começar agora
@@ -205,21 +205,21 @@ export function HeroSection() {
             style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
           >
             <div className="flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#bd18b4]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
               <span>Pagamento seguro</span>
             </div>
             <div className="flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#bd18b4]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
               <span>Cancele quando quiser</span>
             </div>
             <div className="flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#bd18b4]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>

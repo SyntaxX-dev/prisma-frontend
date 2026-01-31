@@ -1,6 +1,6 @@
 // Subscription API Types
 
-export type PlanType = 'START' | 'PRO' | 'ULTRA';
+export type PlanType = 'START' | 'PRO' | 'ULTRA' | 'PRODUCER';
 export type BillingType = 'PIX' | 'CREDIT_CARD';
 
 export interface CheckoutRequestDto {
@@ -72,19 +72,22 @@ export interface SubscriptionResponseDto {
 export const PLAN_NAMES: Record<PlanType, string> = {
     START: 'Start',
     PRO: 'Pro',
-    ULTRA: 'Ultra'
+    ULTRA: 'Ultra',
+    PRODUCER: 'Produtor'
 };
 
 export const PLAN_PRICES: Record<PlanType, string> = {
     START: '12.90',
     PRO: '39.90',
-    ULTRA: '59.90'
+    ULTRA: '39.90',
+    PRODUCER: '59.90'
 };
 
 export const PLAN_DESCRIPTIONS: Record<PlanType, string> = {
     START: 'Ideal para quem quer começar a estudar e acelerar seus estudos de forma rápida e simples.',
     PRO: 'O plano perfeito para quem quer acelerar seus estudos e alcançar resultados reais.',
-    ULTRA: 'Ideal para quem quer ser aprovado em qualquer prova.'
+    ULTRA: 'Ideal para quem quer ser aprovado em qualquer prova.',
+    PRODUCER: 'Crie e venda seus próprios cursos com a nossa estrutura.'
 };
 
 // Change Plan Types

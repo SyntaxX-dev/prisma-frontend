@@ -6,12 +6,12 @@ import { PencilScribble } from "@/components/ui/PencilScribble";
 
 export function Footer() {
   return (
-    <footer className="bg-[#1a1b1e] border-t border-[#323238] relative overflow-hidden">
+    <footer className="bg-background border-t border-surface-border relative overflow-hidden">
       {/* Decorative scribbles */}
       <div className="absolute inset-0 pointer-events-none">
         <PencilScribble
           path="M 0 20 Q 40 5, 80 20 T 160 20"
-          color="#bd18b4"
+          color="var(--brand)"
           width={200}
           height={40}
           className="absolute bottom-10 right-10 opacity-10"
@@ -94,7 +94,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-2">
-                <Mail size={14} className="text-[#bd18b4]" />
+                <Mail size={14} className="text-brand" />
                 <a
                   href="mailto:contato@prisma.com"
                   className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer"
@@ -104,7 +104,7 @@ export function Footer() {
                 </a>
               </li>
               <li className="flex items-center gap-2">
-                <Phone size={14} className="text-[#bd18b4]" />
+                <Phone size={14} className="text-brand" />
                 <a
                   href="tel:+5583987690902"
                   className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer"
@@ -114,7 +114,7 @@ export function Footer() {
                 </a>
               </li>
               <li className="flex items-center gap-2">
-                <MapPin size={14} className="text-[#bd18b4]" />
+                <MapPin size={14} className="text-brand" />
                 <span
                   className="text-gray-400 text-sm"
                   style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}
@@ -127,7 +127,7 @@ export function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-[#323238] pt-6">
+        <div className="border-t border-surface-border pt-6">
           <p
             className="text-gray-500 text-sm text-center"
             style={{ fontFamily: 'Metropolis, sans-serif', fontWeight: 300 }}

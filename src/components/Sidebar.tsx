@@ -199,8 +199,8 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                   key={item.label}
                   onClick={() => handleNavigation(item.label)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${isActive(item.label)
-                      ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
-                      : 'text-white/80 hover:bg-white/10'
+                    ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
+                    : 'text-white/80 hover:bg-white/10'
                     }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -218,10 +218,10 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                   onClick={() => handleNavigation(item.label)}
                   disabled={item.disabled}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${item.disabled
-                      ? 'opacity-50 cursor-not-allowed'
-                      : isActive(item.label)
-                        ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
-                        : 'text-white/80 hover:bg-white/10'
+                    ? 'opacity-50 cursor-not-allowed'
+                    : isActive(item.label)
+                      ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
+                      : 'text-white/80 hover:bg-white/10'
                     }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -238,8 +238,8 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                   key={item.label}
                   onClick={() => handleNavigation(item.label)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${isActive(item.label)
-                      ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
-                      : 'text-white/80 hover:bg-white/10'
+                    ? 'bg-[#bd18b4]/20 text-[#bd18b4]'
+                    : 'text-white/80 hover:bg-white/10'
                     }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -308,7 +308,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                       <Button
                         variant="ghost"
                         onClick={() => handleNavigation(item.label)}
-                        className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#bd18b4] text-white' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
+                        className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-brand text-white' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
                       >
                         <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                         {isExpanded && item.label}
@@ -393,7 +393,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                       <Button
                         variant="ghost"
                         onClick={() => handleNavigation(item.label)}
-                        className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-[#bd18b4] text-white' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
+                        className={`w-full text-gray-300 hover:text-gray-100 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-300 ease-in-out ${isActive(item.label) ? 'bg-brand text-white' : ''} ${isExpanded ? 'justify-start px-3 py-1.5' : 'justify-center px-2 py-2'}`}
                       >
                         <item.icon className={`w-4 h-4 ${isExpanded ? 'mr-3' : ''}`} />
                         {isExpanded && item.label}
@@ -417,7 +417,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                 background="#202024"
                 borderRadius="16px"
                 borderColor="rgba(201, 254, 2, 0.4)"
-                glareColor="#bd18b4"
+                glareColor="var(--brand)"
                 glareOpacity={0.4}
                 glareAngle={-30}
                 glareSize={300}
@@ -501,7 +501,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                 background="#202024"
                 borderRadius="16px"
                 borderColor="rgba(34, 197, 94, 0.4)"
-                glareColor="#bd18b4"
+                glareColor="var(--brand)"
                 glareOpacity={0.4}
                 glareAngle={-30}
                 glareSize={300}
@@ -558,7 +558,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             <div
               className="px-4 py-2 text-white text-sm whitespace-nowrap"
               style={{
-                background: 'rgba(189, 24, 180, 0.14)',
+                background: 'rgba(var(--brand-rgb), 0.14)',
                 borderRadius: '16px',
                 boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
                 backdropFilter: 'blur(6.3px)',

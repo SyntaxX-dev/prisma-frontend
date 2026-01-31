@@ -108,23 +108,23 @@ export function CourseCard({
       onClick={handleClick}
       className="block text-left w-full h-[320px] pointer-events-auto transform transition-all duration-300 hover:-translate-y-1"
     >
-      <Card className={`bg-white/5 backdrop-blur-xl border transition-all duration-300 cursor-pointer h-full flex flex-col group rounded-2xl overflow-hidden w-full relative ${isSponsored
-        ? 'border-[#FFD700]/30 hover:border-[#FFD700]/60 shadow-[0_0_25px_rgba(255,215,0,0.15)] hover:shadow-[0_0_40px_rgba(255,215,0,0.25)]'
-        : 'border-white/10 hover:border-[#bd18b4]/40 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5),0_0_20px_rgba(189,24,180,0.15)]'
+      <Card className={`bg-glass backdrop-blur-xl border transition-all duration-300 cursor-pointer h-full flex flex-col group rounded-2xl overflow-hidden w-full relative ${isSponsored
+        ? 'border-gold/30 hover:border-gold/60 shadow-[0_0_25px_rgba(255,215,0,0.15)] hover:shadow-[0_0_40px_rgba(255,215,0,0.25)]'
+        : 'border-glass-border hover:border-brand/40 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5),0_0_20px_rgba(189,24,180,0.15)]'
         }`}>
         {/* Shine effect on hover */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
 
         {/* Badge Patrocinado */}
         {isSponsored && (
-          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-gradient-to-r from-gold to-gold-secondary text-black text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
             <Sparkles className="w-3 h-3" />
             <span>PATROCINADO</span>
           </div>
         )}
         <CardHeader className="p-0 flex-shrink-0 relative">
           {/* Background com gradiente mais suave */}
-          <div className={`relative w-full h-40 bg-gradient-to-br from-white/5 to-transparent overflow-hidden rounded-t-2xl ${isSponsored ? 'ring-1 ring-[#FFD700]/10' : ''
+          <div className={`relative w-full h-40 bg-gradient-to-br from-glass to-transparent overflow-hidden rounded-t-2xl ${isSponsored ? 'ring-1 ring-gold/10' : ''
             }`}>
             {/* Padrão de pontinhos */}
             <svg
@@ -153,7 +153,7 @@ export function CourseCard({
             {/* Ícone no canto superior esquerdo com sombra */}
             <div className="absolute top-4 left-4 z-10">
               <div
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-500 group-hover:scale-110 ${isSponsored ? 'ring-1 ring-[#FFD700]/30' : ''
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-500 group-hover:scale-110 ${isSponsored ? 'ring-1 ring-gold/30' : ''
                   }`}
                 style={{
                   backgroundColor: iconColor || 'rgba(255,255,255,0.05)',
@@ -178,8 +178,8 @@ export function CourseCard({
           {/* Título */}
           <div className="mb-4">
             <h3 className={`font-bold text-lg mb-2 line-clamp-2 leading-tight transition-colors ${isSponsored
-                ? 'text-white group-hover:text-[#FFD700]'
-                : 'text-white group-hover:text-[#c532e2]'
+              ? 'text-white group-hover:text-gold'
+              : 'text-white group-hover:text-brand-accent'
               }`}>
               {title}
             </h3>
@@ -194,7 +194,7 @@ export function CourseCard({
 
           {/* Rodapé do Card */}
           <div className="flex items-center justify-between text-[11px] text-white/40 border-t border-white/5 pt-4 mt-auto font-medium tracking-wide">
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/5 border border-white/5 group-hover:bg-white/10 transition-colors">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-glass border border-glass-border group-hover:bg-glass-hover transition-colors">
               <span className="uppercase">{technology}</span>
             </div>
             <div className="flex items-center gap-1.5 opacity-60">

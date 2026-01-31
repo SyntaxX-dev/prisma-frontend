@@ -9,37 +9,37 @@ const benefits = [
     icon: Users,
     title: "Comunidades",
     description: "Conecte-se com outros estudantes em grupos de estudo.",
-    color: "#bd18b4",
+    color: "var(--brand)",
   },
   {
     icon: BookOpen,
     title: "Conteúdo Curado",
     description: "Vídeos selecionados e organizados em trilhas de aprendizado.",
-    color: "#aa22c5",
+    color: "var(--brand-secondary)",
   },
   {
     icon: Brain,
     title: "IA de Resumos",
     description: "Resumos automáticos para otimizar seu tempo de estudo.",
-    color: "#a727a0",
+    color: "var(--brand-accent)",
   },
 ];
 
 export function BenefitsSection() {
   return (
-    <section className="py-24 bg-[#1a1b1e] relative overflow-hidden">
+    <section className="py-24 bg-background relative overflow-hidden">
       {/* Decorative scribbles */}
       <div className="absolute inset-0 pointer-events-none">
         <PencilScribble
           path="M 0 50 Q 100 20, 200 50 T 400 50"
-          color="#bd18b4"
+          color="var(--brand)"
           width={500}
           height={80}
           className="absolute top-10 left-5 opacity-10"
         />
         <PencilScribble
           path="M 0 30 Q 80 50, 160 30 T 320 30"
-          color="#aa22c5"
+          color="var(--brand-secondary)"
           width={400}
           height={60}
           className="absolute bottom-20 right-10 opacity-10"
@@ -61,10 +61,10 @@ export function BenefitsSection() {
           >
             Por que escolher o{" "}
             <span className="relative inline-block">
-              <span className="text-[#bd18b4]">Prisma</span>
+              <span className="text-brand">Prisma</span>
               <PencilScribble
                 path="M 0 5 Q 30 0, 60 5 T 120 5"
-                color="#bd18b4"
+                color="var(--brand)"
                 width={130}
                 height={15}
                 className="absolute -bottom-1 left-0 opacity-60"
@@ -91,7 +91,7 @@ export function BenefitsSection() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="group"
             >
-              <div className="bg-[#202024] border border-[#323238] rounded-2xl p-8 h-full hover:border-[#bd18b4]/30 transition-all duration-300">
+              <div className="bg-surface-card border border-surface-border rounded-2xl p-8 h-full hover:border-brand/30 transition-all duration-300">
                 {/* Icon */}
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center mb-5"

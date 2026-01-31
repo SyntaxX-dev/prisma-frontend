@@ -3,12 +3,14 @@
 import { Pricing } from '@/components/landing/Pricing';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { BackgroundGrid } from '@/components/shared/BackgroundGrid';
 
 export default function PlansPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen w-full bg-[#1a1b1e] relative ">
+    <div className="min-h-screen w-full bg-transparent relative overflow-hidden flex flex-col items-center justify-center pb-60">
+      <BackgroundGrid />
       {/* Back Button */}
       <div className="absolute top-6 left-4 md:left-8 z-30">
         <button

@@ -37,19 +37,19 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="suporte" className="py-24 bg-[#202024] relative overflow-hidden">
+    <section id="suporte" className="py-24 bg-surface-card relative overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute inset-0 pointer-events-none">
         <PencilScribble
           path="M 0 30 Q 50 10, 100 30 T 200 30"
-          color="#bd18b4"
+          color="var(--brand)"
           width={250}
           height={50}
           className="absolute top-16 left-10 opacity-10"
         />
         <PencilScribble
           path="M 0 20 Q 30 40, 60 20 T 120 20"
-          color="#aa22c5"
+          color="var(--brand-secondary)"
           width={150}
           height={40}
           className="absolute bottom-20 right-20 opacity-10"
@@ -70,7 +70,7 @@ export function FAQ() {
             style={{ fontFamily: 'Metropolis, sans-serif' }}
           >
             Perguntas{" "}
-            <span className="text-[#bd18b4]">frequentes</span>
+            <span className="text-brand">frequentes</span>
           </h2>
           <p
             className="text-gray-400"
@@ -92,7 +92,7 @@ export function FAQ() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full bg-[#1a1b1e] border border-[#323238] rounded-xl p-5 hover:border-[#bd18b4]/30 transition-all duration-300 text-left cursor-pointer"
+                className="w-full bg-background border border-surface-border rounded-xl p-5 hover:border-brand/30 transition-all duration-300 text-left cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-4">
                   <h3
@@ -101,11 +101,11 @@ export function FAQ() {
                   >
                     {faq.question}
                   </h3>
-                  <div className="flex-shrink-0 w-6 h-6 bg-[#bd18b4]/10 rounded-lg flex items-center justify-center">
+                  <div className="flex-shrink-0 w-6 h-6 bg-brand/10 rounded-lg flex items-center justify-center">
                     {openIndex === index ? (
-                      <Minus className="w-4 h-4 text-[#bd18b4]" />
+                      <Minus className="w-4 h-4 text-brand" />
                     ) : (
-                      <Plus className="w-4 h-4 text-[#bd18b4]" />
+                      <Plus className="w-4 h-4 text-brand" />
                     )}
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export function FAQ() {
           >
             Ainda tem dúvidas?{" "}
             <button
-              className="text-[#bd18b4] hover:underline cursor-pointer"
+              className="text-brand hover:underline cursor-pointer"
               style={{ fontFamily: 'Metropolis, sans-serif' }}
             >
               Entre em contato

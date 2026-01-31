@@ -597,14 +597,14 @@ export function ProfilePage() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-1">
                                     <div className="space-y-6">
-                                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
-                                            <div className="absolute inset-0 bg-gradient-to-br from-[#bd18b4]/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-3xl p-8 relative overflow-hidden group">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
 
                                             <div className="text-center mb-6 relative z-10">
                                                 <div className="relative inline-block group mb-6">
                                                     <Avatar
-                                                        className={`w-32 h-32 md:w-40 md:h-40 border-4 border-[#bd18b4]/20 shadow-2xl transition-all duration-500 ${isUploadingImage ? 'opacity-50' : isOwnProfile ? 'cursor-pointer group-hover:scale-105 group-hover:border-[#bd18b4]/40' : ''}`}
+                                                        className={`w-32 h-32 md:w-40 md:h-40 border-4 border-brand/20 shadow-2xl transition-all duration-500 ${isUploadingImage ? 'opacity-50' : isOwnProfile ? 'cursor-pointer group-hover:scale-105 group-hover:border-brand/40' : ''}`}
                                                         onClick={() => {
                                                             if (isOwnProfile && !isUploadingImage) {
                                                                 document.getElementById('avatar-upload')?.click();
@@ -616,7 +616,7 @@ export function ProfilePage() {
                                                             className="object-cover transition-all duration-300"
                                                             alt="Foto do perfil"
                                                         />
-                                                        <AvatarFallback className="text-3xl md:text-4xl font-black bg-gradient-to-br from-[#bd18b4] to-[#c532e2] text-white">
+                                                        <AvatarFallback className="text-3xl md:text-4xl font-black bg-gradient-to-br from-brand to-brand-accent text-white">
                                                             {getInitials(user)}
                                                         </AvatarFallback>
                                                     </Avatar>
@@ -638,7 +638,7 @@ export function ProfilePage() {
                                                     {/* Indicador de loading durante upload */}
                                                     {isUploadingImage && (
                                                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                                                            <LoadingGrid size="24" color="#bd18b4" />
+                                                            <LoadingGrid size="24" color="var(--brand)" />
                                                         </div>
                                                     )}
 
@@ -688,7 +688,7 @@ export function ProfilePage() {
                                                                     onClick={() => {
                                                                         router.push(`/communities?chat=${userId}`);
                                                                     }}
-                                                                    className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/80 text-black px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
+                                                                    className="w-full bg-brand hover:bg-brand/80 text-black px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
                                                                 >
                                                                     <MessageCircle className="w-4 h-4" />
                                                                     Conversar

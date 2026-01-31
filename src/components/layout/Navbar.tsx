@@ -151,15 +151,15 @@ export function Navbar({ }: NavbarProps) {
       <div className="flex items-center gap-2 md:justify-between relative w-full">
 
         {/* Desktop Navigation */}
-        <div className="hidden md:block bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
+        <div className="hidden md:block bg-glass-hover backdrop-blur-md rounded-full px-6 py-3 border border-glass-border-hover">
           <nav className="flex items-center gap-6">
             {navItems.map((item) => (
               <button
                 key={item}
                 onClick={() => handleNavClick(item)}
                 className={`transition-colors cursor-pointer text-sm ${isActive(item)
-                  ? 'text-[#bd18b4]'
-                  : 'text-white/80 hover:text-[#bd18b4]'
+                  ? 'text-brand'
+                  : 'text-white/80 hover:text-brand'
                   }`}
               >
                 {item}
@@ -168,7 +168,7 @@ export function Navbar({ }: NavbarProps) {
           </nav>
         </div>
 
-        <div className="bg-white/15 backdrop-blur-md rounded-full px-3 md:px-4 py-2 md:py-3 border border-white/20 mx-auto md:mx-0">
+        <div className="bg-glass-hover backdrop-blur-md rounded-full px-3 md:px-4 py-2 md:py-3 border border-glass-border-hover mx-auto md:mx-0">
           <div className="flex items-center gap-2 md:gap-3">
             <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-48 md:w-64' : 'w-8'
               }`}>
@@ -190,7 +190,7 @@ export function Navbar({ }: NavbarProps) {
                     />
                     {isLoading && (
                       <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                        <LoadingGrid size="16" color="#bd18b4" />
+                        <LoadingGrid size="16" color="var(--brand)" />
                       </div>
                     )}
                   </div>
@@ -256,14 +256,14 @@ export function Navbar({ }: NavbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-8 h-8 p-0 relative cursor-pointer transition-all duration-300"
+                  className="text-white/80 hover:text-brand hover:bg-white/10 rounded-full w-8 h-8 p-0 relative cursor-pointer transition-all duration-300"
                 >
                   <Bell className="w-6 h-6 transition-all duration-300" />
                   {hasNotification && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#bd18b4] rounded-full animate-ping"></span>
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand rounded-full animate-ping"></span>
                   )}
                   {hasNotification && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#bd18b4] rounded-full"></span>
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand rounded-full"></span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -305,7 +305,7 @@ export function Navbar({ }: NavbarProps) {
                               setNotificationOpen(false);
                               setProfileModalOpen(true);
                             }}
-                            className="w-full bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black text-sm"
+                            className="w-full bg-brand hover:bg-brand/90 text-black text-sm"
                           >
                             Completar Perfil
                           </Button>
@@ -327,14 +327,14 @@ export function Navbar({ }: NavbarProps) {
         {/* Profile Dropdown - Desktop and Mobile */}
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <div className="bg-white/15 backdrop-blur-md rounded-full px-2 md:px-4 py-2 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors flex items-center gap-2 md:gap-3 absolute right-2 md:relative md:right-0">
+            <div className="bg-glass-hover backdrop-blur-md rounded-full px-2 md:px-4 py-2 border border-glass-border-hover cursor-pointer hover:bg-glass-border transition-colors flex items-center gap-2 md:gap-3 absolute right-2 md:relative md:right-0">
               <Avatar className="w-8 h-8">
                 <AvatarImage
                   src={user?.profileImage || "/api/placeholder/32/32"}
                   className="object-cover"
                   alt="Foto do perfil"
                 />
-                <AvatarFallback className="bg-[#bd18b4] text-black">
+                <AvatarFallback className="bg-brand text-black">
                   {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -370,14 +370,14 @@ export function Navbar({ }: NavbarProps) {
               onClick={() => navigateWithLoading('/profile', 'Carregando Perfil...')}
               className="text-gray-300 hover:text-gray-100 rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-white/30"
             >
-              <User className="mr-3 h-4 w-4 text-[#bd18b4]" />
+              <User className="mr-3 h-4 w-4 text-brand" />
               <span>Perfil</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => navigateWithLoading('/settings', 'Carregando Configurações...')}
               className="text-gray-300 hover:text-gray-100 rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-white/30"
             >
-              <Settings className="mr-3 h-4 w-4 text-[#bd18b4]" />
+              <Settings className="mr-3 h-4 w-4 text-brand" />
               <span>Configurações</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/20" />
@@ -385,7 +385,7 @@ export function Navbar({ }: NavbarProps) {
               onClick={handleLogout}
               className="text-red-400 hover:text-white rounded-lg px-3 py-2 mx-2 my-1 cursor-pointer transition-colors data-[highlighted]:!bg-red-500/20 data-[highlighted]:!text-white"
             >
-              <LogOut className="mr-3 h-4 w-4 text-[#bd18b4]" />
+              <LogOut className="mr-3 h-4 w-4 text-brand" />
               <span>Sair</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

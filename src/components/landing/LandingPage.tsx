@@ -67,7 +67,7 @@ function MouseFollower() {
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#1a1b1e] text-white">
+    <div className="min-h-screen bg-background text-white">
       <MouseFollower />
       <Navbar />
       <HeroSection />

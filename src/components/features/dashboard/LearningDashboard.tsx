@@ -41,7 +41,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
 
       <div className="mb-10 relative">
         <div className="flex items-center gap-4 mb-3">
-          <div className="w-12 h-1 bg-gradient-to-r from-[#bd18b4] to-[#aa22c5] rounded-full" />
+          <div className="w-12 h-1 bg-gradient-to-r from-brand to-brand-secondary rounded-full" />
           <h1 className="text-white text-3xl md:text-4xl font-black tracking-tight uppercase">
             {greeting}, {userName?.split(' ')[0] || "Explorador"}!
           </h1>
@@ -51,12 +51,12 @@ export function LearningDashboard({ userName }: { userName?: string }) {
         </p>
 
         {/* Subtle decorative element */}
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-[#bd18b4]/5 blur-[80px] -z-10 pointer-events-none" />
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-brand/5 blur-[80px] -z-10 pointer-events-none" />
       </div>
 
       {coursesLoading ? (
         <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingGrid size="60" color="#bd18b4" />
+          <LoadingGrid size="60" color="var(--brand)" />
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-12">
