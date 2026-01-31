@@ -149,6 +149,7 @@ function SettingsContent() {
       'START': 'Start',
       'PRO': 'Pro',
       'ULTRA': 'Ultra',
+      'PRODUCER': 'Producer',
     };
     return mapping[planId] || planId;
   };
