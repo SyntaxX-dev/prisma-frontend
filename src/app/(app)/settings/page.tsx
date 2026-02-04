@@ -59,8 +59,8 @@ function SettingsContent() {
   // Níveis dos planos para verificar upgrade/downgrade
   const PLAN_LEVELS: Record<string, number> = {
     'Start': 0,
-    'Pro': 1,
-    'Ultra': 2
+    'Ultra': 1,
+    'Produtor': 2
   };
 
   usePageDataLoad({
@@ -137,8 +137,8 @@ function SettingsContent() {
   const planNameToId = (planName: string): PlanType => {
     const mapping: Record<string, PlanType> = {
       'Start': 'START',
-      'Pro': 'PRO',
       'Ultra': 'ULTRA',
+      'Produtor': 'PRODUCER',
     };
     return mapping[planName] || 'START';
   };
@@ -149,7 +149,7 @@ function SettingsContent() {
       'START': 'Start',
       'PRO': 'Pro',
       'ULTRA': 'Ultra',
-      'PRODUCER': 'Producer',
+      'PRODUCER': 'Produtor',
     };
     return mapping[planId] || planId;
   };
@@ -253,38 +253,46 @@ function SettingsContent() {
       price: 'R$ 12,90',
       period: '/mês',
       features: [
-        'Acesso a todos os cursos',
-        'Comunidades ilimitadas',
-        'Suporte por email',
-        'Certificados de conclusão'
+        'Conteúdo segmentado',
+        'Acesso a comunidades',
+        'Direito a ofensivas',
+        'Suporte 24/7',
       ],
       popular: false
     },
     {
-      name: 'Pro',
+      name: 'Ultra',
       price: 'R$ 39,90',
       period: '/mês',
       features: [
-        'Tudo do plano Start',
-        'Acesso prioritário a novos cursos',
-        'Suporte prioritário',
-        'Mapas mentais ilimitados',
-        'Relatórios de progresso avançados'
+        'Conteúdo segmentado',
+        'Acesso a comunidades',
+        'Direito a ofensivas',
+        'Suporte 24/7',
+        'Prioridade no suporte 24/7',
+        'Acesso a todos os cursos premiums',
+        'Geração de mapas mentais',
+        'Acesso a IA de resumos para cada curso',
       ],
       popular: true
     },
     {
-      name: 'Ultra',
+      name: 'Produtor',
       price: 'R$ 59,90',
       period: '/mês',
       features: [
-        'Tudo do plano Pro',
-        'Mentoria individual mensal',
-        'Acesso a conteúdo exclusivo',
-        'Sessões de coaching',
-        'Suporte 24/7'
+        'Conteúdo segmentado',
+        'Acesso a comunidades',
+        'Direito a ofensivas',
+        'Suporte 24/7',
+        'Prioridade no suporte 24/7',
+        'Acesso a todos os cursos premiums',
+        'Geração de mapas mentais',
+        'Acesso a IA de resumos para cada curso',
+        'Lançamento de cursos próprios',
       ],
-      popular: false
+      popular: false,
+      highlight: true
     }
   ];
 
@@ -381,7 +389,11 @@ function SettingsContent() {
                           {plan.features.map((feature, index) => (
                             <li key={index} className="flex items-start gap-2 text-sm lg:text-base text-white/80">
                               <Check className="w-4 h-4 lg:w-5 lg:h-5 text-[#bd18b4] mt-0.5 flex-shrink-0" />
-                              <span>{feature}</span>
+                              <span className={feature === 'Acesso a IA de resumos para cada curso' 
+                                ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand via-brand-accent to-brand-secondary animate-gradient bg-[length:200%_auto] font-bold' 
+                                : ''}>
+                                {feature}
+                              </span>
                             </li>
                           ))}
                         </ul>

@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useSearch } from "@/hooks/shared";
 import { useCourseSearchWithParams, useProducerCourses } from "@/hooks/features/courses";
 import { HorizontalCarousel } from "../course/HorizontalCarousel";
-import { Sparkles } from "lucide-react";
 
 export function LearningDashboard({ userName }: { userName?: string }) {
   const [greeting, setGreeting] = useState("");
@@ -81,7 +80,6 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                 <div className="flex items-center gap-3">
                   <h2 className="text-white text-lg md:text-xl font-black tracking-tight uppercase">Cursos Patrocinados</h2>
                   <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
-                    <Sparkles className="w-3 h-3 text-amber-500" />
                     <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">
                       Destaque
                     </span>

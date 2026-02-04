@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, HelpCircle, X, LogOut, User, Settings, AlertCircle, Loader2, Menu } from "lucide-react";
+import { Search, Bell, X, LogOut, User, Settings, AlertCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -35,7 +35,7 @@ interface NavbarProps {
 
 export function Navbar({ }: NavbarProps) {
 
-  const navItems = ["Dashboard", "Cursos", "Trilhas", "Certificados", "Minha Conta", "Suporte"];
+  const navItems = ["Dashboard", "Cursos", "Vistos Atualmente", "Meu Resumo", "Mapas Mentais", "Questões", "Perfil", "Configurações"];
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -79,14 +79,18 @@ export function Navbar({ }: NavbarProps) {
       navigateWithLoading('/dashboard', 'Carregando Dashboard...');
     } else if (item === "Cursos") {
       navigateWithLoading('/courses', 'Carregando Cursos...');
-    } else if (item === "Trilhas") {
-      navigateWithLoading('/courses', 'Carregando Trilhas...');
-    } else if (item === "Certificados") {
-      navigateWithLoading('/courses', 'Carregando Certificados...');
-    } else if (item === "Minha Conta") {
+    } else if (item === "Vistos Atualmente") {
+      navigateWithLoading('/watching', 'Carregando Vistos Atualmente...');
+    } else if (item === "Meu Resumo") {
+      navigateWithLoading('/my-summaries', 'Carregando Meu Resumo...');
+    } else if (item === "Mapas Mentais") {
+      navigateWithLoading('/mind-maps', 'Carregando Mapas Mentais...');
+    } else if (item === "Questões") {
+      navigateWithLoading('/questions', 'Carregando Questões...');
+    } else if (item === "Perfil") {
       navigateWithLoading('/profile', 'Carregando Perfil...');
-    } else if (item === "Suporte") {
-      navigateWithLoading('/settings', 'Carregando Suporte...');
+    } else if (item === "Configurações") {
+      navigateWithLoading('/settings', 'Carregando Configurações...');
     }
   };
 
@@ -95,6 +99,18 @@ export function Navbar({ }: NavbarProps) {
       return pathname === '/dashboard';
     } else if (item === "Cursos") {
       return pathname.startsWith('/courses');
+    } else if (item === "Vistos Atualmente") {
+      return pathname === '/watching' || pathname?.startsWith('/watching');
+    } else if (item === "Meu Resumo") {
+      return pathname === '/my-summaries' || pathname?.startsWith('/my-summaries');
+    } else if (item === "Mapas Mentais") {
+      return pathname === '/mind-maps' || pathname?.startsWith('/mind-maps');
+    } else if (item === "Questões") {
+      return pathname === '/questions' || pathname?.startsWith('/questions');
+    } else if (item === "Perfil") {
+      return pathname === '/profile' || pathname?.startsWith('/profile');
+    } else if (item === "Configurações") {
+      return pathname === '/settings' || pathname?.startsWith('/settings');
     }
     return false;
   };
@@ -283,13 +299,7 @@ export function Navbar({ }: NavbarProps) {
                   </div>
                 </PopoverContent>
               </Popover>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-8 h-8 p-0 cursor-pointer"
-              >
-                <HelpCircle className="w-4 h-4" />
-              </Button>
+
             </div>
           </div>
 

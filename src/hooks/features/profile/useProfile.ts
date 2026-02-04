@@ -97,9 +97,6 @@ export function useProfile() {
       
       // Atualizar dados básicos com informações da API
       if (profile) {
-        // Verificar quais campos estão completos baseado no completedFields
-        const completedFields = profile.notification?.completedFields || [];
-        
         const basicInfo = {
           nome: profile.name || '',
           areaAtuacao: profile.userFocus || '',
@@ -181,9 +178,6 @@ export function useProfile() {
     const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
     const order = userProfile?.socialLinksOrder || defaultOrder;
     
-    // Usar JSON.stringify para criar uma chave única baseada na ordem
-    const orderKey = JSON.stringify(order);
-    
     if (order && order.length > 0) {
       // Mapear campos do backend para frontend com ícones e labels corretos
       const fieldMap: Record<string, { label: string; icon: any; placeholder: string }> = {
@@ -211,7 +205,55 @@ export function useProfile() {
       // Sempre atualizar para garantir que a UI seja atualizada
       setLinkFieldsOrder(orderedFields);
     }
-  }, [JSON.stringify(userProfile?.socialLinksOrder), userProfile?.id]); // Usar JSON.stringify para detectar mudanças no array
+  }, [JSON.stringify(userProfile?.socialLinksOrder), userProfile?.id]);
+
+  // Função centralizada para sincronizar todos os estados locais com o objeto de perfil
+  const syncStatesFromProfile = useCallback((profile: UserProfile | null) => {
+    if (!profile) return;
+
+    // Sincronizar Informações Básicas
+    setBasicInfoData({
+      nome: profile.name || '',
+      areaAtuacao: profile.userFocus || '',
+      empresa: profile.contestType || profile.collegeCourse || '',
+      nacionalidade: profile.location || '',
+      cidade: profile.location || ''
+    });
+
+    // Sincronizar Foco
+    if (profile.userFocus) {
+      setSelectedFocus(profile.userFocus);
+      if (profile.userFocus === 'FACULDADE' && profile.collegeCourse) {
+        setSelectedCourse(profile.collegeCourse);
+      } else if (profile.userFocus === 'CONCURSO' && profile.contestType) {
+        setSelectedContest(profile.contestType);
+      }
+    }
+
+    // Sincronizar Links
+    setLinksData({
+      sitePessoal: profile.portfolio || '',
+      linkedin: profile.linkedin || '',
+      instagram: profile.instagram || '',
+      twitter: profile.twitter || '',
+      github: profile.github || ''
+    });
+
+    // Sincronizar Sobre
+    setAboutText(profile.aboutYou || '');
+
+    // Sincronizar Avatar
+    if (profile.profileImage) {
+      setAvatarImage(profile.profileImage);
+    }
+  }, []);
+
+  // Chamar sincronização sempre que o userProfile mudar
+  useEffect(() => {
+    if (userProfile) {
+      syncStatesFromProfile(userProfile);
+    }
+  }, [userProfile, syncStatesFromProfile]);
 
   // Função para atualizar o perfil local sem recarregar
   const updateLocalProfile = useCallback((updates: Partial<UserProfile>) => {
@@ -455,46 +497,57 @@ export function useProfile() {
     loadUserProfile();
   }, [loadUserProfile]);
 
-  // Calcular tarefas baseado nos campos completos da API
-  const completedFields = userProfile?.notification?.completedFields || [];
-  
-  const profileTasks: ProfileTask[] = [
-    { 
-      label: 'Informações básicas', 
-      completed: completedFields.includes('nome') && completedFields.includes('email') && completedFields.includes('nível de educação') && completedFields.includes('idade')
-    },
-    { 
-      label: 'Foto do perfil', 
-      completed: completedFields.includes('foto do perfil')
-    },
-    { 
-      label: 'Links', 
-      // Links só é completo se TODOS os três campos estiverem preenchidos
-      completed: completedFields.includes('LinkedIn') && completedFields.includes('GitHub') && completedFields.includes('portfólio')
-    },
-    { 
-      label: 'Sobre você', 
-      completed: completedFields.includes('sobre você')
-    },
-    { 
-      label: 'Habilidades', 
-      completed: completedFields.includes('habilidades')
-    },
-    { 
-      label: 'Momento de carreira', 
-      completed: completedFields.includes('momento de carreira')
-    }
-  ];
+  // Calcular tarefas baseado nos dados reais do perfil para garantir sincronia com a porcentagem
+  const profileTasks = useMemo<ProfileTask[]>(() => {
+    // Pegar campos do backend como fallback ou complemento
+    const completedFields = userProfile?.notification?.completedFields || [];
+    const lowerFields = completedFields.map(f => f.toLowerCase());
+    
+    return [
+      { 
+        label: 'Informações básicas', 
+        // Considerar completo se tiver nome e idade (os campos principais do modal)
+        completed: !!(userProfile?.name && userProfile?.age) || 
+                  (lowerFields.includes('nome') && lowerFields.includes('idade'))
+      },
+      { 
+        label: 'Foto do perfil', 
+        completed: !!userProfile?.profileImage || lowerFields.includes('foto do perfil')
+      },
+      { 
+        label: 'Links', 
+        // Considerar completo se tiver pelo menos UM dos links principais
+        completed: !!(userProfile?.linkedin || userProfile?.github || userProfile?.portfolio) ||
+                  (lowerFields.includes('linkedin') || lowerFields.includes('github') || lowerFields.includes('portfólio'))
+      },
+      { 
+        label: 'Sobre você', 
+        completed: !!userProfile?.aboutYou || lowerFields.includes('sobre você')
+      },
+      { 
+        label: 'Habilidades', 
+        completed: !!userProfile?.habilities || lowerFields.includes('habilidades')
+      },
+      { 
+        label: 'Momento de carreira', 
+        completed: !!userProfile?.momentCareer || lowerFields.includes('momento de carreira')
+      }
+    ];
+  }, [userProfile]);
 
-  const completedTasks = profileTasks.filter(task => task.completed).length;
+  const completedTasks = useMemo(() => profileTasks.filter(task => task.completed).length, [profileTasks]);
   const totalTasks = profileTasks.length;
   
   // Usar porcentagem da API se disponível, senão calcular localmente
-  const completionPercentage = userProfile?.notification?.profileCompletionPercentage 
-    ? userProfile.notification.profileCompletionPercentage 
-    : userProfile 
-      ? calculateProfilePercentage(userProfile)
-      : Math.round((completedTasks / totalTasks) * 100);
+  const completionPercentage = useMemo(() => {
+    if (userProfile?.notification?.profileCompletionPercentage !== undefined) {
+      return userProfile.notification.profileCompletionPercentage;
+    }
+    if (userProfile) {
+      return calculateProfilePercentage(userProfile);
+    }
+    return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  }, [userProfile, calculateProfilePercentage, completedTasks, totalTasks]);
 
   const getInitials = useCallback((user: UserProfile): string => {
     const emailValue = typeof user.email === 'string' ? user.email : user.email?.value || '';

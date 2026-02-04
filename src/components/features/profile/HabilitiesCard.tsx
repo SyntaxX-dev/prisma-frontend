@@ -1,8 +1,6 @@
-"use client";
-
+import { useMemo } from 'react';
 import { UserProfile } from '@/types/auth-api';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Edit3, Plus, Star } from 'lucide-react';
 
@@ -40,10 +38,20 @@ interface HabilitiesCardProps {
 }
 
 export function HabilitiesCard({ userProfile, isPublicView, onEditClick }: HabilitiesCardProps) {
-  // Parse das habilidades do usuário
-  const habilities = userProfile?.habilities 
-    ? userProfile.habilities.split(',').map(h => h.trim()).filter(h => h)
-    : [];
+  // Parse das habilidades do usuário de forma segura (pode vir como string separada por vírgula ou array)
+  const habilities = useMemo(() => {
+    if (!userProfile?.habilities) return [];
+    
+    if (Array.isArray(userProfile.habilities)) {
+      return (userProfile.habilities as string[]).filter(h => typeof h === 'string' && h.trim() !== '');
+    }
+    
+    if (typeof userProfile.habilities === 'string') {
+      return userProfile.habilities.split(',').map(h => h.trim()).filter(h => h !== '');
+    }
+    
+    return [];
+  }, [userProfile?.habilities]);
 
   return (
     <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
@@ -69,7 +77,7 @@ export function HabilitiesCard({ userProfile, isPublicView, onEditClick }: Habil
         {habilities.length > 0 ? (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
-              {habilities.map((hability, index) => (
+              {habilities.map((hability: string, index: number) => (
                 <div 
                   key={index}
                   className={`${getHabilityColor(index)} text-xs font-medium`}

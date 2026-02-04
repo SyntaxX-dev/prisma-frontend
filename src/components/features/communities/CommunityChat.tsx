@@ -895,6 +895,7 @@ export function CommunityChat({
       />
       <div
         className="p-2 md:p-4 border-t border-white/10 bg-[#1a1a1a] w-full max-w-full overflow-hidden"
+        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         <div className="flex flex-col gap-2 w-full max-w-full">
           {/* Preview de arquivos pendentes */}

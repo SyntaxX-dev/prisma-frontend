@@ -8,8 +8,8 @@ export async function changePlan(data: ChangePlanRequestDto): Promise<ChangePlan
             throw new Error('ID do novo plano é obrigatório');
         }
 
-        if (!['START', 'PRO', 'ULTRA'].includes(data.newPlanId)) {
-            throw new Error('Plano inválido. Use START, PRO ou ULTRA');
+        if (!['START', 'PRO', 'ULTRA', 'PRODUCER'].includes(data.newPlanId)) {
+            throw new Error('Plano inválido. Use START, PRO, ULTRA ou PRODUCER');
         }
 
         const response = await httpClient.post<ChangePlanResponseDto>('/subscriptions/change-plan', {

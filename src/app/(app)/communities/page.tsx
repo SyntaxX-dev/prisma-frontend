@@ -1181,12 +1181,10 @@ function CommunitiesPageContent() {
       <div className="relative z-10 flex h-screen w-screen overflow-hidden p-2 md:p-4 pt-4 md:pt-6 gap-2 md:gap-3">
 
         {/* Mobile Sidebar Overlay */}
-        {isMobileSidebarOpen && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            onClick={() => setIsMobileSidebarOpen(false)}
-          />
-        )}
+        <div
+          className={`lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${isMobileSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
 
         {/* Communities List - Sidebar Esquerda */}
         <div className="hidden lg:block relative">
@@ -1239,16 +1237,15 @@ function CommunitiesPageContent() {
         </div>
 
         {/* Mobile Left Sidebar Modal */}
-        {isMobileSidebarOpen && (
-          <>
-            {/* Overlay */}
-            <div
-              className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-              onClick={() => setIsMobileSidebarOpen(false)}
-            />
+        <>
+          {/* Overlay */}
+          <div
+            className={`lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${isMobileSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
 
-            {/* Sidebar Modal */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 bottom-0 z-50 w-full h-screen bg-[#040404] border-r border-white/10 overflow-y-auto transform transition-transform duration-300">
+          {/* Sidebar Modal */}
+          <div className={`lg:hidden fixed top-0 left-0 right-0 bottom-0 z-50 w-full h-screen bg-[#040404] border-r border-white/10 overflow-y-auto transition-transform duration-300 ease-in-out ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
               {/* Botão de fechar */}
               <button
                 onClick={() => setIsMobileSidebarOpen(false)}
@@ -1315,7 +1312,6 @@ function CommunitiesPageContent() {
               </div>
             </div>
           </>
-        )}
 
         {/* Chat Area - Coluna Central + Direita */}
         {selectedChatUserId && userProfile ? (
@@ -1573,16 +1569,16 @@ function CommunitiesPageContent() {
               </div>
 
               {/* Mobile Right Sidebar Modal - Chat Direto */}
-              {!isRightSidebarCollapsed && chatUser && (
+              {chatUser && (
                 <>
                   {/* Overlay */}
                   <div
-                    className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                    className={`lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${isRightSidebarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                     onClick={() => setIsRightSidebarCollapsed(true)}
                   />
 
                   {/* Sidebar Modal */}
-                  <div className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transform transition-transform duration-300">
+                  <div className={`lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transition-transform duration-300 ease-in-out ${isRightSidebarCollapsed ? 'translate-x-full' : 'translate-x-0'}`}>
                     {/* Botão de fechar */}
                     <button
                       onClick={() => setIsRightSidebarCollapsed(true)}
@@ -1856,47 +1852,45 @@ function CommunitiesPageContent() {
               </div>
 
               {/* Mobile Right Sidebar Modal */}
-              {!isRightSidebarCollapsed && (
-                <>
-                  {/* Overlay */}
-                  <div
-                    className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-                    onClick={() => setIsRightSidebarCollapsed(true)}
-                  />
+              <>
+                {/* Overlay */}
+                <div
+                  className={`lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${isRightSidebarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  onClick={() => setIsRightSidebarCollapsed(true)}
+                />
 
-                  {/* Sidebar Modal */}
-                  <div className="lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transform transition-transform duration-300">
-                    {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
-                      <div className="pt-16 px-4">
-                        <ChatSidebarSkeleton />
+                {/* Sidebar Modal */}
+                <div className={`lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transition-transform duration-300 ease-in-out ${isRightSidebarCollapsed ? 'translate-x-full' : 'translate-x-0'}`}>
+                  {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
+                    <div className="pt-16 px-4">
+                      <ChatSidebarSkeleton />
+                    </div>
+                  ) : (
+                    <>
+                      {/* Botão de fechar */}
+                      <button
+                        onClick={() => setIsRightSidebarCollapsed(true)}
+                        className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                      >
+                        <X className="w-5 h-5 text-white" />
+                      </button>
+
+                      <div className="pt-16 px-4 flex justify-center">
+                        <CommunityInfo
+                          community={selectedCommunity}
+                          onStartVideoCall={handleStartVideoCall}
+                          onStartVoiceCall={handleStartVoiceCall}
+                          isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
+                          pinnedMessages={communityPinnedMessages}
+                          currentUserId={userProfile?.id}
+                          currentUserAvatar={userProfile?.profileImage}
+                          onUnpinMessage={unpinCommunityMessage}
+                        />
                       </div>
-                    ) : (
-                      <>
-                        {/* Botão de fechar */}
-                        <button
-                          onClick={() => setIsRightSidebarCollapsed(true)}
-                          className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-                        >
-                          <X className="w-5 h-5 text-white" />
-                        </button>
-
-                        <div className="pt-16 px-4 flex justify-center">
-                          <CommunityInfo
-                            community={selectedCommunity}
-                            onStartVideoCall={handleStartVideoCall}
-                            onStartVoiceCall={handleStartVoiceCall}
-                            isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
-                            pinnedMessages={communityPinnedMessages}
-                            currentUserId={userProfile?.id}
-                            currentUserAvatar={userProfile?.profileImage}
-                            onUnpinMessage={unpinCommunityMessage}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
+                    </>
+                  )}
+                </div>
+              </>
             </div>
           </div>
         ) : (

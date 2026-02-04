@@ -70,9 +70,18 @@ export function ProfileCompletionModal({
                 getContestOptions(),
                 getCollegeCourseOptions()
             ]);
-            setContestOptions(contests);
-            setCollegeOptions(courses);
+            
+            // Garantir que os dados sejam arrays, extraindo .data se necessário
+            const contestData = Array.isArray(contests) ? contests : (contests as any)?.data || [];
+            const collegeData = Array.isArray(courses) ? courses : (courses as any)?.data || [];
+            
+            setContestOptions(contestData);
+            setCollegeOptions(collegeData);
         } catch (error) {
+            console.error('Erro ao carregar opções:', error);
+            // Fallback para array vazio em caso de erro
+            setContestOptions([]);
+            setCollegeOptions([]);
         }
     };
 

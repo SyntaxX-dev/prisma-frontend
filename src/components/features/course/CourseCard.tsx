@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "../../ui/card";
 import { useNavigationWithLoading } from "@/hooks/shared";
-import { Calendar, Sparkles } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { useId } from "react";
 
 interface CourseCardProps {
@@ -118,7 +118,6 @@ export function CourseCard({
         {/* Badge Patrocinado */}
         {isSponsored && (
           <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-gradient-to-r from-gold to-gold-secondary text-black text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
-            <Sparkles className="w-3 h-3" />
             <span>PATROCINADO</span>
           </div>
         )}

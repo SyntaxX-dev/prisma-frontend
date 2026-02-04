@@ -1,4 +1,5 @@
 import { Play, Clock, Download, Share2, Lock, CheckCircle, FileText, MessageSquare, ChevronDown, ArrowLeft, Brain, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { formatResetTime } from "@/lib/utils/time";
 import { Button } from "../../ui/button";
 import { Badge } from "../../ui/badge";
@@ -18,6 +19,8 @@ import { saveVideoTimestamp } from "@/api/progress/save-video-timestamp";
 import { getInProgressVideos } from "@/api/progress/get-in-progress-videos";
 import InteractiveMindMap from "./InteractiveMindMap";
 import { generateMindMap, getMindMapByVideo, getGenerationLimits, AllLimitsInfo, GenerationType } from "@/api/mind-map/generate-mind-map";
+import { getSubscription } from "@/api/subscriptions/get-subscription";
+import { PlanUpgradeModal } from "../subscriptions/PlanUpgradeModal";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -113,10 +116,25 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [generatedType, setGeneratedType] = useState<GenerationType | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [isMobileContentOpen, setIsMobileContentOpen] = useState(false);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const fetchingRef = useRef(false);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const savedTimestampRef = useRef<number>(0);
+
+  // Fetch subscription on mount
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        const response = await getSubscription();
+        setSubscription(response.data);
+      } catch (err) {
+        console.error('Error fetching subscription:', err);
+      }
+    };
+    fetchSubscription();
+  }, []);
 
   const fetchModules = async () => {
     if (!subCourseId) {
@@ -646,6 +664,12 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const handleGenerate = async (type: GenerationType) => {
     if (!selectedVideo) return;
 
+    // Check if user has access (START plan is blocked)
+    if (subscription?.plan?.id === 'START' || subscription?.planId === 'START') {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setMindMapLoading(true);
     setMindMapError(null);
 
@@ -679,6 +703,12 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       let errorMessage = `Erro ao gerar ${typeLabel}`;
 
       const message = err instanceof Error ? err.message : String(err);
+
+      // Verificar se é erro de restrição de plano (403)
+      if (message.includes('plano') || message.includes('403')) {
+        setShowUpgradeModal(true);
+        return;
+      }
 
       // Verificar se é erro de limite excedido
       if (message.includes('Limite diário') || message.includes('LIMIT_EXCEEDED')) {
@@ -1222,7 +1252,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                       <Button
                         onClick={() => handleGenerate('mindmap')}
                         disabled={limitsInfo ? !limitsInfo.mindmap.canGenerate : false}
-                        className="bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto"
+                        className="align-center bg-[#bd18b4] cursor-pointer hover:bg-[#aa22c5] text-black font-semibold shadow-lg hover:shadow-[#bd18b4]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto"
                       >
                         <Brain className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                         Gerar Mapa Mental
@@ -1388,7 +1418,8 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
           <div className="p-4 space-y-2">
             {modules.map((module, moduleIndex) => (
               <div key={module.id} className="bg-white/5 backdrop-blur-sm rounded-lg overflow-hidden border border-white/10 hover:bg-white/[0.07] transition-colors">
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => toggleModule(module.id)}
                   className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
                 >
@@ -1404,13 +1435,27 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                     </div>
                   </div>
                   <ChevronDown
-                    className={`w-4 h-4 text-white/60 transition-transform ${expandedModules.has(module.id) ? 'rotate-180' : ''
+                    className={`w-4 h-4 text-white/60 transition-transform duration-300 ${expandedModules.has(module.id) ? 'rotate-180' : ''
                       }`}
                   />
-                </button>
+                </motion.button>
 
-                {expandedModules.has(module.id) && (
-                  <div className="border-t border-white/5">
+                <AnimatePresence initial={false}>
+                  {expandedModules.has(module.id) && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ 
+                        height: "auto", 
+                        opacity: 1 
+                      }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ 
+                        duration: 0.25, 
+                        ease: [0.4, 0, 0.2, 1]
+                      }}
+                      style={{ willChange: "height" }}
+                      className="border-t border-white/5 overflow-hidden"
+                    >
                     {module.videos.map((video) => (
                       <button
                         key={video.id}
@@ -1448,8 +1493,9 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                         </div>
                       </button>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
+              </AnimatePresence>
               </div>
             ))}
           </div>
@@ -1459,21 +1505,32 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       {/* Mobile Bottom Sheet */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
         {/* Overlay quando aberto */}
-        {isMobileContentOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm -z-10"
-            onClick={() => setIsMobileContentOpen(false)}
-          />
-        )}
+        <AnimatePresence>
+          {isMobileContentOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-md -z-10"
+              onClick={() => setIsMobileContentOpen(false)}
+            />
+          )}
+        </AnimatePresence>
         
         {/* Bottom Sheet */}
-        <div className={`relative bg-transparent backdrop-blur-md border-t border-white/10 transition-all duration-300 ease-out ${
-          isMobileContentOpen ? 'h-[80vh]' : 'h-auto'
-        }`}>
+        <motion.div 
+          initial={false}
+          animate={{ height: isMobileContentOpen ? '80vh' : 'auto' }}
+          transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          className="relative bg-[#0a0a0a]/80 backdrop-blur-xl border-t border-white/10 overflow-hidden rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+        >
+          {/* Barra de arraste visual */}
+          <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-1" />
+          
           {/* Header - sempre visível */}
           <button
             onClick={() => setIsMobileContentOpen(!isMobileContentOpen)}
-            className="w-full p-4 flex flex-col gap-2 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/10"
+            className="w-full p-4 flex flex-col gap-2 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors"
           >
             <div className="flex items-center justify-between">
               <h2 className="text-white font-semibold text-base">Conteúdo</h2>
@@ -1508,12 +1565,20 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
           </button>
 
           {/* Conteúdo expansível */}
-          {isMobileContentOpen && (
-            <div className="overflow-y-auto h-[calc(80vh-160px)] bg-transparent">
+          <AnimatePresence>
+            {isMobileContentOpen && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="overflow-y-auto h-[calc(80vh-170px)] bg-transparent scrollbar-hide"
+              >
               <div className="p-4 space-y-2">
                 {modules.map((module, moduleIndex) => (
                   <div key={module.id} className="bg-white/5 backdrop-blur-sm rounded-lg overflow-hidden border border-white/10 hover:bg-white/[0.07] transition-colors">
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleModule(module.id);
@@ -1532,14 +1597,28 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                         </div>
                       </div>
                       <ChevronDown
-                        className={`w-4 h-4 text-white/60 transition-transform ${
+                        className={`w-4 h-4 text-white/60 transition-transform duration-300 ${
                           expandedModules.has(module.id) ? 'rotate-180' : ''
                         }`}
                       />
-                    </button>
+                    </motion.button>
 
-                    {expandedModules.has(module.id) && (
-                      <div className="border-t border-white/5">
+                    <AnimatePresence initial={false}>
+                      {expandedModules.has(module.id) && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ 
+                            height: "auto", 
+                            opacity: 1 
+                          }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ 
+                            duration: 0.25, 
+                            ease: [0.4, 0, 0.2, 1]
+                          }}
+                          style={{ willChange: "height" }}
+                          className="border-t border-white/5 overflow-hidden"
+                        >
                         {module.videos.map((video) => (
                           <button
                             key={video.id}
@@ -1583,15 +1662,24 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                             </div>
                           </button>
                         ))}
-                      </div>
+                      </motion.div>
                     )}
+                  </AnimatePresence>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-        </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
+
+      {/* MODAL DE UPGRADE */}
+      <PlanUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="Geração de conteúdo com IA (Mapas Mentais e Resumos)"
+      />
     </div>
   );
 }

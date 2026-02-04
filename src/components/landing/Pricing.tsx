@@ -8,6 +8,7 @@ import { PencilScribble } from "@/components/ui/PencilScribble";
 import { useAuth } from "@/hooks/features/auth";
 import { useChangePlan } from "@/hooks/features/subscriptions";
 import { getSubscription } from "@/api/subscriptions/get-subscription";
+import { cancelPlanChange } from "@/api/subscriptions/cancel-plan-change";
 import { UpgradeConfirmationModal } from "@/components/features/subscriptions/UpgradeConfirmationModal";
 import { DowngradeConfirmationModal } from "@/components/features/subscriptions/DowngradeConfirmationModal";
 import { PixPaymentModal } from "@/components/features/subscriptions/PixPaymentModal";
@@ -138,7 +139,6 @@ export function Pricing() {
 
       if (result.isUpgrade && result.creditAmount !== undefined) {
         setUpgradeData(result);
-        setCurrentPlanId(planId);
       } else {
         setDowngradeData(result);
       }
@@ -146,6 +146,12 @@ export function Pricing() {
       const errorMessage = error.details?.message || error.message || 'Erro ao trocar de plano. Tente novamente mais tarde.';
       showError(errorMessage);
     }
+  };
+
+  const handleCloseUpgradeModal = () => {
+    setUpgradeData(null);
+    // Cancela o pending change no backend já que o usuário desistiu de pagar
+    cancelPlanChange().catch(() => {});
   };
 
   const handleGoToPayment = (url: string) => {
@@ -303,14 +309,14 @@ export function Pricing() {
                     <li key={featureIndex} className="flex items-start gap-3">
                       <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-brand" strokeWidth={3} />
                       <span
-                        className={`text-sm ${feature === "Lançamento de cursos próprios"
+                        className={`text-sm ${feature === "Acesso a IA de resumos para cada curso" || feature === "Lançamento de cursos próprios"
                           ? "text-transparent bg-clip-text bg-gradient-to-r from-brand via-brand-accent to-brand-secondary animate-gradient bg-[length:200%_auto] font-bold"
                           : "text-gray-300"
                           }`}
                         style={{
                           fontFamily: 'Metropolis, sans-serif',
-                          fontWeight: feature === "Lançamento de cursos próprios" ? 800 : 300,
-                          animationDuration: feature === "Lançamento de cursos próprios" ? '3s' : undefined
+                          fontWeight: (feature === "Acesso a IA de resumos para cada curso" || feature === "Lançamento de cursos próprios") ? 800 : 300,
+                          animationDuration: (feature === "Acesso a IA de resumos para cada curso" || feature === "Lançamento de cursos próprios") ? '3s' : undefined
                         }}
                       >
                         {feature}
@@ -365,7 +371,7 @@ export function Pricing() {
         <UpgradeConfirmationModal
           data={upgradeData}
           isOpen={!!upgradeData}
-          onClose={() => setUpgradeData(null)}
+          onClose={handleCloseUpgradeModal}
           onGoToPayment={handleGoToPayment}
           onShowPix={handleShowPix}
         />

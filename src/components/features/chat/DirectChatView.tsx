@@ -745,7 +745,7 @@ export function DirectChatView({
         disabled={!isConnected || uploading}
         className="fixed inset-0"
       />
-      <div className="flex flex-col gap-2 p-2 md:p-4 border-t border-white/10 bg-[#1a1a1a] w-full max-w-full overflow-hidden">
+      <div className="flex flex-col gap-2 p-2 md:p-4 border-t border-white/10 bg-[#1a1a1a] w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {/* Preview de arquivos pendentes */}
         {pendingAttachments.length > 0 && (
           <div className="flex flex-wrap gap-2 pb-2">

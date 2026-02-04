@@ -34,6 +34,12 @@ export async function generateQuiz(topic: string): Promise<GenerateQuizResponse>
 
   if (!response.ok) {
     const error = await response.json();
+
+    // Handle 403 Forbidden (plan restriction)
+    if (response.status === 403) {
+      throw new Error(error.message || 'Você precisa fazer upgrade do seu plano para gerar questões.');
+    }
+
     throw new Error(error.message || 'Erro ao gerar quiz');
   }
 

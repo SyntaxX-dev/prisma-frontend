@@ -4,9 +4,12 @@ import { useState, useEffect, Suspense } from 'react';
 import { generateQuiz, type QuizQuestion } from '@/api/quiz/generate-quiz';
 import { submitAnswer } from '@/api/quiz/submit-answer';
 import { getResult, type QuestionResult } from '@/api/quiz/get-result';
+import { getSubscription } from '@/api/subscriptions/get-subscription';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/layout/Navbar';
 import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
+import { PlanUpgradeModal } from '@/components/features/subscriptions/PlanUpgradeModal';
 import { Sparkles, Check, X, Download, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/features/auth';
 
@@ -20,10 +23,13 @@ interface AnswerFeedback {
 
 export default function QuestionsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDark, setIsDark] = useState(true);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Quiz state
   const [viewState, setViewState] = useState<ViewState>('input');
@@ -45,6 +51,19 @@ export default function QuestionsPage() {
     setIsDark(!isDark);
   };
 
+  // Fetch subscription on mount
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        const response = await getSubscription();
+        setSubscription(response.data);
+      } catch (err) {
+        console.error('Error fetching subscription:', err);
+      }
+    };
+    fetchSubscription();
+  }, []);
+
   // Warn before leaving during quiz
   useEffect(() => {
     if (viewState === 'quiz') {
@@ -65,6 +84,12 @@ export default function QuestionsPage() {
       return;
     }
 
+    // Check if user has access (START plan is blocked)
+    if (subscription?.planId === 'START') {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -78,7 +103,12 @@ export default function QuestionsPage() {
       setAnsweredCorrectly([]);
       setViewState('quiz');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao gerar quiz');
+      // Enhanced error handling for plan restrictions
+      if (err instanceof Error && err.message.includes('plano')) {
+        setShowUpgradeModal(true);
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro ao gerar quiz');
+      }
     } finally {
       setLoading(false);
     }
@@ -727,6 +757,13 @@ export default function QuestionsPage() {
           </div>
         </div>
       </div>
+
+      {/* MODAL DE UPGRADE */}
+      <PlanUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="Geração de questões com IA"
+      />
     </div>
   );
 }

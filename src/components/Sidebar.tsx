@@ -283,7 +283,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
             </div>
           </div>
 
-          <div className={`flex-1 overflow-hidden space-y-3 transition-all duration-300 ease-in-out ${isExpanded ? 'px-4 pt-3 pb-2' : 'p-2'}`}>
+          <div className={`flex-1 min-h-0 overflow-y-auto space-y-3 transition-all duration-300 ease-in-out scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/40 ${isExpanded ? 'px-4 pt-3 pb-2' : 'p-2'}`} style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
 
             <div>
               {isExpanded && (
@@ -409,7 +409,7 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
           </div>
 
           {isExpanded && (
-            <div className="pt-3 px-4 pb-3 border-t border-white/20 flex flex-col space-y-3 flex-1 flex-shrink-0">
+            <div className="pt-3 px-4 pb-3 border-t border-white/20 flex flex-col space-y-3 flex-shrink-0 overflow-y-auto max-h-[45%]" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
               {/* Card de Upgrade Plan */}
               <GlareHover
                 width="100%"
@@ -442,11 +442,11 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
                   <div className="p-1.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
                     <PenTool className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-white font-bold text-sm">Upgrade Pro!</span>
+                  <span className="text-white font-bold text-sm">Upgrade Ultra!</span>
                 </div>
 
                 <p className={`text-white/80 text-xs leading-relaxed transition-all duration-500 ease-in-out delay-200 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                  Faça upgrade para Pro e eleve sua experiência hoje
+                  Faça upgrade para Ultra e eleve sua experiência hoje
                 </p>
               </GlareHover>
 

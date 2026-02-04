@@ -37,6 +37,7 @@ interface NavbarProps {
 export function Navbar({ }: NavbarProps) {
 
   const navItems = ["Dashboard", "Chats", "Vistos Atualmente", "Meu resumo", "Mapas Mentais", "Questões", "Perfil", "Configurações"];
+  const xlOnlyItems = ["Mapas Mentais", "Questões", "Perfil", "Configurações"];
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -141,7 +142,7 @@ export function Navbar({ }: NavbarProps) {
   return (
     <div
       data-navbar
-      className={`fixed top-0 right-0 z-50 w-full md:w-[calc(100vw-20%)] p-2 md:p-4 transition-all duration-300 bg-transparent`}
+      className={`fixed top-0 right-0 z-50 w-full md:w-[calc(100vw-280px)] xl:w-[calc(100vw-288px)] p-2 md:p-3 xl:p-4 transition-all duration-300 bg-transparent mt-2 md:mt-0`}
       style={{
         transform: 'translateZ(0)',
         backfaceVisibility: 'hidden',
@@ -151,13 +152,13 @@ export function Navbar({ }: NavbarProps) {
       <div className="flex items-center gap-2 md:justify-between relative w-full">
 
         {/* Desktop Navigation */}
-        <div className="hidden md:block bg-glass-hover backdrop-blur-md rounded-full px-6 py-3 border border-glass-border-hover">
-          <nav className="flex items-center gap-6">
+        <div className="hidden md:block bg-glass-hover backdrop-blur-md rounded-full px-4 xl:px-6 py-2 xl:py-3 border border-glass-border-hover min-w-0 shrink">
+          <nav className="flex items-center gap-3 xl:gap-6">
             {navItems.map((item) => (
               <button
                 key={item}
                 onClick={() => handleNavClick(item)}
-                className={`transition-colors cursor-pointer text-sm ${isActive(item)
+                className={`transition-colors cursor-pointer text-sm ${xlOnlyItems.includes(item) ? 'hidden xl:block' : ''} ${isActive(item)
                   ? 'text-brand'
                   : 'text-white/80 hover:text-brand'
                   }`}
@@ -168,7 +169,7 @@ export function Navbar({ }: NavbarProps) {
           </nav>
         </div>
 
-        <div className="bg-glass-hover backdrop-blur-md rounded-full px-3 md:px-4 py-2 md:py-3 border border-glass-border-hover mx-auto md:mx-0">
+        <div className="bg-glass-hover backdrop-blur-md rounded-full px-3 xl:px-4 py-2 xl:py-3 border border-glass-border-hover mx-auto md:mx-0 shrink-0">
           <div className="flex items-center gap-2 md:gap-3">
             <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-48 md:w-64' : 'w-8'
               }`}>
@@ -327,7 +328,7 @@ export function Navbar({ }: NavbarProps) {
         {/* Profile Dropdown - Desktop and Mobile */}
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <div className="bg-glass-hover backdrop-blur-md rounded-full px-2 md:px-4 py-2 border border-glass-border-hover cursor-pointer hover:bg-glass-border transition-colors flex items-center gap-2 md:gap-3 absolute right-2 md:relative md:right-0">
+            <div className="bg-glass-hover backdrop-blur-md rounded-full p-1.5 xl:px-4 xl:py-2 border border-glass-border-hover cursor-pointer hover:bg-glass-border transition-colors flex items-center xl:gap-3 shrink-0">
               <Avatar className="w-8 h-8">
                 <AvatarImage
                   src={user?.profileImage || "/api/placeholder/32/32"}
@@ -338,7 +339,7 @@ export function Navbar({ }: NavbarProps) {
                   {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                 </AvatarFallback>
               </Avatar>
-              <div className="text-white hidden md:block">
+              <div className="text-white hidden xl:block">
                 <div className="text-sm font-medium">
                   {user?.name || 'Usuário'}
                 </div>
