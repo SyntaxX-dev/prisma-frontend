@@ -11,6 +11,7 @@ export interface CommunityMessage {
   edited: boolean;
   updatedAt?: string | null;
   attachments?: MessageAttachmentResponse[];
+  clientId?: string;
 }
 
 export interface PinnedCommunityMessage {

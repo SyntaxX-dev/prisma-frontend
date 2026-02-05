@@ -118,6 +118,7 @@ export function useCommunityChat(communityId: string | null) {
               edited: false,
               updatedAt: null,
               attachments: finalAttachments,
+              clientId: optimisticMsg?.id,
             };
             const updated = [...withoutOptimistic, communityMessage];
             const sorted = updated.sort(
@@ -148,6 +149,7 @@ export function useCommunityChat(communityId: string | null) {
             edited: false,
             updatedAt: null,
             attachments: finalAttachmentsForSimilar,
+            clientId: optimisticWithAttachments?.id,
           };
           const updated = [...prev, communityMessage];
           const sorted = updated.sort(
@@ -424,292 +426,8 @@ export function useCommunityChat(communityId: string | null) {
       }
     });
 
-    // Evento: nova mensagem na comunidade
-    newSocket.on('new_community_message', (data: NewCommunityMessageEvent) => {
+    // Eventos redundantes removidos (já registrados por registerCommunityListeners)
 
-      // Usar ref para ter sempre o valor mais atualizado
-      const currentCommunityId = currentCommunityIdRef.current || communityId;
-      
-      // Só adicionar se for da comunidade atual
-      if (data.communityId === currentCommunityId) {
-        setMessages((prev) => {
-          // Verificar se a mensagem já existe (evitar duplicatas) 
-          const exists = prev.some((msg) => msg.id === data.id);   
-          if (exists) {
-            return prev;
-          }
-          
-          // Verificar se há uma mensagem otimista similar (mesmo sender e comunidade)
-          // IMPORTANTE: Buscar por sender e comunidade, e considerar similar se:
-          // 1. A mensagem otimista tem attachments (sempre substituir)
-          // 2. O conteúdo é igual (ou ambos são vazios)
-          // 3. A mensagem otimista foi criada recentemente (últimos 5 segundos)
-          const currentTime = Date.now();
-          const hasSimilarOptimistic = prev.some((msg) => {
-            if (!msg.id.startsWith('temp-')) return false;
-            if (msg.senderId !== data.senderId) return false;
-            if (msg.communityId !== data.communityId) return false;
-            
-            // Verificar se a mensagem otimista foi criada recentemente (últimos 5 segundos)
-            const optimisticTime = new Date(msg.createdAt).getTime();
-            const timeDiff = currentTime - optimisticTime;
-            if (timeDiff > 5000) return false; // Muito antiga, não é similar
-            
-            // Se a mensagem otimista tem attachments, sempre considerar como similar
-            const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
-            if (optimisticHasAttachments) {
-              return true; // Sempre substituir se a otimista tem attachments
-            }
-            
-            // Se não tem attachments, verificar se o conteúdo é igual
-            const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
-            return contentsMatch;
-          });
-          
-          if (hasSimilarOptimistic) {
-            // Encontrar a mensagem otimista para preservar seus attachments se necessário
-            // IMPORTANTE: Buscar por conteúdo e sender, não por quantidade de attachments
-            const optimisticMsg = prev.find((msg) => {
-              if (!msg.id.startsWith('temp-')) return false;
-              if (msg.senderId !== data.senderId) return false;
-              if (msg.communityId !== data.communityId) return false;
-              const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
-              return contentsMatch;
-            });
-            
-            // Remover mensagens otimistas similares e adicionar a real
-            // IMPORTANTE: Remover qualquer mensagem otimista com mesmo conteúdo e sender
-            const withoutOptimistic = prev.filter((msg) => {
-              if (!msg.id.startsWith('temp-')) return true;
-              if (msg.senderId !== data.senderId) return true;
-              if (msg.communityId !== data.communityId) return true;
-              const contentsMatch =
-                (!msg.content && !data.content) || msg.content === data.content;
-              return !contentsMatch; // Manter apenas mensagens com conteúdo diferente
-            });
-            
-            // Preservar attachments da mensagem otimista se a mensagem real não tiver attachments
-            // mas a otimista tiver (caso o backend ainda não tenha enviado os attachments no WebSocket)
-            const finalAttachments = data.attachments && data.attachments.length > 0
-              ? data.attachments
-              : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
-                  ? optimisticMsg.attachments
-                  : []);
-            
-            // Converter NewCommunityMessageEvent para CommunityMessage adicionando propriedades faltantes
-            const communityMessage: CommunityMessage = {
-              ...data,
-              edited: false,
-              updatedAt: null,
-              attachments: finalAttachments,
-            };
-            const updated = [...withoutOptimistic, communityMessage];
-            const sorted = updated.sort(
-              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            );
-            return sorted;
-          }
-          
-          // Se a mensagem não tem attachments mas há uma mensagem otimista similar com attachments,
-          // usar os attachments da otimista (caso o backend ainda não tenha enviado no WebSocket)
-          // Buscar por mensagens otimistas recentes do mesmo sender
-          const currentTimeForSimilar = Date.now();
-          const similarOptimistic = prev.find((msg) => {
-            if (!msg.id.startsWith('temp-')) return false;
-            if (msg.senderId !== data.senderId) return false;
-            if (msg.communityId !== data.communityId) return false;
-            
-            // Verificar se a mensagem otimista foi criada recentemente (últimos 5 segundos)
-            const optimisticTime = new Date(msg.createdAt).getTime();
-            const timeDiff = currentTimeForSimilar - optimisticTime;
-            if (timeDiff > 5000) return false; // Muito antiga, não é similar
-            
-            // Se tem attachments, sempre considerar
-            const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
-            if (optimisticHasAttachments) return true;
-            
-            // Se não tem attachments, verificar se o conteúdo é igual
-            const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
-            return contentsMatch;
-          });
-          
-          const finalAttachments = data.attachments && data.attachments.length > 0
-            ? data.attachments
-            : (similarOptimistic?.attachments && similarOptimistic.attachments.length > 0
-                ? similarOptimistic.attachments
-                : []);
-          
-          if (similarOptimistic && finalAttachments.length > 0 && (!data.attachments || data.attachments.length === 0)) {
-          }
-          
-          // Converter NewCommunityMessageEvent para CommunityMessage adicionando propriedades faltantes
-          const communityMessage: CommunityMessage = {
-            ...data,
-            edited: false,
-            updatedAt: null,
-            attachments: finalAttachments,
-          };
-          const updated = [...prev, communityMessage];
-          const sorted = updated.sort(
-            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-          
-          // Se a mensagem não tem attachments, SEMPRE tentar buscar da API
-          // (o backend pode não estar enviando attachments no WebSocket)
-          if ((!finalAttachments || finalAttachments.length === 0) && data.id && !data.id.startsWith('temp-')) {
-            // Verificar se já estamos buscando attachments para esta mensagem
-            if (pendingAttachmentFetchesRef.current.has(data.id)) {
-              return sorted;
-            }
-            
-            const messageTime = new Date(data.createdAt).getTime();
-            const timeDiff = Date.now() - messageTime;
-            
-            // Sempre tentar buscar se não tiver attachments (mesmo que não seja recente)
-            // O backend pode não estar enviando attachments no WebSocket
-            if (timeDiff < 30000) { // 30 segundos para dar mais tempo
-              // Marcar que estamos buscando attachments para esta mensagem
-              pendingAttachmentFetchesRef.current.add(data.id);
-              
-              // Mensagem recente sem attachments - tentar buscar da API
-              
-              // Fazer múltiplas tentativas com intervalos crescentes
-              const attempts = [500, 1000, 2000];
-              attempts.forEach((delay, index) => {
-                setTimeout(async () => {
-                  try {
-                    // Verificar se a mensagem já tem attachments usando setMessages com callback
-                    let shouldContinue = true;
-                    setMessages((prev) => {
-                      const currentMsg = prev.find((msg) => msg.id === data.id);
-                      if (currentMsg && currentMsg.attachments && currentMsg.attachments.length > 0) {
-                        pendingAttachmentFetchesRef.current.delete(data.id);
-                        shouldContinue = false;
-                      }
-                      return prev; // Não alterar o estado, apenas verificar
-                    });
-                    
-                    if (!shouldContinue) {
-                      return;
-                    }
-                    
-                    const { getCommunityMessages } = await import('@/api/communities/get-community-messages');
-                    const response = await getCommunityMessages(data.communityId, 10, 0); // Buscar mais mensagens para garantir
-                    
-                    if (response.success && response.data.length > 0) {
-                      // Procurar a mensagem específica na lista
-                      const foundMessage = response.data.find((msg: CommunityMessage) => msg.id === data.id);
-                      
-                      if (foundMessage && foundMessage.attachments && foundMessage.attachments.length > 0) {
-                        setMessages((prev) => {
-                          // Verificar novamente se a mensagem ainda não tem attachments
-                          const msg = prev.find((m) => m.id === data.id);
-                          if (msg && msg.attachments && msg.attachments.length > 0) {
-                            return prev;
-                          }
-                          
-                          const updated = prev.map((msg) => 
-                            msg.id === data.id 
-                              ? { ...msg, attachments: foundMessage.attachments }
-                              : msg
-                          );
-                          return updated;
-                        });
-                        // Remover da lista de buscas pendentes após sucesso
-                        pendingAttachmentFetchesRef.current.delete(data.id);
-                      } else {
-                        // Se foi a última tentativa e não encontrou, remover da lista
-                        if (index === attempts.length - 1) {
-                          pendingAttachmentFetchesRef.current.delete(data.id);
-                        }
-                      }
-                    } else {
-                      // Se foi a última tentativa e não encontrou, remover da lista
-                      if (index === attempts.length - 1) {
-                        pendingAttachmentFetchesRef.current.delete(data.id);
-                      }
-                    }
-                  } catch (error) {
-                    // Se foi a última tentativa e deu erro, remover da lista
-                    if (index === attempts.length - 1) {
-                      pendingAttachmentFetchesRef.current.delete(data.id);
-                    }
-                  }
-                }, delay);
-              });
-            }
-          }
-          
-          return sorted;
-        });
-      }
-    });
-
-    // Evento: mensagem deletada na comunidade
-    newSocket.on('community_message_deleted', (data: CommunityMessageDeletedEvent) => {
-
-      // Só atualizar se for da comunidade atual
-      if (data.communityId === communityId) {
-        setMessages((prev) => {
-          const messageExists = prev.some((msg) => msg.id === data.messageId);
-          if (!messageExists) {
-            return prev;
-          }
-
-          return prev.map((msg) =>
-            msg.id === data.messageId ? { ...msg, content: data.message.content } : msg
-          );
-        });
-
-        // Se a mensagem estava fixada, atualizar lista de fixadas
-        setPinnedMessages((prev) => {
-          const wasPinned = prev.some((p) => p.messageId === data.messageId);
-          if (wasPinned && communityId) {
-            // Recarregar mensagens fixadas para remover a deletada
-            getPinnedCommunityMessages(communityId)
-              .then((response) => {
-                if (response.success) {
-                  setPinnedMessages(response.data);
-                }
-              })
-              .catch((error) => {
-              });
-          }
-          return prev;
-        });
-      }
-    });
-
-    // Evento: mensagem editada na comunidade em tempo real
-    newSocket.on('community_message_edited', (data: CommunityMessageEditedEvent) => {
-
-      // Só atualizar se for da comunidade atual
-      if (data.communityId === communityId) {
-        setMessages((prev) => {
-          const messageExists = prev.some((msg) => msg.id === data.id);
-          if (!messageExists) {
-            return prev;
-          }
-
-          return prev.map((msg) =>
-            msg.id === data.id
-              ? { ...msg, content: data.content, edited: true, updatedAt: data.updatedAt }
-              : msg
-          );
-        });
-      }
-    });
-
-    // Evento: typing indicator
-    newSocket.on('community_typing', (data: { userId: string; communityId: string; isTyping: boolean }) => {
-      // Só atualizar se for da comunidade atual
-      const currentCommunityId = currentCommunityIdRef.current || communityId;
-      if (data.communityId === currentCommunityId) {
-        setIsTyping(data.isTyping);
-        setTypingUserId(data.isTyping ? data.userId : null);
-      } else {
-      }
-    });
 
     setSocket(newSocket);
 
@@ -903,6 +621,7 @@ export function useCommunityChat(communityId: string | null) {
             const messageWithAttachments: CommunityMessage = {
               ...response.data,
               attachments: finalAttachments,
+              clientId: optimisticMsg.id,
             };
 
             const updated = [...withoutOptimistic, messageWithAttachments];

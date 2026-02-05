@@ -489,7 +489,7 @@ export function CommunityChat({
       }}
     >
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-2 md:p-5 pt-12 space-y-3 md:space-y-6 pb-32 w-full max-w-full">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-2 md:p-5 pt-12 space-y-3 md:space-y-6 w-full max-w-full">
         {isLoadingMessages ? (
           <div className="flex flex-col gap-4">
             {[
@@ -612,6 +612,7 @@ export function CommunityChat({
           </div>
         ) : (
           <>
+            <AnimatePresence initial={false}>
             {messages.map((message, index) => {
               const messageIsOwn = isOwn(message.senderId);
               const showAvatar = index === 0 || messages[index - 1].senderId !== message.senderId;
@@ -661,8 +662,15 @@ export function CommunityChat({
               };
 
               return (
-                <div
-                  key={message.id}
+                <motion.div
+                  layout="position"
+                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ 
+                    duration: 0.2,
+                    ease: "easeOut"
+                  }}
+                  key={message.clientId || message.id}
                   ref={(el) => {
                     if (el) {
                       messageRefs.current.set(message.id, el);
@@ -833,9 +841,10 @@ export function CommunityChat({
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
+          </AnimatePresence>
 
             {/* Typing indicator */}
             {shouldShowTyping && typingMember && (

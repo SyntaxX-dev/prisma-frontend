@@ -159,9 +159,10 @@ export function useChat() {
                 ? optimisticMsg.attachments
                 : []);
           
-          const messageWithAttachments = {
+          const messageWithAttachments: Message = {
             ...message,
             attachments: finalAttachments,
+            clientId: optimisticMsg?.id,
           };
           
           const updated = [...withoutOptimistic, messageWithAttachments];
@@ -197,9 +198,10 @@ export function useChat() {
         if (similarOptimistic && finalAttachments.length > 0 && (!message.attachments || message.attachments.length === 0)) {
         }
         
-        const messageWithAttachments = {
+        const messageWithAttachments: Message = {
           ...message,
           attachments: finalAttachments,
+          clientId: similarOptimistic?.id,
         };
         
         const updated = [...prev, messageWithAttachments];
@@ -685,9 +687,10 @@ export function useChat() {
                 ? optimisticMsg.attachments
                 : []);
           
-          const messageWithAttachments = {
+          const messageWithAttachments: Message = {
             ...message,
             attachments: finalAttachments,
+            clientId: optimisticMsg?.id,
           };
           
           const updated = [...withoutOptimistic, messageWithAttachments];
@@ -724,9 +727,10 @@ export function useChat() {
         if (similarOptimistic && finalAttachments.length > 0 && (!message.attachments || message.attachments.length === 0)) {
         }
         
-        const messageWithAttachments = {
+        const messageWithAttachments: Message = {
           ...message,
           attachments: finalAttachments,
+          clientId: similarOptimistic?.id,
         };
         
         const updated = [...prev, messageWithAttachments];

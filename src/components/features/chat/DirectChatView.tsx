@@ -489,7 +489,8 @@ export function DirectChatView({
             </div>
           </div>
         ) : (
-          messages.map((msg: Message) => {
+          <AnimatePresence initial={false}>
+            {messages.map((msg: Message) => {
             const isOwn = msg.senderId === currentUserId;
             const messageDate = new Date(msg.createdAt);
             const timeAgo = formatDistanceToNow(messageDate, { addSuffix: true, locale: ptBR });
@@ -538,8 +539,15 @@ export function DirectChatView({
             };
 
             return (
-              <div
-                key={msg.id}
+              <motion.div
+                layout="position"
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  duration: 0.2,
+                  ease: "easeOut"
+                }}
+                key={msg.clientId || msg.id}
                 ref={(el) => {
                   if (el) {
                     messageRefs.current.set(msg.id, el);
@@ -686,9 +694,10 @@ export function DirectChatView({
                     )}
                   </div>
                 </div>
-              </div>
-            );
-          })
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         )}
 
         {(() => {
