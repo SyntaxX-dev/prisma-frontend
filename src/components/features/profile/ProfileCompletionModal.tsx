@@ -64,15 +64,25 @@ export function ProfileCompletionModal({
         }
     }, [isOpen]);
 
+    const getLocalContestOptions = (): Array<{ value: ContestType; label: string }> =>
+        Object.entries(CONTEST_TYPE_LABELS).map(([value, label]) => ({ value: value as ContestType, label }));
+
+    const getLocalCollegeOptions = (): Array<{ value: CollegeCourse; label: string }> =>
+        Object.entries(COLLEGE_COURSE_LABELS).map(([value, label]) => ({ value: value as CollegeCourse, label }));
+
     const loadOptions = async () => {
         try {
             const [contests, courses] = await Promise.all([
                 getContestOptions(),
                 getCollegeCourseOptions()
             ]);
-            setContestOptions(contests);
-            setCollegeOptions(courses);
+            const contestData = Array.isArray(contests) ? contests : [];
+            const collegeData = Array.isArray(courses) ? courses : [];
+            setContestOptions(contestData.length > 0 ? contestData : getLocalContestOptions());
+            setCollegeOptions(collegeData.length > 0 ? collegeData : getLocalCollegeOptions());
         } catch (error) {
+            setContestOptions(getLocalContestOptions());
+            setCollegeOptions(getLocalCollegeOptions());
         }
     };
 

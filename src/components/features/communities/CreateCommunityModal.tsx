@@ -326,30 +326,31 @@ export function CreateCommunityModal({
   return (
     <>
     <Dialog open={isOpen && !showCropModal} onOpenChange={handleClose}>
-      <DialogContent 
-        className="overflow-hidden border border-white/10 [&>button]:text-gray-300 [&>button]:cursor-pointer"
+      <DialogContent
+        className="overflow-y-auto border border-white/10 [&>button]:text-gray-300 [&>button]:cursor-pointer"
         style={{
           background: 'rgb(30, 30, 30)',
           maxWidth: '32rem',
+          maxHeight: '90dvh',
           padding: 0,
           gap: 0,
           borderRadius: '1rem',
         }}
       >
         {/* Header */}
-        <div style={{ padding: '2rem', paddingBottom: '1.5rem' }}>
+        <div style={{ padding: '1.5rem 1.5rem 1rem' }}>
           <div className="flex items-start justify-between" style={{ marginBottom: '0.5rem' }}>
             <div className="flex-1">
-              <h2 className="font-bold text-white" style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Crie sua própria comunidade</h2>
+              <h2 className="font-bold text-white" style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Crie sua própria comunidade</h2>
               <p style={{ fontSize: '0.875rem', color: 'rgb(156, 163, 175)' }}>
                 Crie e customize uma comunidade para sua galera estudar junto.
               </p>
             </div>
-           
+
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ paddingLeft: '2rem', paddingRight: '2rem', paddingBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ paddingLeft: '1.5rem', paddingRight: '1.5rem', paddingBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Error Message */}
           {error && (
             <div style={{ 

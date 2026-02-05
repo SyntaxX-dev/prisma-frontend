@@ -692,18 +692,11 @@ function CommunitiesPageContent() {
     }
   }, []);
 
-  // Abrir sidebar esquerda no mobile ao carregar a página
+  // Abrir sidebar esquerda no mobile ao carregar a página (apenas uma vez no mount)
   useEffect(() => {
-    const checkMobile = () => {
-      if (window.innerWidth < 1024) { // lg breakpoint do Tailwind
-        setIsMobileSidebarOpen(true);
-      }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-
-    return () => window.removeEventListener('resize', checkMobile);
+    if (window.innerWidth < 1024 && !chatUserId && !communityIdFromUrl) {
+      setIsMobileSidebarOpen(true);
+    }
   }, []);
 
   // Este useEffect foi removido - a restauração agora é feita no useEffect abaixo (linha 709)
@@ -1175,10 +1168,10 @@ function CommunitiesPageContent() {
   }
 
   return (
-    <div className="min-h-screen text-white relative">
+    <div className="h-dvh text-white relative overflow-hidden">
       <BackgroundGrid />
 
-      <div className="relative z-10 flex h-screen w-screen overflow-hidden p-2 md:p-4 pt-4 md:pt-6 gap-2 md:gap-3">
+      <div className="relative z-10 flex h-full w-full overflow-hidden p-2 md:p-4 pt-4 md:pt-6 gap-2 md:gap-3">
 
         {/* Mobile Sidebar Overlay */}
         <div
@@ -1976,7 +1969,7 @@ function CommunitiesPageContent() {
 export default function CommunitiesPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]" suppressHydrationWarning>
+      <div className="h-dvh flex items-center justify-center bg-[#0a0a0a]" suppressHydrationWarning>
         <LoadingGrid />
       </div>
     }>

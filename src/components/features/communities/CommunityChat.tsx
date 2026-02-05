@@ -953,7 +953,7 @@ export function CommunityChat({
               onKeyDown={handleKeyDown}
               placeholder={isConnected ? (editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem...") : "Conectando..."}
               disabled={!isConnected}
-              className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-2 md:px-3 py-1.5 text-sm flex-1 min-w-0 overflow-y-auto overflow-x-hidden max-w-full"
+              className="resize-none bg-[#29292E] border border-[#323238] text-white placeholder:text-gray-500 focus:border-[#bd18b4] focus:outline-none focus:ring-0 rounded-md px-2 md:px-3 py-1.5 text-base md:text-sm flex-1 min-w-0 overflow-y-auto overflow-x-hidden max-w-full"
               rows={1}
               style={{
                 wordBreak: 'break-word',

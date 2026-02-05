@@ -257,7 +257,7 @@ export function Pricing() {
         </motion.div>
 
         {/* Plans Container */}
-        <div className="flex flex-nowrap lg:flex-wrap justify-center gap-6 lg:gap-8 max-w-[1440px] mx-auto w-full">
+        <div className="flex flex-col md:flex-row flex-wrap justify-center items-center md:items-stretch gap-6 lg:gap-8 max-w-[1440px] mx-auto w-full">
           {plans.map((plan, index) => (
             <motion.div
               key={index}
@@ -265,7 +265,7 @@ export function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="w-full md:w-[calc(48%)] lg:w-[calc(31%)] min-w-[320px] max-w-[420px]"
+              className="w-full max-w-[420px] md:w-[calc(48%)] lg:w-[calc(31%)]"
             >
               <div
                 className={`bg-surface-card rounded-2xl p-8 lg:p-12 min-h-[600px] flex flex-col relative transition-all duration-300 ${plan.popular

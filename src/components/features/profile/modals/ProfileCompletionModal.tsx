@@ -64,24 +64,28 @@ export function ProfileCompletionModal({
         }
     }, [isOpen]);
 
+    const getLocalContestOptions = (): Array<{ value: ContestType; label: string }> =>
+        Object.entries(CONTEST_TYPE_LABELS).map(([value, label]) => ({ value: value as ContestType, label }));
+
+    const getLocalCollegeOptions = (): Array<{ value: CollegeCourse; label: string }> =>
+        Object.entries(COLLEGE_COURSE_LABELS).map(([value, label]) => ({ value: value as CollegeCourse, label }));
+
     const loadOptions = async () => {
         try {
             const [contests, courses] = await Promise.all([
                 getContestOptions(),
                 getCollegeCourseOptions()
             ]);
-            
-            // Garantir que os dados sejam arrays, extraindo .data se necessário
+
             const contestData = Array.isArray(contests) ? contests : (contests as any)?.data || [];
             const collegeData = Array.isArray(courses) ? courses : (courses as any)?.data || [];
-            
-            setContestOptions(contestData);
-            setCollegeOptions(collegeData);
+
+            setContestOptions(contestData.length > 0 ? contestData : getLocalContestOptions());
+            setCollegeOptions(collegeData.length > 0 ? collegeData : getLocalCollegeOptions());
         } catch (error) {
-            console.error('Erro ao carregar opções:', error);
-            // Fallback para array vazio em caso de erro
-            setContestOptions([]);
-            setCollegeOptions([]);
+            console.error('Erro ao carregar opções da API, usando labels locais:', error);
+            setContestOptions(getLocalContestOptions());
+            setCollegeOptions(getLocalCollegeOptions());
         }
     };
 
