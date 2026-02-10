@@ -8,6 +8,7 @@ import { Users, Lock, Globe, Loader2 } from "lucide-react";
 import type { Community } from "@/types/community";
 import { joinCommunity } from "@/api/communities/join-community";
 import { useNotifications } from "@/hooks/shared/useNotifications";
+import { useCacheInvalidation } from "@/hooks/shared";
 
 interface CommunityJoinTooltipProps {
   community: Community;
@@ -26,6 +27,7 @@ export function CommunityJoinTooltip({
 }: CommunityJoinTooltipProps) {
   const [isJoining, setIsJoining] = useState(false);
   const { showSuccess, showError } = useNotifications();
+  const { communities } = useCacheInvalidation();
 
   // Calcular posição ajustada para não cortar
   const getAdjustedPosition = () => {
@@ -81,6 +83,10 @@ export function CommunityJoinTooltip({
     try {
       setIsJoining(true);
       await joinCommunity(community.id);
+
+      // Invalidar cache de comunidades após entrar
+      await communities();
+
       showSuccess("Você entrou na comunidade com sucesso!");
       onJoinSuccess();
       onClose();

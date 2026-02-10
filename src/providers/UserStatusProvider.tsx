@@ -188,6 +188,15 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
           }));
         }
       }
+
+      // Repassar eventos de comunidade para o useCommunityChat via eventos customizados
+      if (eventName === 'new_community_message' || eventName === 'community_typing' || eventName === 'community_message_deleted' || eventName === 'community_message_edited') {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(`chat_${eventName}`, {
+            detail: args[0],
+          }));
+        }
+      }
     });
 
     // setSocket será chamado no evento 'connect'

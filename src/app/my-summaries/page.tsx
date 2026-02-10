@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { Calendar, FileText, Loader2 } from 'lucide-react';
-import { listUserMindMaps, MindMapData } from '@/api/mind-map/generate-mind-map';
+import { MindMapData } from '@/api/mind-map/generate-mind-map';
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,13 +11,15 @@ import { Sidebar } from '@/components/Sidebar';
 import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { LoadingGrid } from '@/components/ui/loading-grid';
 import { usePageDataLoad } from '@/hooks/shared';
+import { useMySummaries, useAIContentCache } from '@/hooks/features/ai-content';
 
 function MySummariesContent() {
   const [isDark, setIsDark] = useState(true);
-  const [summaries, setSummaries] = useState<MindMapData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedSummary, setSelectedSummary] = useState<MindMapData | null>(null);
+
+  // Hook com cache para resumos
+  const { data: summaries = [], isLoading: loading, error, refetch } = useMySummaries();
+  const { invalidateSummaries } = useAIContentCache();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -28,30 +30,11 @@ function MySummariesContent() {
     customDelay: 0
   });
 
-  useEffect(() => {
-    const fetchSummaries = async () => {
-      try {
-        const response = await listUserMindMaps();
-        if (response.success && response.data && Array.isArray(response.data.mindMaps)) {
-          // Filter only text summaries
-          const textSummaries = response.data.mindMaps.filter(
-            (map) => map.generationType === 'text'
-          );
-          setSummaries(textSummaries);
-        } else {
-          setSummaries([]);
-        }
-      } catch (err) {
-        setError('Erro ao carregar resumos');
-        console.error('Error fetching summaries:', err);
-        setSummaries([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSummaries();
-  }, []);
+  // Função para recarregar com invalidação de cache
+  const handleRetry = async () => {
+    await invalidateSummaries();
+    refetch();
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -93,7 +76,13 @@ function MySummariesContent() {
             <Navbar isDark={isDark} toggleTheme={toggleTheme} />
             <div className="flex items-center justify-center min-h-screen p-4 pt-28">
               <div className="text-center">
-                <p className="text-sm md:text-base text-red-400">{error}</p>
+                <p className="text-sm md:text-base text-red-400 mb-4">Erro ao carregar resumos</p>
+                <Button
+                  onClick={handleRetry}
+                  className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold"
+                >
+                  Tentar Novamente
+                </Button>
               </div>
             </div>
           </div>

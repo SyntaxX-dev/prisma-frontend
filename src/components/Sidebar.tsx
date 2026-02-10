@@ -1,4 +1,4 @@
-import { ChevronDown, Home, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain, UserPlus, Menu, X } from "lucide-react";
+import { ChevronDown, Home, MessageCircle, Eye, FileText, FolderOpen, Zap, User, Settings, PenTool, Brain, UserPlus } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -50,6 +50,18 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
       }
     };
   }, [hideTimeout]);
+
+  // Escutar evento customizado da Navbar para abrir/fechar menu mobile
+  useEffect(() => {
+    const handleToggleMobileSidebar = () => {
+      setIsMobileMenuOpen(prev => !prev);
+    };
+
+    window.addEventListener('toggle-mobile-sidebar', handleToggleMobileSidebar);
+    return () => {
+      window.removeEventListener('toggle-mobile-sidebar', handleToggleMobileSidebar);
+    };
+  }, []);
 
   const toggleSection = (section: keyof typeof collapsedSections) => {
     setCollapsedSections(prev => ({
@@ -159,14 +171,6 @@ export function Sidebar({ isDark, toggleTheme, isVideoPlaying = false }: Sidebar
 
   return (
     <>
-      {/* Mobile Menu Button - Fixed Top */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="md:hidden fixed top-4 left-4 z-[60] bg-white/20 backdrop-blur-md border border-white/30 rounded-full p-3 text-white hover:bg-white/30 transition-all"
-      >
-        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
-
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div

@@ -470,6 +470,142 @@ export function useCommunityChat(communityId: string | null) {
     }
   }, [communityId]);
 
+  // Escutar eventos customizados repassados pelo UserStatusProvider
+  useEffect(() => {
+    if (typeof window === 'undefined' || !communityId) return;
+
+    const handleNewCommunityMessage = (event: CustomEvent<NewCommunityMessageEvent>) => {
+      const data = event.detail;
+      const currentCommunityId = currentCommunityIdRef.current;
+
+      if (!currentCommunityId || data.communityId !== currentCommunityId) {
+        return;
+      }
+
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg.id === data.id);
+        if (exists) {
+          return prev;
+        }
+
+        // Verificar se há mensagem otimista similar
+        const hasSimilarOptimistic = prev.some((msg) => {
+          if (!msg.id.startsWith('temp-')) return false;
+          if (msg.senderId !== data.senderId) return false;
+          if (msg.communityId !== data.communityId) return false;
+          const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+          return contentsMatch;
+        });
+
+        if (hasSimilarOptimistic) {
+          const optimisticMsg = prev.find((msg) => {
+            if (!msg.id.startsWith('temp-')) return false;
+            if (msg.senderId !== data.senderId) return false;
+            if (msg.communityId !== data.communityId) return false;
+            const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+            return contentsMatch;
+          });
+
+          const withoutOptimistic = prev.filter((msg) => {
+            if (!msg.id.startsWith('temp-')) return true;
+            if (msg.senderId !== data.senderId) return true;
+            if (msg.communityId !== data.communityId) return true;
+            const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
+            return !contentsMatch;
+          });
+
+          const finalAttachments = data.attachments && data.attachments.length > 0
+            ? data.attachments
+            : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
+                ? optimisticMsg.attachments
+                : []);
+
+          const communityMessage: CommunityMessage = {
+            ...data,
+            edited: false,
+            updatedAt: null,
+            attachments: finalAttachments,
+            clientId: optimisticMsg?.id,
+          };
+
+          const updated = [...withoutOptimistic, communityMessage];
+          return updated.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        }
+
+        const communityMessage: CommunityMessage = {
+          ...data,
+          edited: false,
+          updatedAt: null,
+          attachments: data.attachments || [],
+        };
+
+        const updated = [...prev, communityMessage];
+        return updated.sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      });
+    };
+
+    const handleCommunityTyping = (event: CustomEvent<{ userId: string; communityId: string; isTyping: boolean }>) => {
+      const data = event.detail;
+      const currentCommunityId = currentCommunityIdRef.current;
+
+      if (!currentCommunityId || data.communityId !== currentCommunityId) {
+        return;
+      }
+
+      setIsTyping(data.isTyping);
+      setTypingUserId(data.isTyping ? data.userId : null);
+    };
+
+    const handleCommunityMessageDeleted = (event: CustomEvent<CommunityMessageDeletedEvent>) => {
+      const data = event.detail;
+      const currentCommunityId = currentCommunityIdRef.current;
+
+      if (!currentCommunityId || data.communityId !== currentCommunityId) {
+        return;
+      }
+
+      setMessages((prev) => prev.filter((msg) => msg.id !== data.messageId));
+      setPinnedMessages((prev) => prev.filter((msg) => msg.id !== data.messageId));
+    };
+
+    const handleCommunityMessageEdited = (event: CustomEvent<CommunityMessageEditedEvent>) => {
+      const data = event.detail;
+      const currentCommunityId = currentCommunityIdRef.current;
+
+      if (!currentCommunityId || data.communityId !== currentCommunityId) {
+        return;
+      }
+
+      setMessages((prev) => {
+        const messageExists = prev.some((msg) => msg.id === data.id);
+        if (!messageExists) {
+          return prev;
+        }
+        return prev.map((msg) =>
+          msg.id === data.id
+            ? { ...msg, content: data.content, edited: true, updatedAt: data.updatedAt }
+            : msg
+        );
+      });
+    };
+
+    window.addEventListener('chat_new_community_message', handleNewCommunityMessage as EventListener);
+    window.addEventListener('chat_community_typing', handleCommunityTyping as EventListener);
+    window.addEventListener('chat_community_message_deleted', handleCommunityMessageDeleted as EventListener);
+    window.addEventListener('chat_community_message_edited', handleCommunityMessageEdited as EventListener);
+
+    return () => {
+      window.removeEventListener('chat_new_community_message', handleNewCommunityMessage as EventListener);
+      window.removeEventListener('chat_community_typing', handleCommunityTyping as EventListener);
+      window.removeEventListener('chat_community_message_deleted', handleCommunityMessageDeleted as EventListener);
+      window.removeEventListener('chat_community_message_edited', handleCommunityMessageEdited as EventListener);
+    };
+  }, [communityId]);
+
   const loadMessages = useCallback(async (limit: number = 50, offset: number = 0) => {
     if (!communityId) return;
     try {

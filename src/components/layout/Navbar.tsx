@@ -1,6 +1,11 @@
 "use client";
 
 import { Search, Bell, HelpCircle, X, LogOut, User, Settings, AlertCircle, Loader2, Menu } from "lucide-react";
+
+// Evento customizado para controlar o menu mobile da sidebar
+const toggleMobileSidebar = () => {
+  window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'));
+};
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import {
@@ -28,6 +33,7 @@ import { StreakCalendar } from "../features/offensives/StreakCalendar";
 import { ProfileCompletionModal } from "../features/profile/modals/ProfileCompletionModal";
 import { getEmailValue } from "@/lib/utils/email";
 import { getAuthState } from "@/lib/auth";
+import { NotificationResponse } from "@/api/profile/get-notifications";
 
 interface NavbarProps {
   isDark?: boolean;
@@ -47,6 +53,32 @@ export function Navbar({ }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
+
+  // Estado local para notificações em tempo real
+  const [localNotification, setLocalNotification] = useState<NotificationResponse | null>(null);
+
+  // Escutar eventos de atualização de notificações do perfil
+  useEffect(() => {
+    const handleNotificationsUpdate = (event: CustomEvent<NotificationResponse>) => {
+      setLocalNotification(event.detail);
+    };
+
+    window.addEventListener('profile-notifications-updated', handleNotificationsUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('profile-notifications-updated', handleNotificationsUpdate as EventListener);
+    };
+  }, []);
+
+  // Sincronizar com user.notification quando mudar
+  useEffect(() => {
+    if (user?.notification) {
+      setLocalNotification({
+        ...user.notification,
+        badge: user.notification.badge ?? null
+      });
+    }
+  }, [user?.notification]);
 
   // Atualizar currentPath quando a URL mudar
   useEffect(() => {
@@ -78,8 +110,9 @@ export function Navbar({ }: NavbarProps) {
     }
   }, [refetchOffensives]);
 
-  const hasNotification = user?.notification?.hasNotification || false;
-  const notificationData = user?.notification;
+  // Usar localNotification para dados em tempo real
+  const hasNotification = localNotification?.hasNotification || false;
+  const notificationData = localNotification;
 
   // Controlar hidratação para evitar problemas de SSR
   useEffect(() => {
@@ -151,6 +184,17 @@ export function Navbar({ }: NavbarProps) {
     >
       <div className="flex items-center gap-2 md:justify-between relative w-full">
 
+        {/* Mobile Menu Button - À esquerda no mobile */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="md:hidden bg-glass-hover backdrop-blur-md border border-glass-border-hover text-white/80 hover:text-brand hover:bg-white/10 rounded-full w-11 h-11 p-0 cursor-pointer shrink-0"
+          onClick={toggleMobileSidebar}
+          title="Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
+
         {/* Desktop Navigation */}
         <div className="hidden md:block bg-glass-hover backdrop-blur-md rounded-full px-4 xl:px-6 py-2 xl:py-3 border border-glass-border-hover min-w-0 shrink">
           <nav className="flex items-center gap-3 xl:gap-6">
@@ -169,9 +213,9 @@ export function Navbar({ }: NavbarProps) {
           </nav>
         </div>
 
-        <div className="bg-glass-hover backdrop-blur-md rounded-full px-3 xl:px-4 py-2 xl:py-3 border border-glass-border-hover mx-auto md:mx-0 shrink-0">
+        <div className="bg-glass-hover backdrop-blur-md rounded-full px-3 xl:px-4 py-2 xl:py-3 border border-glass-border-hover mx-auto md:mx-0 shrink min-w-0">
           <div className="flex items-center gap-2 md:gap-3">
-            <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-48 md:w-64' : 'w-8'
+            <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-40 sm:w-52 md:w-64' : 'w-8'
               }`}>
               {searchExpanded || isSearching ? (
                 <div className="flex items-center gap-2">

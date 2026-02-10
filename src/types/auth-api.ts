@@ -64,6 +64,7 @@ export interface UserProfile {
   habilities?: string | null;
   momentCareer?: string | null;
   location?: string | null;
+  locationVisibility?: 'PUBLIC' | 'STATE_ONLY' | 'PRIVATE';
   userFocus?: string | null;
   contestType?: string | null;
   collegeCourse?: string | null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
 import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
@@ -12,33 +12,20 @@ import { useParams } from "next/navigation";
 import { useNavigationWithLoading } from "@/hooks/shared";
 import { useLoading } from "@/contexts/LoadingContext";
 import { usePageDataLoad } from "@/hooks/shared";
-import { useAuth } from "@/hooks/features/auth";
-
-interface SubCourse {
-  id: string;
-  courseId: string;
-  name: string;
-  description: string;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-  channelThumbnailUrl?: string;
-}
-
+import { useSubCourses, useSubCoursesCache } from "@/hooks/features/courses";
 
 export default function CoursePage() {
   const [isDark, setIsDark] = useState(true);
   const [searchInput, setSearchInput] = useState('');
-  const [isDataLoading, setIsDataLoading] = useState(true);
-  const [showLoading, setShowLoading] = useState(false);
-  const [subCourses, setSubCourses] = useState<SubCourse[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const params = useParams();
   const courseId = params.courseId as string;
   const { setLoading } = useLoading();
   const { navigateWithLoading } = useNavigationWithLoading();
-  const { user } = useAuth();
+
+  // Hook com cache para subcursos
+  const { data: subCourses = [], isLoading: isDataLoading, error, refetch } = useSubCourses(courseId);
+  const { invalidate } = useSubCoursesCache();
 
   usePageDataLoad({
     waitForData: true,
@@ -46,49 +33,11 @@ export default function CoursePage() {
     customDelay: 0
   });
 
-  useEffect(() => {
-    const fetchCourseData = async () => {
-      if (!user || !courseId) return;
-
-      try {
-        setIsDataLoading(true);
-
-        // Show loading after 2 seconds
-        const loadingTimeout = setTimeout(() => {
-          setShowLoading(true);
-        }, 2000);
-
-        const token = localStorage.getItem('auth_token');
-
-        // Fetch sub-courses
-        const subCoursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}/sub-courses`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        const subCoursesData = await subCoursesResponse.json();
-
-        if (subCoursesData.success) {
-          // Usar dados dos subcursos sem fazer requisições adicionais para vídeos
-          setSubCourses(subCoursesData.data);
-        } else {
-          setError('Erro ao carregar subcursos');
-        }
-
-        // Clear loading timeout if data loads before 2 seconds
-        clearTimeout(loadingTimeout);
-      } catch (err) {
-        setError('Erro ao conectar com o servidor');
-      } finally {
-        setIsDataLoading(false);
-        setShowLoading(false);
-      }
-    };
-
-    fetchCourseData();
-  }, [user, courseId]);
+  // Função para recarregar com invalidação de cache
+  const handleRetry = async () => {
+    await invalidate(courseId);
+    refetch();
+  };
 
   const handleGoBack = () => {
     setLoading(true, 'Voltando...');
@@ -125,10 +74,15 @@ export default function CoursePage() {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-white text-2xl font-bold mb-4">{error}</h1>
-          <Button onClick={() => router.push('/courses')} className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black">
-            Voltar aos Cursos
-          </Button>
+          <h1 className="text-white text-2xl font-bold mb-4">Erro ao carregar subcursos</h1>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={handleRetry} className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black">
+              Tentar Novamente
+            </Button>
+            <Button onClick={() => router.push('/courses')} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+              Voltar aos Cursos
+            </Button>
+          </div>
         </div>
       </div>
     );

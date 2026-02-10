@@ -5,7 +5,7 @@ import { Navbar } from "../../../components/Navbar";
 import { Sidebar } from "../../../components/Sidebar";
 import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useAuth } from "../../../hooks/features/auth";
-import { useNotifications } from "../../../hooks/shared";
+import { useNotifications, useCacheInvalidation } from "../../../hooks/shared";
 import { usePageDataLoad } from "@/hooks/shared";
 import { useChangePlan } from "../../../hooks/features/subscriptions";
 import { getSubscription } from "../../../api/subscriptions/get-subscription";
@@ -42,6 +42,7 @@ function SettingsContent() {
   const [isDark, setIsDark] = useState(true);
   const { user } = useAuth();
   const { showSuccess, showError } = useNotifications();
+  const { subscription: invalidateSubscription } = useCacheInvalidation();
   const { changeUserPlan, loading: isChangingPlan } = useChangePlan();
   const [showCancelSubscriptionDialog, setShowCancelSubscriptionDialog] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
@@ -177,6 +178,9 @@ function SettingsContent() {
 
       const result = await changeUserPlan(newPlanId);
 
+      // Invalidar cache de assinatura após mudança de plano
+      await invalidateSubscription();
+
       if (result.isUpgrade && result.paymentUrl) {
         // É upgrade com pagamento pendente - armazenar dados e mostrar modal
         setUpgradeData(result);
@@ -214,6 +218,9 @@ function SettingsContent() {
       setIsCancellingPlanChange(true);
       const response = await cancelPlanChange();
       if (response.success) {
+        // Invalidar cache de assinatura
+        await invalidateSubscription();
+
         showSuccess('Mudança de plano cancelada com sucesso!');
         setPendingPlanChange(null);
         await loadSubscription();
@@ -389,8 +396,8 @@ function SettingsContent() {
                           {plan.features.map((feature, index) => (
                             <li key={index} className="flex items-start gap-2 text-sm lg:text-base text-white/80">
                               <Check className="w-4 h-4 lg:w-5 lg:h-5 text-[#bd18b4] mt-0.5 flex-shrink-0" />
-                              <span className={feature === 'Acesso a IA de resumos para cada curso' 
-                                ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand via-brand-accent to-brand-secondary animate-gradient bg-[length:200%_auto] font-bold' 
+                              <span className={feature === 'Acesso a IA de resumos para cada curso'
+                                ? 'animate-rainbow font-bold'
                                 : ''}>
                                 {feature}
                               </span>

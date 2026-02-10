@@ -12,6 +12,7 @@ import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { PlanUpgradeModal } from '@/components/features/subscriptions/PlanUpgradeModal';
 import { Sparkles, Check, X, Download, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/features/auth';
+import { useCacheInvalidation } from '@/hooks/shared';
 
 type ViewState = 'input' | 'quiz' | 'result';
 
@@ -23,6 +24,7 @@ interface AnswerFeedback {
 
 export default function QuestionsPage() {
   const { user } = useAuth();
+  const { questions: invalidateQuestions } = useCacheInvalidation();
   const router = useRouter();
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
@@ -154,6 +156,9 @@ export default function QuestionsPage() {
 
       // Store result in localStorage for PDF generation
       localStorage.setItem(`quiz_result_${sessionId}`, JSON.stringify(response.data));
+
+      // Invalidar cache de questões após completar quiz
+      await invalidateQuestions();
 
       setViewState('result');
     } catch (err) {

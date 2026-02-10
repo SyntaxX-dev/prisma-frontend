@@ -68,7 +68,7 @@ export function UpgradeConfirmationModal({
                     {/* Detalhes do Upgrade */}
                     <div className="bg-[#29292E] rounded-xl p-6 border border-[#323238]">
                         <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
-                            📊 Detalhes do Upgrade
+                            Detalhes do Upgrade
                         </h3>
 
                         {/* Comparação de Planos */}
@@ -103,7 +103,7 @@ export function UpgradeConfirmationModal({
                         {data.creditAmount && data.creditAmount > 0 && (
                             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
                                 <h4 className="text-green-400 font-semibold mb-2 flex items-center gap-2">
-                                    💰 Crédito Aplicado: R$ {data.creditAmount.toFixed(2)}
+                                    Crédito Aplicado: R$ {data.creditAmount.toFixed(2)}
                                 </h4>
                                 <p className="text-gray-300 text-sm">
                                     Foi subtraído R$ {data.creditAmount.toFixed(2)} da fatura deste mês em virtude
@@ -118,7 +118,7 @@ export function UpgradeConfirmationModal({
                                 {amountToPay > 0 ? (
                                     <>
                                         <h4 className="text-[#8b5cf6] font-semibold mb-2 flex items-center gap-2">
-                                            💳 Valor a Pagar: R$ {amountToPay.toFixed(2)}
+                                            Valor a Pagar: R$ {amountToPay.toFixed(2)}
                                         </h4>
                                         <p className="text-gray-300 text-sm">
                                             (Valor do novo plano: R$ {newPlanPrice} - Crédito: R$ {data.creditAmount?.toFixed(2) || '0,00'})
@@ -126,7 +126,7 @@ export function UpgradeConfirmationModal({
                                     </>
                                 ) : (
                                     <h4 className="text-green-400 font-semibold flex items-center gap-2">
-                                        ✅ O crédito cobre totalmente o novo plano!
+                                        O crédito cobre totalmente o novo plano!
                                     </h4>
                                 )}
                             </div>
@@ -135,7 +135,7 @@ export function UpgradeConfirmationModal({
                         {/* Novo Período */}
                         <div className="bg-[#1a1b1e] rounded-lg p-4">
                             <h4 className="text-white font-semibold mb-2 flex items-center gap-2">
-                                📅 Novo Período
+                                Novo Período
                             </h4>
                             <p className="text-gray-300 text-sm">
                                 {formatDate(data.effectiveDate)} até {calculatePeriodEnd(data.effectiveDate)}

@@ -30,6 +30,14 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
   const [searchType, setSearchType] = useState<'cep' | 'manual' | 'address'>('cep');
   const [cep, setCep] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Função para aplicar máscara de CEP (00000-000)
+  const applyCepMask = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .slice(0, 9);
+  };
   const [addressData, setAddressData] = useState<LocationData | null>(null);
   const [manualAddress, setManualAddress] = useState({
     rua: '',
@@ -64,32 +72,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
     }
   };
 
-  // Função para buscar endereço por cidade/estado
-  const searchByAddress = async () => {
-    if (!manualAddress.cidade || !manualAddress.estado) {
-      alert('Digite pelo menos a cidade e estado');
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      const query = `${manualAddress.cidade}, ${manualAddress.estado}`;
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=1`);
-      const data = await response.json();
-      
-      if (data.length > 0) {
-        const result = data[0];
-        const fullAddress = `${manualAddress.rua ? manualAddress.rua + ', ' : ''}${manualAddress.numero ? manualAddress.numero + ', ' : ''}${manualAddress.bairro ? manualAddress.bairro + ', ' : ''}${result.display_name}`;
-        onChange(fullAddress);
-      } else {
-        alert('Localização não encontrada');
-      }
-    } catch (error) {
-      alert('Erro ao buscar endereço');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   // Função para construir endereço manual
   const buildManualAddress = () => {
@@ -125,16 +108,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
           <Search className="w-4 h-4 mr-1" />
           CEP
         </Button>
-        <Button
-          type="button"
-          variant={searchType === 'address' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSearchType('address')}
-          className={searchType === 'address' ? 'bg-[#bd18b4] text-black' : 'border-[#323238] text-gray-300'}
-        >
-          <MapPin className="w-4 h-4 mr-1" />
-          Endereço
-        </Button>
+
         <Button
           type="button"
           variant={searchType === 'manual' ? 'default' : 'outline'}
@@ -154,8 +128,8 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
             <Input
               type="text"
               value={cep}
-              onChange={(e) => setCep(e.target.value)}
-              placeholder="Digite o CEP (apenas números)"
+              onChange={(e) => setCep(applyCepMask(e.target.value))}
+              placeholder="00000-000"
               className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
               maxLength={9}
             />
@@ -179,37 +153,7 @@ export function LocationField({ value, onChange, placeholder = "Digite sua local
         </div>
       )}
 
-      {/* Busca por endereço */}
-      {searchType === 'address' && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="text"
-              value={manualAddress.cidade}
-              onChange={(e) => setManualAddress(prev => ({ ...prev, cidade: e.target.value }))}
-              placeholder="Cidade"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
-            />
-            <Input
-              type="text"
-              value={manualAddress.estado}
-              onChange={(e) => setManualAddress(prev => ({ ...prev, estado: e.target.value }))}
-              placeholder="Estado (UF)"
-              className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none"
-              maxLength={2}
-            />
-          </div>
-          <Button
-            type="button"
-            onClick={searchByAddress}
-            disabled={isLoading || !manualAddress.cidade || !manualAddress.estado}
-            className="w-full bg-[#bd18b4] hover:bg-[#aa22c5] text-black disabled:opacity-50"
-          >
-            {isLoading ? <LoadingGrid size="16" color="#bd18b4" className="mr-2" /> : <Search className="w-4 h-4 mr-2" />}
-            Buscar Localização
-          </Button>
-        </div>
-      )}
+
 
       {/* Entrada manual */}
       {searchType === 'manual' && (

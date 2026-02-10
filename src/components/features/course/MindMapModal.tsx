@@ -9,6 +9,7 @@ import { LoadingGrid } from "../../ui/loading-grid";
 import InteractiveMindMap from "./InteractiveMindMap";
 import ReactMarkdown from 'react-markdown';
 import { formatResetTime } from "@/lib/utils/time";
+import { useAIContentCache } from "@/hooks/features/ai-content";
 
 interface MindMapModalProps {
   open: boolean;
@@ -34,16 +35,14 @@ export function MindMapModal({
   const [generatedType, setGeneratedType] = useState<GenerationType | null>(null);
   const [downloading, setDownloading] = useState(false);
 
+  // Hook para invalidar cache após geração
+  const { invalidateAfterGeneration } = useAIContentCache();
+
   // Buscar informações dos limites quando o modal abre
   useEffect(() => {
     if (open) {
       getGenerationLimits()
         .then((response) => {
-          console.log('Generation Limits Response:', response.data);
-          console.log('Mindmap canGenerate:', response.data.mindmap.canGenerate);
-          console.log('Text canGenerate:', response.data.text.canGenerate);
-          console.log('Mindmap resetTime:', response.data.mindmap.resetTime);
-          console.log('Text resetTime:', response.data.text.resetTime);
           setLimitsInfo(response.data);
         })
         .catch(() => {
@@ -69,6 +68,9 @@ export function MindMapModal({
 
       setMindMap(response.data.content);
       setGeneratedType(type);
+
+      // Invalidar cache após geração bem-sucedida
+      await invalidateAfterGeneration(type === 'text' ? 'summary' : 'mindmap');
 
       // Atualizar limites após geração bem-sucedida
       if (response.data.remainingGenerations !== undefined) {

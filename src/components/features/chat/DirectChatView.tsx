@@ -367,7 +367,8 @@ export function DirectChatView({
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a] w-full max-w-full overflow-hidden">
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-2 md:p-4 pt-12 space-y-3 md:space-y-4 w-full max-w-full">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-2 md:p-4 pt-12 w-full max-w-full">
+        <div className="flex flex-col justify-end min-h-full space-y-3 md:space-y-4">
         {isLoadingMessages ? (
           <div className="flex flex-col gap-4">
             {[
@@ -746,6 +747,7 @@ export function DirectChatView({
           )}
 
         <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Input */}

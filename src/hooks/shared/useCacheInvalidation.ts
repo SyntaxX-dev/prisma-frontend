@@ -77,7 +77,29 @@ export function useCacheInvalidation() {
     progress: () => CacheInvalidation.invalidateProgress(queryClient),
     options: () => CacheInvalidation.invalidateOptions(queryClient),
     afterAuth: () => CacheInvalidation.invalidateAfterAuth(queryClient),
-    
+
+    // Novas funções de invalidação
+    communities: () => CacheInvalidation.invalidateCommunities(queryClient),
+    watching: () => CacheInvalidation.invalidateWatching(queryClient),
+    summaries: () => CacheInvalidation.invalidateSummaries(queryClient),
+    mindMaps: () => CacheInvalidation.invalidateMindMaps(queryClient),
+    aiContent: () => CacheInvalidation.invalidateAIContent(queryClient),
+    questions: () => CacheInvalidation.invalidateQuestions(queryClient),
+    subscription: () => CacheInvalidation.invalidateSubscription(queryClient),
+    messages: () => CacheInvalidation.invalidateMessages(queryClient),
+
+    // Funções compostas para ações comuns
+    afterVideoAction: () => CacheInvalidation.invalidateAfterVideoAction(queryClient),
+    afterVideoCompletion: () => CacheInvalidation.invalidateVideoCompletion(queryClient),
+    afterAIGeneration: (type: 'summary' | 'mindmap') =>
+      CacheInvalidation.invalidateAfterAIGeneration(queryClient, type),
+
+    // Invalidações por ID
+    courseById: (courseId: string) => CacheInvalidation.invalidateCourseById(queryClient, courseId),
+    communityById: (communityId: string) => CacheInvalidation.invalidateCommunityById(queryClient, communityId),
+    subCourses: (courseId?: string) => CacheInvalidation.invalidateSubCourses(queryClient, courseId),
+    moduleVideos: (moduleId: string) => CacheInvalidation.invalidateModuleVideos(queryClient, moduleId),
+
     /**
      * Invalidar por ID específico
      */

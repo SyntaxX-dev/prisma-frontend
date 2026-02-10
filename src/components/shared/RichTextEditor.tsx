@@ -246,17 +246,24 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
             </div>
 
             {isLinkModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-[#202024] border border-[#323238] rounded-lg p-6 w-96">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                    <div className="bg-[#202024] border border-[#323238] rounded-lg p-6 w-96 shadow-xl relative z-[10000]">
                         <h3 className="text-white text-lg font-semibold mb-4">Adicionar Link</h3>
                         <input
                             type="url"
                             value={linkUrl}
                             onChange={(e) => setLinkUrl(e.target.value)}
                             placeholder="https://exemplo.com"
-                            className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer px-3 py-2 rounded"
+                            className="w-full bg-[#29292E] border border-[#323238] text-white placeholder-gray-400 focus:border-[#bd18b4] focus:ring-1 focus:ring-[#bd18b4] focus:outline-none px-3 py-2 rounded mb-4"
+                            autoFocus
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    setLink();
+                                }
+                            }}
                         />
-                        <div className="flex justify-end space-x-3 mt-4">
+                        <div className="flex justify-end space-x-3">
                             <Button
                                 type="button"
                                 variant="outline"

@@ -98,7 +98,7 @@ const formatDuration = (seconds: number): string => {
 export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, subCourseId }: CourseDetailProps) {
 
   const { navigateWithLoading } = useNavigationWithLoading();
-  const { invalidateTags } = useCacheInvalidation();
+  const { afterVideoAction } = useCacheInvalidation();
   const router = useRouter();
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
@@ -371,7 +371,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                         });
 
                         // Invalidar cache
-                        await invalidateTags(['offensives', 'streak']);
+                        await afterVideoAction();
 
                       } catch (error) {
                       }
@@ -564,7 +564,7 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       
       // Invalidar cache de offensives para atualizar o calendário
       try {
-        await invalidateTags(['offensives', 'streak']);
+        await afterVideoAction();
         
         // Forçar refetch dos dados de offensives
         if (typeof window !== 'undefined' && (window as any).refetchOffensives) {

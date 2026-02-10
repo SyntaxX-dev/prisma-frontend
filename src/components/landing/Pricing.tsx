@@ -310,13 +310,12 @@ export function Pricing() {
                       <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-brand" strokeWidth={3} />
                       <span
                         className={`text-sm ${feature === "Acesso a IA de resumos para cada curso" || feature === "Lançamento de cursos próprios"
-                          ? "text-transparent bg-clip-text bg-gradient-to-r from-brand via-brand-accent to-brand-secondary animate-gradient bg-[length:200%_auto] font-bold"
+                          ? "animate-rainbow font-bold"
                           : "text-gray-300"
                           }`}
                         style={{
                           fontFamily: 'Metropolis, sans-serif',
-                          fontWeight: (feature === "Acesso a IA de resumos para cada curso" || feature === "Lançamento de cursos próprios") ? 800 : 300,
-                          animationDuration: (feature === "Acesso a IA de resumos para cada curso" || feature === "Lançamento de cursos próprios") ? '3s' : undefined
+                          fontWeight: (feature === "Acesso a IA de resumos para cada curso" || feature === "Lançamento de cursos próprios") ? 800 : 300
                         }}
                       >
                         {feature}

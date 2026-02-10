@@ -34,12 +34,13 @@ import {
   getNotifications 
 } from '@/api/profile';
 import { updateLocation } from '@/api/profile/update-location';
-import { useClientOnly } from '../../shared';
+import { useClientOnly, useCacheInvalidation } from '../../shared';
 
 export function useProfile() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { profile: invalidateProfileCache } = useCacheInvalidation();
   const [avatarImage, setAvatarImage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,7 +89,14 @@ export function useProfile() {
   // Função para carregar o perfil do usuário
   const loadUserProfile = useCallback(async () => {
     if (!isClient) return;
-    
+
+    // Verificar se existe token antes de fazer a chamada
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -260,48 +268,94 @@ export function useProfile() {
     setUserProfile(prev => prev ? { ...prev, ...updates } : null);
   }, []);
 
-  // Função para atualizar notificações após mudanças
-  const updateNotificationsAfterChange = useCallback(async () => {
-    try {
-      const notifications = await getNotifications();
-      updateLocalProfile({ notification: notifications });
-    } catch (error) {
+  // Calcula notificações localmente (sem API) para atualização otimista
+  const calculateNotificationsLocally = useCallback((profile: UserProfile) => {
+    const missingFields: string[] = [];
+    const completedFields: string[] = [];
+
+    const profileFields = [
+      { key: 'name', label: 'nome', weight: 10 },
+      { key: 'email', label: 'email', weight: 10 },
+      { key: 'age', label: 'idade', weight: 10 },
+      { key: 'profileImage', label: 'foto do perfil', weight: 10 },
+      { key: 'linkedin', label: 'LinkedIn', weight: 5 },
+      { key: 'github', label: 'GitHub', weight: 5 },
+      { key: 'portfolio', label: 'portfólio', weight: 5 },
+      { key: 'aboutYou', label: 'sobre você', weight: 15 },
+      { key: 'habilities', label: 'habilidades', weight: 15 },
+      { key: 'momentCareer', label: 'momento de carreira', weight: 10 },
+      { key: 'location', label: 'localização', weight: 5 },
+      { key: 'userFocus', label: 'foco de estudo', weight: 10 },
+      { key: 'educationLevel', label: 'nível de educação', weight: 10 },
+    ];
+
+    let totalWeight = 0;
+    let completedWeight = 0;
+
+    for (const field of profileFields) {
+      const value = profile[field.key as keyof UserProfile];
+      const isCompleted = value !== null && value !== undefined && value !== '';
+
+      if (isCompleted) {
+        completedFields.push(field.label);
+        completedWeight += field.weight;
+      } else {
+        missingFields.push(field.label);
+      }
+
+      totalWeight += field.weight;
     }
-  }, [updateLocalProfile]);
 
-  // Funções para verificar se todos os campos de um modal foram preenchidos
-  const isBasicInfoComplete = useCallback((data: any) => {
-    return data.nome && data.nome.trim() !== '' && 
-           data.idade && parseInt(data.idade) > 0;
-  }, []);
-
-  const isLinksComplete = useCallback((data: any) => {
-    return (data.linkedin && data.linkedin.trim() !== '') &&
-           (data.github && data.github.trim() !== '') &&
-           (data.portfolio && data.portfolio.trim() !== '');
-  }, []);
-
-  const isAboutComplete = useCallback((data: any) => {
-    return data.aboutYou && data.aboutYou.trim() !== '';
-  }, []);
-
-  const isHabilitiesComplete = useCallback((data: any) => {
-    return data.habilities && data.habilities.trim() !== '';
-  }, []);
-
-  const isCareerComplete = useCallback((data: any) => {
-    return data.momentCareer && data.momentCareer.trim() !== '';
-  }, []);
-
-  const isFocusComplete = useCallback((focus: string, contest?: string, course?: string) => {
-    if (focus === 'CONCURSO') {
-      return contest && contest.trim() !== '';
+    // Campos específicos baseados no foco
+    if (profile.userFocus === 'CONCURSO') {
+      totalWeight += 5;
+      if (profile.contestType) completedWeight += 5;
     }
-    if (focus === 'FACULDADE') {
-      return course && course.trim() !== '';
+    if (profile.userFocus === 'FACULDADE') {
+      totalWeight += 5;
+      if (profile.collegeCourse) completedWeight += 5;
     }
-    return focus && focus.trim() !== '';
+
+    const profileCompletionPercentage = Math.round((completedWeight / totalWeight) * 100);
+    const hasNotification = missingFields.length > 0;
+
+    let message = '';
+    if (hasNotification) {
+      if (missingFields.length === 1) {
+        message = `Complete seu perfil adicionando sua ${missingFields[0]}.`;
+      } else {
+        const fieldsCopy = [...missingFields];
+        const lastField = fieldsCopy.pop();
+        const otherFields = fieldsCopy.join(', ');
+        message = `Complete seu perfil adicionando suas informações: ${otherFields} e ${lastField}.`;
+      }
+    } else {
+      message = `Perfil ${profileCompletionPercentage}% completo!`;
+    }
+
+    return {
+      hasNotification,
+      missingFields,
+      message,
+      badge: profile.badge || null,
+      profileCompletionPercentage,
+      completedFields,
+    };
   }, []);
+
+  // Função para atualizar notificações de forma otimista (sem API)
+  const updateNotificationsOptimistically = useCallback((updatedProfile: UserProfile) => {
+    const notifications = calculateNotificationsLocally(updatedProfile);
+
+    setUserProfile(prev => prev ? { ...prev, notification: notifications } : null);
+
+    // Disparar evento para sincronizar notificações com outros componentes (ex: Navbar)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('profile-notifications-updated', {
+        detail: notifications
+      }));
+    }
+  }, [calculateNotificationsLocally]);
 
   // Função para calcular porcentagem baseada nos campos preenchidos
   const calculateProfilePercentage = useCallback((profile: UserProfile) => {
@@ -352,10 +406,12 @@ export function useProfile() {
     try {
       const updatedProfile = await getProfile();
       setUserProfile(updatedProfile);
+      // Invalidar cache do perfil para garantir consistência
+      await invalidateProfileCache();
     } catch (error) {
       throw error; // Re-throw para que a função chamadora possa capturar
     }
-  }, []);
+  }, [invalidateProfileCache]);
 
   // Funções de atualização de perfil
   const updateUserName = useCallback(async (name: string) => {
@@ -388,6 +444,10 @@ export function useProfile() {
       setError('Erro ao atualizar foto do perfil');
     }
   }, [refreshProfile]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   const deleteUserProfileImage = useCallback(async () => {
     try {
@@ -464,9 +524,9 @@ export function useProfile() {
     }
   }, [refreshProfile]);
 
-  const updateUserLocation = useCallback(async (location: string) => {
+  const updateUserLocation = useCallback(async (location: string, visibility?: 'PUBLIC' | 'STATE_ONLY' | 'PRIVATE') => {
     try {
-      await updateLocation(location);
+      await updateLocation(location, visibility);
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
@@ -568,14 +628,18 @@ export function useProfile() {
         setError(null);
 
         // Validar tipo de arquivo
-        if (!file.type.startsWith('image/')) {
-          setError('Por favor, selecione apenas arquivos de imagem');
+        if (!file.type.startsWith('image/') && !file.type.includes('svg')) {
+          setError('Formato de arquivo não suportado. Por favor, envie uma imagem (JPG, PNG, SVG, etc).');
+          // Resetar input para permitir nova seleção
+          event.target.value = '';
           return;
         }
 
         // Validar tamanho do arquivo (máximo 5MB)
         if (file.size > 5 * 1024 * 1024) {
           setError('A imagem deve ter no máximo 5MB');
+          // Resetar input para permitir nova seleção
+          event.target.value = '';
           return;
         }
         
@@ -593,6 +657,8 @@ export function useProfile() {
         setError('Erro ao fazer upload da imagem. Tente novamente.');
       } finally {
         setIsUploadingImage(false);
+        // Resetar o input file para permitir selecionar o mesmo arquivo novamente
+        event.target.value = '';
       }
     }
   }, [refreshProfile]);
@@ -656,11 +722,8 @@ export function useProfile() {
     }
 
     try {
-      let allFieldsComplete = false;
-
       switch (selectedTask) {
         case 'Informações básicas':
-          allFieldsComplete = isBasicInfoComplete(formData);
           if (formData.nome && formData.nome !== userProfile.name) {
             await updateUserName(formData.nome);
           }
@@ -669,7 +732,6 @@ export function useProfile() {
           }
           break;
         case 'Links':
-          allFieldsComplete = isLinksComplete(formData);
           await updateUserLinks({
             linkedin: formData.linkedin || undefined,
             github: formData.github || undefined,
@@ -677,34 +739,37 @@ export function useProfile() {
           });
           break;
         case 'Sobre você':
-          allFieldsComplete = isAboutComplete({ aboutYou: formData.sobre });
-          // Permitir campo vazio (agora o backend aceita nulo)
           await updateUserAboutYou(formData.sobre?.trim() || '');
           break;
         case 'Habilidades':
-          allFieldsComplete = isHabilitiesComplete({ habilities: formData.habilidades });
-          // Permitir campo vazio (agora o backend aceita nulo)
-          const habilitiesArray = formData.habilidades ? 
+          const habilitiesArray = formData.habilidades ?
             formData.habilidades.split(',').map(h => h.trim()).filter(h => h) : [];
           await updateUserHabilities(habilitiesArray);
           break;
         case 'Momento de carreira':
-          allFieldsComplete = isCareerComplete({ momentCareer: formData.carreira });
-          // Permitir campo vazio (agora o backend aceita nulo)
           const momentCareerValue = formData.carreira?.trim() || '';
           await updateUserMomentCareer(momentCareerValue === '' ? null : momentCareerValue);
           break;
       }
 
-      // Só atualizar notificações se todos os campos foram preenchidos
-      if (allFieldsComplete) {
-        await updateNotificationsAfterChange();
-      }
+      // Atualização otimista das notificações (sem API)
+      const updatedProfile = {
+        ...userProfile,
+        name: formData.nome || userProfile.name,
+        age: formData.idade ? parseInt(formData.idade) : userProfile.age,
+        linkedin: formData.linkedin || userProfile.linkedin,
+        github: formData.github || userProfile.github,
+        portfolio: formData.portfolio || userProfile.portfolio,
+        aboutYou: formData.sobre?.trim() || userProfile.aboutYou,
+        habilities: formData.habilidades ? formData.habilidades.split(',').map(h => h.trim()).filter(h => h) : userProfile.habilities,
+        momentCareer: formData.carreira?.trim() || userProfile.momentCareer,
+      } as UserProfile;
+      updateNotificationsOptimistically(updatedProfile);
     } catch (error) {
     } finally {
       handleModalClose();
     }
-  }, [selectedTask, formData, userProfile, updateUserName, updateUserAge, updateUserLinks, updateUserAbout, handleModalClose, isBasicInfoComplete, isLinksComplete, isAboutComplete, isHabilitiesComplete, isCareerComplete, updateNotificationsAfterChange]);
+  }, [selectedTask, formData, userProfile, updateUserName, updateUserAge, updateUserLinks, updateUserAboutYou, updateUserHabilities, updateUserMomentCareer, handleModalClose, updateNotificationsOptimistically]);
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({
@@ -722,32 +787,29 @@ export function useProfile() {
 
   const handleBasicInfoSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!userProfile) {
       setIsBasicInfoModalOpen(false);
       return;
     }
 
     try {
-      const allFieldsComplete = isBasicInfoComplete(basicInfoData);
-      
       // Atualizar nome se mudou
       if (basicInfoData.nome && basicInfoData.nome !== userProfile.name) {
         await updateUserName(basicInfoData.nome);
       }
-      
-      // Atualizar outros campos básicos se necessário
-      // Aqui você pode adicionar mais campos conforme necessário
-      
-      // Só atualizar notificações se todos os campos foram preenchidos
-      if (allFieldsComplete) {
-        await updateNotificationsAfterChange();
-      }
+
+      // Atualização otimista das notificações
+      const updatedProfile = {
+        ...userProfile,
+        name: basicInfoData.nome || userProfile.name,
+      } as UserProfile;
+      updateNotificationsOptimistically(updatedProfile);
     } catch (error) {
     } finally {
       setIsBasicInfoModalOpen(false);
     }
-  }, [basicInfoData, userProfile, updateUserName, isBasicInfoComplete, updateNotificationsAfterChange]);
+  }, [basicInfoData, userProfile, updateUserName, updateNotificationsOptimistically]);
 
   const handleBasicInfoModalClose = useCallback(() => {
     setIsBasicInfoModalOpen(false);
@@ -776,8 +838,6 @@ export function useProfile() {
     }
 
     try {
-      const allFieldsComplete = isFocusComplete(selectedFocus, selectedContest, selectedCourse);
-      
       const updateData: any = { userFocus: selectedFocus };
 
       if (selectedFocus === 'CONCURSO' && selectedContest) {
@@ -789,16 +849,20 @@ export function useProfile() {
       }
 
       await updateUserProfile(updateData);
-      
-      // Só atualizar notificações se todos os campos foram preenchidos
-      if (allFieldsComplete) {
-        await updateNotificationsAfterChange();
-      }
+
+      // Atualização otimista das notificações
+      const updatedProfile = {
+        ...userProfile,
+        userFocus: selectedFocus,
+        contestType: selectedFocus === 'CONCURSO' ? selectedContest : userProfile.contestType,
+        collegeCourse: selectedFocus === 'FACULDADE' ? selectedCourse : userProfile.collegeCourse,
+      } as UserProfile;
+      updateNotificationsOptimistically(updatedProfile);
     } catch (error) {
     } finally {
       handleFocusModalClose();
     }
-  }, [userProfile, selectedFocus, selectedContest, selectedCourse, updateUserProfile, handleFocusModalClose, isFocusComplete, updateNotificationsAfterChange]);
+  }, [userProfile, selectedFocus, selectedContest, selectedCourse, updateUserProfile, handleFocusModalClose, updateNotificationsOptimistically]);
 
   const handleLinksChange = useCallback((field: string, value: string) => {
     setLinksData(prev => ({
@@ -816,12 +880,6 @@ export function useProfile() {
     }
 
     try {
-      const allFieldsComplete = isLinksComplete({
-        linkedin: linksData.linkedin,
-        github: linksData.github,
-        portfolio: linksData.sitePessoal
-      });
-      
       // Verificar se houve mudanças nos links existentes
       const hasLinkChanges = 
         linksData.linkedin !== (userProfile?.linkedin || '') ||
@@ -855,10 +913,20 @@ export function useProfile() {
 
       if (hasInstagramChange) {
         await updateInstagram(linksData.instagram);
+        // Atualizar estado local imediatamente
+        setUserProfile(prev => {
+          if (!prev) return null;
+          return { ...prev, instagram: linksData.instagram || null };
+        });
       }
 
       if (hasTwitterChange) {
         await updateTwitter(linksData.twitter);
+        // Atualizar estado local imediatamente
+        setUserProfile(prev => {
+          if (!prev) return null;
+          return { ...prev, twitter: linksData.twitter || null };
+        });
       }
 
       if (hasOrderChange) {
@@ -871,16 +939,10 @@ export function useProfile() {
         const missingFields = validLinks.filter(field => !completeOrder.includes(field));
         
         // Se faltar algum campo, adicionar no final, mas preservar a ordem original
-        const finalOrder = completeOrder.length === 5 
+        const finalOrder = completeOrder.length === 5
           ? completeOrder  // Se já tem todos os 5, usar a ordem como está
           : [...completeOrder, ...missingFields]; // Se faltar algum, adicionar no final
-        
-        console.log('🔍 Debug - Ordem dos Links:');
-        console.log('  - currentOrder (do drag):', currentOrder);
-        console.log('  - completeOrder (filtrado):', completeOrder);
-        console.log('  - missingFields:', missingFields);
-        console.log('  - finalOrder (enviando):', finalOrder);
-        
+
         // Validação: deve conter exatamente 5 links
         if (finalOrder.length !== 5) {
           throw new Error('A ordem deve conter exatamente 5 links');
@@ -919,10 +981,8 @@ export function useProfile() {
         }
         
         try {
-          console.log('📤 Enviando ordem para o backend:', finalOrder);
-          const response = await updateSocialLinksOrder(finalOrder);
-          console.log('📥 Resposta do backend:', response);
-          
+          await updateSocialLinksOrder(finalOrder);
+
           // Se chegou aqui, a API foi bem-sucedida, então manter o estado atualizado
           // Recarregar o perfil do backend em background para garantir sincronização
           refreshProfile().catch(console.error);
@@ -943,10 +1003,16 @@ export function useProfile() {
         }
       }
       
-      // Só atualizar notificações se todos os campos foram preenchidos
-      if (allFieldsComplete) {
-        await updateNotificationsAfterChange();
-      }
+      // Atualização otimista das notificações
+      const updatedProfile = {
+        ...userProfile,
+        linkedin: linksData.linkedin || userProfile.linkedin,
+        github: linksData.github || userProfile.github,
+        portfolio: linksData.sitePessoal || userProfile.portfolio,
+        instagram: linksData.instagram || userProfile.instagram,
+        twitter: linksData.twitter || userProfile.twitter,
+      } as UserProfile;
+      updateNotificationsOptimistically(updatedProfile);
     } catch (error: any) {
       // Tratamento de erros conforme o guia
       if (error?.response?.status === 400) {
@@ -986,7 +1052,7 @@ export function useProfile() {
     } finally {
       setIsLinksModalOpen(false);
     }
-  }, [userProfile, linksData, linkFieldsOrder, updateUserLinks, updateInstagram, updateTwitter, updateSocialLinksOrder, isLinksComplete, updateNotificationsAfterChange]);
+  }, [userProfile, linksData, linkFieldsOrder, updateUserLinks, updateNotificationsOptimistically, refreshProfile]);
 
   const handleLinksModalClose = useCallback(() => {
     setIsLinksModalOpen(false);
@@ -1003,34 +1069,42 @@ export function useProfile() {
     }
 
     try {
-      const allFieldsComplete = isAboutComplete({ aboutYou: aboutText });
-      
       // Permitir campo vazio (agora o backend aceita nulo)
       await updateUserAboutYou(aboutText?.trim() || '');
-      
-      // Só atualizar notificações se todos os campos foram preenchidos
-      if (allFieldsComplete) {
-        await updateNotificationsAfterChange();
-      }
+
+      // Atualização otimista das notificações
+      const updatedProfile = {
+        ...userProfile,
+        aboutYou: aboutText?.trim() || userProfile.aboutYou,
+      } as UserProfile;
+      updateNotificationsOptimistically(updatedProfile);
     } catch (error) {
       setError('Erro ao atualizar sobre você');
     } finally {
       handleAboutModalClose();
     }
-  }, [userProfile, aboutText, updateUserAboutYou, handleAboutModalClose, isAboutComplete, updateNotificationsAfterChange]);
+  }, [userProfile, aboutText, updateUserAboutYou, handleAboutModalClose, updateNotificationsOptimistically]);
 
   const handleHabilitiesModalClose = useCallback(() => {
     setIsHabilitiesModalOpen(false);
   }, []);
 
   const handleHabilitiesSubmit = useCallback(async (habilities: string[]) => {
+    if (!userProfile) return;
+
     try {
       await updateUserHabilities(habilities);
-      await updateNotificationsAfterChange();
+
+      // Atualização otimista das notificações (habilities é string no UserProfile)
+      const updatedProfile = {
+        ...userProfile,
+        habilities: habilities.join(', '),
+      } as UserProfile;
+      updateNotificationsOptimistically(updatedProfile);
     } catch (error) {
       throw error;
     }
-  }, [updateUserHabilities, updateNotificationsAfterChange]);
+  }, [userProfile, updateUserHabilities, updateNotificationsOptimistically]);
 
   const getModalFields = useCallback((taskLabel: string) => {
     switch (taskLabel) {
@@ -1154,6 +1228,7 @@ export function useProfile() {
     setIsHabilitiesModalOpen,
     setIsCareerModalOpen,
     setAboutText,
-    setLinkFieldsOrder
+    setLinkFieldsOrder,
+    clearError
   };
 }

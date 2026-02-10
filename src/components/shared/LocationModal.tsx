@@ -4,8 +4,15 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Globe } from 'lucide-react';
 import { LoadingGrid } from '@/components/ui/loading-grid';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface LocationData {
   cep: string;
@@ -23,18 +30,25 @@ interface LocationData {
 interface LocationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (location: string) => void;
+  onSave: (location: string, visibility: 'PUBLIC' | 'STATE_ONLY' | 'PRIVATE') => void;
   currentLocation?: string;
+  currentVisibility?: 'PUBLIC' | 'STATE_ONLY' | 'PRIVATE';
 }
 
-export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }: LocationModalProps) {
-  const [searchType, setSearchType] = useState<'cep' | 'city'>('cep');
+export function LocationModal({ isOpen, onClose, onSave, currentLocation = '', currentVisibility = 'PUBLIC' }: LocationModalProps) {
   const [cep, setCep] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [addressData, setAddressData] = useState<LocationData | null>(null);
   const [finalLocation, setFinalLocation] = useState(currentLocation);
+  const [visibility, setVisibility] = useState<'PUBLIC' | 'STATE_ONLY' | 'PRIVATE'>(currentVisibility);
+
+  // Função para aplicar máscara de CEP (00000-000)
+  const applyCepMask = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .slice(0, 9);
+  };
 
   // Função para buscar CEP via ViaCEP
   const searchByCep = async (cepValue: string) => {
@@ -61,36 +75,12 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
     }
   };
 
-  // Função para buscar por cidade e estado
-  const searchByCity = async () => {
-    if (!city || !state) {
-      alert('Digite a cidade e estado');
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      const query = `${city}, ${state}`;
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=1`);
-      const data = await response.json();
-      
-      if (data.length > 0) {
-        const result = data[0];
-        setFinalLocation(result.display_name);
-      } else {
-        alert('Localização não encontrada');
-      }
-    } catch (error) {
-      alert('Erro ao buscar localização');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   // Função para salvar
   const handleSave = () => {
     if (finalLocation.trim()) {
-      onSave(finalLocation);
+      onSave(finalLocation, visibility);
       onClose();
     } else {
       alert('Digite uma localização válida');
@@ -101,8 +91,6 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
   const handleCancel = () => {
     setFinalLocation(currentLocation);
     setCep('');
-    setCity('');
-    setState('');
     setAddressData(null);
     onClose();
   };
@@ -117,47 +105,16 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Seletor de tipo de busca */}
-          <div className="flex space-x-2">
-            <Button
-              type="button"
-              variant={searchType === 'cep' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSearchType('cep')}
-              className={`cursor-pointer transition-colors ${
-                searchType === 'cep' 
-                  ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]' 
-                  : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
-              }`}
-            >
-              <Search className="w-4 h-4 mr-1" />
-              CEP
-            </Button>
-            <Button
-              type="button"
-              variant={searchType === 'city' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSearchType('city')}
-              className={`cursor-pointer transition-colors ${
-                searchType === 'city' 
-                  ? 'bg-[#bd18b4] text-black hover:bg-[#aa22c5]' 
-                  : 'border-[#323238] text-gray-300 hover:bg-[#bd18b4]/10 hover:border-[#bd18b4]/30 hover:text-[#c532e2]'
-              }`}
-            >
-              <MapPin className="w-4 h-4 mr-1" />
-              Cidade/Estado
-            </Button>
-          </div>
+
 
           {/* Busca por CEP */}
-          {searchType === 'cep' && (
-            <div className="space-y-3">
+          <div className="space-y-3">
               <div className="flex space-x-2">
                 <Input
                   type="text"
                   value={cep}
-                  onChange={(e) => setCep(e.target.value)}
-                  placeholder="Digite o CEP (apenas números)"
+                  onChange={(e) => setCep(applyCepMask(e.target.value))}
+                  placeholder="00000-000"
                   className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none cursor-pointer"
                   maxLength={9}
                 />
@@ -179,40 +136,6 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
                 </div>
               )}
             </div>
-          )}
-
-          {/* Busca por cidade e estado */}
-          {searchType === 'city' && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="Cidade"
-                  className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none cursor-pointer"
-                />
-                <Input
-                  type="text"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  placeholder="Estado (UF)"
-                  className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none cursor-pointer"
-                  maxLength={2}
-                />
-              </div>
-              <Button
-                type="button"
-                onClick={searchByCity}
-                disabled={isLoading || !city || !state}
-                className="w-full bg-[#bd18b4] hover:bg-[#aa22c5] text-black disabled:opacity-50 cursor-pointer transition-colors"
-              >
-                {isLoading ? <LoadingGrid size="16" color="#bd18b4" className="mr-2" /> : <Search className="w-4 h-4 mr-2" />}
-                Buscar Localização
-              </Button>
-            </div>
-          )}
-
           {/* Campo de resultado */}
           <div className="space-y-2">
             <label className="text-sm text-gray-300">
@@ -225,6 +148,54 @@ export function LocationModal({ isOpen, onClose, onSave, currentLocation = '' }:
               placeholder="Digite sua localização completa"
               className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none cursor-pointer"
             />
+          </div>
+
+          {/* Visibilidade da Localização */}
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-[#bd18b4]" />
+              <label className="text-sm font-medium text-gray-200">
+                Privacidade da Localização
+              </label>
+            </div>
+            
+            <Select value={visibility} onValueChange={(value: any) => setVisibility(value)}>
+              <SelectTrigger className="bg-[#29292E] border-[#323238] text-white focus:!border-[#bd18b4] focus:!ring-0 focus:!outline-none h-11">
+                <SelectValue placeholder="Selecione a visibilidade" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1e] border-[#323238] text-white">
+                <SelectItem value="PUBLIC" className="focus:bg-white/5 focus:text-white cursor-pointer py-3">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <p className="font-medium">Público</p>
+                      <p className="text-xs text-gray-400">Todos verão seu endereço completo</p>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="STATE_ONLY" className="focus:bg-white/5 focus:text-white cursor-pointer py-3">
+                   <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-blue-400" />
+                    <div>
+                      <p className="font-medium">Somente Estado</p>
+                      <p className="text-xs text-gray-400">Verão apenas a sigla do estado (ex: SP)</p>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="PRIVATE" className="focus:bg-white/5 focus:text-white cursor-pointer py-3">
+                  <div className="flex items-center gap-2">
+                    <EyeOff className="w-4 h-4 text-red-400" />
+                    <div>
+                      <p className="font-medium">Privado</p>
+                      <p className="text-xs text-gray-400">Ninguém poderá ver sua localização</p>
+                    </div>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-gray-500 italic">
+              * Suas configurações de privacidade são respeitadas mesmo para amigos.
+            </p>
           </div>
 
           {/* Botões de ação */}

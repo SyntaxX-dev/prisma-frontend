@@ -1,6 +1,11 @@
 "use client";
 
-import { Search, Bell, X, LogOut, User, Settings, AlertCircle } from "lucide-react";
+import { Search, Bell, X, LogOut, User, Settings, AlertCircle, Menu } from "lucide-react";
+
+// Evento customizado para controlar o menu mobile da sidebar
+const toggleMobileSidebar = () => {
+  window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'));
+};
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -128,6 +133,17 @@ export function Navbar({ }: NavbarProps) {
       >
         <div className="flex items-center gap-2 md:gap-4 relative w-full">
 
+          {/* Mobile Menu Button - À esquerda no mobile */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden bg-white/15 backdrop-blur-md border border-white/20 text-white/80 hover:text-[#bd18b4] hover:bg-white/10 rounded-full w-11 h-11 p-0 cursor-pointer shrink-0"
+            onClick={toggleMobileSidebar}
+            title="Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+
           {/* Desktop Navigation */}
           <div className="hidden md:block bg-white/15 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
             <nav className="flex items-center gap-6">
@@ -146,7 +162,7 @@ export function Navbar({ }: NavbarProps) {
             </nav>
           </div>
 
-          <div className="bg-white/15 backdrop-blur-md rounded-full px-3 md:px-4 py-2 md:py-3 border border-white/20 ml-auto">
+          <div className="bg-white/15 backdrop-blur-md rounded-full px-3 md:px-4 py-2 md:py-3 border border-white/20 mx-auto md:ml-auto">
             <div className="flex items-center gap-2 md:gap-3">
               <div className={`transition-all duration-500 ease-out overflow-hidden ${searchExpanded || isSearching ? 'w-48 md:w-64' : 'w-8'
                 }`}>

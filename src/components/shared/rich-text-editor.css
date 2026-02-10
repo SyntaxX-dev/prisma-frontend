@@ -1,57 +1,61 @@
-.ProseMirror {
+.rich-text-content, .ProseMirror {
     outline: none;
-    padding: 1rem;
-    min-height: 200px;
     color: white;
     background: transparent;
 }
 
-.ProseMirror p {
+/* Editor specific styles */
+.ProseMirror {
+    padding: 1rem;
+    min-height: 200px;
+}
+
+.rich-text-content p, .ProseMirror p {
     margin: 0.5rem 0;
 }
 
-.ProseMirror p:first-child {
+.rich-text-content p:first-child, .ProseMirror p:first-child {
     margin-top: 0;
 }
 
-.ProseMirror p:last-child {
+.rich-text-content p:last-child, .ProseMirror p:last-child {
     margin-bottom: 0;
 }
 
-.ProseMirror h1 {
+.rich-text-content h1, .ProseMirror h1 {
     font-size: 1.5rem;
     font-weight: bold;
     margin: 1rem 0 0.5rem 0;
     color: white;
 }
 
-.ProseMirror h2 {
+.rich-text-content h2, .ProseMirror h2 {
     font-size: 1.25rem;
     font-weight: bold;
     margin: 0.75rem 0 0.5rem 0;
     color: white;
 }
 
-.ProseMirror h3 {
+.rich-text-content h3, .ProseMirror h3 {
     font-size: 1.125rem;
     font-weight: bold;
     margin: 0.5rem 0 0.25rem 0;
     color: white;
 }
 
-.ProseMirror strong {
+.rich-text-content strong, .ProseMirror strong {
     font-weight: bold;
 }
 
-.ProseMirror em {
+.rich-text-content em, .ProseMirror em {
     font-style: italic;
 }
 
-.ProseMirror s {
+.rich-text-content s, .ProseMirror s {
     text-decoration: line-through;
 }
 
-.ProseMirror code {
+.rich-text-content code, .ProseMirror code {
     background: #374151;
     color: #f3f4f6;
     padding: 0.125rem 0.25rem;
@@ -60,7 +64,7 @@
     font-family: 'Courier New', monospace;
 }
 
-.ProseMirror pre {
+.rich-text-content pre, .ProseMirror pre {
     background: #1f2937;
     color: #f3f4f6;
     padding: 1rem;
@@ -69,39 +73,41 @@
     margin: 1rem 0;
 }
 
-.ProseMirror pre code {
+.rich-text-content pre code, .ProseMirror pre code {
     background: transparent;
     padding: 0;
     color: inherit;
 }
 
-.ProseMirror ul {
+.rich-text-content ul, .ProseMirror ul {
     list-style-type: disc;
     margin: 0.5rem 0;
     padding-left: 1.5rem;
+    color: white;
 }
 
-.ProseMirror ol {
+.rich-text-content ol, .ProseMirror ol {
     list-style-type: decimal;
     margin: 0.5rem 0;
     padding-left: 1.5rem;
+    color: white;
 }
 
-.ProseMirror li {
+.rich-text-content li, .ProseMirror li {
     margin: 0.25rem 0;
 }
 
-.ProseMirror a {
+.rich-text-content a, .ProseMirror a {
     color: #60a5fa;
     text-decoration: underline;
     cursor: pointer;
 }
 
-.ProseMirror a:hover {
+.rich-text-content a:hover, .ProseMirror a:hover {
     color: #93c5fd;
 }
 
-.ProseMirror blockquote {
+.rich-text-content blockquote, .ProseMirror blockquote {
     border-left: 4px solid #6b7280;
     padding-left: 1rem;
     margin: 1rem 0;
@@ -109,7 +115,7 @@
     font-style: italic;
 }
 
-.ProseMirror hr {
+.rich-text-content hr, .ProseMirror hr {
     border: none;
     border-top: 1px solid #374151;
     margin: 1.5rem 0;

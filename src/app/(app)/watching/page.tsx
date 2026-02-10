@@ -1,41 +1,31 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { Navbar } from '@/components/layout';
 import { Sidebar } from '@/components/Sidebar';
 import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { LoadingGrid } from '@/components/ui/loading-grid';
 import { InProgressVideoCard } from '@/components/features/course/InProgressVideoCard';
-import { getInProgressVideos, InProgressVideo } from '@/api/progress/get-in-progress-videos';
-import { Play, Clock, AlertCircle } from 'lucide-react';
+import { Play, AlertCircle } from 'lucide-react';
 import { usePageDataLoad } from '@/hooks/shared';
+import { useInProgressVideos, useWatchingCache } from '@/hooks/features/watching';
 
 function WatchingContent() {
-  const [videos, setVideos] = useState<InProgressVideo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isDark] = useState(true);
+
+  // Hook com cache para vídeos em progresso
+  const { data: videos = [], isLoading, error, refetch } = useInProgressVideos();
+  const { invalidate } = useWatchingCache();
 
   usePageDataLoad({
     waitForData: false,
     customDelay: 0,
   });
 
-  useEffect(() => {
-    loadInProgressVideos();
-  }, []);
-
-  const loadInProgressVideos = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await getInProgressVideos();
-      setVideos(response.data.videos);
-    } catch (err) {
-      setError('Não foi possível carregar os vídeos. Tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
+  // Função para recarregar com invalidação de cache
+  const handleRetry = async () => {
+    await invalidate();
+    refetch();
   };
 
   const totalProgress = videos.reduce((sum, v) => sum + v.progressPercentage, 0);
@@ -83,9 +73,9 @@ function WatchingContent() {
             {error && !isLoading && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center">
                 <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-                <p className="text-red-300 text-lg">{error}</p>
+                <p className="text-red-300 text-lg">Não foi possível carregar os vídeos. Tente novamente.</p>
                 <button
-                  onClick={loadInProgressVideos}
+                  onClick={handleRetry}
                   className="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full transition-colors"
                 >
                   Tentar Novamente

@@ -65,7 +65,8 @@ import {
     ArrowLeft,
     Camera,
     Trash2,
-    Eye
+    Eye,
+    AlertCircle
 } from 'lucide-react';
 import { countries } from '@/lib/constants/countries';
 import { COLLEGE_COURSE_LABELS, CONTEST_TYPE_LABELS, EDUCATION_LEVEL_LABELS } from '@/types/auth-api';
@@ -178,10 +179,10 @@ export function ProfilePage() {
     }, [userId]);
 
     // Função para salvar localização
-    const handleLocationSave = async (location: string) => {
+    const handleLocationSave = async (location: string, visibility?: 'PUBLIC' | 'STATE_ONLY' | 'PRIVATE') => {
         try {
             // Usar o endpoint específico para atualizar localização
-            await updateUserLocation(location);
+            await updateUserLocation(location, visibility);
             // Atualizar também o estado local para exibição
             handleBasicInfoChange('cidade', location);
         } catch (error) {
@@ -289,8 +290,16 @@ export function ProfilePage() {
         setIsHabilitiesModalOpen,
         setIsCareerModalOpen,
         setAboutText,
-        setLinkFieldsOrder
+        setLinkFieldsOrder,
+        clearError
     } = useProfile();
+
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+
+    const handleErrorModalClose = () => {
+        setIsErrorModalOpen(false);
+        clearError();
+    };
 
     // Verificar se está vendo o próprio perfil
     // Se não há userId na URL, é o próprio perfil
@@ -412,6 +421,13 @@ export function ProfilePage() {
         return userId && otherUserProfile ? otherUserProfile : userProfile;
     }, [userId, otherUserProfile, userProfile]);
 
+    // Monitorar erros e abrir modal se necessário
+    useEffect(() => {
+        if (error && user) {
+            setIsErrorModalOpen(true);
+        }
+    }, [error, user]);
+
     // Criar uma chave baseada na ordem dos links para forçar re-render quando a ordem mudar
     // Usar useState para evitar problemas de hidratação
     // Não usar user aqui porque ainda não está definido - usar userProfile ou otherUserProfile diretamente
@@ -436,8 +452,8 @@ export function ProfilePage() {
         );
     }
 
-    // Mostrar erro se houver problema ao carregar (apenas para próprio perfil)
-    if (error && !userId) {
+    // Mostrar erro se houver problema ao carregar (apenas para próprio perfil e se não tiver dados de usuário)
+    if (error && !userId && !user) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center">
                 <div className="text-center">
@@ -646,7 +662,7 @@ export function ProfilePage() {
                                                     {isOwnProfile && (
                                                         <input
                                                             type="file"
-                                                            accept="image/*"
+                                                            accept="image/*, .svg"
                                                             onChange={handleAvatarUpload}
                                                             className="hidden"
                                                             id="avatar-upload"
@@ -715,25 +731,63 @@ export function ProfilePage() {
                                             </div>
 
                                             <div className="space-y-3 mb-6 relative z-10">
-                                                {basicInfoData.cidade ? (
-                                                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
-                                                        <div className="flex items-center">
-                                                            <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 flex-shrink-0 animate-pulse"></div>
-                                                            <span className="text-white/90 text-sm font-semibold">
-                                                                {basicInfoData.cidade}
-                                                            </span>
-                                                        </div>
-                                                        {!isPublicView && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                onClick={() => setIsLocationModalOpen(true)}
-                                                                className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1 h-8 w-8 hover:bg-white/10 cursor-pointer"
-                                                            >
-                                                                <Edit3 className="w-4 h-4 text-white/60" />
-                                                            </Button>
-                                                        )}
-                                                    </div>
+                                                {user?.location ? (
+                                                    (() => {
+                                                        const location = user.location;
+                                                        const visibility = user.locationVisibility;
+
+                                                        // Aplicar privacidade quando:
+                                                        // - Outra pessoa está visualizando o perfil (!isOwnProfile), OU
+                                                        // - O próprio usuário está em modo "ver como outros me veem" (isPublicView)
+                                                        if (!isOwnProfile || isPublicView) {
+                                                            if (visibility === 'PRIVATE') return null;
+                                                            if (visibility === 'STATE_ONLY') {
+                                                                const parts = location.split(' - ');
+                                                                if (parts.length > 1) return (
+                                                                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
+                                                                        <div className="flex items-center">
+                                                                            <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 flex-shrink-0 animate-pulse"></div>
+                                                                            <span className="text-white/90 text-sm font-semibold">
+                                                                                {parts[parts.length - 1]}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                                const commaParts = location.split(', ');
+                                                                if (commaParts.length > 1) return (
+                                                                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
+                                                                        <div className="flex items-center">
+                                                                            <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 flex-shrink-0 animate-pulse"></div>
+                                                                            <span className="text-white/90 text-sm font-semibold">
+                                                                                {commaParts[commaParts.length - 1]}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                        }
+
+                                                        return (
+                                                            <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
+                                                                <div className="flex items-center">
+                                                                    <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 flex-shrink-0 animate-pulse"></div>
+                                                                    <span className="text-white/90 text-sm font-semibold">
+                                                                        {location}
+                                                                    </span>
+                                                                </div>
+                                                                {!isPublicView && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        onClick={() => setIsLocationModalOpen(true)}
+                                                                        className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1 h-8 w-8 hover:bg-white/10 cursor-pointer"
+                                                                    >
+                                                                        <Edit3 className="w-4 h-4 text-white/60" />
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()
                                                 ) : (
                                                     !isPublicView && (
                                                         <Button
@@ -939,11 +993,13 @@ export function ProfilePage() {
                                                 </Button>
                                             )}
                                         </div>
-                                        <div className="text-white/70 text-base leading-relaxed relative z-10 font-medium">
-                                            {user.aboutYou ? (
+                                        <div className="bg-[#202024] border border-[#323238] rounded-xl p-6 min-h-[120px]">
+                                            {userProfile?.aboutYou ? (
                                                 <div
-                                                    dangerouslySetInnerHTML={{ __html: user.aboutYou }}
-                                                    className="prose prose-invert prose-pink max-w-none text-white/70"
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: userProfile.aboutYou || ''
+                                                    }}
+                                                    className="rich-text-content prose prose-invert prose-pink max-w-none text-white/70"
                                                 />
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center py-10 opacity-20">
@@ -1074,18 +1130,30 @@ export function ProfilePage() {
                         </div>
 
                         {/* Email */}
-                        <div className="space-y-2">
-                            <label className="text-sm text-gray-300">
+                        <div className="space-y-2 relative group">
+                            <label className="text-sm text-gray-300 flex items-center justify-between">
                                 E-mail
+                                <span className="text-xs text-gray-500 font-normal">(Não editável)</span>
                             </label>
-                            <Input
-                                type="email"
-                                value={modalValues.email}
-                                className="bg-[#1a1a1a] border-[#323238] text-gray-400 cursor-not-allowed"
-                                placeholder="E-mail não pode ser alterado"
-                                readOnly
-                                disabled
-                            />
+                            <div className="relative">
+                                <Input
+                                    type="email"
+                                    value={modalValues.email}
+                                    className="bg-[#151515] border-[#2a2a2e] text-gray-500 cursor-not-allowed opacity-70 pr-8"
+                                    placeholder="E-mail não pode ser alterado"
+                                    readOnly
+                                    disabled
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-gray-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-5 left-0">
+                                Para alterar seu e-mail, entre em contato com o suporte.
+                            </p>
                         </div>
 
                         {/* Área de atuação */}
@@ -1425,6 +1493,7 @@ export function ProfilePage() {
                 onClose={() => setIsLocationModalOpen(false)}
                 onSave={handleLocationSave}
                 currentLocation={basicInfoData.cidade}
+                currentVisibility={userProfile?.locationVisibility}
             />
 
             {/* Modal para editar momento de carreira */}
@@ -1488,6 +1557,30 @@ export function ProfilePage() {
                             </Button>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+            {/* Modal de Erro */}
+            <Dialog open={isErrorModalOpen} onOpenChange={handleErrorModalClose}>
+                <DialogContent className="bg-[#121214] border-[#323238] text-white">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2 text-red-400">
+                            <span className="p-2 bg-red-400/10 rounded-full">
+                                <AlertCircle className="w-5 h-5" />
+                            </span>
+                            Erro
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-gray-300">{error}</p>
+                    </div>
+                    <div className="flex justify-end">
+                        <Button 
+                            onClick={handleErrorModalClose}
+                            className="bg-zinc-700 hover:bg-zinc-600 text-white"
+                        >
+                            Fechar
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

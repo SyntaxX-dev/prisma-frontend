@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { Brain, Calendar, Loader2 } from 'lucide-react';
-import { listUserMindMaps, MindMapData } from '@/api/mind-map/generate-mind-map';
+import { MindMapData } from '@/api/mind-map/generate-mind-map';
 import { Button } from '@/components/ui/button';
 import InteractiveMindMap from '@/components/features/course/InteractiveMindMap';
 import { Navbar } from '@/components/layout';
@@ -10,13 +10,15 @@ import { Sidebar } from '@/components/Sidebar';
 import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { LoadingGrid } from '@/components/ui/loading-grid';
 import { usePageDataLoad } from '@/hooks/shared';
+import { useMyMindMaps, useAIContentCache } from '@/hooks/features/ai-content';
 
 function MindMapsContent() {
   const [isDark, setIsDark] = useState(true);
-  const [mindMaps, setMindMaps] = useState<MindMapData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedMindMap, setSelectedMindMap] = useState<MindMapData | null>(null);
+
+  // Hook com cache para mapas mentais
+  const { data: mindMaps = [], isLoading: loading, error, refetch } = useMyMindMaps();
+  const { invalidateMindMaps } = useAIContentCache();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -27,30 +29,11 @@ function MindMapsContent() {
     customDelay: 0
   });
 
-  useEffect(() => {
-    const fetchMindMaps = async () => {
-      try {
-        const response = await listUserMindMaps();
-        if (response.success && response.data && Array.isArray(response.data.mindMaps)) {
-          // Filter only mind maps (not text summaries)
-          const onlyMindMaps = response.data.mindMaps.filter(
-            (map) => (map.generationType || 'mindmap') === 'mindmap'
-          );
-          setMindMaps(onlyMindMaps);
-        } else {
-          setMindMaps([]);
-        }
-      } catch (err) {
-        setError('Erro ao carregar mapas mentais');
-        console.error('Error fetching mind maps:', err);
-        setMindMaps([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMindMaps();
-  }, []);
+  // Função para recarregar com invalidação de cache
+  const handleRetry = async () => {
+    await invalidateMindMaps();
+    refetch();
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -92,7 +75,13 @@ function MindMapsContent() {
             <Navbar isDark={isDark} toggleTheme={toggleTheme} />
             <div className="flex items-center justify-center min-h-screen p-4 pt-28">
               <div className="text-center">
-                <p className="text-sm md:text-base text-red-400">{error}</p>
+                <p className="text-sm md:text-base text-red-400 mb-4">Erro ao carregar mapas mentais</p>
+                <Button
+                  onClick={handleRetry}
+                  className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold"
+                >
+                  Tentar Novamente
+                </Button>
               </div>
             </div>
           </div>

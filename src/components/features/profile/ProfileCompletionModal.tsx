@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '../../ui/button';
 import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
@@ -24,13 +25,13 @@ import {
     CollegeCourse,
     USER_FOCUS_LABELS,
     CONTEST_TYPE_LABELS,
-    COLLEGE_COURSE_LABELS,
-    BADGE_MAPPING
+    COLLEGE_COURSE_LABELS
 } from '@/types/auth-api';
 import { updateProfile } from '@/api/profile/update-profile';
 import { getContestOptions } from '@/api/options/get-contest-options';
 import { getCollegeCourseOptions } from '@/api/options/get-college-course-options';
 import { useAuth } from '@/hooks/features/auth';
+import { useCacheInvalidation } from '@/hooks/shared';
 import { toast } from 'sonner';
 import { CheckCircle, Award } from 'lucide-react';
 
@@ -50,7 +51,9 @@ export function ProfileCompletionModal({
     onClose,
     notificationData
 }: ProfileCompletionModalProps) {
+    const router = useRouter();
     const { updateUser } = useAuth();
+    const { profile } = useCacheInvalidation();
     const [userFocus, setUserFocus] = useState<UserFocus | ''>('');
     const [contestType, setContestType] = useState<ContestType | ''>('');
     const [collegeCourse, setCollegeCourse] = useState<CollegeCourse | ''>('');
@@ -120,10 +123,23 @@ export function ProfileCompletionModal({
                 updateUser(updatedProfile.data);
             }
 
-            const badge = BADGE_MAPPING[userFocus] || BADGE_MAPPING[contestType] || BADGE_MAPPING[collegeCourse];
+            // Invalidar cache do perfil após atualização
+            await profile();
 
-            toast.success(`Perfil completado! Badge ${badge} atribuído.`);
+            // Obter label amigável para o badge
+            const getBadgeLabel = () => {
+                if (userFocus === 'ENEM') return 'ENEM';
+                if (userFocus === 'ENSINO_MEDIO') return 'Ensino Médio';
+                if (userFocus === 'CONCURSO' && contestType) return CONTEST_TYPE_LABELS[contestType];
+                if (userFocus === 'FACULDADE' && collegeCourse) return COLLEGE_COURSE_LABELS[collegeCourse];
+                return USER_FOCUS_LABELS[userFocus as UserFocus];
+            };
+
+            toast.success(`Perfil completado! Badge "${getBadgeLabel()}" atribuído.`);
             onClose();
+
+            // Redirecionar para o perfil para completar o restante
+            router.push('/profile');
         } catch (error) {
             toast.error('Erro ao atualizar perfil');
         } finally {
@@ -132,10 +148,10 @@ export function ProfileCompletionModal({
     };
 
     const getBadgePreview = () => {
-        if (userFocus === 'ENEM') return 'ENEM_BADGE';
-        if (userFocus === 'ENSINO_MEDIO') return 'ENSINO_MEDIO_BADGE';
-        if (userFocus === 'CONCURSO' && contestType) return BADGE_MAPPING[contestType];
-        if (userFocus === 'FACULDADE' && collegeCourse) return BADGE_MAPPING[collegeCourse];
+        if (userFocus === 'ENEM') return 'ENEM';
+        if (userFocus === 'ENSINO_MEDIO') return 'Ensino Médio';
+        if (userFocus === 'CONCURSO' && contestType) return CONTEST_TYPE_LABELS[contestType];
+        if (userFocus === 'FACULDADE' && collegeCourse) return COLLEGE_COURSE_LABELS[collegeCourse];
         return null;
     };
 

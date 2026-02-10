@@ -212,8 +212,8 @@ export function PlanUpgradeModal({ isOpen, onClose, feature = 'este recurso' }: 
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#bd18b4]" strokeWidth={3} />
-                    <span className={`text-sm ${feature === 'Acesso a IA de resumos para cada curso' 
-                      ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand via-brand-accent to-brand-secondary animate-gradient bg-[length:200%_auto] font-bold' 
+                    <span className={`text-sm ${feature === 'Acesso a IA de resumos para cada curso'
+                      ? 'animate-rainbow font-bold'
                       : 'text-gray-300'}`}>
                       {feature}
                     </span>
