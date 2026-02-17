@@ -26,7 +26,6 @@ export function useYouTubePlayer({
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const lastSavedTimeRef = useRef(0)
 
   // Debug: Log dos parâmetros recebidos
@@ -110,7 +109,6 @@ export function useYouTubePlayer({
 
     return () => {
       mounted = false
-      stopProgressTracking()
       if (playerRef.current) {
         playerRef.current.destroy()
         playerRef.current = null
@@ -131,20 +129,17 @@ export function useYouTubePlayer({
       switch (state) {
         case YT.PlayerState.PLAYING:
           setIsPlaying(true)
-          startProgressTracking()
           onPlay?.()
           break
 
         case YT.PlayerState.PAUSED:
           setIsPlaying(false)
-          stopProgressTracking()
           saveCurrentProgress()
           onPause?.()
           break
 
         case YT.PlayerState.ENDED:
           setIsPlaying(false)
-          stopProgressTracking()
           onVideoEnd?.()
           break
 
@@ -156,27 +151,6 @@ export function useYouTubePlayer({
   )
 
   const handleError = useCallback((event: YT.OnErrorEvent) => {
-  }, [])
-
-  // Progress tracking
-  const startProgressTracking = useCallback(() => {
-    // Clear existing interval
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current)
-    }
-
-    // Save progress every 5 seconds
-    progressIntervalRef.current = setInterval(() => {
-      saveCurrentProgress()
-    }, 5000)
-
-  }, [])
-
-  const stopProgressTracking = useCallback(() => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current)
-      progressIntervalRef.current = null
-    }
   }, [])
 
   const saveCurrentProgress = useCallback(async () => {
@@ -209,32 +183,66 @@ export function useYouTubePlayer({
     }
   }, [videoId, youtubeId])
 
-  // Save progress before leaving page
+  // Save progress when leaving page (tab switch, close tab, navigate away)
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (
-        playerRef.current &&
-        playerRef.current.getPlayerState() === YT.PlayerState.PLAYING
-      ) {
-        const currentTime = Math.floor(playerRef.current.getCurrentTime())
+    const saveBeforeLeave = () => {
+      if (!playerRef.current) return
 
-        // Use sendBeacon to ensure request is sent
-        const blob = new Blob(
-          [JSON.stringify({ videoId: youtubeId, timestamp: currentTime })],
-          { type: 'application/json' },
-        )
+      try {
+        const state = playerRef.current.getPlayerState()
+        if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.PAUSED) return
+
+        const time = Math.floor(playerRef.current.getCurrentTime())
+        const dur = Math.floor(playerRef.current.getDuration())
+
+        if (Math.abs(time - lastSavedTimeRef.current) < 3) return
+        if (dur > 0 && time >= dur - 2) return
 
         const token = localStorage.getItem('auth_token')
         const url = `${process.env.NEXT_PUBLIC_API_URL}/progress/video/timestamp`
 
-        navigator.sendBeacon(url, blob)
+        // fetch com keepalive garante que a requisição é enviada mesmo com a página fechando
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ videoId: youtubeId, timestamp: time }),
+          keepalive: true,
+        }).catch(() => {})
+
+        lastSavedTimeRef.current = time
+      } catch {
+        // Player pode já ter sido destruído
       }
     }
 
+    // Quando o usuário troca de aba ou minimiza o navegador
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveBeforeLeave()
+      }
+    }
+
+    // Quando o usuário fecha a aba/navegador
+    const handleBeforeUnload = () => {
+      saveBeforeLeave()
+    }
+
+    // pagehide é mais confiável que beforeunload em mobile
+    const handlePageHide = () => {
+      saveBeforeLeave()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handlePageHide)
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handlePageHide)
     }
   }, [youtubeId])
 
