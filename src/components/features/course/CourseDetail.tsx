@@ -404,6 +404,28 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       clearTimeout(timer);
       if (playerRef.current) {
         try {
+          // Salvar progresso antes de destruir o player (navegação client-side)
+          const state = playerRef.current.getPlayerState?.();
+          if (state === 1 || state === 2) { // PLAYING ou PAUSED
+            const time = Math.floor(playerRef.current.getCurrentTime?.() || 0);
+            const dur = Math.floor(playerRef.current.getDuration?.() || 0);
+
+            if (time > 0 && (dur <= 0 || time < dur - 1)) {
+              const token = localStorage.getItem('auth_token');
+              const url = `${process.env.NEXT_PUBLIC_API_URL}/progress/video/timestamp`;
+
+              fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ videoId: selectedVideo?.youtubeId, timestamp: time }),
+                keepalive: true,
+              }).catch(() => {});
+            }
+          }
+
           playerRef.current.destroy();
         } catch (e) {
         }

@@ -110,6 +110,29 @@ export function useYouTubePlayer({
     return () => {
       mounted = false
       if (playerRef.current) {
+        try {
+          const state = playerRef.current.getPlayerState()
+          if (state === YT.PlayerState.PLAYING || state === YT.PlayerState.PAUSED) {
+            const time = Math.floor(playerRef.current.getCurrentTime())
+            const dur = Math.floor(playerRef.current.getDuration())
+
+            if (time > 0 && (dur <= 0 || time < dur - 2)) {
+              const token = localStorage.getItem('auth_token')
+              const url = `${process.env.NEXT_PUBLIC_API_URL}/progress/video/timestamp`
+
+              fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ videoId: youtubeId, timestamp: time }),
+                keepalive: true,
+              }).catch(() => {})
+            }
+          }
+        } catch {}
+
         playerRef.current.destroy()
         playerRef.current = null
       }
