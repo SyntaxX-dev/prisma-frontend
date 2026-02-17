@@ -645,7 +645,7 @@ export function ProfilePage() {
                                                     {/* Overlay com ícone de câmera no hover - apenas para o próprio perfil */}
                                                     {isOwnProfile && !isUploadingImage && (
                                                         <div
-                                                            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover/avatar:pointer-events-auto"
+                                                            className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover/avatar:pointer-events-auto"
                                                             onClick={() => {
                                                                 if (!isUploadingImage) {
                                                                     document.getElementById('avatar-upload')?.click();
@@ -678,7 +678,7 @@ export function ProfilePage() {
                                                     {/* Botão de remover foto - apenas para o próprio perfil */}
                                                     {isOwnProfile && (user.profileImage || avatarImage) && !isUploadingImage && (
                                                         <div
-                                                            className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/80 border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/90 hover:border-red-500/50 hover:scale-110"
+                                                            className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/60 backdrop-blur-md border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/80 hover:border-red-500/50 hover:scale-110"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 deleteUserProfileImage();
@@ -721,10 +721,9 @@ export function ProfilePage() {
                                                     {/* Botão "Ver perfil privado" - apenas para o próprio perfil */}
                                                     {isOwnProfile && (
                                                         <Button
-                                                            variant="outline"
-                                                            className={`w-full px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer ${isPublicView
-                                                                ? 'bg-[#bd18b4]/10 border-[#bd18b4] text-[#bd18b4] hover:bg-[#bd18b4]/20'
-                                                                : 'bg-transparent hover:bg-white/5 border-[#323238] text-gray-300 hover:text-white'
+                                                            className={`w-full px-6 py-2 rounded-lg font-bold transition-all duration-300 cursor-pointer border ${isPublicView
+                                                                ? 'bg-[#bd18b4]/10 border-[#bd18b4] text-[#bd18b4] hover:text-white hover:border-white'
+                                                                : 'bg-transparent border-[#323238] text-gray-400 hover:text-white hover:border-white'
                                                                 }`}
                                                             onClick={() => setIsPublicView(!isPublicView)}
                                                         >
