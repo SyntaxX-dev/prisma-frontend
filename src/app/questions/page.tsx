@@ -87,7 +87,8 @@ export default function QuestionsPage() {
     }
 
     // Check if user has access (START plan is blocked)
-    if (subscription?.planId === 'START') {
+    const isStart = subscription?.plan?.id === 'START' || subscription?.planId === 'START';
+    if (isStart) {
       setShowUpgradeModal(true);
       return;
     }
