@@ -6,7 +6,7 @@ import { Badge } from "../../ui/badge";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useNavigationWithLoading } from "@/hooks/shared";
 import { LoadingGrid } from "../../ui/loading-grid";
 import { markVideoCompleted } from "@/api/progress/mark-video-completed";
@@ -100,6 +100,8 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const { navigateWithLoading } = useNavigationWithLoading();
   const { afterVideoAction } = useCacheInvalidation();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const videoFromQuery = searchParams.get('v');
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
@@ -209,7 +211,11 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
         setLastFetchedSubCourseId(subCourseId);
 
         if (allVideos.length > 0) {
-          setSelectedVideo(allVideos[0]);
+          // Se veio com query param ?v=youtubeId, selecionar o vídeo correspondente
+          const targetVideo = videoFromQuery
+            ? allVideos.find(v => v.youtubeId === videoFromQuery)
+            : null;
+          setSelectedVideo(targetVideo || allVideos[0]);
         } else {
           setSelectedVideo(null);
         }

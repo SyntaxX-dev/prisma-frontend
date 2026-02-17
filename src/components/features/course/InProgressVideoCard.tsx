@@ -49,7 +49,7 @@ export function InProgressVideoCard({ video }: InProgressVideoCardProps) {
   const handleContinueWatching = () => {
     // Navigate to the course page with the specific sub-course and video
     navigateWithLoading(
-      `/course/${video.courseId}/sub-courses/${video.subCourseId}/videos`,
+      `/course/${video.courseId}/sub-courses/${video.subCourseId}/videos?v=${video.videoId}`,
       'Carregando vídeo...'
     );
   };
