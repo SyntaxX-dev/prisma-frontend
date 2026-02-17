@@ -41,15 +41,15 @@ export function HabilitiesCard({ userProfile, isPublicView, onEditClick }: Habil
   // Parse das habilidades do usuário de forma segura (pode vir como string separada por vírgula ou array)
   const habilities = useMemo(() => {
     if (!userProfile?.habilities) return [];
-    
+
     if (Array.isArray(userProfile.habilities)) {
       return (userProfile.habilities as string[]).filter(h => typeof h === 'string' && h.trim() !== '');
     }
-    
+
     if (typeof userProfile.habilities === 'string') {
       return userProfile.habilities.split(',').map(h => h.trim()).filter(h => h !== '');
     }
-    
+
     return [];
   }, [userProfile?.habilities]);
 
@@ -57,7 +57,7 @@ export function HabilitiesCard({ userProfile, isPublicView, onEditClick }: Habil
     <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white font-semibold flex items-center gap-2">
+          <CardTitle className="text-white font-black flex items-center gap-2">
             <Star className="w-5 h-5 text-[#bd18b4]" />
             Habilidades
           </CardTitle>
@@ -72,13 +72,13 @@ export function HabilitiesCard({ userProfile, isPublicView, onEditClick }: Habil
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         {habilities.length > 0 ? (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
               {habilities.map((hability: string, index: number) => (
-                <div 
+                <div
                   key={index}
                   className={`${getHabilityColor(index)} text-xs font-medium`}
                 >
@@ -95,13 +95,13 @@ export function HabilitiesCard({ userProfile, isPublicView, onEditClick }: Habil
               <Star className="w-6 h-6 text-gray-500" />
             </div>
             <p className="text-gray-400 text-sm mb-4">
-              {isPublicView 
-                ? 'Nenhuma habilidade cadastrada' 
+              {isPublicView
+                ? 'Nenhuma habilidade cadastrada'
                 : 'Adicione suas habilidades para se destacar'
               }
             </p>
             {!isPublicView && (
-              <Button 
+              <Button
                 className="bg-[#bd18b4] hover:bg-[#aa22c5] text-black px-4 py-2 rounded-lg font-medium flex items-center space-x-2 mx-auto cursor-pointer"
                 onClick={onEditClick}
               >

@@ -68,7 +68,7 @@ export function OffensivesCard() {
     return (
       <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
         <CardHeader>
-          <CardTitle className="text-white font-semibold flex items-center gap-2">
+          <CardTitle className="text-white font-black flex items-center gap-2">
             <Trophy className="w-5 h-5 text-[#bd18b4]" />
             Ofensivas
           </CardTitle>
@@ -86,7 +86,7 @@ export function OffensivesCard() {
     return (
       <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
         <CardHeader>
-          <CardTitle className="text-white font-semibold flex items-center gap-2">
+          <CardTitle className="text-white font-black flex items-center gap-2">
             <Trophy className="w-5 h-5 text-[#bd18b4]" />
             Ofensivas
           </CardTitle>
@@ -111,7 +111,7 @@ export function OffensivesCard() {
     return (
       <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
         <CardHeader>
-          <CardTitle className="text-white font-semibold flex items-center gap-2">
+          <CardTitle className="text-white font-black flex items-center gap-2">
             <Trophy className="w-5 h-5 text-[#bd18b4]" />
             Ofensivas
           </CardTitle>
@@ -128,7 +128,7 @@ export function OffensivesCard() {
   return (
     <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
       <CardHeader>
-        <CardTitle className="text-white font-semibold flex items-center gap-2">
+        <CardTitle className="text-white font-black flex items-center gap-2">
           <Trophy className="w-5 h-5 text-[#bd18b4]" />
           Ofensivas
         </CardTitle>
@@ -153,7 +153,7 @@ export function OffensivesCard() {
               <div className="text-xs text-gray-400">Total de ofensivas</div>
             </div>
           </div>
-          
+
           {/* Data da última ofensiva */}
           <div className="text-xs text-gray-500">
             Última ofensiva: {new Date(currentOffensive.lastVideoCompletedAt).toLocaleDateString('pt-BR')}
@@ -171,7 +171,7 @@ export function OffensivesCard() {
             </div>
             <div className="text-xs text-gray-400">Sequência atual</div>
           </div>
-          
+
           <div className="bg-[#29292E] border border-[#323238] rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-2 h-2 bg-[#ff6b6b] rounded-full"></div>
@@ -190,7 +190,7 @@ export function OffensivesCard() {
             <span className="text-xs text-gray-400">{currentOffensive.consecutiveDays} dias</span>
           </div>
           <div className="w-full bg-[#323238] rounded-full h-2">
-            <div 
+            <div
               className="bg-gradient-to-r from-[#bd18b4] to-[#aa22c5] h-2 rounded-full transition-all duration-300"
               style={{ width: `${Math.min((currentOffensive.consecutiveDays / 30) * 100, 100)}%` }}
             ></div>
@@ -211,7 +211,7 @@ export function OffensivesCard() {
                   <span className="text-xs text-gray-400">{offensivesData.nextMilestones.daysToSuper} dias</span>
                 </div>
               )}
-              
+
               {offensivesData.nextMilestones.daysToSuper === 0 && offensivesData.nextMilestones.daysToUltra > 0 && (
                 <div className="flex items-center justify-between bg-[#7c3aed]/10 border border-[#8b5cf6]/20 rounded-lg p-2">
                   <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export function OffensivesCard() {
                   <span className="text-xs text-gray-400">{offensivesData.nextMilestones.daysToUltra} dias</span>
                 </div>
               )}
-              
+
               {offensivesData.nextMilestones.daysToSuper === 0 && offensivesData.nextMilestones.daysToUltra === 0 && offensivesData.nextMilestones.daysToKing > 0 && (
                 <div className="flex items-center justify-between bg-[#f59e0b]/10 border border-[#fbbf24]/20 rounded-lg p-2">
                   <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export function OffensivesCard() {
                   <span className="text-xs text-gray-400">{offensivesData.nextMilestones.daysToKing} dias</span>
                 </div>
               )}
-              
+
               {offensivesData.nextMilestones.daysToSuper === 0 && offensivesData.nextMilestones.daysToUltra === 0 && offensivesData.nextMilestones.daysToKing === 0 && offensivesData.nextMilestones.daysToInfinity > 0 && (
                 <div className="flex items-center justify-between bg-[#ec4899]/10 border border-[#f472b6]/20 rounded-lg p-2">
                   <div className="flex items-center gap-2">

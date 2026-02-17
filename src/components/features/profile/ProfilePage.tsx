@@ -148,6 +148,11 @@ function SortableLinkItem({
 export function ProfilePage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+
+    useEffect(() => {
+        document.body.classList.add('font-metropolis');
+        return () => document.body.classList.remove('font-metropolis');
+    }, []);
     const userId = searchParams.get('userId');
     const { socket } = useNotificationsContext();
     const [isDark, setIsDark] = useState(true);
@@ -589,7 +594,7 @@ export function ProfilePage() {
     // getModalFields já está disponível no hook useProfile
 
     return (
-        <div className="min-h-screen text-white relative">
+        <div className="min-h-screen text-white relative font-metropolis">
             <BackgroundGrid />
 
 

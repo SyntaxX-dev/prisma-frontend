@@ -32,7 +32,7 @@ export function ProfileHeader({
                         id="avatar-upload"
                     />
                 </div>
-                <h1 className="text-xl font-bold text-white mb-1">
+                <h1 className="text-xl font-black text-white mb-1">
                     {user.nome || user.name}
                 </h1>
                 <p className="text-gray-400 text-sm">

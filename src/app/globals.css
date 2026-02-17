@@ -323,6 +323,11 @@
     @apply bg-background text-foreground;
     font-family: 'Metropolis', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   }
+
+  .font-metropolis,
+  .font-metropolis * {
+    font-family: 'Metropolis', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+  }
 }
 
 @layer base {
@@ -619,23 +624,22 @@ body {
   0% {
     background-position: 200% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
 }
 
 .animate-rainbow {
-  background: linear-gradient(
-    90deg,
-    #ff0000,
-    #ff7f00,
-    #ffff00,
-    #00ff00,
-    #0000ff,
-    #4b0082,
-    #9400d3,
-    #ff0000
-  );
+  background: linear-gradient(90deg,
+      #ff0000,
+      #ff7f00,
+      #ffff00,
+      #00ff00,
+      #0000ff,
+      #4b0082,
+      #9400d3,
+      #ff0000);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;

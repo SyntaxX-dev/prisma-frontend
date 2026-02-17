@@ -8,7 +8,7 @@ import { Button } from '../../ui/button';
 // Função para obter ícone baseado no momento de carreira
 const getCareerIcon = (momentCareer: string) => {
   const momentLower = momentCareer.toLowerCase();
-  
+
   if (momentLower.includes('iniciante') || momentLower.includes('começando') || momentLower.includes('estudante')) {
     return <Target className="w-5 h-5 text-[#bd18b4]" />;
   }
@@ -27,14 +27,14 @@ const getCareerIcon = (momentCareer: string) => {
   if (momentLower.includes('freelancer') || momentLower.includes('consultor') || momentLower.includes('mentor')) {
     return <Lightbulb className="w-5 h-5 text-[#bd18b4]" />;
   }
-  
+
   return <Briefcase className="w-5 h-5 text-[#bd18b4]" />; // Ícone padrão
 };
 
 // Função para obter cor baseada no momento de carreira
 const getCareerColor = (momentCareer: string) => {
   const momentLower = momentCareer.toLowerCase();
-  
+
   if (momentLower.includes('iniciante') || momentLower.includes('começando') || momentLower.includes('estudante')) {
     return 'bg-[#bd18b4]/20 backdrop-blur-md border border-[#c532e2]/30 rounded-full px-3 py-1 text-center';
   }
@@ -53,14 +53,14 @@ const getCareerColor = (momentCareer: string) => {
   if (momentLower.includes('freelancer') || momentLower.includes('consultor') || momentLower.includes('mentor')) {
     return 'bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 rounded-full px-3 py-1 text-center';
   }
-  
+
   return 'bg-gray-500/20 backdrop-blur-md border border-gray-400/30 rounded-full px-3 py-1 text-center'; // Cor padrão
 };
 
 // Função para obter cor do texto baseada no momento de carreira
 const getCareerTextColor = (momentCareer: string) => {
   const momentLower = momentCareer.toLowerCase();
-  
+
   if (momentLower.includes('iniciante') || momentLower.includes('começando') || momentLower.includes('estudante')) {
     return 'text-green-300';
   }
@@ -79,7 +79,7 @@ const getCareerTextColor = (momentCareer: string) => {
   if (momentLower.includes('freelancer') || momentLower.includes('consultor') || momentLower.includes('mentor')) {
     return 'text-yellow-300';
   }
-  
+
   return 'text-gray-300'; // Cor padrão
 };
 
@@ -100,7 +100,7 @@ export function CareerMomentCard({ userProfile, isPublicView, onEditClick }: Car
     <Card className="bg-gradient-to-br from-[#202024] via-[#1e1f23] to-[#1a1b1e] border border-[#323238] rounded-xl p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#bd18b4]/5 before:to-transparent before:pointer-events-none">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white font-semibold flex items-center gap-2">
+          <CardTitle className="text-white font-black flex items-center gap-2">
             {getCareerIcon(momentCareer)}
             Momento de Carreira
           </CardTitle>
@@ -115,7 +115,7 @@ export function CareerMomentCard({ userProfile, isPublicView, onEditClick }: Car
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <div className="flex justify-center">
           <div className={`${getCareerColor(momentCareer)} text-xs font-medium`}>
