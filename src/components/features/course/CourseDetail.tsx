@@ -720,10 +720,14 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     }
   }, []);
 
-  // Buscar limite quando componente monta
+  // Buscar limite apenas se o plano não for START (plano START não tem acesso a IA)
   useEffect(() => {
-    fetchLimitsInfo();
-  }, [fetchLimitsInfo]);
+    if (!subscription) return;
+    const isStart = subscription?.plan?.id === 'START' || subscription?.planId === 'START';
+    if (!isStart) {
+      fetchLimitsInfo();
+    }
+  }, [subscription, fetchLimitsInfo]);
 
   const handleGenerate = async (type: GenerationType) => {
     if (!selectedVideo) return;
@@ -793,10 +797,14 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
     }
   };
 
-  // Buscar mapa mental existente quando o vídeo mudar
+  // Buscar mapa mental existente quando o vídeo mudar (apenas se não for plano START)
   useEffect(() => {
-    fetchExistingMindMap();
-  }, [fetchExistingMindMap]);
+    if (!subscription) return;
+    const isStart = subscription?.plan?.id === 'START' || subscription?.planId === 'START';
+    if (!isStart) {
+      fetchExistingMindMap();
+    }
+  }, [fetchExistingMindMap, subscription]);
 
   const handleDownloadPdf = async () => {
     if (!mindMap || !selectedVideo) return;
