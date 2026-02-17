@@ -120,7 +120,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const fetchingRef = useRef(false);
   const playerRef = useRef<any>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const savedTimestampRef = useRef<number>(0);
 
   // Fetch subscription on mount
@@ -319,14 +318,11 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
                 onStateChange: async (event: any) => {
                   if (event.data === 1) { // PLAYING
                     setLocalVideoPlaying(true);
-                    startProgressTracking();
                   } else if (event.data === 2) { // PAUSED
                     setLocalVideoPlaying(false);
-                    stopProgressTracking();
                     saveProgress();
                   } else if (event.data === 0) { // ENDED
                     setLocalVideoPlaying(false);
-                    stopProgressTracking();
 
                     // Marcar vídeo como completado (sempre true quando terminar)
                     if (selectedVideo?.videoId) {
@@ -400,7 +396,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
 
     return () => {
       clearTimeout(timer);
-      stopProgressTracking();
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
@@ -410,25 +405,6 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       }
     };
   }, [selectedVideo?.id, selectedVideo?.youtubeId]);
-
-  const startProgressTracking = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-
-    // Salvar progresso a cada 1 segundo
-    progressIntervalRef.current = setInterval(() => {
-      saveProgress();
-    }, 1000);
-
-  };
-
-  const stopProgressTracking = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-  };
 
   const saveProgress = async () => {
     if (!playerRef.current || !selectedVideo?.youtubeId) return;
@@ -449,6 +425,66 @@ export function CourseDetail({ onVideoPlayingChange, isVideoPlaying = false, sub
       // Erro ao salvar progresso
     }
   };
+
+  // Salvar progresso ao sair da página (trocar aba, fechar aba/navegador, navegar)
+  useEffect(() => {
+    if (!selectedVideo?.youtubeId) return;
+
+    const saveBeforeLeave = () => {
+      if (!playerRef.current) return;
+
+      try {
+        const state = playerRef.current.getPlayerState?.();
+        // 1 = PLAYING, 2 = PAUSED
+        if (state !== 1 && state !== 2) return;
+
+        const currentTime = Math.floor(playerRef.current.getCurrentTime?.() || 0);
+        const duration = Math.floor(playerRef.current.getDuration?.() || 0);
+
+        if (currentTime <= 0) return;
+        if (duration > 0 && currentTime >= duration - 1) return;
+
+        const token = localStorage.getItem('auth_token');
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/progress/video/timestamp`;
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ videoId: selectedVideo.youtubeId, timestamp: currentTime }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch {
+        // Player pode já ter sido destruído
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveBeforeLeave();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      saveBeforeLeave();
+    };
+
+    const handlePageHide = () => {
+      saveBeforeLeave();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
+  }, [selectedVideo?.youtubeId]);
 
   const modules: ModuleDisplay[] = (() => {
     if (videos.length === 0) return [];
