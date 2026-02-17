@@ -43,21 +43,21 @@ export function ProfileHeader({
             <div className="space-y-3 mb-6">
                 <Button
                     className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                    onClick={() => {}}
+                    onClick={() => { }}
                 >
                     <Plus className="w-4 h-4 mr-2" />
                     Título
                 </Button>
                 <Button
                     className="w-full bg-transparent hover:bg-white/5 text-gray-400 border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                    onClick={() => {}}
+                    onClick={() => { }}
                 >
                     <Plus className="w-4 h-4 mr-2" />
                     Localização
                 </Button>
                 <Button
                     className="w-full bg-transparent hover:bg-white/5 text-[#bd18b4] border border-[#323238] rounded-lg justify-start text-sm py-2 cursor-pointer"
-                    onClick={() => {}}
+                    onClick={() => { }}
                 >
                     <Plus className="w-4 h-4 mr-2" />
                     Escolha seu foco

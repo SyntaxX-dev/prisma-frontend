@@ -613,14 +613,14 @@ export function ProfilePage() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-1">
                                     <div className="space-y-6">
-                                        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-3xl p-8 relative overflow-hidden group">
-                                            <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-3xl p-8 relative overflow-hidden group/profile-card">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-transparent opacity-0 group-hover/profile-card:opacity-100 transition-opacity duration-500" />
 
 
                                             <div className="text-center mb-6 relative z-10">
-                                                <div className="relative inline-block group mb-6">
+                                                <div className="relative inline-block group/avatar mb-6 rounded-full">
                                                     <Avatar
-                                                        className={`w-32 h-32 md:w-40 md:h-40 border-4 border-brand/20 shadow-2xl transition-all duration-500 ${isUploadingImage ? 'opacity-50' : isOwnProfile ? 'cursor-pointer group-hover:scale-105 group-hover:border-brand/40' : ''}`}
+                                                        className={`w-32 h-32 md:w-40 md:h-40 border-4 border-brand/20 shadow-2xl transition-all duration-500 ${isUploadingImage ? 'opacity-50' : isOwnProfile ? 'cursor-pointer group-hover/avatar:scale-105 group-hover/avatar:border-brand/40' : ''}`}
                                                         onClick={() => {
                                                             if (isOwnProfile && !isUploadingImage) {
                                                                 document.getElementById('avatar-upload')?.click();
@@ -640,7 +640,7 @@ export function ProfilePage() {
                                                     {/* Overlay com ícone de câmera no hover - apenas para o próprio perfil */}
                                                     {isOwnProfile && !isUploadingImage && (
                                                         <div
-                                                            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover:pointer-events-auto"
+                                                            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer pointer-events-none group-hover/avatar:pointer-events-auto"
                                                             onClick={() => {
                                                                 if (!isUploadingImage) {
                                                                     document.getElementById('avatar-upload')?.click();
@@ -673,7 +673,7 @@ export function ProfilePage() {
                                                     {/* Botão de remover foto - apenas para o próprio perfil */}
                                                     {isOwnProfile && (user.profileImage || avatarImage) && !isUploadingImage && (
                                                         <div
-                                                            className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/80 border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/90 hover:border-red-500/50 hover:scale-110"
+                                                            className="absolute -bottom-1 -right-1 w-7 h-7 bg-black/80 border border-red-500/30 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer hover:bg-black/90 hover:border-red-500/50 hover:scale-110"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 deleteUserProfileImage();
@@ -1039,7 +1039,7 @@ export function ProfilePage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* Modals moved outside the main scrollable area for better stability */}
 
@@ -1574,7 +1574,7 @@ export function ProfilePage() {
                         <p className="text-gray-300">{error}</p>
                     </div>
                     <div className="flex justify-end">
-                        <Button 
+                        <Button
                             onClick={handleErrorModalClose}
                             className="bg-zinc-700 hover:bg-zinc-600 text-white"
                         >
@@ -1583,6 +1583,6 @@ export function ProfilePage() {
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
