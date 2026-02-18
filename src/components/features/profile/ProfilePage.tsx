@@ -136,7 +136,7 @@ function SortableLinkItem({
                         type="url"
                         value={value}
                         onChange={(e) => onChange(field, e.target.value)}
-                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer pl-12 h-12"
+                        className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-text pl-12 h-12"
                         placeholder={placeholder}
                     />
                 </div>
@@ -1066,7 +1066,7 @@ export function ProfilePage() {
                                     <Textarea
                                         value={formData[field.key] || ''}
                                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                        className="bg-[#29292E] cursor-pointer border-[#323238] text-white placeholder-gray-400 focus:border-[#bd18b4] focus:ring-[#bd18b4]"
+                                        className="bg-[#29292E] cursor-text border-[#323238] text-white placeholder-gray-400 focus:border-[#bd18b4] focus:ring-[#bd18b4]"
                                         placeholder={`Digite ${field.label.toLowerCase()}...`}
                                         rows={3}
                                     />
@@ -1169,7 +1169,7 @@ export function ProfilePage() {
                                 type="text"
                                 value={basicInfoData.areaAtuacao}
                                 onChange={(e) => handleBasicInfoChange('areaAtuacao', e.target.value)}
-                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-text"
                                 placeholder="Em uma frase, o que você faz?"
                             />
                         </div>
@@ -1183,7 +1183,7 @@ export function ProfilePage() {
                                 type="text"
                                 value={basicInfoData.empresa}
                                 onChange={(e) => handleBasicInfoChange('empresa', e.target.value)}
-                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-text"
                                 placeholder="Você trabalha atualmente em alguma empresa?"
                             />
                         </div>
@@ -1536,7 +1536,7 @@ export function ProfilePage() {
                                 type="text"
                                 maxLength={500}
                                 defaultValue={userProfile?.momentCareer || ''}
-                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer"
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-text"
                                 placeholder="Ex: Desenvolvedor Júnior, Estudante, Empreendedor..."
                             />
                             <p className="text-xs text-gray-400">
