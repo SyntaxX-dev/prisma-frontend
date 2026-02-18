@@ -1531,13 +1531,12 @@ export function ProfilePage() {
                             <label className="text-sm text-gray-300">
                                 Momento de carreira
                             </label>
-                            <Input
+                            <Textarea
                                 name="momentCareer"
-                                type="text"
                                 maxLength={500}
                                 defaultValue={userProfile?.momentCareer || ''}
-                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-text"
-                                placeholder="Ex: Desenvolvedor Júnior, Estudante, Empreendedor..."
+                                className="bg-[#29292E] border-[#323238] text-white placeholder-gray-400 focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-text min-h-[120px] resize-none"
+                                placeholder="Ex: Desenvolvedor Júnior, Responsável pelo desenvolvimento e manutenção de todo o ecossistema..."
                             />
                             <p className="text-xs text-gray-400">
                                 Máximo 500 caracteres

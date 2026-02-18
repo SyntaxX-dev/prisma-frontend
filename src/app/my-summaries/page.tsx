@@ -100,7 +100,7 @@ function MySummariesContent() {
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
           <div>
-            <div className="flex-1 p-4 md:p-6 ml-0 lg:ml-[280px] pt-28 md:pt-32">
+            <div className="flex-1 p-4 md:p-6 ml-0 lg:ml-[280px] pt-32 md:pt-40 min-h-[calc(100vh-64px)] flex flex-col">
               {/* Header */}
               <div className="mb-6 md:mb-8">
                 <h1 className="text-2xl md:text-4xl font-bold text-white mb-2 flex items-center gap-2 md:gap-3">
@@ -116,10 +116,10 @@ function MySummariesContent() {
 
               {/* Summaries Grid */}
               {summaries.length === 0 ? (
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 md:p-12 text-center border border-white/10">
-                  <FileText className="w-12 h-12 md:w-20 md:h-20 text-white/30 mx-auto mb-4" />
+                <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+                  <FileText className="w-16 h-16 md:w-24 md:h-24 text-white/20 mx-auto mb-6" />
                   <h2 className="text-xl md:text-2xl font-semibold text-white mb-2">Nenhum resumo encontrado</h2>
-                  <p className="text-sm md:text-base text-white/60">
+                  <p className="text-sm md:text-base text-white/50 max-w-md mx-auto">
                     Vá para uma aula e gere seu primeiro resumo para estudo do ENEM!
                   </p>
                 </div>

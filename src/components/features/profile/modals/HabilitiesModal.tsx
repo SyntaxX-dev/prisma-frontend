@@ -41,49 +41,49 @@ export function HabilitiesModal({
 
     const validateHabilities = (habilitiesList: string[]): string[] => {
         const validationErrors: string[] = [];
-        
+
         // Permitir array vazio (agora o backend aceita nulo)
         // if (habilitiesList.length === 0) {
         //     validationErrors.push('Adicione pelo menos uma habilidade');
         // }
-        
+
         if (habilitiesList.length > 20) {
             validationErrors.push('Máximo de 20 habilidades permitidas');
         }
-        
+
         const emptyHabilities = habilitiesList.filter(h => h.trim() === '');
         if (emptyHabilities.length > 0) {
             validationErrors.push('Habilidades não podem estar vazias');
         }
-        
-        const duplicateHabilities = habilitiesList.filter((h, index) => 
+
+        const duplicateHabilities = habilitiesList.filter((h, index) =>
             habilitiesList.indexOf(h.toLowerCase().trim()) !== index
         );
         if (duplicateHabilities.length > 0) {
             validationErrors.push('Habilidades duplicadas não são permitidas');
         }
-        
+
         return validationErrors;
     };
 
     const addHability = () => {
         const trimmedHability = newHability.trim();
-        
+
         if (!trimmedHability) {
             toast.error('Digite uma habilidade válida');
             return;
         }
-        
+
         if (habilities.length >= 20) {
             toast.error('Máximo de 20 habilidades permitidas');
             return;
         }
-        
+
         if (habilities.some(h => h.toLowerCase() === trimmedHability.toLowerCase())) {
             toast.error('Esta habilidade já foi adicionada');
             return;
         }
-        
+
         setHabilities(prev => [...prev, trimmedHability]);
         setNewHability('');
     };
@@ -105,15 +105,15 @@ export function HabilitiesModal({
 
     const handleSave = async () => {
         const validationErrors = validateHabilities(habilities);
-        
+
         if (validationErrors.length > 0) {
             setErrors(validationErrors);
             return;
         }
-        
+
         setIsLoading(true);
         setErrors([]);
-        
+
         try {
             await onSave(habilities);
             toast.success('Habilidades atualizadas com sucesso!');
@@ -129,7 +129,7 @@ export function HabilitiesModal({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="bg-[#202024] border-[#323238] text-white max-w-lg">
                 <DialogHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pr-8">
                         <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
                             <span>Suas Habilidades</span>
                             <Badge variant="secondary" className="bg-[#bd18b4]/20 text-[#bd18b4] border-[#bd18b4]/30">

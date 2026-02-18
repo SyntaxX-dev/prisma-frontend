@@ -50,7 +50,7 @@ function WatchingContent() {
         <Sidebar isDark={isDark} toggleTheme={() => { }} />
         <div className="flex-1">
           <Navbar isDark={isDark} toggleTheme={() => { }} />
-          <div className="pl-4 md:pl-8 pr-4 md:pr-8 pt-24 md:pt-10 w-full mb-8">
+          <div className="pl-4 md:pl-8 pr-4 md:pr-8 pt-32 md:pt-40 w-full mb-8 min-h-[calc(100vh-64px)] flex flex-col">
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-4">
@@ -85,17 +85,17 @@ function WatchingContent() {
 
             {/* Empty State */}
             {!isLoading && !error && videos.length === 0 && (
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-12 text-center">
-                <div className="bg-white/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Play className="w-10 h-10 text-white/40" />
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+                <div className="bg-white/5 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10">
+                  <Play className="w-12 h-12 text-white/20" />
                 </div>
-                <h3 className="text-white text-xl font-semibold mb-2">Nenhum vídeo em progresso</h3>
-                <p className="text-white/60 mb-6">
+                <h3 className="text-white text-xl md:text-2xl font-semibold mb-2">Nenhum vídeo em progresso</h3>
+                <p className="text-white/50 mb-8 max-w-md mx-auto">
                   Comece a assistir vídeos e eles aparecerão aqui para você continuar depois!
                 </p>
                 <a
                   href="/courses"
-                  className="inline-block bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-medium px-6 py-3 rounded-full transition-colors"
+                  className="inline-block bg-[#bd18b4] hover:bg-[#aa22c5] text-black font-semibold px-8 py-3 rounded-full transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#bd18b4]/20"
                 >
                   Explorar Cursos
                 </a>
