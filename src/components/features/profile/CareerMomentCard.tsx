@@ -34,27 +34,30 @@ const getCareerIcon = (momentCareer: string) => {
 // Função para obter cor baseada no momento de carreira
 const getCareerColor = (momentCareer: string) => {
   const momentLower = momentCareer.toLowerCase();
+  const isLongText = momentCareer.length > 40;
+  const borderRadius = isLongText ? 'rounded-2xl' : 'rounded-full';
+  const padding = isLongText ? 'px-6 py-5' : 'px-4 py-1.5';
 
   if (momentLower.includes('iniciante') || momentLower.includes('começando') || momentLower.includes('estudante')) {
-    return 'bg-[#bd18b4]/20 backdrop-blur-md border border-[#c532e2]/30 rounded-full px-3 py-1 text-center';
+    return `bg-[#bd18b4]/20 backdrop-blur-md border border-[#c532e2]/30 ${borderRadius} ${padding} text-center w-full`;
   }
   if (momentLower.includes('júnior') || momentLower.includes('junior') || momentLower.includes('desenvolvedor')) {
-    return 'bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-full px-3 py-1 text-center';
+    return `bg-blue-500/20 backdrop-blur-md border border-blue-400/30 ${borderRadius} ${padding} text-center w-full`;
   }
   if (momentLower.includes('pleno') || momentLower.includes('sênior') || momentLower.includes('senior') || momentLower.includes('especialista')) {
-    return 'bg-purple-500/20 backdrop-blur-md border border-purple-400/30 rounded-full px-3 py-1 text-center';
+    return `bg-purple-500/20 backdrop-blur-md border border-purple-400/30 ${borderRadius} ${padding} text-center w-full`;
   }
   if (momentLower.includes('líder') || momentLower.includes('lider') || momentLower.includes('coordenador') || momentLower.includes('gerente')) {
-    return 'bg-orange-500/20 backdrop-blur-md border border-orange-400/30 rounded-full px-3 py-1 text-center';
+    return `bg-orange-500/20 backdrop-blur-md border border-orange-400/30 ${borderRadius} ${padding} text-center w-full`;
   }
   if (momentLower.includes('empreendedor') || momentLower.includes('fundador') || momentLower.includes('ceo') || momentLower.includes('diretor')) {
-    return 'bg-red-500/20 backdrop-blur-md border border-red-400/30 rounded-full px-3 py-1 text-center';
+    return `bg-red-500/20 backdrop-blur-md border border-red-400/30 ${borderRadius} ${padding} text-center w-full`;
   }
   if (momentLower.includes('freelancer') || momentLower.includes('consultor') || momentLower.includes('mentor')) {
-    return 'bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 rounded-full px-3 py-1 text-center';
+    return `bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 ${borderRadius} ${padding} text-center w-full`;
   }
 
-  return 'bg-gray-500/20 backdrop-blur-md border border-gray-400/30 rounded-full px-3 py-1 text-center'; // Cor padrão
+  return `bg-gray-500/20 backdrop-blur-md border border-gray-400/30 ${borderRadius} ${padding} text-center w-full`; // Cor padrão
 };
 
 // Função para obter cor do texto baseada no momento de carreira
@@ -117,9 +120,9 @@ export function CareerMomentCard({ userProfile, isPublicView, onEditClick }: Car
       </CardHeader>
 
       <CardContent className="pt-0">
-        <div className="flex justify-center">
-          <div className={`${getCareerColor(momentCareer)} text-xs font-medium`}>
-            <span className={`${getCareerTextColor(momentCareer)}`}>
+        <div className="flex justify-center w-full">
+          <div className={`${getCareerColor(momentCareer)} ${momentCareer.length > 40 ? 'text-sm' : 'text-xs'} font-medium`}>
+            <span className={`${getCareerTextColor(momentCareer)} leading-relaxed shadow-sm`}>
               {momentCareer}
             </span>
           </div>
