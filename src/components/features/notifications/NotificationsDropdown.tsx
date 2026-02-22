@@ -48,10 +48,11 @@ export function NotificationsDropdown() {
     }
   }, []);
 
-  // Carregar pedidos de amizade ao montar o componente
+  // Carregar pedidos de amizade ao montar o componente - apenas uma vez
   useEffect(() => {
     loadFriendRequests();
-  }, [loadFriendRequests]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Recarregar pedidos quando abrir o dropdown
   useEffect(() => {

@@ -558,6 +558,7 @@ function CommunitiesPageContent() {
 
   // Ref para evitar chamadas duplicadas
   const hasLoadedCommunities = useRef(false);
+  const hasLoadedConversations = useRef(false);
   const hasRestoredLastConversation = useRef(false);
 
   // Hook para obter dados do usuário logado
@@ -721,9 +722,12 @@ function CommunitiesPageContent() {
     }
   }, [searchParams, isLoadingCommunities, communities]);
 
-  // Carregar conversas
+  // Carregar conversas - apenas uma vez
   useEffect(() => {
-    loadConversations();
+    if (!hasLoadedConversations.current) {
+      hasLoadedConversations.current = true;
+      loadConversations();
+    }
   }, []);
 
   // Sincronizar communityId com URL
@@ -860,6 +864,15 @@ function CommunitiesPageContent() {
   // Ref para rastrear se as mensagens foram carregadas para a comunidade atual
   const loadingCommunityIdRef = useRef<string | null>(null);
 
+  // Refs para os callbacks de carregamento - evita que mudanças de referência
+  // (causadas pela reconexão do socket) re-disparem o useEffect de carregamento
+  const loadCommunityMessagesRef = useRef(loadCommunityMessages);
+  const loadCommunityPinnedMessagesRef = useRef(loadCommunityPinnedMessages);
+  useEffect(() => {
+    loadCommunityMessagesRef.current = loadCommunityMessages;
+    loadCommunityPinnedMessagesRef.current = loadCommunityPinnedMessages;
+  }, [loadCommunityMessages, loadCommunityPinnedMessages]);
+
   // Load messages when community is selected
   useEffect(() => {
     if (selectedCommunityId) {
@@ -868,8 +881,8 @@ function CommunitiesPageContent() {
       loadingCommunityIdRef.current = selectedCommunityId;
       // Mock delay para visualizar skeletons (2 segundos)
       const loadTimer = setTimeout(async () => {
-        await loadCommunityMessages(50, 0);
-        await loadCommunityPinnedMessages();
+        await loadCommunityMessagesRef.current(50, 0);
+        await loadCommunityPinnedMessagesRef.current();
         // Aguardar um pouco após as mensagens serem carregadas para garantir que tudo foi renderizado
         setTimeout(() => {
           // Só desativar o loading se ainda estamos na mesma comunidade
@@ -885,18 +898,7 @@ function CommunitiesPageContent() {
       setIsLoadingCommunityPinnedMessages(false);
       loadingCommunityIdRef.current = null;
     }
-  }, [selectedCommunityId, loadCommunityMessages, loadCommunityPinnedMessages]);
-
-  // Detectar quando as mensagens fixadas da comunidade foram carregadas
-  useEffect(() => {
-    if (selectedCommunityId && isLoadingCommunityPinnedMessages) {
-      // Aguardar um pouco após as mensagens fixadas serem carregadas
-      const timer = setTimeout(() => {
-        setIsLoadingCommunityPinnedMessages(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedCommunityId, communityPinnedMessages.length, isLoadingCommunityPinnedMessages]);
+  }, [selectedCommunityId]);
 
   const loadCommunities = async () => {
     try {
@@ -1572,43 +1574,48 @@ function CommunitiesPageContent() {
 
                   {/* Sidebar Modal */}
                   <div className={`lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transition-transform duration-300 ease-in-out ${isRightSidebarCollapsed ? 'translate-x-full' : 'translate-x-0'}`}>
-                    {/* Botão de fechar */}
-                    <button
-                      onClick={() => setIsRightSidebarCollapsed(true)}
-                      className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-                    >
-                      <X className="w-5 h-5 text-white" />
-                    </button>
+                    {/* Só renderiza o conteúdo quando o sidebar está aberto para evitar requisições duplicadas */}
+                    {!isRightSidebarCollapsed && (
+                      <>
+                        {/* Botão de fechar */}
+                        <button
+                          onClick={() => setIsRightSidebarCollapsed(true)}
+                          className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                        >
+                          <X className="w-5 h-5 text-white" />
+                        </button>
 
-                    <div className="pt-16 px-4 flex justify-center">
-                      <CommunityInfo
-                        community={{
-                          id: `chat-${chatUser.id}`,
-                          name: chatUser.name,
-                          description: '',
-                          avatarUrl: chatUser.profileImage || undefined,
-                          memberCount: 2,
-                          isOwner: false,
-                          isMember: true,
-                          createdAt: new Date().toISOString(),
-                        }}
-                        onStartVideoCall={() => { }}
-                        onStartVoiceCall={async () => {
-                          try {
-                            await startCall(chatUser.id);
-                          } catch (error) {
-                            console.error('Erro ao iniciar chamada:', error);
-                          }
-                        }}
-                        isFromSidebar={false}
-                        pinnedMessages={pinnedMessages}
-                        currentUserId={userProfile.id}
-                        currentUserAvatar={userProfile.profileImage}
-                        friendName={chatUser.name}
-                        friendAvatar={chatUser.profileImage}
-                        onUnpinMessage={unpinMessage}
-                      />
-                    </div>
+                        <div className="pt-16 px-4 flex justify-center">
+                          <CommunityInfo
+                            community={{
+                              id: `chat-${chatUser.id}`,
+                              name: chatUser.name,
+                              description: '',
+                              avatarUrl: chatUser.profileImage || undefined,
+                              memberCount: 2,
+                              isOwner: false,
+                              isMember: true,
+                              createdAt: new Date().toISOString(),
+                            }}
+                            onStartVideoCall={() => { }}
+                            onStartVoiceCall={async () => {
+                              try {
+                                await startCall(chatUser.id);
+                              } catch (error) {
+                                console.error('Erro ao iniciar chamada:', error);
+                              }
+                            }}
+                            isFromSidebar={false}
+                            pinnedMessages={pinnedMessages}
+                            currentUserId={userProfile.id}
+                            currentUserAvatar={userProfile.profileImage}
+                            friendName={chatUser.name}
+                            friendAvatar={chatUser.profileImage}
+                            onUnpinMessage={unpinMessage}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -1854,33 +1861,36 @@ function CommunitiesPageContent() {
 
                 {/* Sidebar Modal */}
                 <div className={`lg:hidden fixed right-0 top-0 bottom-0 z-50 w-full bg-[#1a1a1a] border-l border-white/10 overflow-y-auto transition-transform duration-300 ease-in-out ${isRightSidebarCollapsed ? 'translate-x-full' : 'translate-x-0'}`}>
-                  {isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
-                    <div className="pt-16 px-4">
-                      <ChatSidebarSkeleton />
-                    </div>
-                  ) : (
-                    <>
-                      {/* Botão de fechar */}
-                      <button
-                        onClick={() => setIsRightSidebarCollapsed(true)}
-                        className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-                      >
-                        <X className="w-5 h-5 text-white" />
-                      </button>
-
-                      <div className="pt-16 px-4 flex justify-center">
-                        <CommunityInfo
-                          community={selectedCommunity}
-                          onStartVideoCall={handleStartVideoCall}
-                          onStartVoiceCall={handleStartVoiceCall}
-                          isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
-                          pinnedMessages={communityPinnedMessages}
-                          currentUserId={userProfile?.id}
-                          currentUserAvatar={userProfile?.profileImage}
-                          onUnpinMessage={unpinCommunityMessage}
-                        />
+                  {/* Só renderiza o conteúdo quando o sidebar está aberto para evitar requisições duplicadas */}
+                  {!isRightSidebarCollapsed && (
+                    isLoadingCommunityMessages || isLoadingCommunityPinnedMessages ? (
+                      <div className="pt-16 px-4">
+                        <ChatSidebarSkeleton />
                       </div>
-                    </>
+                    ) : (
+                      <>
+                        {/* Botão de fechar */}
+                        <button
+                          onClick={() => setIsRightSidebarCollapsed(true)}
+                          className="absolute top-4 right-4 z-10 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+                        >
+                          <X className="w-5 h-5 text-white" />
+                        </button>
+
+                        <div className="pt-16 px-4 flex justify-center">
+                          <CommunityInfo
+                            community={selectedCommunity}
+                            onStartVideoCall={handleStartVideoCall}
+                            onStartVoiceCall={handleStartVoiceCall}
+                            isFromSidebar={communities.some(c => c.id === selectedCommunityId)}
+                            pinnedMessages={communityPinnedMessages}
+                            currentUserId={userProfile?.id}
+                            currentUserAvatar={userProfile?.profileImage}
+                            onUnpinMessage={unpinCommunityMessage}
+                          />
+                        </div>
+                      </>
+                    )
                   )}
                 </div>
               </>

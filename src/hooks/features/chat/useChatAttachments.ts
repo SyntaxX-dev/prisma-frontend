@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getConversationAttachments } from '@/api/messages/get-conversation-attachments';
 import { getCommunityAttachments } from '@/api/communities/get-community-attachments';
 import type { Attachment } from '@/types/attachments';
@@ -17,6 +17,8 @@ export function useChatAttachments(
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Guard: evita chamadas duplicadas para o mesmo chat (Strict Mode / remount)
+  const hasLoadedForRef = useRef<string | null>(null);
 
   const fetchAttachments = useCallback(async () => {
     if (!chatId) {
@@ -29,7 +31,7 @@ export function useChatAttachments(
 
     try {
       let result;
-      
+
       if (chatType === 'personal') {
         result = await getConversationAttachments(chatId);
       } else {
@@ -51,9 +53,21 @@ export function useChatAttachments(
     }
   }, [chatType, chatId]);
 
+  // Usar deps primitivas ao invés da referência da função para evitar
+  // dupla execução quando o useCallback recria a referência (Strict Mode / remount)
   useEffect(() => {
+    if (!chatId) {
+      setAttachments([]);
+      hasLoadedForRef.current = null;
+      return;
+    }
+    const key = `${chatType}:${chatId}`;
+    if (hasLoadedForRef.current === key) return;
+    hasLoadedForRef.current = key;
+
     fetchAttachments();
-  }, [fetchAttachments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatType, chatId]);
 
   return {
     attachments,

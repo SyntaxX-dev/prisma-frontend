@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useProfile } from '@/hooks/features/profile';
+import { useAuth } from '@/hooks/features/auth';
 import { getUserProfile } from '@/api/auth/get-user-profile';
 import { getEmailValue } from '@/lib/utils/email';
 import { LoadingGrid } from '@/components/ui/loading-grid';
@@ -154,6 +155,7 @@ export function ProfilePage() {
         return () => document.body.classList.remove('font-metropolis');
     }, []);
     const userId = searchParams.get('userId');
+    const { user: currentUser } = useAuth();
     const { socket } = useNotificationsContext();
     const [isDark, setIsDark] = useState(true);
 
@@ -233,6 +235,12 @@ export function ProfilePage() {
         }
     };
 
+    // Determinar se está vendo o próprio perfil usando dados do useAuth
+    const isOwnProfile = useMemo(() => {
+        if (!userId) return true;
+        return !!(currentUser?.id && userId === currentUser.id);
+    }, [userId, currentUser?.id]);
+
     const {
         userProfile,
         isLoading,
@@ -297,7 +305,7 @@ export function ProfilePage() {
         setAboutText,
         setLinkFieldsOrder,
         clearError
-    } = useProfile();
+    } = useProfile({ skipFetch: !isOwnProfile });
 
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
 
@@ -305,11 +313,6 @@ export function ProfilePage() {
         setIsErrorModalOpen(false);
         clearError();
     };
-
-    // Verificar se está vendo o próprio perfil
-    // Se não há userId na URL, é o próprio perfil
-    // Se há userId, compara com o ID do usuário logado
-    const isOwnProfile = !userId || (userProfile?.id && userId === userProfile.id);
 
     // Função para carregar perfil de outro usuário
     const loadOtherUserProfile = async () => {
@@ -423,8 +426,13 @@ export function ProfilePage() {
     // Se estiver visualizando perfil de outro usuário, usar otherUserProfile
     // Usar useMemo para garantir que o user seja atualizado quando userProfile mudar
     const user = useMemo(() => {
-        return userId && otherUserProfile ? otherUserProfile : userProfile;
-    }, [userId, otherUserProfile, userProfile]);
+        // Se estamos visualizando outro perfil, usar otherUserProfile
+        if (userId && !isOwnProfile) {
+            return otherUserProfile;
+        }
+        // Caso contrário, usar o perfil do usuário logado (isOwnProfile === true)
+        return userProfile;
+    }, [userId, isOwnProfile, otherUserProfile, userProfile]);
 
     // Monitorar erros e abrir modal se necessário
     useEffect(() => {
@@ -803,12 +811,12 @@ export function ProfilePage() {
                                                         </Button>
                                                     )
                                                 )}
-                                                {selectedFocus ? (
+                                                {user?.userFocus ? (
                                                     <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">
                                                         <div className="flex items-center">
                                                             <div className="w-2 h-2 bg-[#bd18b4] shadow-[0_0_10px_#bd18b4] rounded-full mr-4 animate-pulse"></div>
                                                             <span className="text-white/90 text-sm font-semibold">
-                                                                {getFocusLabel(selectedFocus, selectedCourse)}
+                                                                {getFocusLabel(user.userFocus, user.collegeCourse || user.contestType || undefined)}
                                                             </span>
                                                         </div>
                                                         {!isPublicView && (
@@ -998,10 +1006,10 @@ export function ProfilePage() {
                                             )}
                                         </div>
                                         <div className="bg-[#202024] border border-[#323238] rounded-xl p-6 min-h-[120px]">
-                                            {userProfile?.aboutYou ? (
+                                            {user?.aboutYou ? (
                                                 <div
                                                     dangerouslySetInnerHTML={{
-                                                        __html: userProfile.aboutYou || ''
+                                                        __html: user.aboutYou || ''
                                                     }}
                                                     className="rich-text-content prose prose-invert prose-pink max-w-none text-white/70"
                                                 />

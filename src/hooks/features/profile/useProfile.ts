@@ -2,41 +2,41 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { UserProfile } from '@/types/auth-api';
-import { 
-  BasicInfoData, 
-  LinksData, 
-  LinkField, 
-  ProfileTask 
+import {
+  BasicInfoData,
+  LinksData,
+  LinkField,
+  ProfileTask
 } from '@/types/ui/features/profile';
-import { 
-  Globe, 
-  Linkedin, 
-  Instagram, 
-  Twitter, 
-  Github 
+import {
+  Globe,
+  Linkedin,
+  Instagram,
+  Twitter,
+  Github
 } from 'lucide-react';
 import { getProfile } from '@/api/auth/get-profile';
-import { 
-  updateName, 
-  updateAge, 
+import {
+  updateName,
+  updateAge,
   updateProfileImage,
   uploadProfileImage,
-  deleteProfileImage, 
+  deleteProfileImage,
   updateLinks,
   updateInstagram,
   updateTwitter,
-  updateSocialLinksOrder, 
-  updateAbout, 
+  updateSocialLinksOrder,
+  updateAbout,
   updateAboutYou,
   updateHabilities,
   updateMomentCareer,
   updateProfile,
-  getNotifications 
+  getNotifications
 } from '@/api/profile';
 import { updateLocation } from '@/api/profile/update-location';
 import { useClientOnly, useCacheInvalidation } from '../../shared';
 
-export function useProfile() {
+export function useProfile(options?: { skipFetch?: boolean }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +53,8 @@ export function useProfile() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const isClient = useClientOnly();
-  
-  
+
+
   const [basicInfoData, setBasicInfoData] = useState<BasicInfoData>({
     nome: '',
     areaAtuacao: '',
@@ -62,11 +62,11 @@ export function useProfile() {
     nacionalidade: '',
     cidade: ''
   });
-  
+
   const [selectedFocus, setSelectedFocus] = useState<string>('');
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [selectedContest, setSelectedContest] = useState<string>('');
-  
+
   const [linksData, setLinksData] = useState<LinksData>({
     sitePessoal: '',
     linkedin: '',
@@ -74,7 +74,7 @@ export function useProfile() {
     twitter: '',
     github: ''
   });
-  
+
   const [linkFieldsOrder, setLinkFieldsOrder] = useState<LinkField[]>([
     { id: 'sitePessoal', field: 'sitePessoal', label: 'Site pessoal', icon: Globe, placeholder: 'https://seusite.com' },
     { id: 'linkedin', field: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/seuusuario' },
@@ -82,7 +82,7 @@ export function useProfile() {
     { id: 'twitter', field: 'twitter', label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' },
     { id: 'github', field: 'github', label: 'GitHub', icon: Github, placeholder: 'https://github.com/seuusuario' }
   ]);
-  
+
   const [aboutText, setAboutText] = useState<string>('');
 
 
@@ -102,7 +102,7 @@ export function useProfile() {
       setError(null);
       const profile = await getProfile();
       setUserProfile(profile);
-      
+
       // Atualizar dados básicos com informações da API
       if (profile) {
         const basicInfo = {
@@ -126,7 +126,7 @@ export function useProfile() {
         // Atualizar ordem dos links - usar ordem do backend ou ordem padrão
         const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
         const order = profile.socialLinksOrder || defaultOrder;
-        
+
         if (order && order.length > 0) {
           // Mapear campos do backend para frontend com ícones e labels corretos
           const fieldMap: Record<string, { label: string; icon: any; placeholder: string }> = {
@@ -137,7 +137,7 @@ export function useProfile() {
             'instagram': { label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/seuusuario' },
             'twitter': { label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' }
           };
-          
+
           const orderedFields = order.map(fieldName => {
             // Mapear portfolio do backend para sitePessoal no frontend
             const frontendFieldName = fieldName === 'portfolio' ? 'sitePessoal' : fieldName;
@@ -185,7 +185,7 @@ export function useProfile() {
     // Ordem padrão conforme o guia
     const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
     const order = userProfile?.socialLinksOrder || defaultOrder;
-    
+
     if (order && order.length > 0) {
       // Mapear campos do backend para frontend com ícones e labels corretos
       const fieldMap: Record<string, { label: string; icon: any; placeholder: string }> = {
@@ -196,7 +196,7 @@ export function useProfile() {
         'instagram': { label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/seuusuario' },
         'twitter': { label: 'X (Twitter)', icon: Twitter, placeholder: 'https://x.com/seuusuario' }
       };
-      
+
       const orderedFields = order.map(fieldName => {
         // Mapear portfolio do backend para sitePessoal no frontend
         const frontendFieldName = fieldName === 'portfolio' ? 'sitePessoal' : fieldName;
@@ -209,7 +209,7 @@ export function useProfile() {
           placeholder: fieldInfo.placeholder
         };
       });
-      
+
       // Sempre atualizar para garantir que a UI seja atualizada
       setLinkFieldsOrder(orderedFields);
     }
@@ -360,17 +360,17 @@ export function useProfile() {
   // Função para calcular porcentagem baseada nos campos preenchidos
   const calculateProfilePercentage = useCallback((profile: UserProfile) => {
     let percentage = 0;
-    
+
     // Campos obrigatórios (50% do total)
     if (profile.name && profile.name.trim() !== '') percentage += 10; // nome
     if (profile.email) percentage += 10; // email (sempre preenchido)
     if (profile.age && profile.age > 0) percentage += 10; // idade
     if (profile.userFocus) percentage += 10; // foco de estudo
     if (profile.educationLevel) percentage += 10; // nível de educação
-    
+
     // Campos opcionais (50% do total)
     if (profile.profileImage && profile.profileImage.trim() !== '') percentage += 10; // foto do perfil
-    
+
     // Links: só conta se TODOS os três estiverem preenchidos
     const hasLinkedin = profile.linkedin && profile.linkedin.trim() !== '';
     const hasGithub = profile.github && profile.github.trim() !== '';
@@ -378,12 +378,12 @@ export function useProfile() {
     if (hasLinkedin && hasGithub && hasPortfolio) {
       percentage += 15; // 5% para cada link (total 15%)
     }
-    
+
     if (profile.aboutYou && profile.aboutYou.trim() !== '') percentage += 15; // sobre você
     if (profile.habilities && profile.habilities.trim() !== '') percentage += 15; // habilidades
     if (profile.momentCareer && profile.momentCareer.trim() !== '') percentage += 10; // momento de carreira
     if (profile.location && profile.location.trim() !== '') percentage += 5; // localização
-    
+
     return Math.min(percentage, 100); // Máximo 100%
   }, []);
 
@@ -392,11 +392,11 @@ export function useProfile() {
     const newPercentage = calculateProfilePercentage(updatedProfile);
     // Usar o perfil atualizado em vez do userProfile do estado
     if (updatedProfile?.notification) {
-      updateLocalProfile({ 
-        notification: { 
-          ...updatedProfile.notification, 
-          profileCompletionPercentage: newPercentage 
-        } 
+      updateLocalProfile({
+        notification: {
+          ...updatedProfile.notification,
+          profileCompletionPercentage: newPercentage
+        }
       });
     }
   }, [calculateProfilePercentage, updateLocalProfile]);
@@ -494,14 +494,14 @@ export function useProfile() {
     try {
       // Enviar null se string vazia ou null, senão enviar a string
       const momentCareerToSend = (momentCareer && momentCareer.trim() !== '') ? momentCareer.trim() : null;
-      
+
       // Validar tamanho máximo
       if (momentCareerToSend && momentCareerToSend.length > 500) {
         throw new Error('O momento de carreira deve ter no máximo 500 caracteres');
       }
-      
+
       const response = await updateProfile({ momentCareer: momentCareerToSend || undefined });
-      
+
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error: any) {
@@ -515,7 +515,7 @@ export function useProfile() {
       // Enviar null se array vazio ou null, senão enviar o array
       const habilitiesToSend = (habilities && habilities.length > 0) ? habilities : null;
       await updateHabilities(habilitiesToSend);
-      
+
       // Recarregar perfil do backend para obter dados atualizados
       await refreshProfile();
     } catch (error) {
@@ -554,42 +554,46 @@ export function useProfile() {
 
   // Carregar perfil ao montar o componente
   useEffect(() => {
+    if (options?.skipFetch) {
+      setIsLoading(false);
+      return;
+    }
     loadUserProfile();
-  }, [loadUserProfile]);
+  }, [loadUserProfile, options?.skipFetch]);
 
   // Calcular tarefas baseado nos dados reais do perfil para garantir sincronia com a porcentagem
   const profileTasks = useMemo<ProfileTask[]>(() => {
     // Pegar campos do backend como fallback ou complemento
     const completedFields = userProfile?.notification?.completedFields || [];
     const lowerFields = completedFields.map(f => f.toLowerCase());
-    
+
     return [
-      { 
-        label: 'Informações básicas', 
+      {
+        label: 'Informações básicas',
         // Considerar completo se tiver nome e idade (os campos principais do modal)
-        completed: !!(userProfile?.name && userProfile?.age) || 
-                  (lowerFields.includes('nome') && lowerFields.includes('idade'))
+        completed: !!(userProfile?.name && userProfile?.age) ||
+          (lowerFields.includes('nome') && lowerFields.includes('idade'))
       },
-      { 
-        label: 'Foto do perfil', 
+      {
+        label: 'Foto do perfil',
         completed: !!userProfile?.profileImage || lowerFields.includes('foto do perfil')
       },
-      { 
-        label: 'Links', 
+      {
+        label: 'Links',
         // Considerar completo se tiver pelo menos UM dos links principais
         completed: !!(userProfile?.linkedin || userProfile?.github || userProfile?.portfolio) ||
-                  (lowerFields.includes('linkedin') || lowerFields.includes('github') || lowerFields.includes('portfólio'))
+          (lowerFields.includes('linkedin') || lowerFields.includes('github') || lowerFields.includes('portfólio'))
       },
-      { 
-        label: 'Sobre você', 
+      {
+        label: 'Sobre você',
         completed: !!userProfile?.aboutYou || lowerFields.includes('sobre você')
       },
-      { 
-        label: 'Habilidades', 
+      {
+        label: 'Habilidades',
         completed: !!userProfile?.habilities || lowerFields.includes('habilidades')
       },
-      { 
-        label: 'Momento de carreira', 
+      {
+        label: 'Momento de carreira',
         completed: !!userProfile?.momentCareer || lowerFields.includes('momento de carreira')
       }
     ];
@@ -597,7 +601,7 @@ export function useProfile() {
 
   const completedTasks = useMemo(() => profileTasks.filter(task => task.completed).length, [profileTasks]);
   const totalTasks = profileTasks.length;
-  
+
   // Usar porcentagem da API se disponível, senão calcular localmente
   const completionPercentage = useMemo(() => {
     if (userProfile?.notification?.profileCompletionPercentage !== undefined) {
@@ -642,14 +646,14 @@ export function useProfile() {
           event.target.value = '';
           return;
         }
-        
+
         // Fazer upload da imagem
         const response = await uploadProfileImage(file);
-        
+
         if (response.data.profileImage) {
           // Atualizar a imagem local
           setAvatarImage(response.data.profileImage);
-          
+
           // Recarregar o perfil para obter dados atualizados
           await refreshProfile();
         }
@@ -669,10 +673,10 @@ export function useProfile() {
       setIsHabilitiesModalOpen(true);
       return;
     }
-    
+
     setSelectedTask(taskLabel);
     setIsModalOpen(true);
-    
+
     // Preencher formData com dados da API baseado na tarefa selecionada
     if (userProfile) {
       switch (taskLabel) {
@@ -715,7 +719,7 @@ export function useProfile() {
 
   const handleFormSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedTask || !userProfile) {
       handleModalClose();
       return;
@@ -873,7 +877,7 @@ export function useProfile() {
 
   const handleLinksSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!userProfile) {
       setIsLinksModalOpen(false);
       return;
@@ -881,7 +885,7 @@ export function useProfile() {
 
     try {
       // Verificar se houve mudanças nos links existentes
-      const hasLinkChanges = 
+      const hasLinkChanges =
         linksData.linkedin !== (userProfile?.linkedin || '') ||
         linksData.github !== (userProfile?.github || '') ||
         linksData.sitePessoal !== (userProfile?.portfolio || '');
@@ -896,7 +900,7 @@ export function useProfile() {
       const currentOrder = linkFieldsOrder.map(field => {
         return field.field === 'sitePessoal' ? 'portfolio' : field.field;
       });
-      
+
       // Ordem padrão conforme o guia
       const defaultOrder = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
       const backendOrder = userProfile?.socialLinksOrder || defaultOrder;
@@ -932,12 +936,12 @@ export function useProfile() {
       if (hasOrderChange) {
         // Validar a ordem conforme o guia
         const validLinks = ['linkedin', 'github', 'portfolio', 'instagram', 'twitter'];
-        
+
         // Preservar a ordem atual do drag and drop
         // Apenas garantir que todos os 5 campos estejam presentes
         const completeOrder = currentOrder.filter(field => validLinks.includes(field));
         const missingFields = validLinks.filter(field => !completeOrder.includes(field));
-        
+
         // Se faltar algum campo, adicionar no final, mas preservar a ordem original
         const finalOrder = completeOrder.length === 5
           ? completeOrder  // Se já tem todos os 5, usar a ordem como está
@@ -947,28 +951,28 @@ export function useProfile() {
         if (finalOrder.length !== 5) {
           throw new Error('A ordem deve conter exatamente 5 links');
         }
-        
+
         // Validação: deve conter todos os links válidos
         const hasAllLinks = validLinks.every((link) => finalOrder.includes(link));
         if (!hasAllLinks) {
           throw new Error('A ordem deve conter todos os links: linkedin, github, portfolio, instagram, twitter');
         }
-        
+
         // Validação: não pode ter links inválidos
         const hasOnlyValidLinks = finalOrder.every((link) => validLinks.includes(link));
         if (!hasOnlyValidLinks) {
           throw new Error('A ordem contém links inválidos');
         }
-        
+
         // Validação: não pode ter duplicatas
         const uniqueLinks = new Set(finalOrder);
         if (uniqueLinks.size !== finalOrder.length) {
           throw new Error('A ordem não pode ter links duplicados');
         }
-        
+
         // OPTIMISTIC UPDATE: Atualizar o estado local IMEDIATAMENTE antes da chamada da API
         const previousOrder = userProfile?.socialLinksOrder ? [...userProfile.socialLinksOrder] : null;
-        
+
         if (userProfile) {
           setUserProfile(prev => {
             if (!prev) return null;
@@ -979,7 +983,7 @@ export function useProfile() {
             };
           });
         }
-        
+
         try {
           await updateSocialLinksOrder(finalOrder);
 
@@ -1002,7 +1006,7 @@ export function useProfile() {
           throw error;
         }
       }
-      
+
       // Atualização otimista das notificações
       const updatedProfile = {
         ...userProfile,
@@ -1178,7 +1182,7 @@ export function useProfile() {
     completedTasks,
     totalTasks,
     completionPercentage,
-    
+
     // Actions
     loadUserProfile,
     getInitials,
@@ -1202,7 +1206,7 @@ export function useProfile() {
     handleHabilitiesModalClose,
     handleHabilitiesSubmit,
     getModalFields,
-    
+
     // Profile update functions
     updateUserName,
     updateUserAge,
@@ -1215,7 +1219,7 @@ export function useProfile() {
     updateUserLocation,
     updateUserProfile,
     refreshNotifications,
-    
+
     // Setters
     setIsModalOpen,
     setSelectedTask,

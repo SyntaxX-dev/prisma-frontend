@@ -100,6 +100,8 @@ export function CommunityChat({
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasScrolledToBottomRef = useRef<string | null>(null);
+  // Guard para evitar chamadas duplicadas ao getCommunityMembers
+  const hasLoadedMembersForCommunityRef = useRef<string | null>(null);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -258,6 +260,11 @@ export function CommunityChat({
 
   // Carregar informações dos membros da comunidade
   useEffect(() => {
+    // Guard: só recarrega se a comunidade mudou
+    if (!community.id) return;
+    if (hasLoadedMembersForCommunityRef.current === community.id) return;
+    hasLoadedMembersForCommunityRef.current = community.id;
+
     const loadMembers = async () => {
       if (!community.id) return;
 
