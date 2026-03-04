@@ -28,6 +28,7 @@ import {
     COLLEGE_COURSE_LABELS
 } from '@/types/api/auth-api';
 import { updateProfile } from '@/api/profile/update-profile';
+import { getProfile } from '@/api/auth/get-profile';
 import { getContestOptions } from '@/api/options/get-contest-options';
 import { getCollegeCourseOptions } from '@/api/options/get-college-course-options';
 import { useAuth } from '@/hooks/features/auth';
@@ -137,36 +138,16 @@ export function ProfileCompletionModal({
                 updateData.collegeCourse = collegeCourse;
             }
 
-            const updatedProfile = await updateProfile(updateData);
+            await updateProfile(updateData);
 
-            // Montar notificação a partir da resposta (backend não retorna data com perfil completo)
-            const notification = {
-                hasNotification: updatedProfile.hasNotification,
-                missingFields: updatedProfile.missingFields,
-                message: buildNotificationMessage(
-                    updatedProfile.hasNotification,
-                    updatedProfile.missingFields,
-                    updatedProfile.profileCompletionPercentage
-                ),
-                badge: updatedProfile.badge ?? null,
-                profileCompletionPercentage: updatedProfile.profileCompletionPercentage,
-                completedFields: updatedProfile.completedFields ?? [],
-            };
+            // Buscar o perfil atualizado (fonte de verdade) e sincronizar auth + notificações
+            const refreshed = await getProfile();
+            updateUser(refreshed);
 
-            // Atualizar usuário no contexto: campos salvos + notificação recalculada (campo pendente concluído)
-            if (user) {
-                updateUser({
-                    ...user,
-                    userFocus: userFocus as any,
-                    contestType: userFocus === 'CONCURSO' ? (contestType as any) : user.contestType,
-                    collegeCourse: userFocus === 'FACULDADE' ? (collegeCourse as any) : user.collegeCourse,
-                    notification,
-                });
-            }
-
-            // Atualizar notificações na Navbar imediatamente (ex.: remover "foco de estudo" dos pendentes)
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('profile-notifications-updated', { detail: notification }));
+            if (typeof window !== 'undefined' && refreshed?.notification) {
+                window.dispatchEvent(
+                    new CustomEvent('profile-notifications-updated', { detail: refreshed.notification })
+                );
             }
 
             // Invalidar cache do perfil após atualização
