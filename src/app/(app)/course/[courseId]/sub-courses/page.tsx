@@ -98,7 +98,7 @@ export default function CoursePage() {
           <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
           <div className="p-4 md:p-6 ml-0 md:ml-10 pt-24 md:pt-10">
-            <div className="mb-6 md:mb-8">
+            <div className="mb-6 md:mb-8 md:mt-12">
               <Button
                 variant="ghost"
                 size="sm"
