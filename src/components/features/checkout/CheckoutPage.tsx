@@ -19,7 +19,7 @@ export function CheckoutPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { showError, showSuccess } = useNotifications();
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
     const { changeUserPlan, loading: isChangingPlan } = useChangePlan();
 
     const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
@@ -54,9 +54,13 @@ export function CheckoutPage() {
     }, [isAuthenticated, user]);
 
     // Verificar se usuário autenticado tem assinatura
+    // Aguarda isAuthLoading terminar para evitar race condition e chamadas desnecessárias
     useEffect(() => {
         // Evitar múltiplas execuções
         if (hasCheckedSubscription.current) return;
+
+        // Aguardar o useAuth terminar de carregar o estado real
+        if (isAuthLoading) return;
 
         const checkSubscription = async () => {
             if (!isAuthenticated) {
@@ -112,7 +116,7 @@ export function CheckoutPage() {
         };
 
         checkSubscription();
-    }, [isAuthenticated]);
+    }, [isAuthenticated, isAuthLoading]);
 
 
     useEffect(() => {

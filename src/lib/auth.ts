@@ -13,7 +13,17 @@ export function getAuthState(): AuthState {
 
   const token = localStorage.getItem('auth_token');
   const userStr = localStorage.getItem('user_profile');
-  
+  const expires = localStorage.getItem('auth_expires');
+
+  // Se o token está expirado, limpar sessão fantasma e retornar não autenticado
+  if (token && expires && Date.now() > parseInt(expires, 10)) {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_profile');
+    localStorage.removeItem('auth_expires');
+    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
+    return { isAuthenticated: false, user: null, token: null };
+  }
+
   let user: UserProfile | null = null;
   if (userStr) {
     try {
@@ -34,6 +44,7 @@ export function clearAuthState(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_profile');
+    localStorage.removeItem('auth_expires');
     localStorage.removeItem('reset_email');
 
     // Remover também o cookie

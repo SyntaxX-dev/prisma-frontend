@@ -6,9 +6,7 @@ import { defaultMetadata } from "@/lib/seo";
 import { LoadingProvider } from "@/contexts/LoadingContext";
 import { LoadingWrapper } from "@/components/shared/LoadingWrapper";
 import { NotificationProvider as ToastNotificationProvider } from "@/components/shared/NotificationProvider";
-import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import { QueryProvider } from "@/providers/QueryProvider";
-import { UserStatusProvider } from "@/providers/UserStatusProvider";
 import { WhatsAppFloatButton } from "@/components/shared/WhatsAppFloatButton";
 
 const geistSans = Geist({
@@ -50,15 +48,11 @@ export default function RootLayout({
         />
         <QueryProvider>
           <LoadingProvider>
-            <UserStatusProvider>
-            <NotificationsProvider>
-              <LoadingWrapper>
-                {children}
-              </LoadingWrapper>
-              <ToastNotificationProvider />
-              <WhatsAppFloatButton />
-            </NotificationsProvider>
-            </UserStatusProvider>
+            <LoadingWrapper>
+              {children}
+            </LoadingWrapper>
+            <ToastNotificationProvider />
+            <WhatsAppFloatButton />
           </LoadingProvider>
         </QueryProvider>
       </body>

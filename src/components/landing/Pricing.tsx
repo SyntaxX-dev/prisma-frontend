@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { Check, Mail, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -85,12 +85,30 @@ export function Pricing() {
   const [downgradeData, setDowngradeData] = useState<ChangePlanData | null>(null);
   const [showPixModal, setShowPixModal] = useState(false);
   const [pixData, setPixData] = useState<{ qrCode: ChangePlanData['pixQrCode']; amount: number; paymentUrl?: string } | null>(null);
+  const [sectionInView, setSectionInView] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Só buscar assinatura quando a seção de planos estiver visível (evita /subscriptions/me ao carregar a landing)
+  useEffect(() => {
+    if (!sectionRef.current || !isAuthenticated) return;
+    const el = sectionRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setSectionInView(true);
+      },
+      { rootMargin: '100px', threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const loadSubscription = async () => {
-      if (!isAuthenticated) {
-        setCurrentPlanId(null);
-        setIsLoadingSubscription(false);
+      if (!isAuthenticated || !sectionInView) {
+        if (!isAuthenticated) {
+          setCurrentPlanId(null);
+          setIsLoadingSubscription(false);
+        }
         return;
       }
 
@@ -113,7 +131,7 @@ export function Pricing() {
     };
 
     loadSubscription();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, sectionInView]);
 
   const handlePlanClick = async (planId: PlanType) => {
     if (!isAuthenticated) {
@@ -197,7 +215,7 @@ export function Pricing() {
   };
 
   return (
-    <section id="planos" className="py-12 bg-transparent relative overflow-hidden w-full">
+    <section id="planos" ref={sectionRef} className="py-12 bg-transparent relative overflow-hidden w-full">
       {/* Decorative scribbles */}
       <div className="absolute inset-0 pointer-events-none">
         <PencilScribble
