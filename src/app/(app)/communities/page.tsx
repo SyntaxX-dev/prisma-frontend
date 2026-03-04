@@ -829,24 +829,15 @@ function CommunitiesPageContent() {
     if (selectedChatUserId) {
       setIsLoadingConversation(true);
       // Mock delay para visualizar skeletons (2 segundos)
-      setTimeout(() => {
-        loadConversation(selectedChatUserId);
+      const timer = setTimeout(async () => {
+        await loadConversation(selectedChatUserId);
+        setIsLoadingConversation(false);
       }, 2000);
+      return () => clearTimeout(timer);
     } else {
       setIsLoadingConversation(false);
     }
   }, [selectedChatUserId, loadConversation]);
-
-  // Detectar quando as mensagens foram carregadas
-  useEffect(() => {
-    if (selectedChatUserId && directMessages.length > 0) {
-      // Pequeno delay para garantir que tudo foi renderizado
-      const timer = setTimeout(() => {
-        setIsLoadingConversation(false);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedChatUserId, directMessages.length]);
 
   const loadConversations = async () => {
     try {
