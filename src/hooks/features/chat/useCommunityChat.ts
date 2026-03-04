@@ -52,7 +52,7 @@ export function useCommunityChat(communityId: string | null) {
     if (!socket) {
       return;
     }
-    
+
     // Remover listeners antigos para evitar duplicatas
     if (socket.connected) {
       socket.off('new_community_message');
@@ -60,7 +60,7 @@ export function useCommunityChat(communityId: string | null) {
       socket.off('community_message_deleted');
       socket.off('community_message_edited');
     }
-    
+
     // Registrar listener de new_community_message
     socket.on('new_community_message', (data: NewCommunityMessageEvent) => {
       const currentCommunityId = currentCommunityIdRef.current || commId;
@@ -70,26 +70,26 @@ export function useCommunityChat(communityId: string | null) {
           if (exists) {
             return prev;
           }
-          
+
           const currentTime = Date.now();
           const hasSimilarOptimistic = prev.some((msg) => {
             if (!msg.id.startsWith('temp-')) return false;
             if (msg.senderId !== data.senderId) return false;
             if (msg.communityId !== data.communityId) return false;
-            
+
             const optimisticTime = new Date(msg.createdAt).getTime();
             const timeDiff = currentTime - optimisticTime;
             if (timeDiff > 5000) return false;
-            
+
             const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
             if (optimisticHasAttachments) {
               return true;
             }
-            
+
             const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
             return contentsMatch;
           });
-          
+
           if (hasSimilarOptimistic) {
             const optimisticMsg = prev.find((msg) => {
               if (!msg.id.startsWith('temp-')) return false;
@@ -98,7 +98,7 @@ export function useCommunityChat(communityId: string | null) {
               const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
               return contentsMatch;
             });
-            
+
             const withoutOptimistic = prev.filter((msg) => {
               if (!msg.id.startsWith('temp-')) return true;
               if (msg.senderId !== data.senderId) return true;
@@ -106,13 +106,13 @@ export function useCommunityChat(communityId: string | null) {
               const contentsMatch = (!msg.content && !data.content) || msg.content === data.content;
               return !contentsMatch;
             });
-            
+
             const finalAttachments = data.attachments && data.attachments.length > 0
               ? data.attachments
               : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
-                  ? optimisticMsg.attachments
-                  : []);
-            
+                ? optimisticMsg.attachments
+                : []);
+
             const communityMessage: CommunityMessage = {
               ...data,
               edited: false,
@@ -126,7 +126,7 @@ export function useCommunityChat(communityId: string | null) {
             );
             return sorted;
           }
-          
+
           const currentTimeForSimilar = Date.now();
           const optimisticWithAttachments = prev.find((msg) => {
             if (!msg.id.startsWith('temp-')) return false;
@@ -137,13 +137,13 @@ export function useCommunityChat(communityId: string | null) {
             if (timeDiff > 5000) return false;
             return (msg.attachments?.length || 0) > 0;
           });
-          
+
           const finalAttachmentsForSimilar = data.attachments && data.attachments.length > 0
             ? data.attachments
             : (optimisticWithAttachments?.attachments && optimisticWithAttachments.attachments.length > 0
-                ? optimisticWithAttachments.attachments
-                : []);
-          
+              ? optimisticWithAttachments.attachments
+              : []);
+
           const communityMessage: CommunityMessage = {
             ...data,
             edited: false,
@@ -155,7 +155,7 @@ export function useCommunityChat(communityId: string | null) {
           const sorted = updated.sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
-          
+
           // Se a mensagem não tem attachments, SEMPRE tentar buscar da API
           // (o backend pode não estar enviando attachments no WebSocket)
           if ((!finalAttachmentsForSimilar || finalAttachmentsForSimilar.length === 0) && data.id && !data.id.startsWith('temp-')) {
@@ -163,16 +163,16 @@ export function useCommunityChat(communityId: string | null) {
             if (pendingAttachmentFetchesRef.current.has(data.id)) {
               return sorted;
             }
-            
+
             const messageTime = new Date(data.createdAt).getTime();
             const timeDiff = Date.now() - messageTime;
-            
+
             // Sempre tentar buscar se não tiver attachments (mesmo que não seja recente)
             // O backend pode não estar enviando attachments no WebSocket
             if (timeDiff < 30000) { // 30 segundos para dar mais tempo
               // Marcar que estamos buscando attachments para esta mensagem
               pendingAttachmentFetchesRef.current.add(data.id);
-              
+
               // Fazer múltiplas tentativas com intervalos crescentes
               const attempts = [500, 1000, 2000];
               attempts.forEach((delay, index) => {
@@ -188,18 +188,18 @@ export function useCommunityChat(communityId: string | null) {
                       }
                       return prev; // Não alterar o estado, apenas verificar
                     });
-                    
+
                     if (!shouldContinue) {
                       return;
                     }
-                    
+
                     const { getCommunityMessages } = await import('@/api/communities/get-community-messages');
                     const response = await getCommunityMessages(data.communityId, 10, 0); // Buscar mais mensagens para garantir
-                    
+
                     if (response.success && response.data.length > 0) {
                       // Procurar a mensagem específica na lista
                       const foundMessage = response.data.find((msg: CommunityMessage) => msg.id === data.id);
-                      
+
                       if (foundMessage && foundMessage.attachments && foundMessage.attachments.length > 0) {
                         setMessages((prev) => {
                           // Verificar novamente se a mensagem ainda não tem attachments
@@ -207,9 +207,9 @@ export function useCommunityChat(communityId: string | null) {
                           if (msg && msg.attachments && msg.attachments.length > 0) {
                             return prev;
                           }
-                          
-                          const updated = prev.map((msg) => 
-                            msg.id === data.id 
+
+                          const updated = prev.map((msg) =>
+                            msg.id === data.id
                               ? { ...msg, attachments: foundMessage.attachments }
                               : msg
                           );
@@ -239,7 +239,7 @@ export function useCommunityChat(communityId: string | null) {
               });
             }
           }
-          
+
           return sorted;
         });
       }
@@ -284,7 +284,7 @@ export function useCommunityChat(communityId: string | null) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const token = localStorage.getItem('auth_token');
     if (!token) return;
 
@@ -308,17 +308,19 @@ export function useCommunityChat(communityId: string | null) {
       socketRef.current = window.__sharedChatSocket;
       setSocket(window.__sharedChatSocket);
       currentCommunityIdRef.current = communityId;
-      
+
       // Incrementar contador apenas se ainda não estava usando o socket compartilhado
       if (!wasAlreadyUsingSharedSocket) {
         window.__sharedChatSocketListenersCount++;
       }
-      
+
       // Se o socket está conectado, usar imediatamente
       if (window.__sharedChatSocket.connected) {
         setIsConnected(true);
+        // Entrar na sala da comunidade para receber eventos em tempo real
+        window.__sharedChatSocket.emit('join_community', { communityId });
         registerCommunityListeners(window.__sharedChatSocket, communityId);
-        
+
         // Iniciar heartbeat se ainda não estiver ativo
         if (!heartbeatIntervalRef.current) {
           heartbeatIntervalRef.current = setInterval(() => {
@@ -330,12 +332,14 @@ export function useCommunityChat(communityId: string | null) {
       } else {
         // Se o socket está desconectado, tentar reconectar
         setIsConnected(false);
-        
+
         // Registrar listeners quando o socket conectar
         window.__sharedChatSocket.once('connect', () => {
           setIsConnected(true);
+          // Entrar na sala da comunidade para receber eventos em tempo real
+          window.__sharedChatSocket!.emit('join_community', { communityId });
           registerCommunityListeners(window.__sharedChatSocket!, communityId);
-          
+
           // Iniciar heartbeat se ainda não estiver ativo
           if (!heartbeatIntervalRef.current) {
             heartbeatIntervalRef.current = setInterval(() => {
@@ -345,11 +349,11 @@ export function useCommunityChat(communityId: string | null) {
             }, 30000);
           }
         });
-        
+
         // Tentar reconectar
         window.__sharedChatSocket.connect();
       }
-      
+
       return;
     }
 
@@ -391,6 +395,9 @@ export function useCommunityChat(communityId: string | null) {
       socketRef.current = newSocket;
       currentCommunityIdRef.current = communityId;
       setSocket(newSocket);
+
+      // Entrar na sala da comunidade para receber eventos em tempo real
+      newSocket.emit('join_community', { communityId });
 
       // Registrar listeners de comunidade quando o socket conectar
       registerCommunityListeners(newSocket, communityId);
@@ -439,11 +446,16 @@ export function useCommunityChat(communityId: string | null) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
       }
-      
+
+      // Sair da sala da comunidade ao desmontar/trocar comunidade
+      if (communityId && newSocket.connected) {
+        newSocket.emit('leave_community', { communityId });
+      }
+
       // Decrementar contador de listeners apenas se este socket é o compartilhado
       if (newSocket === window.__sharedChatSocket) {
         window.__sharedChatSocketListenersCount--;
-        
+
         // NÃO desconectar o socket se ainda há outros listeners (useChat pode estar usando)
         // Sempre manter o socket compartilhado conectado se há pelo menos 1 listener
         if (window.__sharedChatSocketListenersCount <= 0) {
@@ -457,16 +469,21 @@ export function useCommunityChat(communityId: string | null) {
           newSocket.disconnect();
         }
       }
-      
+
       socketRef.current = null;
       currentCommunityIdRef.current = null;
     };
   }, [communityId]);
 
-  // Atualizar ref quando communityId mudar (mesmo que o socket já esteja conectado)
+  // Atualizar ref e entrar na sala quando communityId mudar (mesmo que o socket já esteja conectado)
   useEffect(() => {
     if (communityId) {
       currentCommunityIdRef.current = communityId;
+      // Emitir join_community quando trocar de comunidade com socket já conectado
+      const activeSocket = socketRef.current || window.__sharedChatSocket;
+      if (activeSocket?.connected) {
+        activeSocket.emit('join_community', { communityId });
+      }
     }
   }, [communityId]);
 
@@ -517,8 +534,8 @@ export function useCommunityChat(communityId: string | null) {
           const finalAttachments = data.attachments && data.attachments.length > 0
             ? data.attachments
             : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
-                ? optimisticMsg.attachments
-                : []);
+              ? optimisticMsg.attachments
+              : []);
 
           const communityMessage: CommunityMessage = {
             ...data,
@@ -641,7 +658,7 @@ export function useCommunityChat(communityId: string | null) {
     if (!content?.trim() && (!attachments || attachments.length === 0)) {
       return { success: false, message: 'Mensagem ou anexo é obrigatório' };
     }
-    
+
     // Obter userId do token JWT
     let senderId = '';
     try {
@@ -652,7 +669,7 @@ export function useCommunityChat(communityId: string | null) {
       }
     } catch (e) {
     }
-    
+
     // Criar mensagem otimista temporária
     const tempId = `temp-${Date.now()}-${Math.random()}`;
     const optimisticMessage: CommunityMessage = {
@@ -675,8 +692,8 @@ export function useCommunityChat(communityId: string | null) {
         duration: att.duration || null,
       })),
     };
-    
-    
+
+
     // Adicionar mensagem otimista imediatamente
     setMessages((prev) => {
       const updated = [...prev, optimisticMessage];
@@ -684,7 +701,7 @@ export function useCommunityChat(communityId: string | null) {
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
     });
-    
+
     try {
       const response = await sendCommunityMessage(communityId, content, attachments);
       if (response.success) {
@@ -740,20 +757,20 @@ export function useCommunityChat(communityId: string | null) {
             // mas a otimista tiver (caso o backend ainda não tenha processado os attachments)
             const finalAttachments = attachments && attachments.length > 0
               ? attachments.map((attachment, index) => ({
-                  id: attachment.cloudinaryPublicId || `temp-${response.data.id}-${index}`,
-                  fileUrl: attachment.fileUrl,
-                  fileName: attachment.fileName,
-                  fileType: attachment.fileType,
-                  fileSize: attachment.fileSize,
-                  thumbnailUrl: attachment.thumbnailUrl || attachment.fileUrl,
-                  width: attachment.width ?? null,
-                  height: attachment.height ?? null,
-                  duration: attachment.duration ?? null,
-                }))
+                id: attachment.cloudinaryPublicId || `temp-${response.data.id}-${index}`,
+                fileUrl: attachment.fileUrl,
+                fileName: attachment.fileName,
+                fileType: attachment.fileType,
+                fileSize: attachment.fileSize,
+                thumbnailUrl: attachment.thumbnailUrl || attachment.fileUrl,
+                width: attachment.width ?? null,
+                height: attachment.height ?? null,
+                duration: attachment.duration ?? null,
+              }))
               : (optimisticMsg.attachments && optimisticMsg.attachments.length > 0
-                      ? optimisticMsg.attachments
-                      : []);
-    
+                ? optimisticMsg.attachments
+                : []);
+
             const messageWithAttachments: CommunityMessage = {
               ...response.data,
               attachments: finalAttachments,
@@ -769,7 +786,7 @@ export function useCommunityChat(communityId: string | null) {
 
           // Se não há mensagem otimista, verificar se a mensagem real já existe (adicionada pelo WebSocket)
           const alreadyExists = prev.some((msg) => msg.id === response.data.id);
-          
+
           if (alreadyExists) {
             // Se a mensagem já existe (adicionada pelo WebSocket), atualizar os attachments se a resposta da API tiver
             return prev.map((msg) => {
@@ -907,15 +924,15 @@ export function useCommunityChat(communityId: string | null) {
     if (!socketRef.current || !socketRef.current.connected || !communityId) {
       return;
     }
-    
+
     // O backend adiciona o userId automaticamente do token JWT
     // Enviar apenas communityId e isTyping conforme documentação
     const payload = {
       communityId,
-          isTyping,
-        };
-        
-        socketRef.current.emit('community_typing', payload);
+      isTyping,
+    };
+
+    socketRef.current.emit('community_typing', payload);
   }, [communityId]);
 
   return {

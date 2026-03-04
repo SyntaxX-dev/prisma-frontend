@@ -48,7 +48,7 @@ export function useChat() {
     if (!socket) {
       return;
     }
-    
+
     // Remover listeners antigos para evitar duplicatas
     // IMPORTANTE: Só remover se o socket estiver conectado e tiver listeners
     if (socket.connected) {
@@ -64,12 +64,12 @@ export function useChat() {
       const receivedAt = new Date().toISOString();
       const messageCreatedAt = message.createdAt;
       const delay = new Date(receivedAt).getTime() - new Date(messageCreatedAt).getTime();
-      
+
       // Verificar se o socket está conectado
       if (!socket.connected) {
         return;
       }
-      
+
       // Obter ID do usuário atual do token
       let currentUserId = '';
       try {
@@ -81,14 +81,14 @@ export function useChat() {
       } catch (e) {
         return;
       }
-      
+
       // Verificar se a mensagem pertence à conversa atual
       const currentChatUserId = currentChatUserIdRef.current;
-      
+
       if (!currentChatUserId || !currentUserId) {
         return;
       }
-      
+
       const isFromCurrentConversation =
         (message.senderId === currentUserId && message.receiverId === currentChatUserId) ||
         (message.senderId === currentChatUserId && message.receiverId === currentUserId);
@@ -102,7 +102,7 @@ export function useChat() {
         if (exists) {
           return prev;
         }
-        
+
         const hasSimilarOptimistic = prev.some((msg) => {
           if (!msg.id.startsWith('temp-')) return false;
           if (msg.senderId !== message.senderId) return false;
@@ -118,7 +118,7 @@ export function useChat() {
 
           return attachmentsMatch;
         });
-        
+
         if (hasSimilarOptimistic) {
           const optimisticMsg = prev.find((msg) => {
             if (!msg.id.startsWith('temp-')) return false;
@@ -135,7 +135,7 @@ export function useChat() {
 
             return attachmentsMatch;
           });
-          
+
           const withoutOptimistic = prev.filter((msg) => {
             if (!msg.id.startsWith('temp-')) return true;
             if (msg.senderId !== message.senderId) return true;
@@ -152,76 +152,76 @@ export function useChat() {
 
             return !attachmentsMatch;
           });
-          
+
           const finalAttachments = message.attachments && message.attachments.length > 0
             ? message.attachments
             : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
-                ? optimisticMsg.attachments
-                : []);
-          
+              ? optimisticMsg.attachments
+              : []);
+
           const messageWithAttachments: Message = {
             ...message,
             attachments: finalAttachments,
             clientId: optimisticMsg?.id,
           };
-          
+
           const updated = [...withoutOptimistic, messageWithAttachments];
           const sorted = updated.sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
           return sorted;
         }
-        
+
         const currentTimeForSimilar = Date.now();
         const similarOptimistic = prev.find((msg) => {
           if (!msg.id.startsWith('temp-')) return false;
           if (msg.senderId !== message.senderId) return false;
           if (msg.receiverId !== message.receiverId) return false;
-          
+
           const optimisticTime = new Date(msg.createdAt).getTime();
           const timeDiff = currentTimeForSimilar - optimisticTime;
           if (timeDiff > 5000) return false;
-          
+
           const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
           if (optimisticHasAttachments) return true;
-          
+
           const contentsMatch = (!msg.content && !message.content) || msg.content === message.content;
           return contentsMatch;
         });
-        
+
         const finalAttachments = message.attachments && message.attachments.length > 0
           ? message.attachments
           : (similarOptimistic?.attachments && similarOptimistic.attachments.length > 0
-              ? similarOptimistic.attachments
-              : []);
-        
+            ? similarOptimistic.attachments
+            : []);
+
         if (similarOptimistic && finalAttachments.length > 0 && (!message.attachments || message.attachments.length === 0)) {
         }
-        
+
         const messageWithAttachments: Message = {
           ...message,
           attachments: finalAttachments,
           clientId: similarOptimistic?.id,
         };
-        
+
         const updated = [...prev, messageWithAttachments];
         const sorted = updated.sort(
           (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
-        
+
         if ((!finalAttachments || finalAttachments.length === 0) && message.id && !message.id.startsWith('temp-')) {
           if (pendingAttachmentFetchesRef.current.has(message.id)) {
             return sorted;
           }
-          
+
           const messageTime = new Date(message.createdAt).getTime();
           const timeDiff = Date.now() - messageTime;
-          
+
           if (timeDiff < 30000) {
             pendingAttachmentFetchesRef.current.add(message.id);
-            
+
             const friendId = message.receiverId === currentUserId ? message.senderId : message.receiverId;
-            
+
             const attempts = [500, 1000, 2000];
             attempts.forEach((delay, index) => {
               setTimeout(async () => {
@@ -235,26 +235,26 @@ export function useChat() {
                     }
                     return prev;
                   });
-                  
+
                   if (!shouldContinue) {
                     return;
                   }
-                  
+
                   const { getConversation } = await import('@/api/messages/get-conversation');
                   const response = await getConversation(friendId, 10, 0);
-                  
+
                   if (response.success && response.data.messages.length > 0) {
                     const foundMessage = response.data.messages.find((msg: Message) => msg.id === message.id);
-                    
+
                     if (foundMessage && foundMessage.attachments && foundMessage.attachments.length > 0) {
                       setMessages((prev) => {
                         const msg = prev.find((m) => m.id === message.id);
                         if (msg && msg.attachments && msg.attachments.length > 0) {
                           return prev;
                         }
-                        
-                        const updated = prev.map((msg) => 
-                          msg.id === message.id 
+
+                        const updated = prev.map((msg) =>
+                          msg.id === message.id
                             ? { ...msg, attachments: foundMessage.attachments }
                             : msg
                         );
@@ -280,7 +280,7 @@ export function useChat() {
             });
           }
         }
-        
+
         return sorted;
       });
     });
@@ -290,7 +290,7 @@ export function useChat() {
       if (!socket.connected) {
         return;
       }
-      
+
       let currentUserId = '';
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -301,21 +301,21 @@ export function useChat() {
       } catch (e) {
         return;
       }
-      
+
       const typingUserId = data.userId || data.senderId;
       const currentChatUserId = currentChatUserIdRef.current;
-      
+
       if (!currentChatUserId) {
         return;
       }
-      
+
       // Verificar se o evento é relevante para a conversa atual
       // O evento é relevante se:
       // 1. O usuário que está digitando é o amigo da conversa atual (typingUserId === currentChatUserId)
       // 2. E o evento é direcionado para o usuário atual (targetUserId === currentUserId ou não especificado)
       // OU simplesmente se o usuário que está digitando é o amigo da conversa atual
       const isRelevantForCurrentChat = typingUserId === currentChatUserId;
-      
+
       if (isRelevantForCurrentChat) {
         setIsTyping(data.isTyping);
         setTypingUserId(data.isTyping ? typingUserId : null);
@@ -324,25 +324,25 @@ export function useChat() {
 
     // Registrar listener de message_deleted
     socket.on('message_deleted', (data: { messageId: string; message: Message }) => {
-      const isFromCurrentConversation = 
-        data.message.senderId === currentChatUserIdRef.current || 
+      const isFromCurrentConversation =
+        data.message.senderId === currentChatUserIdRef.current ||
         data.message.receiverId === currentChatUserIdRef.current;
-      
+
       if (!isFromCurrentConversation) {
         return;
       }
-      
+
       setMessages((prev) => {
         const messageExists = prev.some((msg) => msg.id === data.messageId);
         if (!messageExists) {
           return prev;
         }
-        
+
         return prev.map((msg) =>
           msg.id === data.messageId ? data.message : msg
         );
       });
-      
+
       setPinnedMessages((prev) => {
         const wasPinned = prev.some((p) => p.messageId === data.messageId);
         if (wasPinned && currentChatUserIdRef.current) {
@@ -411,15 +411,23 @@ export function useChat() {
       if (!wasAlreadyUsingSharedSocket) {
         window.__sharedChatSocketListenersCount++;
       }
-      
-      // Se o socket está desconectado, tentar reconectar
-      if (!window.__sharedChatSocket.connected) {
+
+      // Se o socket está conectado, registrar listeners imediatamente
+      if (window.__sharedChatSocket.connected) {
+        registerDirectChatListeners(window.__sharedChatSocket);
+      } else {
+        // Se o socket está desconectado, registrar listener para quando conectar
+        window.__sharedChatSocket.once('connect', () => {
+          setIsConnected(true);
+          registerDirectChatListeners(window.__sharedChatSocket!);
+        });
+        window.__sharedChatSocket.on('disconnect', () => {
+          setIsConnected(false);
+        });
         window.__sharedChatSocket.connect();
+        registerDirectChatListeners(window.__sharedChatSocket);
       }
-      
-      // IMPORTANTE: Sempre re-registrar os listeners, mesmo se já estava usando o socket
-      // Isso garante que os listeners estejam ativos após voltar de uma comunidade
-      registerDirectChatListeners(window.__sharedChatSocket);
+
       return;
     }
 
@@ -483,7 +491,7 @@ export function useChat() {
         return;
       }
     }
-    
+
     // Se não há socket compartilhado ou está desconectado, usar o novo
     window.__sharedChatSocket = newSocket;
     window.__sharedChatSocketListenersCount++;
@@ -493,10 +501,10 @@ export function useChat() {
       setIsConnected(true);
       socketRef.current = newSocket;
       setSocket(newSocket);
-      
+
       // Re-registrar listeners quando o socket conectar (caso tenha sido desconectado)
       registerDirectChatListeners(newSocket);
-      
+
       // Emitir um evento de teste para verificar se o socket está funcionando
       newSocket.emit('test_connection', { timestamp: new Date().toISOString() });
 
@@ -532,13 +540,13 @@ export function useChat() {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
       }
-      
+
       // NÃO remover listeners nem fechar o socket aqui
       // O socket pode ser compartilhado com useCommunityChat
       // Apenas decrementar o contador de listeners se este socket é o compartilhado
       if (socketRef.current === window.__sharedChatSocket) {
         window.__sharedChatSocketListenersCount--;
-        
+
         // Se não há mais listeners, NÃO limpar a referência compartilhada
         // Deixar o socket disponível para reutilização
         if (window.__sharedChatSocketListenersCount < 0) {
@@ -559,16 +567,16 @@ export function useChat() {
     if (currentChatUserId) {
       // Atualizar a ref imediatamente
       currentChatUserIdRef.current = currentChatUserId;
-      
+
       // Limpar indicador de typing ao mudar de conversa
       setIsTyping(false);
       setTypingUserId(null);
-      
+
       // Verificar se o socket compartilhado está disponível e migrar para ele se necessário
-      const activeSocket = window.__sharedChatSocket?.connected 
-        ? window.__sharedChatSocket 
+      const activeSocket = window.__sharedChatSocket?.connected
+        ? window.__sharedChatSocket
         : socketRef.current;
-      
+
       if (activeSocket?.connected) {
         // Se não estamos usando o socket compartilhado mas ele está disponível, migrar
         if (window.__sharedChatSocket?.connected && socketRef.current !== window.__sharedChatSocket) {
@@ -576,7 +584,7 @@ export function useChat() {
           setSocket(window.__sharedChatSocket);
           setIsConnected(true);
         }
-        
+
         // SEMPRE re-registrar listeners quando currentChatUserId mudar
         // Isso garante que os listeners estejam ativos mesmo após voltar de uma comunidade
         registerDirectChatListeners(activeSocket);
@@ -595,7 +603,7 @@ export function useChat() {
 
     const handleNewMessage = (event: CustomEvent<Message>) => {
       const message = event.detail;
-      
+
       const receivedAt = new Date().toISOString();
       const messageCreatedAt = message.createdAt;
       const delay = new Date(receivedAt).getTime() - new Date(messageCreatedAt).getTime();
@@ -663,36 +671,36 @@ export function useChat() {
 
             return attachmentsMatch;
           });
-          
-        const withoutOptimistic = prev.filter((msg) => {
-          if (!msg.id.startsWith('temp-')) return true;
-          if (msg.senderId !== message.senderId) return true;
-          if (msg.receiverId !== message.receiverId) return true;
-          const contentsMatch =
-            (!msg.content && !message.content) || msg.content === message.content;
-          if (!contentsMatch) return true;
 
-          const optimisticAttachmentsLength = msg.attachments?.length || 0;
-          const incomingAttachmentsLength = message.attachments?.length || 0;
-          const attachmentsMatch =
-            optimisticAttachmentsLength === incomingAttachmentsLength ||
-            (optimisticAttachmentsLength > 0 && incomingAttachmentsLength === 0);
+          const withoutOptimistic = prev.filter((msg) => {
+            if (!msg.id.startsWith('temp-')) return true;
+            if (msg.senderId !== message.senderId) return true;
+            if (msg.receiverId !== message.receiverId) return true;
+            const contentsMatch =
+              (!msg.content && !message.content) || msg.content === message.content;
+            if (!contentsMatch) return true;
 
-          return !attachmentsMatch;
-        });
-          
+            const optimisticAttachmentsLength = msg.attachments?.length || 0;
+            const incomingAttachmentsLength = message.attachments?.length || 0;
+            const attachmentsMatch =
+              optimisticAttachmentsLength === incomingAttachmentsLength ||
+              (optimisticAttachmentsLength > 0 && incomingAttachmentsLength === 0);
+
+            return !attachmentsMatch;
+          });
+
           const finalAttachments = message.attachments && message.attachments.length > 0
             ? message.attachments
             : (optimisticMsg?.attachments && optimisticMsg.attachments.length > 0
-                ? optimisticMsg.attachments
-                : []);
-          
+              ? optimisticMsg.attachments
+              : []);
+
           const messageWithAttachments: Message = {
             ...message,
             attachments: finalAttachments,
             clientId: optimisticMsg?.id,
           };
-          
+
           const updated = [...withoutOptimistic, messageWithAttachments];
           const sorted = updated.sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -700,39 +708,39 @@ export function useChat() {
           return sorted;
         }
 
-        
+
         const currentTimeForCustom = Date.now();
         const similarOptimistic = prev.find((msg) => {
           if (!msg.id.startsWith('temp-')) return false;
           if (msg.senderId !== message.senderId) return false;
           if (msg.receiverId !== message.receiverId) return false;
-          
+
           const optimisticTime = new Date(msg.createdAt).getTime();
           const timeDiff = currentTimeForCustom - optimisticTime;
           if (timeDiff > 5000) return false;
-          
+
           const optimisticHasAttachments = (msg.attachments?.length || 0) > 0;
           if (optimisticHasAttachments) return true;
-          
+
           const contentsMatch = (!msg.content && !message.content) || msg.content === message.content;
           return contentsMatch;
         });
-        
+
         const finalAttachments = message.attachments && message.attachments.length > 0
           ? message.attachments
           : (similarOptimistic?.attachments && similarOptimistic.attachments.length > 0
-              ? similarOptimistic.attachments
-              : []);
-        
+            ? similarOptimistic.attachments
+            : []);
+
         if (similarOptimistic && finalAttachments.length > 0 && (!message.attachments || message.attachments.length === 0)) {
         }
-        
+
         const messageWithAttachments: Message = {
           ...message,
           attachments: finalAttachments,
           clientId: similarOptimistic?.id,
         };
-        
+
         const updated = [...prev, messageWithAttachments];
         const sorted = updated.sort(
           (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -858,7 +866,7 @@ export function useChat() {
     try {
       currentChatUserIdRef.current = friendId;
       setCurrentChatUserId(friendId);
-      
+
       setMessages([]);
       setPinnedMessages([]);
       setIsTyping(false);
@@ -900,7 +908,7 @@ export function useChat() {
 
   const sendMessage = useCallback(async (receiverId: string, content?: string, attachments?: MessageAttachment[]) => {
     if (!content?.trim() && (!attachments || attachments.length === 0)) return;
-    
+
     // Obter userId do token JWT
     let senderId = '';
     try {
@@ -911,7 +919,7 @@ export function useChat() {
       }
     } catch (e) {
     }
-    
+
     // Criar mensagem otimista temporária
     const tempId = `temp-${Date.now()}-${Math.random()}`;
     const optimisticMessage: Message = {
@@ -933,8 +941,8 @@ export function useChat() {
         duration: att.duration || null,
       })),
     };
-    
-    
+
+
     // Adicionar mensagem otimista imediatamente
     setMessages((prev) => {
       const updated = [...prev, optimisticMessage];
@@ -942,30 +950,30 @@ export function useChat() {
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
     });
-    
+
     try {
       const response = await sendMessageApi(receiverId, content, attachments);
-      
+
       // Substituir mensagem otimista pela mensagem real da API
       // O backend retorna a mensagem diretamente em data, não em data.message
       if (response && response.success && response.data) {
         const realMessage = response.data;
-        
+
         setMessages((prev) => {
           // Encontrar a mensagem otimista para preservar seus attachments
           const optimisticMsg = prev.find((msg) => msg.id === tempId);
           const optimisticAttachments = optimisticMsg?.attachments || [];
-          
-          
+
+
           // Preservar attachments da mensagem otimista se a resposta da API não tiver attachments
           const finalAttachments = (realMessage.attachments && realMessage.attachments.length > 0)
             ? realMessage.attachments
             : (optimisticAttachments.length > 0 ? optimisticAttachments : []);
-          
-          
+
+
           // Verificar se a mensagem real já existe (pode ter sido adicionada pelo evento WebSocket)
           const alreadyExists = prev.some((msg) => msg.id === realMessage.id);
-          
+
           if (alreadyExists) {
             // Atualizar a mensagem existente com attachments se ela não tiver
             return prev.map((msg) => {
@@ -983,7 +991,7 @@ export function useChat() {
               return msg;
             }).filter((msg): msg is Message => msg !== null);
           }
-          
+
           // Remover mensagem otimista e adicionar a real com attachments preservados
           const withoutTemp = prev.filter((msg) => msg.id !== tempId);
           const messageWithAttachments = {
@@ -1005,28 +1013,28 @@ export function useChat() {
 
   const sendTypingIndicator = useCallback((receiverId: string, isTyping: boolean) => {
     // Usar o socket compartilhado se disponível, caso contrário usar o socket local
-    const activeSocket = window.__sharedChatSocket?.connected 
-      ? window.__sharedChatSocket 
+    const activeSocket = window.__sharedChatSocket?.connected
+      ? window.__sharedChatSocket
       : socketRef.current;
-    
+
     if (!activeSocket) {
       return;
     }
-    
+
     if (!activeSocket.connected) {
       return;
     }
-    
+
     // Verificar se há uma conversa selecionada
     if (!currentChatUserIdRef.current) {
       return;
     }
-    
+
     // Verificar se o receiverId corresponde à conversa atual
     if (receiverId !== currentChatUserIdRef.current) {
       return;
     }
-    
+
     try {
       activeSocket.emit('typing', {
         receiverId,
@@ -1041,7 +1049,7 @@ export function useChat() {
     if (!currentChatUserId) {
       return { success: false, message: 'Chat não selecionado' };
     }
-    
+
     try {
       const response = await pinMessage(messageId, friendId);
       if (response.success) {
@@ -1063,7 +1071,7 @@ export function useChat() {
     if (!currentChatUserId) {
       return { success: false, message: 'Chat não selecionado' };
     }
-    
+
     try {
       const response = await unpinMessage(messageId);
       if (response.success) {

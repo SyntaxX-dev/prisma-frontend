@@ -650,8 +650,6 @@ function CommunitiesPageContent() {
     if (!userId) return;
     try {
       setIsLoadingChatUser(true);
-      // Mock delay para visualizar skeletons (1.5 segundos)
-      await new Promise(resolve => setTimeout(resolve, 1500));
       const response = await getUserProfile(userId);
       if (response.success && response.data) {
         const userData = {
@@ -826,14 +824,31 @@ function CommunitiesPageContent() {
 
   // Carregar conversa quando chatUserId mudar
   useEffect(() => {
+    let active = true;
     if (selectedChatUserId) {
       setIsLoadingConversation(true);
-      // Mock delay para visualizar skeletons (2 segundos)
-      const timer = setTimeout(async () => {
-        await loadConversation(selectedChatUserId);
-        setIsLoadingConversation(false);
-      }, 2000);
-      return () => clearTimeout(timer);
+
+      const loadData = async () => {
+        try {
+          // Carregar a conversa
+          await loadConversation(selectedChatUserId);
+
+          if (active) {
+            setIsLoadingConversation(false);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar conversa:", error);
+          if (active) {
+            setIsLoadingConversation(false);
+          }
+        }
+      };
+
+      loadData();
+
+      return () => {
+        active = false;
+      };
     } else {
       setIsLoadingConversation(false);
     }
@@ -870,20 +885,17 @@ function CommunitiesPageContent() {
       setIsLoadingCommunityMessages(true);
       setIsLoadingCommunityPinnedMessages(true);
       loadingCommunityIdRef.current = selectedCommunityId;
-      // Mock delay para visualizar skeletons (2 segundos)
-      const loadTimer = setTimeout(async () => {
+      const load = async () => {
         await loadCommunityMessagesRef.current(50, 0);
         await loadCommunityPinnedMessagesRef.current();
-        // Aguardar um pouco após as mensagens serem carregadas para garantir que tudo foi renderizado
-        setTimeout(() => {
-          // Só desativar o loading se ainda estamos na mesma comunidade
-          if (loadingCommunityIdRef.current === selectedCommunityId) {
-            setIsLoadingCommunityMessages(false);
-            setIsLoadingCommunityPinnedMessages(false);
-          }
-        }, 300);
-      }, 2000);
-      return () => clearTimeout(loadTimer);
+
+        // Só desativar o loading se ainda estamos na mesma comunidade
+        if (loadingCommunityIdRef.current === selectedCommunityId) {
+          setIsLoadingCommunityMessages(false);
+          setIsLoadingCommunityPinnedMessages(false);
+        }
+      };
+      load();
     } else {
       setIsLoadingCommunityMessages(false);
       setIsLoadingCommunityPinnedMessages(false);
@@ -1232,72 +1244,72 @@ function CommunitiesPageContent() {
 
           {/* Sidebar Modal */}
           <div className={`lg:hidden fixed top-0 left-0 right-0 bottom-0 z-50 w-full h-screen bg-[#040404] border-r border-white/10 overflow-y-auto transition-transform duration-300 ease-in-out ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-              {/* Botão de fechar */}
-              <button
-                onClick={() => setIsMobileSidebarOpen(false)}
-                className="absolute top-4 right-4 z-[1] p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
+            {/* Botão de fechar */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="absolute top-4 right-4 z-[1] p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-all"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
 
-              <div className="pt-20 h-full">
-                <CommunityList
-                  communities={communities}
-                  selectedCommunityId={selectedCommunityId}
-                  onSelectCommunity={(id) => {
-                    // Buscar a comunidade na lista
-                    const community = communities.find(c => c.id === id);
-                    if (!community) return;
+            <div className="pt-20 h-full">
+              <CommunityList
+                communities={communities}
+                selectedCommunityId={selectedCommunityId}
+                onSelectCommunity={(id) => {
+                  // Buscar a comunidade na lista
+                  const community = communities.find(c => c.id === id);
+                  if (!community) return;
 
-                    // Se for membro ou dono, abrir normalmente
-                    if (community.isMember || community.isOwner) {
-                      // Fechar sidebar mobile primeiro
-                      setIsMobileSidebarOpen(false);
-                      // Atualizar estados
-                      setSelectedCommunityId(id);
-                      setSelectedChatUserId(null);
-                      // Salvar como última conversa
-                      saveLastConversation('community', id);
-                      // Atualizar URL com community param
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.set('community', id);
-                      params.delete('chat'); // Remover chat param se existir
-                      router.push(`/communities?${params.toString()}`);
-                    } else if (community.visibility === 'PUBLIC') {
-                      // Se for pública e não for membro, mostrar tooltip centralizado
-                      setTooltipPosition({
-                        x: window.innerWidth / 2 - 160,
-                        y: window.innerHeight / 2 - 200,
-                      });
-                      setTooltipCommunity(community);
-                    }
-                  }}
-                  onCreateCommunity={() => {
-                    setIsCreateModalOpen(true);
-                    setIsMobileSidebarOpen(false);
-                  }}
-                  onCommunityClick={handleCommunityClick}
-                  conversations={conversations}
-                  selectedChatUserId={selectedChatUserId}
-                  onSelectConversation={(userId) => {
+                  // Se for membro ou dono, abrir normalmente
+                  if (community.isMember || community.isOwner) {
                     // Fechar sidebar mobile primeiro
                     setIsMobileSidebarOpen(false);
                     // Atualizar estados
-                    setSelectedChatUserId(userId);
-                    setSelectedCommunityId(undefined);
+                    setSelectedCommunityId(id);
+                    setSelectedChatUserId(null);
                     // Salvar como última conversa
-                    saveLastConversation('chat', userId);
-                    // Atualizar URL com chat param
+                    saveLastConversation('community', id);
+                    // Atualizar URL com community param
                     const params = new URLSearchParams(searchParams.toString());
-                    params.set('chat', userId);
-                    params.delete('community'); // Remover community param se existir
+                    params.set('community', id);
+                    params.delete('chat'); // Remover chat param se existir
                     router.push(`/communities?${params.toString()}`);
-                    loadChatUser(userId);
-                  }}
-                />
-              </div>
+                  } else if (community.visibility === 'PUBLIC') {
+                    // Se for pública e não for membro, mostrar tooltip centralizado
+                    setTooltipPosition({
+                      x: window.innerWidth / 2 - 160,
+                      y: window.innerHeight / 2 - 200,
+                    });
+                    setTooltipCommunity(community);
+                  }
+                }}
+                onCreateCommunity={() => {
+                  setIsCreateModalOpen(true);
+                  setIsMobileSidebarOpen(false);
+                }}
+                onCommunityClick={handleCommunityClick}
+                conversations={conversations}
+                selectedChatUserId={selectedChatUserId}
+                onSelectConversation={(userId) => {
+                  // Fechar sidebar mobile primeiro
+                  setIsMobileSidebarOpen(false);
+                  // Atualizar estados
+                  setSelectedChatUserId(userId);
+                  setSelectedCommunityId(undefined);
+                  // Salvar como última conversa
+                  saveLastConversation('chat', userId);
+                  // Atualizar URL com chat param
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set('chat', userId);
+                  params.delete('community'); // Remover community param se existir
+                  router.push(`/communities?${params.toString()}`);
+                  loadChatUser(userId);
+                }}
+              />
             </div>
-          </>
+          </div>
+        </>
 
         {/* Chat Area - Coluna Central + Direita */}
         {selectedChatUserId && userProfile ? (
