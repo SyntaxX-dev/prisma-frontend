@@ -168,6 +168,7 @@ export function ProfilePage() {
         nome: '',
         email: ''
     });
+    const [selectedEducationLevel, setSelectedEducationLevel] = useState<string>('');
 
     // Estado para o modal de localização
     const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -292,6 +293,7 @@ export function ProfilePage() {
         updateUserAbout,
         updateUserMomentCareer,
         updateUserLocation,
+        updateUserProfile,
         setIsModalOpen,
         setSelectedTask,
         setSelectedCourse,
@@ -407,6 +409,7 @@ export function ProfilePage() {
                 nome: basicInfoData.nome || userProfile.name || '',
                 email: getEmailValue(userProfile)
             });
+            setSelectedEducationLevel(userProfile.educationLevel || '');
         }
     }, [userProfile, basicInfoData]);
 
@@ -1125,7 +1128,12 @@ export function ProfilePage() {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <form onSubmit={handleBasicInfoSubmit} className="space-y-4">
+                    <form onSubmit={async (e) => {
+                        await handleBasicInfoSubmit(e);
+                        if (selectedEducationLevel && selectedEducationLevel !== userProfile?.educationLevel) {
+                            await updateUserProfile({ educationLevel: selectedEducationLevel });
+                        }
+                    }} className="space-y-4">
                         {/* Nome */}
                         <div className="space-y-2">
                             <label className="text-sm text-gray-300">
@@ -1225,6 +1233,32 @@ export function ProfilePage() {
                                             className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
                                         >
                                             {country.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Nível de Educação */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-300">
+                                Nível de Educação
+                            </label>
+                            <Select
+                                value={selectedEducationLevel}
+                                onValueChange={setSelectedEducationLevel}
+                            >
+                                <SelectTrigger className="bg-[#29292E] border-[#323238] text-white focus:!border-[#323238] focus:!ring-0 focus:!outline-none cursor-pointer">
+                                    <SelectValue placeholder="Selecione seu nível de educação" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#29292E] border-[#323238] text-white z-50">
+                                    {Object.entries(EDUCATION_LEVEL_LABELS).map(([value, label]) => (
+                                        <SelectItem
+                                            key={value}
+                                            value={value}
+                                            className="text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                                        >
+                                            {label}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

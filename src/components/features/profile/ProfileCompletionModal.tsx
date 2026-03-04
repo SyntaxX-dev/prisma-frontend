@@ -23,9 +23,11 @@ import {
     UserFocus,
     ContestType,
     CollegeCourse,
+    EducationLevel,
     USER_FOCUS_LABELS,
     CONTEST_TYPE_LABELS,
-    COLLEGE_COURSE_LABELS
+    COLLEGE_COURSE_LABELS,
+    EDUCATION_LEVEL_LABELS
 } from '@/types/auth-api';
 import { updateProfile } from '@/api/profile/update-profile';
 import { getProfile } from '@/api/auth/get-profile';
@@ -74,9 +76,13 @@ export function ProfileCompletionModal({
     const [userFocus, setUserFocus] = useState<UserFocus | ''>('');
     const [contestType, setContestType] = useState<ContestType | ''>('');
     const [collegeCourse, setCollegeCourse] = useState<CollegeCourse | ''>('');
+    const [educationLevel, setEducationLevel] = useState<EducationLevel | ''>('');
     const [contestOptions, setContestOptions] = useState<Array<{ value: ContestType; label: string }>>([]);
     const [collegeOptions, setCollegeOptions] = useState<Array<{ value: CollegeCourse; label: string }>>([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    const needsEducationLevel = notificationData.missingFields.includes('nível de educação');
+    const needsUserFocus = notificationData.missingFields.includes('foco de estudo');
 
     useEffect(() => {
         if (isOpen) {
@@ -107,32 +113,45 @@ export function ProfileCompletionModal({
     };
 
     const handleSubmit = async () => {
-        if (!userFocus) {
+        if (needsUserFocus && !userFocus) {
             toast.error('Selecione um foco de estudo');
             return;
         }
 
-        if (userFocus === 'CONCURSO' && !contestType) {
+        if (needsUserFocus && userFocus === 'CONCURSO' && !contestType) {
             toast.error('Selecione o tipo de concurso');
             return;
         }
 
-        if (userFocus === 'FACULDADE' && !collegeCourse) {
+        if (needsUserFocus && userFocus === 'FACULDADE' && !collegeCourse) {
             toast.error('Selecione o curso de faculdade');
+            return;
+        }
+
+        if (needsEducationLevel && !educationLevel) {
+            toast.error('Selecione o nível de educação');
             return;
         }
 
         setIsLoading(true);
 
         try {
-            const updateData: any = { userFocus };
+            const updateData: any = {};
 
-            if (userFocus === 'CONCURSO') {
+            if (needsUserFocus && userFocus) {
+                updateData.userFocus = userFocus;
+            }
+
+            if (userFocus === 'CONCURSO' && contestType) {
                 updateData.contestType = contestType;
             }
 
-            if (userFocus === 'FACULDADE') {
+            if (userFocus === 'FACULDADE' && collegeCourse) {
                 updateData.collegeCourse = collegeCourse;
+            }
+
+            if (needsEducationLevel && educationLevel) {
+                updateData.educationLevel = educationLevel;
             }
 
             await updateProfile(updateData);
@@ -211,6 +230,31 @@ export function ProfileCompletionModal({
                     )}
 
                     <div className="space-y-4">
+                        {needsEducationLevel && (
+                            <div>
+                                <label className="text-sm font-medium text-white mb-2 block">
+                                    Nível de Educação *
+                                </label>
+                                <Select value={educationLevel} onValueChange={(value) => setEducationLevel(value as EducationLevel)}>
+                                    <SelectTrigger className="bg-white/10 border-white/30 text-white">
+                                        <SelectValue placeholder="Selecione seu nível de educação" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-gray-900 border-white/30">
+                                        {Object.entries(EDUCATION_LEVEL_LABELS).map(([value, label]) => (
+                                            <SelectItem
+                                                key={value}
+                                                value={value}
+                                                className="text-white hover:bg-white/20"
+                                            >
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {needsUserFocus && (
                         <div>
                             <label className="text-sm font-medium text-white mb-2 block">
                                 Foco de Estudo *
@@ -232,6 +276,7 @@ export function ProfileCompletionModal({
                                 </SelectContent>
                             </Select>
                         </div>
+                        )}
 
                         {userFocus === 'CONCURSO' && (
                             <div>
@@ -297,7 +342,7 @@ export function ProfileCompletionModal({
                     <div className="flex gap-3 pt-4">
                         <Button
                             onClick={handleSubmit}
-                            disabled={isLoading || !userFocus}
+                            disabled={isLoading || (needsUserFocus && !userFocus) || (needsEducationLevel && !educationLevel)}
                             className="flex-1 bg-[#bd18b4] hover:bg-[#bd18b4]/90 text-black"
                         >
                             {isLoading ? 'Salvando...' : 'Completar Perfil'}
