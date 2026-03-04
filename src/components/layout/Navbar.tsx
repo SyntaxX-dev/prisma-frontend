@@ -60,6 +60,7 @@ export function Navbar({ }: NavbarProps) {
   // Escutar eventos de atualização de notificações do perfil
   useEffect(() => {
     const handleNotificationsUpdate = (event: CustomEvent<NotificationResponse>) => {
+      console.log('📬 [Navbar] Received notification update event:', event.detail);
       setLocalNotification(event.detail);
     };
 

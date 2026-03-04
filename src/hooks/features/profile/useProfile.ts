@@ -296,14 +296,8 @@ export function useProfile(options?: { skipFetch?: boolean }) {
       // educationLevel é considerado preenchido se userFocus estiver definido,
       // pois o foco de estudo já representa o nível/contexto educacional do usuário
       let isCompleted: boolean;
-      if (field.key === 'educationLevel') {
-        const value = profile[field.key as keyof UserProfile];
-        isCompleted = (value !== null && value !== undefined && value !== '') ||
-          (profile.userFocus !== null && profile.userFocus !== undefined && profile.userFocus !== '');
-      } else {
-        const value = profile[field.key as keyof UserProfile];
-        isCompleted = value !== null && value !== undefined && value !== '';
-      }
+      const value = profile[field.key as keyof UserProfile];
+      isCompleted = value !== null && value !== undefined && value !== '';
 
       if (isCompleted) {
         completedFields.push(field.label);

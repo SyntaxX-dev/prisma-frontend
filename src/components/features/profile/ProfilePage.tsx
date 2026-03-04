@@ -854,17 +854,7 @@ export function ProfilePage() {
 
                                                 {/* Nível de Educação */}
                                                 {user?.educationLevel && (() => {
-                                                    const educationLevelMap: Record<string, keyof typeof EDUCATION_LEVEL_LABELS> = {
-                                                        'POSTGRADUATE': 'POS_GRADUACAO',
-                                                        'HIGH_SCHOOL': 'ENSINO_MEDIO',
-                                                        'GRADUATION': 'GRADUACAO',
-                                                        'ELEMENTARY': 'FUNDAMENTAL',
-                                                        'MASTER': 'MESTRADO',
-                                                        'DOCTORATE': 'DOUTORADO',
-                                                    };
-
-                                                    const mappedLevel = educationLevelMap[user.educationLevel] || user.educationLevel as keyof typeof EDUCATION_LEVEL_LABELS;
-                                                    const label = EDUCATION_LEVEL_LABELS[mappedLevel] || user.educationLevel;
+                                                    const label = EDUCATION_LEVEL_LABELS[user.educationLevel as keyof typeof EDUCATION_LEVEL_LABELS] || user.educationLevel;
 
                                                     return (
                                                         <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center group hover:bg-white/10 hover:border-[#bd18b4]/30 transition-all">

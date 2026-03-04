@@ -28,13 +28,13 @@ export interface ResetPasswordDto {
   newPassword: string;
 }
 
-export type EducationLevel = 
-  | 'FUNDAMENTAL' 
-  | 'ENSINO_MEDIO' 
-  | 'GRADUACAO' 
-  | 'POS_GRADUACAO' 
-  | 'MESTRADO' 
-  | 'DOUTORADO';
+export type EducationLevel =
+  | 'ELEMENTARY'
+  | 'HIGH_SCHOOL'
+  | 'UNDERGRADUATE'
+  | 'POSTGRADUATE'
+  | 'MASTER'
+  | 'DOCTORATE';
 
 export interface AuthResponse {
   accessToken?: string;
@@ -124,12 +124,12 @@ export interface ApiResponse<T = unknown> {
 
 
 export const EDUCATION_LEVEL_LABELS: Record<EducationLevel, string> = {
-  FUNDAMENTAL: 'Ensino Fundamental',
-  ENSINO_MEDIO: 'Ensino Médio',
-  GRADUACAO: 'Graduação',
-  POS_GRADUACAO: 'Pós-Graduação',
-  MESTRADO: 'Mestrado',
-  DOUTORADO: 'Doutorado'
+  ELEMENTARY: 'Ensino Fundamental',
+  HIGH_SCHOOL: 'Ensino Médio',
+  UNDERGRADUATE: 'Graduação',
+  POSTGRADUATE: 'Pós-Graduação',
+  MASTER: 'Mestrado',
+  DOCTORATE: 'Doutorado'
 };
 
 export const BADGE_MAPPING: Record<string, string> = {

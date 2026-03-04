@@ -23,9 +23,11 @@ import {
     UserFocus,
     ContestType,
     CollegeCourse,
+    EducationLevel,
     USER_FOCUS_LABELS,
     CONTEST_TYPE_LABELS,
-    COLLEGE_COURSE_LABELS
+    COLLEGE_COURSE_LABELS,
+    EDUCATION_LEVEL_LABELS
 } from '@/types/auth-api';
 import { updateProfile } from '@/api/profile/update-profile';
 import { getProfile } from '@/api/auth/get-profile';
@@ -74,6 +76,7 @@ export function ProfileCompletionModal({
     const [userFocus, setUserFocus] = useState<UserFocus | ''>('');
     const [contestType, setContestType] = useState<ContestType | ''>('');
     const [collegeCourse, setCollegeCourse] = useState<CollegeCourse | ''>('');
+    const [educationLevel, setEducationLevel] = useState<EducationLevel | ''>('');
     const [contestOptions, setContestOptions] = useState<Array<{ value: ContestType; label: string }>>([]);
     const [collegeOptions, setCollegeOptions] = useState<Array<{ value: CollegeCourse; label: string }>>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -122,23 +125,34 @@ export function ProfileCompletionModal({
             return;
         }
 
+        if (!educationLevel) {
+            toast.error('Selecione seu nível de educação');
+            return;
+        }
+
         setIsLoading(true);
 
+        const updateData: any = { userFocus, educationLevel };
+
+        if (userFocus === 'CONCURSO') {
+            updateData.contestType = contestType;
+        }
+
+        if (userFocus === 'FACULDADE') {
+            updateData.collegeCourse = collegeCourse;
+        }
+
+        console.log('🚀 [ProfileCompletionModal] Submitting update:', updateData);
+
         try {
-            const updateData: any = { userFocus };
-
-            if (userFocus === 'CONCURSO') {
-                updateData.contestType = contestType;
-            }
-
-            if (userFocus === 'FACULDADE') {
-                updateData.collegeCourse = collegeCourse;
-            }
-
-            await updateProfile(updateData);
+            const response = await updateProfile(updateData);
+            console.log('✅ [ProfileCompletionModal] Update response:', response);
 
             // Buscar o perfil atualizado (fonte de verdade) e sincronizar auth + notificações
             const refreshed = await getProfile();
+            console.log('🔄 [ProfileCompletionModal] Refreshed profile:', refreshed);
+            console.log('🔔 [ProfileCompletionModal] Notification status:', refreshed?.notification);
+
             updateUser(refreshed);
 
             if (typeof window !== 'undefined' && refreshed?.notification) {
@@ -211,6 +225,28 @@ export function ProfileCompletionModal({
                     )}
 
                     <div className="space-y-4">
+                        <div>
+                            <label className="text-sm font-medium text-white mb-2 block">
+                                Nível de Educação *
+                            </label>
+                            <Select value={educationLevel} onValueChange={(value) => setEducationLevel(value as EducationLevel)}>
+                                <SelectTrigger className="bg-white/10 border-white/30 text-white">
+                                    <SelectValue placeholder="Selecione seu nível de educação" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-900 border-white/30">
+                                    {Object.entries(EDUCATION_LEVEL_LABELS).map(([value, label]) => (
+                                        <SelectItem
+                                            key={value}
+                                            value={value}
+                                            className="text-white hover:bg-white/20"
+                                        >
+                                            {label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div>
                             <label className="text-sm font-medium text-white mb-2 block">
                                 Foco de Estudo *
