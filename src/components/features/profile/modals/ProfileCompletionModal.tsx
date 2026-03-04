@@ -46,13 +46,29 @@ interface ProfileCompletionModalProps {
     };
 }
 
+function buildNotificationMessage(
+    hasNotification: boolean,
+    missingFields: string[],
+    profileCompletionPercentage: number
+): string {
+    if (!hasNotification || missingFields.length === 0) {
+        return `Perfil ${profileCompletionPercentage}% completo!`;
+    }
+    if (missingFields.length === 1) {
+        return `Complete seu perfil adicionando sua ${missingFields[0]}.`;
+    }
+    const fieldsCopy = [...missingFields];
+    const lastField = fieldsCopy.pop();
+    return `Complete seu perfil adicionando suas informações: ${fieldsCopy.join(', ')} e ${lastField}.`;
+}
+
 export function ProfileCompletionModal({
     isOpen,
     onClose,
     notificationData
 }: ProfileCompletionModalProps) {
     const router = useRouter();
-    const { updateUser } = useAuth();
+    const { user, updateUser } = useAuth();
     const { profile } = useCacheInvalidation();
     const [userFocus, setUserFocus] = useState<UserFocus | ''>('');
     const [contestType, setContestType] = useState<ContestType | ''>('');
@@ -122,8 +138,35 @@ export function ProfileCompletionModal({
             }
 
             const updatedProfile = await updateProfile(updateData);
-            if (updatedProfile.data) {
-                updateUser(updatedProfile.data);
+
+            // Montar notificação a partir da resposta (backend não retorna data com perfil completo)
+            const notification = {
+                hasNotification: updatedProfile.hasNotification,
+                missingFields: updatedProfile.missingFields,
+                message: buildNotificationMessage(
+                    updatedProfile.hasNotification,
+                    updatedProfile.missingFields,
+                    updatedProfile.profileCompletionPercentage
+                ),
+                badge: updatedProfile.badge ?? null,
+                profileCompletionPercentage: updatedProfile.profileCompletionPercentage,
+                completedFields: updatedProfile.completedFields ?? [],
+            };
+
+            // Atualizar usuário no contexto: campos salvos + notificação recalculada (campo pendente concluído)
+            if (user) {
+                updateUser({
+                    ...user,
+                    userFocus: userFocus as any,
+                    contestType: userFocus === 'CONCURSO' ? (contestType as any) : user.contestType,
+                    collegeCourse: userFocus === 'FACULDADE' ? (collegeCourse as any) : user.collegeCourse,
+                    notification,
+                });
+            }
+
+            // Atualizar notificações na Navbar imediatamente (ex.: remover "foco de estudo" dos pendentes)
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('profile-notifications-updated', { detail: notification }));
             }
 
             // Invalidar cache do perfil após atualização
@@ -141,7 +184,7 @@ export function ProfileCompletionModal({
             toast.success(`Perfil completado! Badge "${getBadgeLabel()}" atribuído.`);
             onClose();
 
-            // Redirecionar para o perfil para completar o restante
+            // Redirecionar para o perfil (e completar a etapa de campo pendente na UI)
             router.push('/profile');
         } catch (error) {
             toast.error('Erro ao atualizar perfil');
