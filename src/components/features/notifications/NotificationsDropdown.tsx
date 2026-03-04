@@ -31,14 +31,14 @@ export function NotificationsDropdown() {
     setIsLoadingRequests(true);
     try {
       const response = await getFriendRequests('received');
-      
+
       // Filtrar apenas pedidos pendentes
       const pendingRequests = (response.data.requests || []).filter(
         (req) => req.status === 'PENDING'
       );
-      
+
       setFriendRequests(pendingRequests);
-      
+
       // Atualizar contador de não lidas se houver pedidos pendentes
       if (pendingRequests.length > 0) {
       }
@@ -236,7 +236,7 @@ export function NotificationsDropdown() {
                   removeNotification('all');
                   setIsOpen(false);
                 }}
-                className="text-gray-400 hover:text-white text-sm transition-colors"
+                className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer"
               >
                 Limpar todas
               </button>
@@ -285,14 +285,14 @@ export function NotificationsDropdown() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleAcceptFriendRequest(request.id)}
-                              className="flex-1 px-3 py-1.5 bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                              className="flex-1 px-3 py-1.5 bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
                             >
                               <Check className="w-3 h-3" />
                               Aceitar
                             </button>
                             <button
                               onClick={() => handleRejectFriendRequest(request.id)}
-                              className="flex-1 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                              className="flex-1 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
                             >
                               <X className="w-3 h-3" />
                               Rejeitar
@@ -316,115 +316,114 @@ export function NotificationsDropdown() {
                 return true;
               })
               .length > 0 && (
-              <div className="divide-y divide-white/5">
-                {notifications
-                  .filter((notification) => notification.type !== 'FRIEND_REQUEST')
-                  .map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-4 hover:bg-white/5 transition-colors ${
-                      !notification.read ? 'bg-blue-500/5' : ''
-                    }`}
-                  >
-                    <div className="flex gap-3">
-                      {/* Avatar */}
-                      {notification.requester?.profileImage || notification.receiver?.profileImage ? (
-                        <Avatar className="w-10 h-10 shrink-0">
-                          <AvatarImage
-                            src={
-                              notification.requester?.profileImage ||
-                              notification.receiver?.profileImage ||
-                              undefined
-                            }
-                            alt={notification.requester?.name || notification.receiver?.name || 'User'}
-                          />
-                          <AvatarFallback className="bg-[#bd18b4] text-black text-xs">
-                            {(notification.requester?.name || notification.receiver?.name || 'U')
-                              .charAt(0)
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-[#bd18b4] flex items-center justify-center shrink-0">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                      )}
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <p className="text-white font-medium text-sm mb-1">
-                              {notification.title}
-                            </p>
-                            <p className="text-gray-400 text-xs mb-2">{notification.message}</p>
-                            <p className="text-gray-500 text-xs">
-                              {new Date(notification.createdAt).toLocaleDateString('pt-BR', {
-                                day: '2-digit',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1" />
-                          )}
-                        </div>
-
-                        {/* Actions for friend requests */}
-                        {notification.type === 'FRIEND_REQUEST' && notification.requester && (
-                          <div className="flex gap-2 mt-3">
-                            <button
-                              onClick={() => handleAcceptFromNotification(notification)}
-                              className="flex-1 px-3 py-1.5 bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
-                            >
-                              <Check className="w-3 h-3" />
-                              Aceitar
-                            </button>
-                            <button
-                              onClick={() => handleRejectFromNotification(notification)}
-                              className="flex-1 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
-                            >
-                              <X className="w-3 h-3" />
-                              Rejeitar
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Click to view profile */}
-                        {notification.relatedUserId && (
-                          <button
-                            onClick={() => handleNotificationClick(notification)}
-                            className="mt-2 text-blue-400 hover:text-blue-300 text-xs font-medium transition-colors"
-                          >
-                            Ver perfil →
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Close button */}
-                      <button
-                        onClick={() => removeNotification(notification.id)}
-                        className="text-gray-500 hover:text-white transition-colors shrink-0"
+                <div className="divide-y divide-white/5">
+                  {notifications
+                    .filter((notification) => notification.type !== 'FRIEND_REQUEST')
+                    .map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 hover:bg-white/5 transition-colors ${!notification.read ? 'bg-blue-500/5' : ''
+                          }`}
                       >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                        <div className="flex gap-3">
+                          {/* Avatar */}
+                          {notification.requester?.profileImage || notification.receiver?.profileImage ? (
+                            <Avatar className="w-10 h-10 shrink-0">
+                              <AvatarImage
+                                src={
+                                  notification.requester?.profileImage ||
+                                  notification.receiver?.profileImage ||
+                                  undefined
+                                }
+                                alt={notification.requester?.name || notification.receiver?.name || 'User'}
+                              />
+                              <AvatarFallback className="bg-[#bd18b4] text-black text-xs">
+                                {(notification.requester?.name || notification.receiver?.name || 'U')
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-[#bd18b4] flex items-center justify-center shrink-0">
+                              {getNotificationIcon(notification.type)}
+                            </div>
+                          )}
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className="text-white font-medium text-sm mb-1">
+                                  {notification.title}
+                                </p>
+                                <p className="text-gray-400 text-xs mb-2">{notification.message}</p>
+                                <p className="text-gray-500 text-xs">
+                                  {new Date(notification.createdAt).toLocaleDateString('pt-BR', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
+                              </div>
+                              {!notification.read && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1" />
+                              )}
+                            </div>
+
+                            {/* Actions for friend requests */}
+                            {notification.type === 'FRIEND_REQUEST' && notification.requester && (
+                              <div className="flex gap-2 mt-3">
+                                <button
+                                  onClick={() => handleAcceptFromNotification(notification)}
+                                  className="flex-1 px-3 py-1.5 bg-[#bd18b4]/20 hover:bg-[#bd18b4]/30 text-[#c532e2] rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  Aceitar
+                                </button>
+                                <button
+                                  onClick={() => handleRejectFromNotification(notification)}
+                                  className="flex-1 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                >
+                                  <X className="w-3 h-3" />
+                                  Rejeitar
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Click to view profile */}
+                            {notification.relatedUserId && (
+                              <button
+                                onClick={() => handleNotificationClick(notification)}
+                                className="mt-2 text-blue-400 hover:text-blue-300 text-xs font-medium transition-colors cursor-pointer"
+                              >
+                                Ver perfil →
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Close button */}
+                          <button
+                            onClick={() => removeNotification(notification.id)}
+                            className="text-gray-500 hover:text-white transition-colors shrink-0 cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
 
             {/* Estado vazio */}
-            {!isLoadingRequests && 
-             notifications.filter(n => n.type !== 'FRIEND_REQUEST').length === 0 && 
-             friendRequests.length === 0 && (
-              <div className="p-8 text-center">
-                <Bell className="w-12 h-12 text-gray-500 mx-auto mb-3 opacity-50" />
-                <p className="text-gray-400 text-sm">Nenhuma notificação</p>
-              </div>
-            )}
+            {!isLoadingRequests &&
+              notifications.filter(n => n.type !== 'FRIEND_REQUEST').length === 0 &&
+              friendRequests.length === 0 && (
+                <div className="p-8 text-center">
+                  <Bell className="w-12 h-12 text-gray-500 mx-auto mb-3 opacity-50" />
+                  <p className="text-gray-400 text-sm">Nenhuma notificação</p>
+                </div>
+              )}
           </div>
         </div>
       )}

@@ -855,7 +855,7 @@ export function CommunityChat({
           </AnimatePresence>
 
             {/* Typing indicator */}
-            {shouldShowTyping && typingMember && (
+            {shouldShowTyping && (
               <div className="flex gap-3">
                 <Avatar className="w-8 h-8 shrink-0">
                   <AvatarImage
