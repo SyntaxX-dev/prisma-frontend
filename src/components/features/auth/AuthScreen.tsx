@@ -9,6 +9,8 @@ import { registerUser } from '@/api/auth/register';
 import { getProfile } from '@/api/auth/get-profile';
 import { useAuth } from '@/hooks/features/auth';
 import { useNotifications } from '@/hooks/shared';
+import { educationLevelPtToEn } from '@/types/education';
+import { EducationLevel } from '@/types/education';
 
 interface AuthScreenContentProps {
   mode?: 'login' | 'register';
@@ -124,7 +126,7 @@ function AuthScreenContent({ mode = 'login', registrationToken, expiresAt }: Aut
         password: registerForm.password,
         confirmPassword: registerForm.confirmPassword,
         age: parseInt(registerForm.age),
-        educationLevel: registerForm.educationLevel as 'GRADUACAO' | 'MESTRADO' | 'DOUTORADO' | 'FUNDAMENTAL' | 'ENSINO_MEDIO' | 'POS_GRADUACAO',
+        educationLevel: educationLevelPtToEn[registerForm.educationLevel] ?? EducationLevel.UNDERGRADUATE,
         token: registrationToken,
       });
 

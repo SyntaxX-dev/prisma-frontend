@@ -35,7 +35,7 @@ export function useGoogleAuth() {
             nome: name,
             email,
             age: 25,
-            educationLevel: 'GRADUACAO' as const,
+            educationLevel: 'UNDERGRADUATE' as const,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
