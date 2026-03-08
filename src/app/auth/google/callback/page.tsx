@@ -1,45 +1,54 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/features/auth';
+import { getProfile } from '@/api/auth/get-profile';
 import { LoadingGrid } from '@/components/ui/loading-grid';
+import { CACHE_TAGS } from '@/lib/cache/invalidate-tags';
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { login } = useAuth();
+    const [tokenFromUrl, setTokenFromUrl] = useState<string | null>(null);
+    const hasLoggedInRef = useRef(false);
 
     useEffect(() => {
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-        const name = urlParams.get('name');
-        const email = urlParams.get('email');
-
-        if (token && name && email) {
-
-            const user = {
-                id: email,
-                name,
-                nome: name,
-                email,
-                age: 25,
-                educationLevel: 'UNDERGRADUATE' as const,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-
-            login(token, user, true);
-
-            window.history.replaceState({}, document.title, '/dashboard');
-
-            router.push('/dashboard');
-
+        const token = searchParams.get('token');
+        if (token) {
+            if (typeof window !== 'undefined') {
+                window.localStorage.setItem('auth_token', token);
+            }
+            setTokenFromUrl(token);
         } else {
-
             router.push('/auth/login');
         }
-    }, [login, router]);
+    }, [searchParams, router]);
+
+    const { data: profile, isSuccess, isError } = useQuery({
+        queryKey: [CACHE_TAGS.USER_PROFILE, 'oauth', tokenFromUrl],
+        queryFn: () => getProfile(),
+        enabled: !!tokenFromUrl && !hasLoggedInRef.current,
+        staleTime: 0,
+        retry: false,
+    });
+
+    useEffect(() => {
+        if (isSuccess && profile && tokenFromUrl && !hasLoggedInRef.current) {
+            hasLoggedInRef.current = true;
+            login(tokenFromUrl, profile, true);
+            window.history.replaceState({}, document.title, '/dashboard');
+            router.push('/dashboard');
+        }
+    }, [isSuccess, profile, tokenFromUrl, login, router]);
+
+    useEffect(() => {
+        if (isError) {
+            router.push('/auth/login');
+        }
+    }, [isError, router]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -48,5 +57,22 @@ export default function GoogleCallbackPage() {
                 <p className="text-white text-lg mt-4">Processando login com Google...</p>
             </div>
         </div>
+    );
+}
+
+const fallback = (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="text-center">
+            <LoadingGrid size="60" color="#bd18b4" />
+            <p className="text-white text-lg mt-4">Processando login com Google...</p>
+        </div>
+    </div>
+);
+
+export default function GoogleCallbackPage() {
+    return (
+        <Suspense fallback={fallback}>
+            <GoogleCallbackContent />
+        </Suspense>
     );
 }
