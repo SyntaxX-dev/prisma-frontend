@@ -101,6 +101,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     newSocket.on('connect', () => {
       socketRef.current = newSocket;
       setSocket(newSocket);
+      console.log('[UserStatusProvider] ✅ Socket conectado. socketId:', newSocket.id);
 
       // Notificar useChat/useCommunityChat que o socket está disponível
       if (typeof window !== 'undefined') {
@@ -155,6 +156,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     });
 
     newSocket.on('disconnect', (reason) => {
+      console.log('[UserStatusProvider] ❌ Socket desconectado. Motivo:', reason);
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
@@ -162,6 +164,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     });
 
     newSocket.on('connect_error', (error) => {
+      console.error('[UserStatusProvider] ❌ Erro de conexão:', error.message);
     });
 
     newSocket.on('heartbeat_ack', (data: any) => {
@@ -187,6 +190,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     // O UserStatusProvider é o dono do socket compartilhado.
     // useChat e useCommunityChat escutam via window events.
     newSocket.onAny((eventName, ...args) => {
+      console.log('[UserStatusProvider] 📨 Evento recebido no socket:', eventName, args[0]);
       if (
         eventName === 'new_message' ||
         eventName === 'typing' ||
@@ -198,6 +202,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
         eventName === 'community_message_edited' ||
         eventName === 'messages_read'
       ) {
+        console.log('[UserStatusProvider] 📤 Despachando window event: chat_' + eventName);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent(`chat_${eventName}`, {
             detail: args[0],

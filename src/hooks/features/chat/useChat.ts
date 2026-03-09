@@ -405,6 +405,9 @@ export function useChat() {
         socketRef.current = sharedSocket;
         setSocket(sharedSocket);
         setIsConnected(sharedSocket.connected);
+        console.log('[useChat] 🔗 Sincronizado com socket compartilhado. connected:', sharedSocket.connected, 'id:', sharedSocket.id);
+      } else {
+        console.warn('[useChat] ⚠️ window.__sharedChatSocket ainda não existe');
       }
     };
 
@@ -451,10 +454,7 @@ export function useChat() {
 
     const handleNewMessage = (event: CustomEvent<Message>) => {
       const message = event.detail;
-
-      const receivedAt = new Date().toISOString();
-      const messageCreatedAt = message.createdAt;
-      const delay = new Date(receivedAt).getTime() - new Date(messageCreatedAt).getTime();
+      console.log('[useChat] 📨 handleNewMessage recebido:', message);
 
       let currentUserId = '';
       try {
@@ -464,12 +464,15 @@ export function useChat() {
           currentUserId = payload.sub || payload.userId || payload.id || '';
         }
       } catch (e) {
+        console.error('[useChat] Erro ao decodificar token:', e);
         return;
       }
 
       const currentChatUserId = currentChatUserIdRef.current;
+      console.log('[useChat] currentUserId:', currentUserId, 'currentChatUserId:', currentChatUserId);
 
       if (!currentChatUserId || !currentUserId) {
+        console.warn('[useChat] ⚠️ currentChatUserId ou currentUserId vazio, ignorando mensagem');
         return;
       }
 
@@ -478,8 +481,15 @@ export function useChat() {
         (message.senderId === currentChatUserId && message.receiverId === currentUserId);
 
       if (!isFromCurrentConversation) {
+        console.warn('[useChat] ⚠️ Mensagem não é da conversa atual, ignorando:', {
+          messageSenderId: message.senderId,
+          messageReceiverId: message.receiverId,
+          currentUserId,
+          currentChatUserId,
+        });
         return;
       }
+      console.log('[useChat] ✅ Mensagem é da conversa atual, adicionando ao estado');
 
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === message.id);
