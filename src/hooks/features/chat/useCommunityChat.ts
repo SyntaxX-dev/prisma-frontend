@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { env } from '@/lib/env';
+import { Socket } from 'socket.io-client';
 import { sendCommunityMessage } from '@/api/communities/send-community-message';
 import type { MessageAttachment, MessageAttachmentResponse } from '@/types/file-upload';
 import { getCommunityMessages } from '@/api/communities/get-community-messages';
@@ -285,11 +284,7 @@ export function useCommunityChat(communityId: string | null) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
-
-    // Se não há communityId, apenas limpar estado mas NÃO desconectar o socket compartilhado
-    // O socket pode estar sendo usado pelo useChat
+    // Se não há communityId, limpar estado
     if (!communityId) {
       socketRef.current = null;
       currentCommunityIdRef.current = null;
@@ -302,172 +297,53 @@ export function useCommunityChat(communityId: string | null) {
       return;
     }
 
-    // Verificar se já existe um socket compartilhado
-    if (window.__sharedChatSocket) {
-      const wasAlreadyUsingSharedSocket = socketRef.current === window.__sharedChatSocket;
-      socketRef.current = window.__sharedChatSocket;
-      setSocket(window.__sharedChatSocket);
-      currentCommunityIdRef.current = communityId;
-
-      // Incrementar contador apenas se ainda não estava usando o socket compartilhado
-      if (!wasAlreadyUsingSharedSocket) {
-        window.__sharedChatSocketListenersCount++;
-      }
-
-      // Se o socket está conectado, usar imediatamente
-      if (window.__sharedChatSocket.connected) {
-        setIsConnected(true);
-        // Entrar na sala da comunidade para receber eventos em tempo real
-        window.__sharedChatSocket.emit('join_community', { communityId });
-        registerCommunityListeners(window.__sharedChatSocket, communityId);
-
-        // Iniciar heartbeat se ainda não estiver ativo
-        if (!heartbeatIntervalRef.current) {
-          heartbeatIntervalRef.current = setInterval(() => {
-            if (window.__sharedChatSocket?.connected) {
-              window.__sharedChatSocket.emit('heartbeat');
-            }
-          }, 30000);
-        }
-      } else {
-        // Se o socket está desconectado, tentar reconectar
-        setIsConnected(false);
-
-        // Registrar listeners quando o socket conectar
-        window.__sharedChatSocket.once('connect', () => {
-          setIsConnected(true);
-          // Entrar na sala da comunidade para receber eventos em tempo real
-          window.__sharedChatSocket!.emit('join_community', { communityId });
-          registerCommunityListeners(window.__sharedChatSocket!, communityId);
-
-          // Iniciar heartbeat se ainda não estiver ativo
-          if (!heartbeatIntervalRef.current) {
-            heartbeatIntervalRef.current = setInterval(() => {
-              if (window.__sharedChatSocket?.connected) {
-                window.__sharedChatSocket.emit('heartbeat');
-              }
-            }, 30000);
-          }
-        });
-
-        // Tentar reconectar
-        window.__sharedChatSocket.connect();
-      }
-
-      return;
-    }
-
-    if (socketRef.current?.connected && currentCommunityIdRef.current === communityId) return;
-
-    // Desconectar socket anterior se mudou de comunidade (apenas se não for compartilhado)
-    if (socketRef.current && currentCommunityIdRef.current !== communityId && socketRef.current !== window.__sharedChatSocket) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-
-    let apiUrl = env.NEXT_PUBLIC_API_URL;
-    const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
-    const socketUrl = `${wsProtocol}://${apiUrl.replace(/^https?:\/\//, '')}/chat`;
-
-    const newSocket = io(socketUrl, {
-      extraHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-      auth: {
-        token: token,
-      },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-    });
-
-    // Tornar este socket o compartilhado
-    window.__sharedChatSocket = newSocket;
-    if (window.__sharedChatSocketListenersCount === 0) {
-      window.__sharedChatSocketListenersCount = 1;
-    } else {
-      window.__sharedChatSocketListenersCount++;
-    }
-
-    newSocket.on('connect', () => {
-      setIsConnected(true);
-      socketRef.current = newSocket;
-      currentCommunityIdRef.current = communityId;
-      setSocket(newSocket);
-
-      // Entrar na sala da comunidade para receber eventos em tempo real
-      newSocket.emit('join_community', { communityId });
-
-      // Registrar listeners de comunidade quando o socket conectar
-      registerCommunityListeners(newSocket, communityId);
-
-      // Iniciar heartbeat a cada 30 segundos
-      heartbeatIntervalRef.current = setInterval(() => {
-        if (newSocket.connected) {
-          newSocket.emit('heartbeat');
-        }
-      }, 30000); // 30 segundos
-    });
-
-    newSocket.on('heartbeat_ack', (data: any) => {
-    });
-
-    newSocket.on('disconnect', () => {
-      setIsConnected(false);
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-        heartbeatIntervalRef.current = null;
-      }
-    });
-
-    newSocket.on('connect_error', (error) => {
-      setIsConnected(false);
-    });
-
-    // Log quando o socket recebe qualquer evento (para debug)
-    newSocket.onAny((eventName, ...args) => {
-      if (eventName === 'new_community_message') {
-      }
-      if (eventName === 'community_typing') {
-      }
-    });
-
-    // Eventos redundantes removidos (já registrados por registerCommunityListeners)
-
-
-    setSocket(newSocket);
-
-    // Atualizar ref imediatamente também
     currentCommunityIdRef.current = communityId;
 
-    return () => {
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-        heartbeatIntervalRef.current = null;
+    // O UserStatusProvider é o dono do socket compartilhado.
+    // useCommunityChat reutiliza esse socket para entrar na sala da comunidade.
+    const setupCommunity = (sharedSocket: Socket) => {
+      socketRef.current = sharedSocket;
+      setSocket(sharedSocket);
+      setIsConnected(sharedSocket.connected);
+
+      if (sharedSocket.connected) {
+        sharedSocket.emit('join_community', { communityId });
+      } else {
+        sharedSocket.once('connect', () => {
+          setIsConnected(true);
+          sharedSocket.emit('join_community', { communityId });
+        });
       }
+    };
+
+    if (window.__sharedChatSocket) {
+      setupCommunity(window.__sharedChatSocket);
+    }
+
+    // Verificar periodicamente até o socket compartilhado estar disponível e conectado.
+    // O interval se auto-cancela assim que o socket estiver pronto.
+    const checkInterval = setInterval(() => {
+      if (window.__sharedChatSocket?.connected) {
+        setupCommunity(window.__sharedChatSocket);
+        clearInterval(checkInterval);
+      }
+    }, 500);
+
+    const handleSocketConnected = () => {
+      if (window.__sharedChatSocket) {
+        setupCommunity(window.__sharedChatSocket);
+        clearInterval(checkInterval);
+      }
+    };
+    window.addEventListener('chat_socket_connected', handleSocketConnected);
+
+    return () => {
+      clearInterval(checkInterval);
+      window.removeEventListener('chat_socket_connected', handleSocketConnected);
 
       // Sair da sala da comunidade ao desmontar/trocar comunidade
-      if (communityId && newSocket.connected) {
-        newSocket.emit('leave_community', { communityId });
-      }
-
-      // Decrementar contador de listeners apenas se este socket é o compartilhado
-      if (newSocket === window.__sharedChatSocket) {
-        window.__sharedChatSocketListenersCount--;
-
-        // NÃO desconectar o socket se ainda há outros listeners (useChat pode estar usando)
-        // Sempre manter o socket compartilhado conectado se há pelo menos 1 listener
-        if (window.__sharedChatSocketListenersCount <= 0) {
-          window.__sharedChatSocketListenersCount = 0;
-          // NÃO desconectar o socket - deixar para o useChat gerenciar
-          // window.__sharedChatSocket = null;
-        }
-      } else {
-        // Este é um socket antigo que não é mais o compartilhado, desconectar
-        if (newSocket.connected) {
-          newSocket.disconnect();
-        }
+      if (communityId && socketRef.current?.connected) {
+        socketRef.current.emit('leave_community', { communityId });
       }
 
       socketRef.current = null;
