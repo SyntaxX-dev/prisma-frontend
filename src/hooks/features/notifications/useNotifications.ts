@@ -66,14 +66,9 @@ export function useNotifications() {
 
     
     // Conectar ao WebSocket
-    let apiUrl = env.NEXT_PUBLIC_API_URL;
-    if (apiUrl.startsWith('https://')) {
-      apiUrl = apiUrl.replace('https://', '');
-    } else if (apiUrl.startsWith('http://')) {
-      apiUrl = apiUrl.replace('http://', '');
-    }
-    const wsProtocol = env.NEXT_PUBLIC_API_URL.startsWith('https') ? 'wss' : 'ws';
-    const socketUrl = `${wsProtocol}://${apiUrl}/notifications`;
+    const baseSocketUrl = env.NEXT_PUBLIC_SOCKET_URL;
+    const wsProtocol = baseSocketUrl.startsWith('https') ? 'wss' : 'ws';
+    const socketUrl = `${wsProtocol}://${baseSocketUrl.replace(/^https?:\/\//, '')}/notifications`;
 
     // Opção 1: Header Authorization (recomendado)
     const newSocket = io(socketUrl, {

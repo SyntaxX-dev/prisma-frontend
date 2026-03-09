@@ -64,9 +64,9 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    let apiUrl = env.NEXT_PUBLIC_API_URL;
-    const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
-    const socketUrl = `${wsProtocol}://${apiUrl.replace(/^https?:\/\//, '')}/chat`;
+    const baseSocketUrl = env.NEXT_PUBLIC_SOCKET_URL;
+    const wsProtocol = baseSocketUrl.startsWith('https') ? 'wss' : 'ws';
+    const socketUrl = `${wsProtocol}://${baseSocketUrl.replace(/^https?:\/\//, '')}/chat`;
 
     hasInitializedRef.current = true;
 
