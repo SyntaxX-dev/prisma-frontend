@@ -866,28 +866,28 @@ export function CommunityChat({
                     {(typingMember?.name || "U").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="bg-[#29292E] border border-[#323238] rounded-lg px-4 py-2">
+                <div className="bg-[#29292E] border border-[#454550] rounded-lg px-4 py-2.5 shadow-md">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">
+                    <span className="text-sm text-gray-200 font-medium">
                       {typingMember?.name || "Alguém"} está digitando
                     </span>
                     <div className="flex items-center gap-1">
                       <span
-                        className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
+                        className="w-2 h-2 bg-purple-400 rounded-full inline-block"
                         style={{
                           animation: 'typing-dot 1.4s infinite ease-in-out',
                           animationDelay: '0ms'
                         }}
                       />
                       <span
-                        className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
+                        className="w-2 h-2 bg-purple-400 rounded-full inline-block"
                         style={{
                           animation: 'typing-dot 1.4s infinite ease-in-out',
                           animationDelay: '200ms'
                         }}
                       />
                       <span
-                        className="w-1.5 h-1.5 bg-gray-400 rounded-full inline-block"
+                        className="w-2 h-2 bg-purple-400 rounded-full inline-block"
                         style={{
                           animation: 'typing-dot 1.4s infinite ease-in-out',
                           animationDelay: '400ms'
