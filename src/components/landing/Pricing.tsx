@@ -18,6 +18,17 @@ import { useNotifications } from "@/hooks/shared";
 const plans = [
   {
     planId: 'START' as const,
+    name: "Teste",
+    price: "5.00",
+    period: "mês",
+    description: "Plano temporário para teste de integração.",
+    popular: false,
+    checkoutUrl: "https://www.asaas.com/c/utjakpwqu2nccos8",
+    features: ["Acesso temporário para teste"],
+    cta: "Testar Agora",
+  },
+  {
+    planId: 'START' as const,
     name: "Start",
     price: "14.90",
     period: "mês",
