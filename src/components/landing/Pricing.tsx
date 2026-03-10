@@ -19,10 +19,11 @@ const plans = [
   {
     planId: 'START' as const,
     name: "Start",
-    price: "12.90",
+    price: "14.90",
     period: "mês",
     description: "Ideal para quem quer começar a estudar de forma rápida e simples.",
     popular: false,
+    checkoutUrl: "https://www.asaas.com/c/joikfj71qhaj11n5",
     features: [
       "Conteúdo segmentado",
       "Acesso a comunidades",
@@ -38,6 +39,7 @@ const plans = [
     period: "mês",
     description: "O plano completo para quem quer ser aprovado em qualquer prova.",
     popular: true,
+    checkoutUrl: "https://www.asaas.com/c/3pc0rfm9ijni4n8t",
     features: [
       "Conteúdo segmentado",
       "Acesso a comunidades",
@@ -58,6 +60,7 @@ const plans = [
     description: "Tudo do Ultra + a liberdade de criar e monetizar seu conhecimento.",
     popular: false,
     highlight: true,
+    checkoutUrl: "https://www.asaas.com/c/ewwbyxnqe37e25o8",
     features: [
       "Conteúdo segmentado",
       "Acesso a comunidades",
@@ -75,9 +78,9 @@ const plans = [
 
 
 export function Pricing() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { changeUserPlan, loading: isChangingPlan } = useChangePlan();
-  const { showError, showSuccess } = useNotifications();
+  const { showError } = useNotifications();
 
   const [currentPlanId, setCurrentPlanId] = useState<PlanType | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
@@ -134,15 +137,12 @@ export function Pricing() {
   }, [isAuthenticated, sectionInView]);
 
   const handlePlanClick = async (planId: PlanType) => {
-    if (!isAuthenticated) {
-      localStorage.setItem('selectedPlan', planId);
-      window.location.href = `/checkout?plan=${planId}`;
-      return;
-    }
+    const plan = plans.find(p => p.planId === planId);
 
-    if (!currentPlanId) {
-      localStorage.setItem('selectedPlan', planId);
-      window.location.href = `/checkout?plan=${planId}`;
+    if (!isAuthenticated || !currentPlanId) {
+      if (plan?.checkoutUrl) {
+        window.location.href = plan.checkoutUrl;
+      }
       return;
     }
 

@@ -77,7 +77,7 @@ export const PLAN_NAMES: Record<PlanType, string> = {
 };
 
 export const PLAN_PRICES: Record<PlanType, string> = {
-    START: '12.90',
+    START: '14.90',
     PRO: '39.90',
     ULTRA: '39.90',
     PRODUCER: '59.90'
