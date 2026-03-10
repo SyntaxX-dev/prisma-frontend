@@ -1,54 +1,49 @@
-import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { getProfile } from '@/api/auth/get-profile';
 import { env } from '@/lib/env';
+import { CACHE_TAGS } from '@/lib/cache/invalidate-tags';
 
 export function useGoogleAuth() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const hasProcessed = useRef(false);
+  const [tokenFromUrl, setTokenFromUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (hasProcessed.current) return;
+    const token = searchParams.get('token');
+    if (token && typeof window !== 'undefined') {
+      window.localStorage.setItem('auth_token', token);
+      setTokenFromUrl(token);
+      hasProcessed.current = true;
+    }
+  }, [searchParams]);
 
-    const handleGoogleCallback = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const name = urlParams.get('name');
-      const email = urlParams.get('email');
+  const { data: profile, isSuccess, isError } = useQuery({
+    queryKey: [CACHE_TAGS.USER_PROFILE, 'google-oauth', tokenFromUrl],
+    queryFn: () => getProfile(),
+    enabled: !!tokenFromUrl,
+    staleTime: 0,
+    retry: false,
+  });
 
-      if (token && name && email) {
-        hasProcessed.current = true;
-        
-        try {
-          localStorage.setItem('auth_token', token);
-          const userProfile = await getProfile();
-          login(token, userProfile, true);
+  useEffect(() => {
+    if (isSuccess && profile && tokenFromUrl) {
+      login(tokenFromUrl, profile, true);
+      window.history.replaceState({}, document.title, '/dashboard');
+      router.push('/dashboard');
+    }
+  }, [isSuccess, profile, tokenFromUrl, login, router]);
 
-          window.history.replaceState({}, document.title, '/dashboard');
-          router.push('/dashboard');
-        } catch {
-          const user = {
-            id: email,
-            name,
-            nome: name,
-            email,
-            age: 25,
-            educationLevel: 'GRADUACAO' as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-
-          login(token, user, true);
-          window.history.replaceState({}, document.title, '/dashboard');
-          router.push('/dashboard');
-        }
-      }
-    };
-
-    handleGoogleCallback();
-  }, [login, router]);
+  useEffect(() => {
+    if (isError) {
+      router.push('/auth/login');
+    }
+  }, [isError, router]);
 
   const handleGoogleLogin = () => {
     hasProcessed.current = false;

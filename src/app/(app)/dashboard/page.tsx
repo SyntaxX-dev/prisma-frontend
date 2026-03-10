@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/layout";
 import { Sidebar } from "@/components/Sidebar";
 import { LearningDashboard } from "@/components/features/dashboard";
@@ -8,10 +10,15 @@ import { BackgroundGrid } from "@/components/shared/BackgroundGrid";
 import { LoadingGrid } from "@/components/ui/loading-grid";
 import { useAuth } from "../../../hooks/features/auth";
 import { usePageDataLoad } from "@/hooks/shared";
+import { getProfile } from "@/api/auth/get-profile";
+import { CACHE_TAGS } from "@/lib/cache/invalidate-tags";
 
 function DashboardContent() {
 	const [isDark, setIsDark] = useState(true);
+	const searchParams = useSearchParams();
 	const { login, user } = useAuth();
+	const [tokenFromUrl, setTokenFromUrl] = useState<string | null>(null);
+	const hasLoggedInRef = useRef(false);
 
 	const toggleTheme = () => {
 		setIsDark(!isDark);
@@ -23,30 +30,28 @@ function DashboardContent() {
 	});
 
 	useEffect(() => {
-
-		const urlParams = new URLSearchParams(window.location.search);
-		const token = urlParams.get('token');
-		const name = urlParams.get('name');
-		const email = urlParams.get('email');
-
-		if (token && name && email) {
-			const user = {
-				id: email,
-				name,
-				nome: name,
-				email,
-				age: 25,
-				educationLevel: 'GRADUACAO' as const,
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
-			};
-
-			login(token, user, true);
-
-			window.history.replaceState({}, document.title, '/dashboard');
-
+		const token = searchParams.get('token');
+		if (token && typeof window !== 'undefined') {
+			window.localStorage.setItem('auth_token', token);
+			setTokenFromUrl(token);
 		}
-	}, [login]);
+	}, [searchParams]);
+
+	const { data: profile, isSuccess } = useQuery({
+		queryKey: [CACHE_TAGS.USER_PROFILE, 'oauth', tokenFromUrl],
+		queryFn: () => getProfile(),
+		enabled: !!tokenFromUrl && !hasLoggedInRef.current,
+		staleTime: 0,
+		retry: false,
+	});
+
+	useEffect(() => {
+		if (isSuccess && profile && tokenFromUrl && !hasLoggedInRef.current) {
+			hasLoggedInRef.current = true;
+			login(tokenFromUrl, profile, true);
+			window.history.replaceState({}, document.title, '/dashboard');
+		}
+	}, [isSuccess, profile, tokenFromUrl, login]);
 
 	return (
 		<div className="min-h-screen text-white relative">

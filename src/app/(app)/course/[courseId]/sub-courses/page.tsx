@@ -62,12 +62,12 @@ export default function CoursePage() {
   const filteredSubCourses = useMemo(() => {
     if (!searchInput.trim()) return subCourses;
 
-
     const query = searchInput.toLowerCase().trim();
-    return subCourses.filter(subCourse =>
-      subCourse.name.toLowerCase().includes(query) ||
-      subCourse.description.toLowerCase().includes(query)
-    );
+    return subCourses.filter((subCourse) => {
+      const name = (subCourse.name ?? '').toString().toLowerCase();
+      const description = (subCourse.description ?? '').toString().toLowerCase();
+      return name.includes(query) || description.includes(query);
+    });
   }, [subCourses, searchInput]);
 
   if (error) {
@@ -161,7 +161,7 @@ export default function CoursePage() {
                 filteredSubCourses.map((subCourse) => (
                   <div
                     key={subCourse.id}
-                    onClick={() => navigateWithLoading(`/course/${courseId}/sub-courses/${subCourse.id}/videos`, `Carregando ${subCourse.name}...`)}
+                    onClick={() => navigateWithLoading(`/course/${courseId}/sub-courses/${subCourse.id}/videos`, `Carregando ${subCourse.name ?? 'subcurso'}...`)}
                     className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 cursor-pointer hover:bg-white/10 hover:border-[#bd18b4]/40 transition-all duration-300 group transform hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]"
                   >
                     <div className="flex items-center gap-4 mb-4">
@@ -177,7 +177,7 @@ export default function CoursePage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white text-lg font-bold group-hover:text-[#bd18b4] transition-colors line-clamp-1 leading-tight">
-                          {subCourse.name}
+                          {subCourse.name ?? 'Sem nome'}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] text-[#bd18b4] font-bold uppercase tracking-widest bg-[#bd18b4]/10 px-2 py-0.5 rounded-md">
@@ -189,7 +189,7 @@ export default function CoursePage() {
                     </div>
 
                     <p className="text-white/40 text-xs font-medium leading-relaxed line-clamp-2 mb-4 h-8">
-                      {subCourse.description}
+                      {subCourse.description ?? ''}
                     </p>
 
                     <div className="pt-4 border-t border-white/5 flex items-center justify-between">

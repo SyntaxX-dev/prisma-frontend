@@ -24,7 +24,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
   const statusMapRef = useRef<Map<string, 'online' | 'offline'>>(new Map());
   const { userProfile } = useProfile();
-  
+
   // Manter ref sincronizada com o estado
   useEffect(() => {
     statusMapRef.current = statusMap;
@@ -39,12 +39,13 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     }
 
     const token = localStorage.getItem('auth_token');
-    
+
     if (!token) {
       // Se não há token, desconectar se houver socket
       if (socketRef.current?.connected) {
         socketRef.current.disconnect();
         socketRef.current = null;
+        window.__sharedChatSocket = null;
         if (heartbeatIntervalRef.current) {
           clearInterval(heartbeatIntervalRef.current);
           heartbeatIntervalRef.current = null;
@@ -64,9 +65,11 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const baseSocketUrl = env.NEXT_PUBLIC_SOCKET_URL;
-    const wsProtocol = baseSocketUrl.startsWith('https') ? 'wss' : 'ws';
-    const socketUrl = `${wsProtocol}://${baseSocketUrl.replace(/^https?:\/\//, '')}/chat`;
+    const baseUrl = env.NEXT_PUBLIC_WS_URL || env.NEXT_PUBLIC_API_URL;
+    const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
+    const socketUrl = baseUrl.startsWith('http')
+      ? `${wsProtocol}://${baseUrl.replace(/^https?:\/\//, '')}/chat`
+      : `${window.location.origin.replace(/^https?/, wsProtocol)}/chat`;
 
     hasInitializedRef.current = true;
 
@@ -80,8 +83,13 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
     });
+
+    // Expor o socket globalmente IMEDIATAMENTE para que useChat/useCommunityChat o usem
+    window.__sharedChatSocket = newSocket;
+    window.__sharedChatSocketListenersCount = 0;
+    socketRef.current = newSocket;
 
     // Listener para autenticação (se o backend usar)
     newSocket.on('authenticated', (data: any) => {
@@ -95,6 +103,12 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     newSocket.on('connect', () => {
       socketRef.current = newSocket;
       setSocket(newSocket);
+      console.log('[UserStatusProvider] ✅ Socket conectado. socketId:', newSocket.id);
+
+      // Notificar useChat/useCommunityChat que o socket está disponível
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('chat_socket_connected'));
+      }
 
       // Função auxiliar para obter o ID do usuário atual
       const getCurrentUserId = () => {
@@ -129,7 +143,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
       heartbeatIntervalRef.current = setInterval(() => {
         if (newSocket.connected) {
           newSocket.emit('heartbeat');
-          
+
           // Garantir que o próprio usuário está marcado como online
           const userId = getCurrentUserId();
           if (userId) {
@@ -144,6 +158,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     });
 
     newSocket.on('disconnect', (reason) => {
+      console.log('[UserStatusProvider] ❌ Socket desconectado. Motivo:', reason);
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
@@ -151,6 +166,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     });
 
     newSocket.on('connect_error', (error) => {
+      console.error('[UserStatusProvider] ❌ Erro de conexão:', error.message);
     });
 
     newSocket.on('heartbeat_ack', (data: any) => {
@@ -163,34 +179,32 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
       if (!data.userId || !data.status) {
         return;
       }
-      
+
       setStatusMap((prev) => {
         const newMap = new Map(prev);
-        const oldStatus = newMap.get(data.userId);
         newMap.set(data.userId, data.status);
-        
         return newMap;
       });
     });
-    
-    // Log quando o socket recebe qualquer evento (para debug)
-    // IMPORTANTE: Registrar ANTES do connect para capturar todos os eventos
-    newSocket.onAny((eventName, ...args) => {
-      if (eventName === 'user_status_changed') {
-      }
-      
-      // Repassar eventos de chat para o useChat via eventos customizados
-      // Isso é necessário porque o backend está enviando apenas para este socket
-      if (eventName === 'new_message' || eventName === 'typing' || eventName === 'message_deleted' || eventName === 'message_edited') {
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent(`chat_${eventName}`, {
-            detail: args[0],
-          }));
-        }
-      }
 
-      // Repassar eventos de comunidade para o useCommunityChat via eventos customizados
-      if (eventName === 'new_community_message' || eventName === 'community_typing' || eventName === 'community_message_deleted' || eventName === 'community_message_edited') {
+    // Repassar eventos de chat para o useChat via eventos customizados
+    // IMPORTANTE: O backend envia apenas para UM socket por userId.
+    // O UserStatusProvider é o dono do socket compartilhado.
+    // useChat e useCommunityChat escutam via window events.
+    newSocket.onAny((eventName, ...args) => {
+      console.log('[UserStatusProvider] 📨 Evento recebido no socket:', eventName, args[0]);
+      if (
+        eventName === 'new_message' ||
+        eventName === 'typing' ||
+        eventName === 'message_deleted' ||
+        eventName === 'message_edited' ||
+        eventName === 'new_community_message' ||
+        eventName === 'community_typing' ||
+        eventName === 'community_message_deleted' ||
+        eventName === 'community_message_edited' ||
+        eventName === 'messages_read'
+      ) {
+        console.log('[UserStatusProvider] 📤 Despachando window event: chat_' + eventName);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent(`chat_${eventName}`, {
             detail: args[0],
@@ -198,8 +212,6 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
         }
       }
     });
-
-    // setSocket será chamado no evento 'connect'
 
     // Detectar fechamento de aba/navegador
     const handleBeforeUnload = () => {
@@ -207,15 +219,15 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
         newSocket.disconnect();
       }
       // Tentar fazer logout no backend usando fetch com keepalive
-      const token = localStorage.getItem('auth_token');
-      if (token) {
+      const currentToken = localStorage.getItem('auth_token');
+      if (currentToken) {
         try {
-          const apiUrl = env.NEXT_PUBLIC_API_URL;
-          const logoutUrl = `${apiUrl}/auth/logout`;
+          const currentApiUrl = env.NEXT_PUBLIC_API_URL;
+          const logoutUrl = `${currentApiUrl}/auth/logout`;
           fetch(logoutUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${currentToken}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({}),
@@ -265,12 +277,12 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      
+
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
       }
-      
+
       // NÃO desconectar o socket aqui, pois outros componentes podem estar usando
       // O socket será desconectado apenas quando o componente for desmontado completamente
       // ou quando o token for removido
@@ -285,6 +297,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
       if (!token && socketRef.current?.connected) {
         socketRef.current.disconnect();
         socketRef.current = null;
+        window.__sharedChatSocket = null;
         if (heartbeatIntervalRef.current) {
           clearInterval(heartbeatIntervalRef.current);
           heartbeatIntervalRef.current = null;
@@ -298,7 +311,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const pendingStatusRequestsRef = useRef<Set<string>>(new Set());
-  
+
   const getStatus = useCallback(async (userId: string): Promise<'online' | 'offline'> => {
     // Verificar cache local primeiro usando a ref
     if (statusMapRef.current.has(userId)) {
@@ -335,7 +348,7 @@ export function UserStatusProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const pendingBatchRequestsRef = useRef<Set<string>>(new Set());
-  
+
   const getBatchStatus = useCallback(async (userIds: string[]): Promise<void> => {
     // Filtrar apenas IDs que não estão no cache e não estão em requisições pendentes
     const missingIds = userIds.filter(
@@ -414,4 +427,3 @@ export function useUserStatus() {
   }
   return context;
 }
-

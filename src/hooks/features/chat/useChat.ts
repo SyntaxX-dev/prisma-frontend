@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { env } from '@/lib/env';
+import { Socket } from 'socket.io-client';
 import { sendMessage as sendMessageApi } from '@/api/messages/send-message';
 import type { MessageAttachment } from '@/types/file-upload';
 import { getConversation } from '@/api/messages/get-conversation';
@@ -396,206 +395,58 @@ export function useChat() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
+    // O UserStatusProvider é o dono do socket compartilhado (window.__sharedChatSocket).
+    // useChat apenas reutiliza esse socket e registra seus listeners via eventos customizados.
+    // Não criamos socket próprio aqui para evitar que o backend sobrescreva o socketId do usuário.
 
-    // Verificar se já existe um socket compartilhado (mesmo que desconectado)
-    // Se existir, reutilizar e apenas re-registrar os listeners
-    if (window.__sharedChatSocket) {
-      const wasAlreadyUsingSharedSocket = socketRef.current === window.__sharedChatSocket;
-      socketRef.current = window.__sharedChatSocket;
-      setSocket(window.__sharedChatSocket);
-      setIsConnected(window.__sharedChatSocket.connected);
-      // Incrementar contador apenas se ainda não estava usando o socket compartilhado
-      // (evitar incrementar múltiplas vezes se o useEffect executar várias vezes)
-      if (!wasAlreadyUsingSharedSocket) {
-        window.__sharedChatSocketListenersCount++;
-      }
-
-      // Se o socket está conectado, registrar listeners imediatamente
-      if (window.__sharedChatSocket.connected) {
-        registerDirectChatListeners(window.__sharedChatSocket);
+    const syncWithSharedSocket = () => {
+      if (window.__sharedChatSocket) {
+        const sharedSocket = window.__sharedChatSocket;
+        socketRef.current = sharedSocket;
+        setSocket(sharedSocket);
+        setIsConnected(sharedSocket.connected);
+        console.log('[useChat] 🔗 Sincronizado com socket compartilhado. connected:', sharedSocket.connected, 'id:', sharedSocket.id);
       } else {
-        // Se o socket está desconectado, registrar listener para quando conectar
-        window.__sharedChatSocket.once('connect', () => {
-          setIsConnected(true);
-          registerDirectChatListeners(window.__sharedChatSocket!);
-        });
-        window.__sharedChatSocket.on('disconnect', () => {
-          setIsConnected(false);
-        });
-        window.__sharedChatSocket.connect();
-        registerDirectChatListeners(window.__sharedChatSocket);
-      }
-
-      return;
-    }
-
-    // Verificar se já existe um socket local conectado
-    if (socketRef.current?.connected) {
-      // Tornar este socket o compartilhado
-      window.__sharedChatSocket = socketRef.current;
-      if (window.__sharedChatSocketListenersCount === 0) {
-        window.__sharedChatSocketListenersCount = 1;
-      } else {
-        window.__sharedChatSocketListenersCount++;
-      }
-      registerDirectChatListeners(socketRef.current);
-      return;
-    }
-
-    const baseSocketUrl = env.NEXT_PUBLIC_SOCKET_URL;
-    const wsProtocol = baseSocketUrl.startsWith('https') ? 'wss' : 'ws';
-    const socketUrl = `${wsProtocol}://${baseSocketUrl.replace(/^https?:\/\//, '')}/chat`;
-
-    const newSocket = io(socketUrl, {
-      extraHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-      auth: {
-        token: token,
-      },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-    });
-
-    // Registrar todos os listeners do chat direto usando a função auxiliar
-    registerDirectChatListeners(newSocket);
-
-    // Log quando o socket recebe qualquer evento (para debug)
-    newSocket.onAny((eventName, ...args) => {
-      if (eventName === 'new_message') {
-      }
-      if (eventName === 'typing') {
-      }
-    });
-
-    // Os listeners de new_message, typing, message_deleted, message_edited e messages_read
-    // são registrados pela função registerDirectChatListeners acima
-
-    // Tornar este socket o compartilhado
-    // IMPORTANTE: Se já existe um socket compartilhado, não substituir
-    // Apenas usar o existente se estiver conectado
-    if (window.__sharedChatSocket && window.__sharedChatSocket !== null) {
-      const existingSharedSocket: Socket = window.__sharedChatSocket;
-      if (existingSharedSocket.connected) {
-        // Desconectar o novo socket e usar o compartilhado
-        newSocket.disconnect();
-        socketRef.current = existingSharedSocket;
-        setSocket(existingSharedSocket);
-        setIsConnected(true);
-        window.__sharedChatSocketListenersCount++;
-        registerDirectChatListeners(existingSharedSocket);
-        return;
-      }
-    }
-
-    // Se não há socket compartilhado ou está desconectado, usar o novo
-    window.__sharedChatSocket = newSocket;
-    window.__sharedChatSocketListenersCount++;
-
-    // Registrar listeners de eventos básicos (connect, disconnect, etc.)
-    newSocket.on('connect', () => {
-      setIsConnected(true);
-      socketRef.current = newSocket;
-      setSocket(newSocket);
-
-      // Re-registrar listeners quando o socket conectar (caso tenha sido desconectado)
-      registerDirectChatListeners(newSocket);
-
-      // Emitir um evento de teste para verificar se o socket está funcionando
-      newSocket.emit('test_connection', { timestamp: new Date().toISOString() });
-
-      // Iniciar heartbeat a cada 30 segundos
-      heartbeatIntervalRef.current = setInterval(() => {
-        if (newSocket.connected) {
-          newSocket.emit('heartbeat');
-        }
-      }, 30000);
-    });
-
-    newSocket.on('heartbeat_ack', (data: any) => {
-    });
-
-    newSocket.on('disconnect', () => {
-      setIsConnected(false);
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-        heartbeatIntervalRef.current = null;
-      }
-    });
-
-    newSocket.on('connect_error', (error) => {
-      setIsConnected(false);
-    });
-
-    // Definir socket imediatamente para que os listeners funcionem
-    setSocket(newSocket);
-    socketRef.current = newSocket;
-
-    return () => {
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-        heartbeatIntervalRef.current = null;
-      }
-
-      // NÃO remover listeners nem fechar o socket aqui
-      // O socket pode ser compartilhado com useCommunityChat
-      // Apenas decrementar o contador de listeners se este socket é o compartilhado
-      if (socketRef.current === window.__sharedChatSocket) {
-        window.__sharedChatSocketListenersCount--;
-
-        // Se não há mais listeners, NÃO limpar a referência compartilhada
-        // Deixar o socket disponível para reutilização
-        if (window.__sharedChatSocketListenersCount < 0) {
-          window.__sharedChatSocketListenersCount = 0;
-        }
-      } else if (socketRef.current && socketRef.current !== window.__sharedChatSocket) {
-        // Este é um socket local que não é o compartilhado
-        if (socketRef.current.connected) {
-          socketRef.current.disconnect();
-        }
+        console.warn('[useChat] ⚠️ window.__sharedChatSocket ainda não existe');
       }
     };
-  }, [registerDirectChatListeners]);
 
-  // Atualizar ref e re-registrar listeners quando currentChatUserId mudar
-  // Isso garante que os listeners sejam sempre re-registrados, especialmente após voltar de uma comunidade
+    syncWithSharedSocket();
+
+    // Verificar periodicamente até o socket compartilhado estar disponível e conectado.
+    // O interval se auto-cancela assim que o socket estiver pronto.
+    const checkInterval = setInterval(() => {
+      if (window.__sharedChatSocket?.connected) {
+        syncWithSharedSocket();
+        clearInterval(checkInterval);
+      }
+    }, 500);
+
+    // Escutar evento de conexão do socket compartilhado via evento customizado
+    const handleSocketConnected = () => {
+      syncWithSharedSocket();
+      clearInterval(checkInterval);
+    };
+    window.addEventListener('chat_socket_connected', handleSocketConnected);
+
+    return () => {
+      clearInterval(checkInterval);
+      window.removeEventListener('chat_socket_connected', handleSocketConnected);
+    };
+  }, []);
+
+  // Atualizar ref quando currentChatUserId mudar
   useEffect(() => {
     if (currentChatUserId) {
-      // Atualizar a ref imediatamente
       currentChatUserIdRef.current = currentChatUserId;
-
-      // Limpar indicador de typing ao mudar de conversa
       setIsTyping(false);
       setTypingUserId(null);
-
-      // Verificar se o socket compartilhado está disponível e migrar para ele se necessário
-      const activeSocket = window.__sharedChatSocket?.connected
-        ? window.__sharedChatSocket
-        : socketRef.current;
-
-      if (activeSocket?.connected) {
-        // Se não estamos usando o socket compartilhado mas ele está disponível, migrar
-        if (window.__sharedChatSocket?.connected && socketRef.current !== window.__sharedChatSocket) {
-          socketRef.current = window.__sharedChatSocket;
-          setSocket(window.__sharedChatSocket);
-          setIsConnected(true);
-        }
-
-        // SEMPRE re-registrar listeners quando currentChatUserId mudar
-        // Isso garante que os listeners estejam ativos mesmo após voltar de uma comunidade
-        registerDirectChatListeners(activeSocket);
-      }
     } else {
-      // Limpar ref quando não há conversa selecionada
       currentChatUserIdRef.current = null;
       setIsTyping(false);
       setTypingUserId(null);
     }
-  }, [currentChatUserId, registerDirectChatListeners]);
+  }, [currentChatUserId]);
 
   // Escutar eventos customizados repassados pelo UserStatusProvider
   useEffect(() => {
@@ -603,10 +454,7 @@ export function useChat() {
 
     const handleNewMessage = (event: CustomEvent<Message>) => {
       const message = event.detail;
-
-      const receivedAt = new Date().toISOString();
-      const messageCreatedAt = message.createdAt;
-      const delay = new Date(receivedAt).getTime() - new Date(messageCreatedAt).getTime();
+      console.log('[useChat] 📨 handleNewMessage recebido:', message);
 
       let currentUserId = '';
       try {
@@ -616,12 +464,15 @@ export function useChat() {
           currentUserId = payload.sub || payload.userId || payload.id || '';
         }
       } catch (e) {
+        console.error('[useChat] Erro ao decodificar token:', e);
         return;
       }
 
       const currentChatUserId = currentChatUserIdRef.current;
+      console.log('[useChat] currentUserId:', currentUserId, 'currentChatUserId:', currentChatUserId);
 
       if (!currentChatUserId || !currentUserId) {
+        console.warn('[useChat] ⚠️ currentChatUserId ou currentUserId vazio, ignorando mensagem');
         return;
       }
 
@@ -630,8 +481,15 @@ export function useChat() {
         (message.senderId === currentChatUserId && message.receiverId === currentUserId);
 
       if (!isFromCurrentConversation) {
+        console.warn('[useChat] ⚠️ Mensagem não é da conversa atual, ignorando:', {
+          messageSenderId: message.senderId,
+          messageReceiverId: message.receiverId,
+          currentUserId,
+          currentChatUserId,
+        });
         return;
       }
+      console.log('[useChat] ✅ Mensagem é da conversa atual, adicionando ao estado');
 
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === message.id);
@@ -845,16 +703,27 @@ export function useChat() {
       });
     };
 
+    const handleMessagesRead = (event: CustomEvent<{ receiverId: string; readAt: string }>) => {
+      const data = event.detail;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.senderId === data.receiverId ? { ...msg, isRead: true } : msg
+        )
+      );
+    };
+
     window.addEventListener('chat_new_message', handleNewMessage as EventListener);
     window.addEventListener('chat_typing', handleTyping as EventListener);
     window.addEventListener('chat_message_deleted', handleMessageDeleted as EventListener);
     window.addEventListener('chat_message_edited', handleMessageEdited as EventListener);
+    window.addEventListener('chat_messages_read', handleMessagesRead as EventListener);
 
     return () => {
       window.removeEventListener('chat_new_message', handleNewMessage as EventListener);
       window.removeEventListener('chat_typing', handleTyping as EventListener);
       window.removeEventListener('chat_message_deleted', handleMessageDeleted as EventListener);
       window.removeEventListener('chat_message_edited', handleMessageEdited as EventListener);
+      window.removeEventListener('chat_messages_read', handleMessagesRead as EventListener);
     };
   }, [currentChatUserId]);
 
@@ -888,23 +757,10 @@ export function useChat() {
       }
 
       await markMessagesAsRead(friendId);
-
-      // Re-registrar listeners após carregar conversa
-      // IMPORTANTE: Garantir que currentChatUserIdRef está atualizado antes de registrar listeners
-      if (socketRef.current?.connected) {
-        // Garantir que a ref está atualizada
-        currentChatUserIdRef.current = friendId;
-        registerDirectChatListeners(socketRef.current);
-      } else if (window.__sharedChatSocket?.connected) {
-        // Garantir que a ref está atualizada
-        currentChatUserIdRef.current = friendId;
-        socketRef.current = window.__sharedChatSocket;
-        registerDirectChatListeners(window.__sharedChatSocket);
-      }
     } catch (error) {
       console.error('[useChat] Erro ao carregar conversa', error);
     }
-  }, [registerDirectChatListeners]);
+  }, []);
 
   const sendMessage = useCallback(async (receiverId: string, content?: string, attachments?: MessageAttachment[]) => {
     if (!content?.trim() && (!attachments || attachments.length === 0)) return;
