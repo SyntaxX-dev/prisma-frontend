@@ -5,6 +5,17 @@ import Image from "next/image";
 import { useSearch } from "@/hooks/shared";
 import { useCourseSearchWithParams, useProducerCourses } from "@/hooks/features/courses";
 import { HorizontalCarousel } from "../course/HorizontalCarousel";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
 
 export function LearningDashboard({ userName }: { userName?: string }) {
   const [greeting, setGreeting] = useState("");
@@ -125,7 +136,13 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                   </div>
                 </div>
               ) : (
-                <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={containerVariants}
+                  className="grid gap-4 md:gap-6"
+                  style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+                >
                   {courses.map((course) => (
                     <CourseCard
                       key={course.courseId}
@@ -145,12 +162,18 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                       level={course.level}
                     />
                   ))}
-                </div>
+                </motion.div>
               )}
             </div>
           ) : (
             /* Mostra grid quando não há busca */
-            <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={containerVariants}
+              className="grid gap-4 md:gap-6"
+              style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+            >
               {courses.map((course) => (
                 <CourseCard
                   key={course.courseId}
@@ -170,7 +193,7 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                   level={course.level}
                 />
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
       )}

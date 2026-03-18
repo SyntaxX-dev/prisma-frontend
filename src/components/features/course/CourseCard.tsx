@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader } from "../../ui/card";
 import { useNavigationWithLoading } from "@/hooks/shared";
-import { Calendar } from "lucide-react";
-import { useId } from "react";
+import { Calendar, Clock, BarChart } from "lucide-react";
+import { motion, Variants } from "framer-motion";
+import { useMemo } from "react";
 
 interface CourseCardProps {
   title: string;
@@ -21,29 +21,63 @@ interface CourseCardProps {
   level?: 'Iniciante' | 'Intermediário' | 'Avançado';
   courseType?: 'CURSO' | 'FORMAÇÃO' | 'PRODUTOR';
   isSponsored?: boolean;
+  index?: number;
 }
+
+const variants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 25
+    }
+  }
+};
+
+const VIBRANT_COLORS = [
+  "#bd18b4", // Brand Pink
+  "#3b82f6", // Blue
+  "#10b981", // Emerald
+  "#f59e0b", // Amber
+  "#ef4444", // Red
+  "#8b5cf6", // Violet
+  "#ec4899", // Pink
+  "#06b6d4", // Cyan
+  "#f97316", // Orange
+  "#22c55e", // Green
+  "#a855f7", // Purple
+  "#0ea5e9", // Sky
+];
 
 export function CourseCard({
   title,
   description,
   technology,
   icon,
-  isSubscriber,
   isFree = false,
-  thumbnailUrl,
-  iconColor,
+  iconColor: originalIconColor,
   courseId: propCourseId,
   isInCategoryPage = false,
   category: propCategory,
-  instructor = 'Diego Fernandes',
   duration = 'N/A',
   year,
-  level,
-  courseType = 'CURSO',
-  isSponsored = false
+  level = 'Intermediário',
+  isSponsored = false,
 }: CourseCardProps) {
   const { navigateWithLoading } = useNavigationWithLoading();
-  const patternId = useId();
+
+  const cardColor = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < title.length; i++) {
+      hash = title.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % VIBRANT_COLORS.length;
+    return VIBRANT_COLORS[index];
+  }, [title]);
+
   const displayCourseId = propCourseId || title.toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -53,156 +87,140 @@ export function CourseCard({
   const getCategoryFromCourseId = (courseId: string) => {
     const categoryMap: Record<string, string> = {
       'nodejs': 'nodejs',
-      'nodejs-avancado': 'nodejs',
-      'nodejs-iniciantes': 'nodejs',
-      'nodejs-apis': 'nodejs',
-
       'react-completo': 'react',
-      'react-hooks': 'react',
-      'react-native-expo': 'react',
-
       'python-django': 'python',
-      'python-data-science': 'python',
-
       'android-kotlin': 'mobile',
-      'ios-swift': 'mobile',
-
       'soft-skills': 'soft-skills',
-      'ingles-para-devs': 'soft-skills',
-
       'tech-lead': 'leadership',
-
       'logica-programacao': 'fundamentals',
-      'dev-global-starter': 'fundamentals',
-      'discover': 'fundamentals',
-
-      'angular-intro': 'angular',
-
-      'go-intro': 'go',
-
-      'csharp-dotnet-intro': 'csharp'
     };
-
     return categoryMap[courseId] || 'fundamentals';
   };
 
   const category = propCategory || getCategoryFromCourseId(displayCourseId);
-
   const href = isInCategoryPage
     ? `/courses/${category}/${displayCourseId}`
     : `/course/${propCourseId}/sub-courses`;
 
   const handleClick = () => {
-    const message = isInCategoryPage
-      ? `Carregando ${title}...`
-      : `Carregando ${title}...`;
-
-    navigateWithLoading(href, message);
+    navigateWithLoading(href, `Carregando ${title}...`);
   };
 
-  // Obter ano atual se não fornecido
   const displayYear = year || new Date().getFullYear().toString();
 
+  const patterns = ['bg-dots-pattern', 'bg-grid-pattern', 'bg-waves-pattern'];
+  const patternClass = patterns[title.length % patterns.length];
+
   return (
-    <button
-      onClick={handleClick}
-      className="block text-left w-full h-[320px] pointer-events-auto transform transition-all duration-300 hover:-translate-y-1"
+    <motion.div
+      variants={variants}
+      className="h-full"
     >
-      <Card className={`bg-glass backdrop-blur-xl border transition-all duration-300 cursor-pointer h-full flex flex-col group rounded-2xl overflow-hidden w-full relative ${isSponsored
-        ? 'border-gold/30 hover:border-gold/60 shadow-[0_0_25px_rgba(255,215,0,0.15)] hover:shadow-[0_0_40px_rgba(255,215,0,0.25)]'
-        : 'border-glass-border hover:border-brand/40 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5),0_0_20px_rgba(189,24,180,0.15)]'
-        }`}>
-        {/* Shine effect on hover */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+      <button
+        onClick={handleClick}
+        className="group relative block h-[420px] w-full text-left outline-none cursor-pointer"
+      >
+        {/* Container Principal - Cinza unificado e vibrante */}
+        <div className="relative block h-full overflow-hidden rounded-2xl border border-white/10 bg-[#1c1c1f] backdrop-blur-xl transition-all duration-500 hover:border-white/20 hover:shadow-2xl hover:shadow-black/50 hover:-translate-y-2">
 
-        {/* Badge Patrocinado */}
-        {isSponsored && (
-          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-gradient-to-r from-gold to-gold-secondary text-black text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
-            <span>PATROCINADO</span>
-          </div>
-        )}
-        <CardHeader className="p-0 flex-shrink-0 relative">
-          {/* Background com gradiente mais suave */}
-          <div className={`relative w-full h-40 bg-gradient-to-br from-glass to-transparent overflow-hidden rounded-t-2xl ${isSponsored ? 'ring-1 ring-gold/10' : ''
-            }`}>
-            {/* Padrão de pontinhos */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none opacity-20"
-              style={{ opacity: 0.15 }}
-            >
-              <defs>
-                <pattern
-                  id={`dot-pattern-${patternId}`}
-                  x="0"
-                  y="0"
-                  width="16"
-                  height="16"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <circle cx="8" cy="8" r="0.5" fill="white" />
-                </pattern>
-              </defs>
-              <rect
-                width="100%"
-                height="100%"
-                fill={`url(#dot-pattern-${patternId})`}
-              />
-            </svg>
+          <div
+            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 transition-all duration-700 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at center, ${cardColor}44 0%, transparent 70%)`
+            }}
+          />
 
-            {/* Ícone no canto superior esquerdo com sombra */}
-            <div className="absolute top-4 left-4 z-10">
-              <div
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-500 group-hover:scale-110 ${isSponsored ? 'ring-1 ring-gold/30' : ''
-                  }`}
-                style={{
-                  backgroundColor: iconColor || 'rgba(255,255,255,0.05)',
-                  backgroundImage: `linear-gradient(135deg, ${iconColor}CC, ${iconColor}88)`,
-                  boxShadow: `0 8px 16px -4px rgba(0, 0, 0, 0.3), 0 0 20px ${iconColor}40`
-                }}
-              >
-                {icon}
-              </div>
+          <div
+            className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none blur-sm"
+            style={{
+              background: `linear-gradient(135deg, ${cardColor}, transparent, ${cardColor})`,
+              padding: '1px'
+            }}
+          />
+
+          <div className={`relative h-44 w-full overflow-hidden ${patternClass}`}>
+            {/* Overlay sutil para manter a profundidade sem escurecer demais o topo */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
+
+            <div className="absolute top-4 right-4 z-10">
+              {isSponsored ? (
+                <span className="bg-amber-400/20 border border-amber-400/30 text-amber-400 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-widest shadow-lg backdrop-blur-md">
+                  Destaque
+                </span>
+              ) : (
+                <span className="bg-white/10 border border-white/20 text-white/80 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-widest backdrop-blur-md">
+                  {technology}
+                </span>
+              )}
             </div>
 
-            {/* Subtle glow behind icon */}
-            <div
-              className="absolute top-4 left-4 w-14 h-14 rounded-full blur-[30px] opacity-20 group-hover:opacity-40 transition-opacity duration-500"
-              style={{ backgroundColor: iconColor }}
-            />
+            {/* Ícone Area - Melhoria de VISIBILIDADE */}
+            <div className="absolute inset-0 flex items-center justify-center p-6">
+              <div
+                className="relative flex items-center justify-center w-24 h-24 rounded-3xl transition-all duration-500 bg-white/5 backdrop-blur-md shadow-2xl group-hover:scale-110 z-10"
+                style={{
+                  border: `1.5px solid ${cardColor}66`,
+                }}
+              >
+                {/* Glow ATRAZ do ícone (não sobre ele) */}
+                <div
+                  className="absolute inset-0 rounded-3xl blur-xl opacity-20 transition-opacity duration-500 group-hover:opacity-40 -z-10"
+                  style={{ backgroundColor: cardColor }}
+                />
+
+                {/* Ícone em si - Ultra VIVO com filtros de saturação e brilho */}
+                <span
+                  className="text-6xl z-20 transition-all duration-300 saturate-[2] brightness-125 contrast-125 group-hover:scale-110"
+                  style={{
+                    filter: `drop-shadow(0 0 20px ${cardColor}88) drop-shadow(0 10px 15px rgba(0,0,0,0.6))`
+                  }}
+                >
+                  {icon}
+                </span>
+              </div>
+            </div>
           </div>
 
-        </CardHeader>
-
-        <CardContent className="p-5 flex-1 flex flex-col justify-between bg-transparent">
-          {/* Título */}
-          <div className="mb-4">
-            <h3 className={`font-bold text-lg mb-2 line-clamp-2 leading-tight transition-colors ${isSponsored
-              ? 'text-white group-hover:text-gold'
-              : 'text-white group-hover:text-brand-accent'
-              }`}>
+          <div className="p-6 flex flex-col h-[calc(420px-176px)] relative z-10">
+            <h3 className="font-bold text-xl mb-3 text-white group-hover:text-white transition-colors duration-200 line-clamp-2 leading-tight">
               {title}
             </h3>
 
-            {/* Descrição */}
             {description && (
-              <p className="text-white/50 text-xs leading-relaxed line-clamp-2 font-medium">
+              <p className="text-sm text-white/60 line-clamp-3 mb-4 flex-grow font-medium leading-relaxed group-hover:text-white/80 transition-colors">
                 {description}
               </p>
             )}
-          </div>
 
-          {/* Rodapé do Card */}
-          <div className="flex items-center justify-between text-[11px] text-white/40 border-t border-white/5 pt-4 mt-auto font-medium tracking-wide">
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-glass border border-glass-border group-hover:bg-glass-hover transition-colors">
-              <span className="uppercase">{technology}</span>
-            </div>
-            <div className="flex items-center gap-1.5 opacity-60">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{displayYear}</span>
+            <div className="mt-auto space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 bg-white/10 border border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-white/70 backdrop-blur-sm group-hover:bg-white/20 transition-colors">
+                  <BarChart className="w-3.5 h-3.5" style={{ color: cardColor }} />
+                  <span>{level}</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-white/10 border border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-white/70 backdrop-blur-sm group-hover:bg-white/20 transition-colors">
+                  <Clock className="w-3.5 h-3.5" style={{ color: cardColor }} />
+                  <span>{duration}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                <div className="flex items-center gap-2 text-white/40 text-xs font-semibold">
+                  <Calendar className="w-4 h-4" />
+                  <span>{displayYear}</span>
+                </div>
+                {isFree ? (
+                  <span className="text-[10px] font-black text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20 uppercase tracking-tighter">
+                    Gratuito
+                  </span>
+                ) : (
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cardColor, boxShadow: `0 0 10px ${cardColor}` }} />
+                )}
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </button>
+        </div>
+      </button>
+    </motion.div>
   );
 }

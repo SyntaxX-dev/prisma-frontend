@@ -11,6 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Search, Filter } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
 
 function SearchPageContent() {
   const { searchParams, updateSearchParams, resetSearchParams, isSearching } = useSearch();
@@ -19,23 +30,23 @@ function SearchPageContent() {
 
   const getSearchSummary = () => {
     const parts = [];
-    
+
     if (searchParams.q) {
       parts.push(`"${searchParams.q}"`);
     }
-    
+
     if (searchParams.level) {
       parts.push(`nível ${searchParams.level}`);
     }
-    
+
     if (searchParams.technology) {
       parts.push(`tecnologia ${searchParams.technology}`);
     }
-    
+
     if (searchParams.year) {
       parts.push(`ano ${searchParams.year}`);
     }
-    
+
     return parts.join(', ');
   };
 
@@ -52,10 +63,10 @@ function SearchPageContent() {
   return (
     <div className="min-h-screen bg-gray-950">
       <div className="flex">
-        <Sidebar isDark={true} toggleTheme={() => {}} />
+        <Sidebar isDark={true} toggleTheme={() => { }} />
         <div className="flex-1 ml-20">
-          <Navbar isDark={true} toggleTheme={() => {}} />
-          
+          <Navbar isDark={true} toggleTheme={() => { }} />
+
           <div className="p-6 pt-24">
             <div className="max-w-7xl mx-auto">
               {/* Header */}
@@ -72,7 +83,7 @@ function SearchPageContent() {
                   <Filter className="w-5 h-5 text-white/60" />
                   <span className="text-white/80 font-medium">Filtros Rápidos:</span>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                   {['React', 'Matemática', 'Português', 'Biologia', 'Teologia'].map((tech) => (
                     <Button
@@ -80,27 +91,25 @@ function SearchPageContent() {
                       variant="outline"
                       size="sm"
                       onClick={() => updateSearchParams({ technology: tech })}
-                      className={`${
-                        searchParams.technology === tech
+                      className={`${searchParams.technology === tech
                           ? 'bg-[#bd18b4] text-black border-[#bd18b4]'
                           : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-                      }`}
+                        }`}
                     >
                       {tech}
                     </Button>
                   ))}
-                  
+
                   {['Iniciante', 'Intermediário', 'Avançado'].map((level) => (
                     <Button
                       key={level}
                       variant="outline"
                       size="sm"
                       onClick={() => updateSearchParams({ level: level as any })}
-                      className={`${
-                        searchParams.level === level
+                      className={`${searchParams.level === level
                           ? 'bg-[#bd18b4] text-black border-[#bd18b4]'
                           : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-                      }`}
+                        }`}
                     >
                       {level}
                     </Button>
@@ -150,7 +159,7 @@ function SearchPageContent() {
                       {isSearching ? 'Nenhum curso encontrado' : 'Comece sua busca'}
                     </h3>
                     <p className="text-white/60 text-sm">
-                      {isSearching 
+                      {isSearching
                         ? 'Tente ajustar os filtros ou usar termos diferentes'
                         : 'Use a barra de busca na navbar ou os filtros acima'
                       }
@@ -164,7 +173,12 @@ function SearchPageContent() {
                       </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <motion.div
+                      initial="hidden"
+                      animate="visible"
+                      variants={containerVariants}
+                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    >
                       {courses.map((course) => (
                         <CourseCard
                           key={course.courseId}
@@ -180,7 +194,7 @@ function SearchPageContent() {
                           category={course.category}
                         />
                       ))}
-                    </div>
+                    </motion.div>
                   </>
                 )}
               </div>

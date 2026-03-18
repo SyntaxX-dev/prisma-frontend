@@ -42,30 +42,30 @@ const fetchCoursesFromAPI = async (): Promise<ApiCourse[]> => {
   try {
     // Obter token de autenticação
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
-    
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/courses`, {
       method: 'GET',
       headers,
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data: ApiCoursesResponse = await response.json();
-    
+
     if (!data.success) {
       throw new Error('API returned unsuccessful response');
     }
-    
+
     return data.data;
   } catch (error) {
     throw error;
@@ -105,7 +105,7 @@ export const transformApiCourseToCourse = (apiCourse: ApiCourse): Course => {
   };
 
   const techInfo = getTechnologyInfo(apiCourse.name);
-  
+
   // Determinar nível baseado no nome
   const getLevel = (name: string): 'Iniciante' | 'Intermediário' | 'Avançado' => {
     const lowerName = name.toLowerCase();
@@ -139,7 +139,7 @@ export const transformApiCourseToCourse = (apiCourse: ApiCourse): Course => {
     courseId: apiCourse.id,
     category: techInfo.category
   };
-  
+
   return course;
 };
 
@@ -148,25 +148,25 @@ const searchCourses = async (query: string): Promise<Course[]> => {
   try {
     // Busca cursos da API real
     const apiCourses = await fetchCoursesFromAPI();
-    
+
     // Transforma para o formato esperado pelos componentes
     const courses = apiCourses.map(transformApiCourseToCourse);
-    
+
     // Se não há query, retorna todos os cursos
-  if (!query.trim()) {
+    if (!query.trim()) {
       return courses;
-  }
+    }
 
     // Filtra cursos baseado na query
-  const searchTerm = query.toLowerCase().trim();
+    const searchTerm = query.toLowerCase().trim();
     return courses.filter(course =>
-    course.title.toLowerCase().includes(searchTerm) ||
-    course.instructor.toLowerCase().includes(searchTerm) ||
-    course.technology.toLowerCase().includes(searchTerm) ||
-    course.level.toLowerCase().includes(searchTerm) ||
+      course.title.toLowerCase().includes(searchTerm) ||
+      course.instructor.toLowerCase().includes(searchTerm) ||
+      course.technology.toLowerCase().includes(searchTerm) ||
+      course.level.toLowerCase().includes(searchTerm) ||
       course.category.toLowerCase().includes(searchTerm) ||
       course.description.toLowerCase().includes(searchTerm)
-  );
+    );
   } catch (error) {
     // Retorna array vazio em caso de erro
     return [];
@@ -199,7 +199,7 @@ const searchCoursesWithParams = async (params: {
   try {
     // Busca cursos da API real
     const apiCourses = await fetchCoursesFromAPI();
-    
+
     // Transforma para o formato esperado pelos componentes
     let filteredCourses = apiCourses.map(transformApiCourseToCourse);
 
@@ -217,25 +217,25 @@ const searchCoursesWithParams = async (params: {
     }
 
     if (params.category) {
-      filteredCourses = filteredCourses.filter(course => 
+      filteredCourses = filteredCourses.filter(course =>
         course.category === params.category
       );
     }
 
     if (params.level) {
-      filteredCourses = filteredCourses.filter(course => 
+      filteredCourses = filteredCourses.filter(course =>
         course.level === params.level
       );
     }
 
     if (params.technology) {
-      filteredCourses = filteredCourses.filter(course => 
+      filteredCourses = filteredCourses.filter(course =>
         course.technology === params.technology
       );
     }
 
     if (params.year) {
-      filteredCourses = filteredCourses.filter(course => 
+      filteredCourses = filteredCourses.filter(course =>
         course.year === params.year
       );
     }
@@ -264,11 +264,11 @@ const searchCoursesWithParams = async (params: {
     const limit = params.limit || 100; // Aumentado para 100 para mostrar mais cursos por padrão
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    
+
     const result = filteredCourses.slice(startIndex, endIndex);
-    
+
     return result;
-    
+
   } catch (error) {
     // Retorna array vazio em caso de erro
     return [];
@@ -290,10 +290,10 @@ export function useCourseSearchWithParams(searchParams: {
     .filter(([_, value]) => value !== undefined && value !== '')
     .map(([key, value]) => `${key}:${value}`)
     .sort(([a], [b]) => a.localeCompare(b)); // Ordena para consistência
-  
+
   // Sempre usa COURSES_SEARCH com os filtros ativos para evitar colisão com useAllCourses
   const queryKey = [CACHE_TAGS.COURSES_SEARCH, activeFilters];
-  
+
   return useQuery({
     queryKey,
     queryFn: () => searchCoursesWithParams(searchParams),

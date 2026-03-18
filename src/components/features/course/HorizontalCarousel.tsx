@@ -1,5 +1,16 @@
 import React from "react";
 import { CourseCard } from "./CourseCard";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
 
 interface Course {
   title: string;
@@ -26,22 +37,24 @@ interface HorizontalCarouselProps {
   limitVisibleCards?: boolean;
 }
 
-export function HorizontalCarousel({ 
-  courses, 
-  itemWidth = 280, 
-  limitVisibleCards = false 
+export function HorizontalCarousel({
+  courses,
+  itemWidth = 280,
+  limitVisibleCards = false
 }: HorizontalCarouselProps) {
   return (
     <div className="w-full">
-      <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="grid gap-4 md:gap-6"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+      >
         {courses.map((course, index) => (
-          <div
-            key={course.courseId || index}
-          >
-            <CourseCard {...course} />
-          </div>
+          <CourseCard key={course.courseId || index} {...course} />
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
