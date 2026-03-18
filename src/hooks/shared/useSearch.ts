@@ -12,8 +12,8 @@ const searchParamsSchema = z.object({
   technology: z.string().optional(),
   year: z.string().optional(),
   page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(50).default(12),
-  sort: z.enum(['title', 'year', 'level', 'createdAt']).default('title'),
+  limit: z.coerce.number().min(1).max(1000).default(100),
+  sort: z.enum(['title', 'year', 'level', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('asc'),
 });
 

@@ -38,20 +38,7 @@ export interface Course {
   isSponsored?: boolean;
 }
 
-// Cache global para todos os cursos (evita múltiplas requisições)
-let allCoursesCache: ApiCourse[] | null = null;
-let cacheTimestamp: number = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-
-// Função para buscar cursos da API real com cache
 const fetchCoursesFromAPI = async (): Promise<ApiCourse[]> => {
-  const now = Date.now();
-  
-  // Se temos cache válido, retorna ele
-  if (allCoursesCache && (now - cacheTimestamp) < CACHE_DURATION) {
-    return allCoursesCache;
-  }
-  
   try {
     // Obter token de autenticação
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -78,10 +65,6 @@ const fetchCoursesFromAPI = async (): Promise<ApiCourse[]> => {
     if (!data.success) {
       throw new Error('API returned unsuccessful response');
     }
-    
-    // Atualiza o cache
-    allCoursesCache = data.data;
-    cacheTimestamp = now;
     
     return data.data;
   } catch (error) {
@@ -278,7 +261,7 @@ const searchCoursesWithParams = async (params: {
 
     // Aplicar paginação
     const page = params.page || 1;
-    const limit = params.limit || 50; // Aumentado para 50 para mostrar mais cursos
+    const limit = params.limit || 100; // Aumentado para 100 para mostrar mais cursos por padrão
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     
@@ -308,10 +291,8 @@ export function useCourseSearchWithParams(searchParams: {
     .map(([key, value]) => `${key}:${value}`)
     .sort(([a], [b]) => a.localeCompare(b)); // Ordena para consistência
   
-  // Se não há filtros ativos, usa a mesma queryKey que useAllCourses
-  const queryKey = activeFilters.length === 0 
-    ? [CACHE_TAGS.COURSES_ALL] 
-    : [CACHE_TAGS.COURSES_SEARCH, activeFilters];
+  // Sempre usa COURSES_SEARCH com os filtros ativos para evitar colisão com useAllCourses
+  const queryKey = [CACHE_TAGS.COURSES_SEARCH, activeFilters];
   
   return useQuery({
     queryKey,
