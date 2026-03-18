@@ -73,8 +73,8 @@ export function LearningDashboard({ userName }: { userName?: string }) {
         </div>
       ) : (
         <div>
-          {/* Seção de Cursos Patrocinados - apenas quando não há busca */}
-          {!isSearching && (
+          {/* Seção de Cursos Patrocinados - apenas quando não há busca e há conteúdo */}
+          {!isSearching && (producerLoading || producerError || producerCourses.length > 0) && (
             <div className="mb-6 md:mb-8">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -95,8 +95,6 @@ export function LearningDashboard({ userName }: { userName?: string }) {
                   </div>
                 ) : producerError ? (
                   <div className="text-red-400 text-sm px-2">Erro ao carregar cursos patrocinados</div>
-                ) : producerCourses.length === 0 ? (
-                  <div className="text-white/60 text-sm px-2">Nenhum curso de produtor disponível no momento.</div>
                 ) : (
                   <HorizontalCarousel
                     courses={producerCourses}
