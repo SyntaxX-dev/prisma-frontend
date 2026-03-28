@@ -324,7 +324,7 @@ export function CommunityList({
         >
           <div className="flex flex-col items-center gap-3 w-full sidebar-items-container">
             {communities.length === 0 ? (
-              <div className="text-gray-500 text-xs py-2">Nenhuma comunidade</div>
+              <div></div>
             ) : (
               navItems.map((item, index) => {
                 return (
